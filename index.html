@@ -26,123 +26,328 @@
         }
         body { font-family: 'Inter', system-ui, sans-serif; background-color: var(--bg); color: var(--text); margin: 0; padding: 20px; line-height: 1.5; }
         .container { max-width: 1600px; margin: auto; position: relative; }
+        
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid var(--border); padding-bottom: 15px; }
+        
         .tabs-container { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid var(--border); }
         .tab-btn { background: transparent; color: var(--muted); border: none; font-size: 15px; font-weight: 700; padding: 12px 25px; cursor: pointer; border-radius: 8px 8px 0 0; transition: all 0.2s; border-bottom: 3px solid transparent; }
+        .tab-btn:hover { color: var(--primary); background: var(--kanban-bg); }
         .tab-btn.active { color: var(--primary); border-bottom: 3px solid var(--primary); background: var(--card); }
         .tab-content { display: none; animation: fadeIn 0.3s ease; }
         .tab-content.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
         #loadingOverlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.8); z-index:9999; justify-content:center; align-items:center; flex-direction:column; backdrop-filter: blur(3px); }
+        body.dark-mode #loadingOverlay { background:rgba(15,23,42,0.8); }
         .spinner { border: 5px solid var(--border); border-top: 5px solid var(--primary); border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        .ei-panel { background: var(--card); border-radius: 12px; border: 1px solid var(--border); padding: 25px; margin-bottom: 25px; display: grid; grid-template-columns: 1fr 1.5fr; gap: 30px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
-        .ei-bar-wrapper { width: 100%; background: var(--border); height: 36px; border-radius: 18px; overflow: hidden; display: flex; margin: 20px 0; }
-        .ei-bar-base { background: #64748b; height: 100%; display:flex; align-items:center; justify-content:center; color:white; font-size:13px; font-weight:bold; }
-        .ei-bar-real { background: var(--ok); height: 100%; }
-        
-        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 25px; }
-        .stat-card { background: var(--card); padding: 20px; border-radius: 12px; border: 1px solid var(--border); text-align: center; }
-        .stat-card h3 { margin: 0; font-size: 28px; color: var(--primary); }
+        .warning-panel { background: rgba(245, 158, 11, 0.05); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 12px; padding: 20px; margin-top: 25px; margin-bottom: 25px; display: none; }
+        .warning-panel h4 { margin: 0 0 15px 0; color: var(--warn); display: flex; align-items: center; gap: 8px; font-size: 16px; }
+        .warning-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 10px; }
+        .warning-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 15px; background: var(--card); border: 1px solid var(--border); border-left: 4px solid var(--warn); border-radius: 6px; font-size: 13px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); cursor: pointer; transition: transform 0.1s;}
+        .warning-item:hover { transform: translateY(-2px); border-left: 4px solid var(--primary); box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .days-left { font-weight: 800; color: var(--danger); font-size: 14px;}
 
-        .controls { background: var(--card); padding: 20px; border-radius: 12px; border: 1px solid var(--border); display: flex; flex-wrap: wrap; gap: 15px; margin-bottom: 25px; }
+        .file-list-container { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+        .file-badge { display: inline-flex; align-items: center; background: var(--kanban-bg); border: 1px solid var(--border); padding: 4px 8px; border-radius: 6px; font-size: 11px; color: var(--text); font-weight: 500;}
+        .file-remove-btn { margin-left: 6px; color: var(--danger); cursor: pointer; font-weight: bold; padding: 0 4px; border-radius: 4px; transition: background 0.2s; font-size: 12px; }
+        .file-remove-btn:hover { background: #fee2e2; }
+
+        .note-input { width: 100%; border: 1px dashed var(--border); background: var(--card); color: var(--text); padding: 8px; border-radius: 6px; font-size: 12px; transition: border 0.2s; box-sizing: border-box; resize: vertical; min-height: 40px; font-family: inherit; }
+        .note-input:focus { border: 1px solid var(--primary); outline: none; background: var(--bg); }
+        .note-input::placeholder { color: var(--muted); opacity: 0.7; }
+
+        .ei-panel { background: var(--card); border-radius: 12px; border: 1px solid var(--border); padding: 25px; margin-bottom: 25px; display: grid; grid-template-columns: 1fr 1.5fr; gap: 30px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
+        .ei-bar-wrapper { width: 100%; background: var(--border); height: 36px; border-radius: 18px; overflow: hidden; display: flex; margin: 20px 0; box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);}
+        .ei-bar-base { background: #64748b; height: 100%; transition: width 0.8s ease-in-out; display:flex; align-items:center; justify-content:center; color:white; font-size:13px; font-weight:bold; white-space:nowrap; overflow:hidden;}
+        .ei-bar-real { background: var(--ok); height: 100%; transition: width 0.8s ease-in-out; }
+        .ei-bar-proj { background: var(--warn); height: 100%; transition: width 0.8s ease-in-out; background-image: repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,0.2) 10px, rgba(255,255,255,0.2) 20px); }
+        .ei-stats-text { display: flex; flex-direction: column; gap: 10px; font-size: 14px; font-weight: 600; color: var(--text); margin-top: 15px; }
+        .ei-stats-text div { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: var(--kanban-bg); border-radius: 6px;}
+        .dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; margin-right: 8px;}
+
+        .milestone-wrapper { grid-column: 1 / -1; margin-top: 15px; padding-top: 20px; border-top: 1px dashed var(--border); }
+        .milestone-table { width: 100%; border-collapse: collapse; font-size: 13px; text-align: center; }
+        .milestone-table th { background: var(--kanban-bg); padding: 10px; border-radius: 6px 6px 0 0; color: var(--muted); font-weight: 700; }
+        .milestone-table td { padding: 10px; border-bottom: 1px solid var(--border); color: var(--text); font-weight: 500; }
+        .milestone-table tr:hover td { background: var(--kanban-bg); }
+        .ms-passed { color: var(--ok); font-weight: bold; }
+        .ms-future { color: var(--warn); font-weight: bold; }
+        .ms-unreachable { color: var(--danger); font-size: 11px; opacity: 0.8; }
+        .ms-global-row td { background: rgba(37, 99, 235, 0.05); font-weight: bold; font-size: 14px; border-bottom: 2px solid var(--primary); }
+
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 25px; }
+        .stat-card { background: var(--card); padding: 20px; border-radius: 12px; border: 1px solid var(--border); text-align: center; display: flex; flex-direction: column; justify-content: flex-start;}
+        .stat-card h3 { margin: 0; font-size: 28px; color: var(--primary); }
+        .stat-card p { margin: 5px 0 0; color: var(--muted); font-weight: 500; font-size: 14px;}
+        .stat-detail { margin-top: 8px; font-size: 12px; color: var(--muted); font-weight: 500; line-height: 1.4; background: var(--bg); padding: 6px 10px; border-radius: 6px; display: inline-block; }
+        .stat-detail:empty { display: none; padding: 0; margin: 0; } 
+
+        .controls { background: var(--card); padding: 20px; border-radius: 12px; border: 1px solid var(--border); display: flex; flex-wrap: wrap; gap: 15px; align-items: flex-start; margin-bottom: 25px; }
         .control-group { display: flex; flex-direction: column; gap: 5px; flex: 1; min-width: 180px; }
         .control-group label { font-weight: 600; font-size: 11px; color: var(--muted); text-transform: uppercase; }
-        input[type="text"], input[type="file"] { padding: 9px; border: 1px solid var(--border); border-radius: 6px; background: var(--card); color: var(--text); width: 100%; }
-
-        .table-wrapper { background: var(--card); border-radius: 12px; border: 1px solid var(--border); overflow: hidden; }
-        table { width: 100%; border-collapse: collapse; }
-        th { background: rgba(0,0,0,0.02); padding: 15px; text-align: left; font-size: 12px; color: var(--muted); border-bottom: 2px solid var(--border); }
-        td { padding: 15px; border-bottom: 1px solid var(--border); font-size: 14px; }
+        .control-hint { font-size: 9px; font-weight: normal; color: var(--primary); text-transform: none; }
         
-        .pq-group-row { background: var(--card); cursor: pointer; }
+        input[type="text"], input[type="date"] { padding: 9px; border: 1px solid var(--border); border-radius: 6px; background: var(--card); color: var(--text); width: 100%; box-sizing: border-box; }
+        input[type="file"] { padding: 6px; border: 1px solid var(--border); border-radius: 6px; background: var(--card); color: var(--text); cursor: pointer; width: 100%; }
+        
+        .checkbox-list { border: 1px solid var(--border); border-radius: 6px; background: var(--card); min-height: 90px; max-height: 120px; overflow-y: auto; padding: 5px; }
+        .checkbox-list label { display: flex; align-items: center; gap: 8px; padding: 6px 8px; cursor: pointer; font-size: 13px; text-transform: none; font-weight: 500; color: var(--text); transition: background 0.1s; border-radius: 4px; }
+        .checkbox-list label:hover { background: var(--kanban-bg); }
+        .checkbox-list input[type="checkbox"] { width: 15px; height: 15px; cursor: pointer; accent-color: var(--primary); margin: 0; flex-shrink: 0; }
+
+        button { background: var(--primary); color: white; border: none; padding: 9px 15px; border-radius: 6px; cursor: pointer; font-weight: 600; transition: all 0.2s; white-space: nowrap; height: fit-content; display:flex; align-items:center; gap:5px; }
+        button:hover { filter: brightness(1.1); transform: translateY(-1px); }
+        .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text); }
+        .btn-outline:hover { background: var(--border); }
+
+        .table-wrapper { background: var(--card); border-radius: 12px; border: 1px solid var(--border); overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); }
+        table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+        th { background: rgba(0,0,0,0.02); padding: 15px; text-align: left; font-size: 12px; text-transform: uppercase; color: var(--muted); border-bottom: 2px solid var(--border); letter-spacing: 0.5px; }
+        td { padding: 15px; border-bottom: 1px solid var(--border); vertical-align: top; font-size: 14px; }
+        
+        .pq-group-row { background: var(--card); cursor: pointer; transition: background 0.2s; }
+        .pq-group-row:hover { background: var(--kanban-bg); }
+        .pq-group-row td { padding: 15px; vertical-align: middle; }
+        .pq-group-row.active { background: var(--kanban-bg); border-left: 4px solid var(--primary); }
+        .pq-group-row.active td:first-child { padding-left: 11px; } 
+        
         .pq-detail-row { background: var(--kanban-bg); display: none; }
         .pq-detail-row.active { display: table-row; }
+        .detail-container { padding: 20px; border-left: 4px solid var(--primary); background: var(--kanban-bg); box-shadow: inset 0 2px 4px rgba(0,0,0,0.02); }
         
-        .badge { display: inline-flex; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; }
-        .badge-ok { background: #d1e7dd; color: #0f5132; }
-        .badge-danger { background: #fee2e2; color: #b91c1c; }
+        .inner-steps-table { width: 100%; border-collapse: collapse; margin-top: 15px; background: var(--card); border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        .inner-steps-table th { background: rgba(0,0,0,0.03); padding: 12px; font-size: 11px; color: var(--muted); text-transform: uppercase; border-bottom: 1px solid var(--border); }
+        .inner-steps-table td { padding: 12px; border-bottom: 1px solid var(--border); font-size: 13px; vertical-align: top; }
+        
+        .pq-progress-container { width: 100%; height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; margin-top: 5px; }
+        .pq-progress-fill { height: 100%; background: var(--primary); transition: width 0.3s ease; }
+        .pq-progress-fill.done { background: var(--ok); }
+        .pq-progress-fill.warn { background: var(--warn); }
 
-        .report-textarea { width: 100%; height: 150px; border: 1px solid var(--border); border-radius: 8px; padding: 15px; margin-bottom: 15px; }
-        .report-preview-box { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 25px; white-space: pre-wrap; font-size: 14px; }
+        .finding-box { margin-top: 0; font-size: 13px; color: var(--text); background: var(--card); padding: 20px; border-radius: 8px; border: 1px solid var(--border); line-height: 1.6; }
+        .finding-meta { display: flex; gap: 20px; flex-wrap: wrap; margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px dashed var(--border); font-size: 12px; color: var(--muted); }
+        .finding-meta span b { color: var(--text); }
+
+        .truncate { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis; }
+
+        .badge { display: inline-flex; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; align-items: center; white-space: nowrap; margin-right: 5px; margin-bottom: 5px;}
+        .badge-danger { background: #fee2e2; color: #b91c1c; }
+        .badge-warn { background: #fef3c7; color: #b45309; }
+        .badge-ok { background: #d1e7dd; color: #0f5132; }
+        .badge-extra { background: var(--border); color: var(--text); border: 1px solid var(--muted); }
+        .badge-person { background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; }
+        .badge-pq-done { background: #059669; color: #ffffff; border: 1px solid #047857; font-size: 12px; padding: 5px 12px; }
+
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); }
+        .modal-content { background: var(--card); margin: 5% auto; padding: 30px; border-radius: 16px; width: 65%; max-height: 85vh; overflow-y: auto; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 15px; margin-bottom: 20px; }
+        
+        .visual-area { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-bottom: 25px; }
+        canvas { max-height: 280px; width: 100% !important; background: white; }
+
+        .report-layout { display: grid; grid-template-columns: 1fr 2fr; gap: 20px; }
+        .report-textarea { width: 100%; height: 150px; border: 1px solid var(--border); border-radius: 8px; padding: 15px; font-family: inherit; font-size: 14px; resize: vertical; background: var(--kanban-bg); color: var(--text); box-sizing: border-box; margin-bottom: 15px; }
+        .report-textarea:focus { outline: none; border-color: var(--primary); background: var(--card); }
+        .report-preview-box { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 25px; font-size: 14px; line-height: 1.6; color: var(--text); height: 100%; box-sizing: border-box; overflow-y: auto; max-height: 800px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);}
+        .report-stat-row { display: flex; gap: 10px; margin-bottom: 15px; }
+        .report-stat-mini { flex: 1; background: var(--kanban-bg); padding: 15px; border-radius: 8px; text-align: center; border: 1px solid var(--border); }
+        .report-stat-mini.done { border-bottom: 4px solid var(--ok); }
+        .report-stat-mini.pending { border-bottom: 4px solid var(--warn); }
+        .report-stat-mini h4 { margin: 0; font-size: 24px; color: var(--text); }
+        .report-stat-mini p { margin: 5px 0 0; font-size: 12px; color: var(--muted); text-transform: uppercase; font-weight: 600; }
+        .review-card { background: var(--card); border: 1px solid var(--border); border-left: 4px solid var(--primary); padding: 15px; border-radius: 6px; margin-bottom: 10px; }
+        .review-card-header { display: flex; justify-content: space-between; margin-bottom: 8px; font-weight: bold; color: var(--text); }
+        .ei-highlight-box { background: rgba(16, 185, 129, 0.05); border: 1px solid rgba(16, 185, 129, 0.2); padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.02);}
     </style>
 </head>
 <body>
 
 <div id="loadingOverlay">
     <div class="spinner"></div>
-    <h3 style="color:var(--primary); margin-top:15px;">Bulut Senkronizasyonu Aktif...</h3>
+    <h3 style="color:var(--primary); margin-top:15px;" data-i18n="loadingText">Veriler İşleniyor... Lütfen Bekleyin.</h3>
 </div>
 
 <div class="container">
     <div class="header">
         <div>
             <h1 style="margin:0; font-size: 24px;">✈️ TÜRKİYE / USOAP CMA CAP İZLEME</h1>
-            <p id="mainSubtitle" style="margin:5px 0 0; color: var(--muted);">Veriler Firebase üzerinde güvenle saklanmaktadır.</p>
+            <p id="mainSubtitle" style="margin:5px 0 0; color: var(--muted);" data-i18n="appSubtitle">Analiz için lütfen Word (.docx) belgelerini yükleyiniz.</p>
         </div>
         <div style="display:flex; gap:10px;">
-            <button onclick="clearAllData()" style="background: var(--danger);">🗑️ Tüm Verileri Sıfırla</button>
+            <button class="btn-outline" onclick="toggleLang()">🌐 TR/EN</button>
+            <button class="btn-outline" onclick="document.body.classList.toggle('dark-mode')" data-i18n="btnTheme">🌓 Tema</button>
+            <button onclick="exportBackupExcel()" style="background: rgba(37, 99, 235, 0.1); color: var(--primary); border: 1px solid var(--primary);" title="Mevcut işaretlemeleri ve notları Excel olarak yedekler.">📥 Seçimleri Yedekle</button>
+            <button onclick="exportExcel()" style="background: #059669;" data-i18n="btnExcel">📊 Excel Rapor</button>
+            <button onclick="exportPDF()" style="background: #dc2626;" data-i18n="btnPdf">📄 PDF Rapor</button> 
+            <button onclick="clearAllData()" style="background: var(--border); color: var(--text);" data-i18n="btnClear">🗑️ Temizle</button>
         </div>
     </div>
 
     <div class="controls">
-        <div class="control-group">
-            <label>1️⃣ Word Dosyaları (.docx)</label>
-            <input type="file" id="docxInput" multiple accept=".docx">
+        <div style="display: flex; flex-wrap: wrap; gap: 15px; width: 100%;">
+            <div class="control-group" style="flex: 1.5;">
+                <label data-i18n="lblWord">1️⃣ Orijinal Word Dosyaları (.docx)</label>
+                <input type="file" id="docxInput" multiple accept=".docx">
+                <div id="wordFileList" class="file-list-container"></div>
+            </div>
+
+            <div class="control-group" style="flex: 1.5;">
+                <label data-i18n="lblExcel">2️⃣ Excel Master Veri veya Yedek Rapor (.xlsx)</label>
+                <div style="display: flex; gap: 5px; align-items: center;">
+                    <input type="file" id="excelInput" accept=".xlsx, .xls">
+                    <button onclick="downloadTemplate()" class="btn-outline" style="height: 100%;" data-i18n="btnTemplate">📄 Şablon</button>
+                </div>
+                <div id="excelFileList" class="file-list-container"></div>
+                <div id="eiStatusTxt" style="margin-top: 6px; font-size: 11px; display: none;"></div>
+            </div>
+            
+            <div class="control-group" style="flex: 1.5;">
+                <label data-i18n="lblSearch">🔍 Kelime / PQ Ara</label>
+                <input type="text" id="searchInput" placeholder="Örn: 4.015, Bulgu, Eylem...">
+            </div>
+            
+            <div class="control-group" style="flex: 1.5;">
+                <label data-i18n="lblDate">📅 Hedef Tarih / Projeksiyon Çarpanı</label>
+                <div style="display: flex; gap: 10px;">
+                    <input type="date" id="dateStart">
+                    <input type="date" id="dateEnd">
+                </div>
+            </div>
         </div>
-        <div class="control-group">
-            <label>2️⃣ Excel Master Veri (.xlsx)</label>
-            <input type="file" id="excelInput" accept=".xlsx, .xls">
-        </div>
-        <div class="control-group">
-            <label>🔍 Ara</label>
-            <input type="text" id="searchInput" oninput="render()">
+
+        <div class="filter-row" style="display:flex; width:100%; flex-wrap:wrap; gap:15px; padding-top:15px; border-top:1px dashed var(--border);">
+            <div class="control-group">
+                <label><span data-i18n="fStatus">Durum</span> <span class="control-hint" data-i18n="fAll">(Seçim yoksa Tümü)</span></label>
+                <div class="checkbox-list" id="statusFilterList">
+                    <label><input type="checkbox" value="late" onchange="render()"><span data-i18n="cbLate">🔴 Gecikmişler</span></label>
+                    <label><input type="checkbox" value="pending" onchange="render()"><span data-i18n="cbPending">🟡 Bekleyenler</span></label>
+                    <label><input type="checkbox" value="done" onchange="render()"><span data-i18n="cbDone">🟢 Tamamlananlar</span></label>
+                </div>
+            </div>
+            <div class="control-group" id="officeFilterListGroup" style="display: none;"><label data-i18n="fOffice">Sorumlu Ofis</label><div class="checkbox-list" id="officeFilterList"></div></div>
+            <div class="control-group" id="areaFilterListGroup" style="display: none;"><label data-i18n="fArea">Denetim Alanı</label><div class="checkbox-list" id="areaFilterList"></div></div>
+            <div class="control-group" id="ceFilterListGroup" style="display: none;"><label data-i18n="fCe">Kritik Element</label><div class="checkbox-list" id="ceFilterList"></div></div>
+            <div class="control-group" id="icaoFilterListGroup" style="display: none;"><label data-i18n="fIcao">ICAO Değ.</label><div class="checkbox-list" id="icaoFilterList"></div></div>
+            <div class="control-group" id="typeFilterListGroup" style="display: none;"><label data-i18n="fType">Doğrulama Türü</label><div class="checkbox-list" id="typeFilterList"></div></div>
+            <div class="control-group" id="personFilterListGroup" style="display: none;"><label data-i18n="fPerson">Sorumlu Personel</label><div class="checkbox-list" id="personFilterList"></div></div>
         </div>
     </div>
 
     <div class="tabs-container">
-        <button class="tab-btn active" onclick="switchTab('dashboard')" id="btn-tab-dashboard">📊 Dashboard</button>
-        <button class="tab-btn" onclick="switchTab('list')" id="btn-tab-list">📋 CAP Listesi</button>
-        <button class="tab-btn" onclick="switchTab('report')" id="btn-tab-report">📈 Günlük Rapor</button>
+        <button class="tab-btn active" onclick="switchTab('dashboard')" id="btn-tab-dashboard" data-i18n="tabDashboard">📊 Dashboard & Özetler</button>
+        <button class="tab-btn" onclick="switchTab('list')" id="btn-tab-list" data-i18n="tabList">📋 Detaylı CAP Listesi</button>
+        <button class="tab-btn" onclick="switchTab('report')" id="btn-tab-report" style="color: var(--primary);">📈 Off-Site Günlük Rapor</button>
     </div>
 
     <div id="tab-dashboard" class="tab-content active">
-        <div class="ei-panel" id="eiPanel">
+        <div class="ei-panel" id="eiPanel" style="display: none;">
             <div>
-                <h3>🌍 Genel EI Projeksiyonu</h3>
+                <h3 id="eiPanelTitle" style="margin: 0 0 5px 0; color: var(--primary);" data-i18n="eiTitle">🌍 Genel (Overall) Etkin Uygulama (EI) Oranı (%) Değişimi</h3>
+                <p id="eiPanelSubtitle" style="margin: 0 0 15px 0; font-size: 13px; color: var(--muted);" data-i18n="eiSubtitle">Sabit Türkiye geneli baz puanı üzerine, <b>ekranda filtrelenen eylemlerin</b> ulusal orana etkisi hesaplanmaktadır.</p>
                 <div class="ei-bar-wrapper">
-                    <div class="ei-bar-base" id="barBase"></div>
-                    <div class="ei-bar-real" id="barReal"></div>
+                    <div class="ei-bar-base" id="barBase" style="width:0%"></div>
+                    <div class="ei-bar-real" id="barReal" style="width:0%"></div>
+                    <div class="ei-bar-proj" id="barProj" style="width:0%"></div>
                 </div>
-                <div id="eiText" style="font-weight: bold; margin-top: 10px;"></div>
+                <div class="ei-stats-text">
+                    <div><span><i class="dot" style="background:#64748b;"></i> <span data-i18n="eiLblBase">Overall EI (%):</span></span> <span id="lblBase">%0.00</span></div>
+                    <div><span><i class="dot" style="background:var(--ok);"></i> <b data-i18n="eiLblReal">Overall EI-Tamamlanlar Dahil (%):</b></span> <span id="lblReal" style="color:var(--ok);">%0.00</span></div>
+                    <div style="border-left: 4px solid var(--warn);"><span><i class="dot" style="background:var(--warn);"></i> <b data-i18n="eiLblProj">Overall EI-Tümü Dahil (%):</b></span> <span id="lblProj" style="color:var(--warn); font-size: 16px;">%0.00</span></div>
+                </div>
             </div>
-            <div><canvas id="eiChartCanvas" style="max-height: 200px;"></canvas></div>
+            <div><canvas id="eiChartCanvas" style="min-height: 260px;"></canvas></div>
+            <div class="milestone-wrapper">
+                <h4 style="margin: 0 0 10px 0; color: var(--text); display: flex; justify-content: space-between; align-items: center;">
+                    <span data-i18n="msTitle">🗓️ Genel ve Alan Bazında Hedef Tablosu</span>
+                    <button onclick="showGapReport()" style="background: var(--danger); font-size: 12px; padding: 6px 12px; border-radius: 6px;" data-i18n="btnGap">🔍 Kök Neden: Neden Ulaşılamıyor?</button>
+                </h4>
+                <table class="milestone-table">
+                    <thead><tr><th style="text-align: left;" data-i18n="thAreaScope">Denetim Alanı / Kapsam</th><th data-i18n="th60">%60 Hedefi</th><th data-i18n="th70">%70 Hedefi</th><th data-i18n="th80">%80 Hedefi</th><th data-i18n="th90">%90 Hedefi</th><th data-i18n="th100">%100 Hedefi</th></tr></thead>
+                    <tbody id="milestoneTableBody"></tbody>
+                </table>
+            </div>
         </div>
+
         <div class="stats-grid">
-            <div class="stat-card"><h3 id="totalPqCount">0</h3><p>Toplam PQ</p></div>
-            <div class="stat-card"><h3 id="donePqCount">0</h3><p>Kapatılan PQ</p></div>
+            <div class="stat-card"><h3 id="totalPqCount">0</h3><p data-i18n="statPqTotal">Ekranda Listelenen PQ</p><div id="pqDetails" class="stat-detail"></div></div>
+            <div class="stat-card"><h3 id="activeActionCount">0</h3><p data-i18n="statActTotal">Ekranda Listelenen Eylem</p><div id="actionDetails" class="stat-detail"></div></div>
+            <div class="stat-card" style="border-bottom: 4px solid var(--danger);"><h3 id="lateCount">0</h3><p data-i18n="statLate">Gecikmiş</p><div id="lateDetails" class="stat-detail"></div></div>
+            <div class="stat-card" style="border-bottom: 4px solid var(--ok);"><h3 id="doneCount">0</h3><p data-i18n="statDone">Tamamlanan</p><div id="doneDetails" class="stat-detail"></div></div>
+        </div>
+
+        <div class="visual-area">
+            <div class="stat-card"><canvas id="statusChart"></canvas></div>
+            <div class="stat-card"><canvas id="delayChart"></canvas></div>
+            <div class="stat-card"><canvas id="officeChart"></canvas></div>
+        </div>
+
+        <div class="table-wrapper" id="areaSummaryContainer" style="display: none;">
+            <h4 style="margin: 0; padding: 15px; background: rgba(0,0,0,0.02); border-bottom: 2px solid var(--border); color: var(--text); font-size: 15px;" data-i18n="sumTitle">📊 Alan Bazlı Eylem (PQ) Özet Tablosu</h4>
+            <table>
+                <thead><tr><th style="width: 20%;" data-i18n="thArea">Denetim Alanı</th><th style="width: 20%; text-align:center;" data-i18n="thTotalCap">Toplam CAP (PQ)</th><th style="width: 20%; text-align:center;" data-i18n="thDoneCap">Tamamlanan (PQ)</th><th style="width: 20%; text-align:center;" data-i18n="thOngoingCap">Devam Eden (PQ)</th><th style="width: 20%; text-align:center;" data-i18n="thProgress">İlerleme (%)</th></tr></thead>
+                <tbody id="areaSummaryBody"></tbody>
+            </table>
+        </div>
+
+        <div class="warning-panel" id="warningPanel">
+            <h4 data-i18n="warningTitle">⚠️ Yaklaşan Görevler (Önümüzdeki 30 Gün)</h4>
+            <div class="warning-grid" id="warningList"></div>
         </div>
     </div>
 
     <div id="tab-list" class="tab-content">
         <div class="table-wrapper">
-            <table>
-                <thead><tr><th>PQ</th><th>Denetim Alanı</th><th>Durum</th><th>İşlem</th></tr></thead>
-                <tbody id="tableBody"></tbody>
+            <table id="capTable">
+                <thead><tr><th style="width: 15%;" data-i18n="thPqArea">PQ & Alan</th><th style="width: 25%;" data-i18n="thOverallProg">Genel İlerleme</th><th style="width: auto;" data-i18n="thSummary">Özet Bilgiler</th><th style="width: 50px; text-align:center;">Detay</th></tr></thead>
+                <tbody id="tableBody">
+                    <tr><td colspan="4" style="text-align:center; padding: 50px; color: var(--muted);" data-i18n="emptyState">Başlamak için Word veya Excel yükleyin.</td></tr>
+                </tbody>
             </table>
         </div>
     </div>
 
     <div id="tab-report" class="tab-content">
-        <textarea id="managementNotes" class="report-textarea" placeholder="Yönetici notlarını buraya ekleyin..."></textarea>
-        <div class="report-preview-box" id="reportPreview"></div>
+        <div class="report-layout">
+            <div>
+                <div style="background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+                    <h3 style="margin: 0 0 15px 0; color: var(--primary); font-size: 18px;">📝 Yönetici Özeti</h3>
+                    <p style="font-size: 12px; color: var(--muted); margin-top: 0; margin-bottom: 15px;">Aşağıdaki alana günlük değerlendirmelerinizi yazın. Detaylı listede seçtiğiniz <b>PQ'lar</b> ve <b>Eylemler</b> sağdaki rapora <b>otomatik olarak</b> eklenecektir.</p>
+                    <textarea id="managementNotes" class="report-textarea" placeholder="Örn: Bugünkü toplantıda X konuları ele alınmış olup..." oninput="updateReportPreview(); saveToLocalStorage();"></textarea>
+                    
+                    <button onclick="copyReportToClipboard()" style="width: 100%; justify-content: center; margin-top: 10px; background: #059669; font-size: 15px; padding: 12px;">📋 Raporu Panoya Kopyala</button>
+                    <p style="font-size: 11px; color: var(--muted); text-align: center; margin-top: 10px;">(Sağdaki şablonu e-posta veya sunum için kopyalar)</p>
+                </div>
+            </div>
+
+            <div>
+                <div class="report-stat-row">
+                    <div class="report-stat-mini">
+                        <h4 id="repTotalOffsite">0</h4>
+                        <p>Toplam Off-Site (PQ)</p>
+                    </div>
+                    <div class="report-stat-mini done">
+                        <h4 id="repDoneOffsite" style="color: var(--ok);">0</h4>
+                        <p>Tamamlanan</p>
+                    </div>
+                    <div class="report-stat-mini pending">
+                        <h4 id="repPendingOffsite" style="color: var(--warn);">0</h4>
+                        <p>Değerlendirmesi Süren</p>
+                    </div>
+                </div>
+
+                <div class="report-preview-box" id="reportPreview">
+                    </div>
+            </div>
+        </div>
     </div>
 </div>
 
 <script>
-    // --- SİZE ÖZEL FIREBASE AYARLARI ---
+    // ==========================================
+    // 1. FIREBASE KONFİGÜRASYONU VE BAŞLATMA
+    // ==========================================
     const firebaseConfig = {
       apiKey: "AIzaSyBIey2A-LIZxq3pI2L1HAPUKM1Y46gERwg",
       authDomain: "icao-cap-takip.firebaseapp.com",
@@ -157,181 +362,564 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    // Global Değişkenler
-    let rawData = []; let pqMasterData = {}; let baseEIData = {}; 
-    let dailyReviewedPQs = new Set(); let dailyPQNotes = {};
-
-    // --- FIREBASE VERİ OKUMA ---
-    db.ref('icao_system').on('value', (snapshot) => {
-        const data = snapshot.val();
-        if (data) {
-            rawData = data.rawData || [];
-            pqMasterData = data.pqMasterData || {};
-            baseEIData = data.baseEIData || {};
-            dailyReviewedPQs = new Set(data.dailyReviewedPQs || []);
-            dailyPQNotes = data.dailyPQNotes || {};
-            document.getElementById('managementNotes').value = data.managementNotes || "";
-            render();
+    // ==========================================
+    // 2. BILINGUAL DICTIONARY VE DEĞİŞKENLER
+    // ==========================================
+    const dict = {
+        tr: {
+            appTitle: "✈️ TÜRKİYE / USOAP CMA CAP İzleme", appSubtitle: "Analiz için lütfen Word (.docx) belgelerini yükleyiniz.",
+            btnTheme: "🌓 Tema", btnClear: "🗑️ Tümünü Temizle", btnExcel: "📊 Excel Rapor", btnPdf: "📄 PDF Rapor", btnTemplate: "📄 Şablon", btnClose2: "Kapat",
+            tabDashboard: "📊 Dashboard & Özetler", tabList: "📋 Detaylı CAP Listesi", tabReport: "📈 Off-Site Günlük Rapor",
+            loadingText: "Veriler İşleniyor... Lütfen Bekleyin.", warningTitle: "⚠️ Yaklaşan Görevler (Önümüzdeki 30 Gün)", daysLeft: "gün kaldı",
+            eiTitle: "🌍 Genel (Overall) Etkin Uygulama (EI) Oranı (%) Değişimi", eiSubtitle: "Sabit Türkiye geneli baz puanı üzerine, <b>ekranda filtrelenen eylemlerin</b> ulusal orana etkisi hesaplanmaktadır.",
+            eiLblBase: "Overall EI (%):", eiLblReal: "Overall EI-Tamamlanlar Dahil (%):", eiLblProj: "Overall EI-Tümü Dahil (%):",
+            msTitle: "🗓️ Genel ve Alan Bazında Hedef Tablosu", btnGap: "🔍 Kök Neden: Neden Ulaşılamıyor?",
+            thAreaScope: "Denetim Alanı / Kapsam", th60: "%60 Hedefi", th70: "%70 Hedefi", th80: "%80 Hedefi", th90: "%90 Hedefi", th100: "%100 Hedefi",
+            statPqTotal: "Ekranda Listelenen PQ", statActTotal: "Ekranda Listelenen Eylem", statLate: "Gecikmiş", statDone: "Tamamlanan",
+            lblWord: "1️⃣ Orijinal Word Dosyaları (.docx)", lblExcel: "2️⃣ Excel Master Veri (.xlsx)", lblSearch: "🔍 Kelime / PQ Ara", lblDate: "📅 Hedef Tarih / Projeksiyon Çarpanı",
+            fStatus: "Durum", fAll: "(Seçim yoksa Tümü)", cbLate: "🔴 Gecikmişler", cbPending: "🟡 Bekleyenler", cbDone: "🟢 Tamamlananlar",
+            fOffice: "Sorumlu Ofis", fArea: "Denetim Alanı", fCe: "Kritik Element", fIcao: "ICAO Değ.", fType: "Doğrulama Türü", fPerson: "Sorumlu Personel",
+            sumTitle: "📊 Alan Bazlı Eylem (PQ) Özet Tablosu", thArea: "Denetim Alanı", thTotalCap: "Toplam CAP (PQ)", thDoneCap: "Tamamlanan (PQ)", thOngoingCap: "Devam Eden (PQ)", thProgress: "İlerleme (%)",
+            thPqArea: "PQ & Alan", thOverallProg: "Genel İlerleme", thSummary: "Özet Bilgiler",
+            thStep: "Adım", thAction: "Planlanan Eylem", thNote: "Notlar", placeholderNote: "Kişisel not ekle...", thOffice: "Sorumlu Ofis", thDate: "Hedef/Bitiş", thStatus: "Durum",
+            emptyState: "Başlamak için Word veya Excel yükleyin.", gapTitle: "🔍 Kök Neden Analizi: Eksik Eylem Planları",
+            distr: "Dağılım:", other: "Diğer", wordConstraint: "Word Dosyası Alan Kısıtı", statusL: "Gecikmiş", statusP: "Bekliyor", statusD: "Tamamlandı",
+            chart1: "Eylem Dağılımı ve Doğrulama Türü", chart2: "Eylem Gecikme Oranı", chart3: "En Çok Eylem Atanan 5 Ofis", eiChart: "Denetim Alanı Bazında EI (%) Değişim Grafiği",
+            cDelay: "Geciken %", cOk: "Zamanında/Bekleyen %", pqDone: "✅ PQ TAMAMLANDI", pqActionNum: "Eylem",
+            mPerson: "SORUMLU PERSONEL", mType: "DOĞRULAMA", mArea: "DENETİM ALANI", mCe: "KRİTİK ELEMENT (CE)", mQ: "❓ PQ SORUSU", mFinding: "📝 BULGU (FINDING)",
+            mOffice: "EYLEM SORUMLU OFİS", mDate: "HEDEF/BİTİŞ TARİHİ", mPct: "DURUM YÜZDESİ", mAction: "PLANLANAN EYLEM (CORRECTIVE ACTION)",
+            excelFiltered: "--- UYGULANAN VERİ FİLTRELERİ ---", excelDash: "--- DASHBOARD ÖZETİ ---", pdfMainList: "📋 Tüm Filtrelenmiş Ana CAP Listesi", pdfPqInfo: "PQ Bilgileri", pdfPersonType: "Personel & Tür", pdfTargetStatus: "Hedef & Durum",
+            unreachable: "Ulaşılamıyor", basePassed: "✔️ Geçildi\n(Kök Veri)", passed: "✔️ Geçildi"
+        },
+        en: {
+            appTitle: "✈️ TURKIYE / USOAP CMA Audit CAP Monitoring", appSubtitle: "Please upload Word (.docx) documents for analysis.",
+            btnTheme: "🌓 Theme", btnClear: "🗑️ Clear All", btnExcel: "📊 Excel Report", btnPdf: "📄 PDF Report", btnTemplate: "📄 Template", btnClose2: "Close",
+            tabDashboard: "📊 Dashboard & Summaries", tabList: "📋 Detailed CAP List", tabReport: "📈 Off-Site Daily Report",
+            loadingText: "Processing Data... Please Wait.", warningTitle: "⚠️ Upcoming Tasks (Next 30 Days)", daysLeft: "days left",
+            eiTitle: "🌍 Overall Effective Implementation (EI) Rate (%) Projection", eiSubtitle: "Calculates the impact of <b>filtered actions on the screen</b> against the national base score.",
+            eiLblBase: "Overall EI (%):", eiLblReal: "Overall EI (Inc. Completed):", eiLblProj: "Overall EI (Inc. All Projected):",
+            msTitle: "🗓️ Target Milestones (Overall & Area Based)", btnGap: "🔍 Root Cause: Why Unreachable?",
+            thAreaScope: "Audit Area / Scope", th60: "60% Target", th70: "70% Target", th80: "80% Target", th90: "90% Target", th100: "100% Target",
+            statPqTotal: "Listed PQs", statActTotal: "Listed Actions (CAP)", statLate: "Overdue Actions", statDone: "Completed Actions",
+            lblWord: "1️⃣ Original Word Files (.docx)", lblExcel: "2️⃣ Excel Master Data (.xlsx)", lblSearch: "🔍 Search Keyword / PQ", lblDate: "📅 Target Date / Projection Limit",
+            fStatus: "Status", fAll: "(All if empty)", cbLate: "🔴 Overdue", cbPending: "🟡 Pending", cbDone: "🟢 Completed",
+            fOffice: "Responsible Office", fArea: "Audit Area", fCe: "Critical Element", fIcao: "ICAO Status", fType: "Validation Type", fPerson: "Responsible Person",
+            sumTitle: "📊 Area Based Action (PQ) Summary", thArea: "Audit Area", thTotalCap: "Total CAP (PQ)", thDoneCap: "Completed (PQ)", thOngoingCap: "Ongoing (PQ)", thProgress: "Progress (%)",
+            thPqArea: "PQ & Area", thOverallProg: "Overall Progress", thSummary: "Summary Info",
+            thStep: "Step", thAction: "Planned Corrective Action", thNote: "Notes", placeholderNote: "Add custom note...", thOffice: "Responsible Office", thDate: "Target Date", thStatus: "Status",
+            emptyState: "Please upload Word or Excel files to begin.", gapTitle: "🔍 Root Cause Analysis: Missing Action Plans",
+            distr: "Breakdown:", other: "Other", wordConstraint: "Word File Area Constraint", statusL: "Overdue", statusP: "Pending", statusD: "Completed",
+            chart1: "Action Distribution & Validation Type", chart2: "Action Delay Ratio", chart3: "Top 5 Responsible Offices", eiChart: "EI (%) Projection Chart by Audit Area",
+            cDelay: "Delayed %", cOk: "On-Time/Pending %", pqDone: "✅ PQ FULLY COMPLETED", pqActionNum: "Actions",
+            mPerson: "RESPONSIBLE PERSON", mType: "VALIDATION", mArea: "AUDIT AREA", mCe: "CRITICAL ELEMENT (CE)", mQ: "❓ PQ QUESTION", mFinding: "📝 FINDING DESCRIPTION",
+            mOffice: "RESPONSIBLE OFFICE", mDate: "EST. COMPLETION DATE", mPct: "PROGRESS (%)", mAction: "PLANNED CORRECTIVE ACTION",
+            excelFiltered: "--- APPLIED DATA FILTERS ---", excelDash: "--- DASHBOARD SUMMARY ---", pdfMainList: "📋 Main Filtered CAP List", pdfPqInfo: "PQ Information", pdfPersonType: "Person & Val. Type", pdfTargetStatus: "Target & Status",
+            unreachable: "Unreachable", basePassed: "✔️ Passed\n(Base Data)", passed: "✔️ Passed"
         }
-    });
+    };
 
-    // --- WORD DOSYASI OKUMA (TAM) ---
-    document.getElementById('docxInput').addEventListener('change', async (e) => {
-        showLoading();
-        const files = e.target.files;
-        for (let file of files) {
-            const zip = await JSZip.loadAsync(file);
-            const xml = await zip.file("word/document.xml").async("string");
-            const parser = new DOMParser();
-            const xmlDoc = parser.parseFromString(xml, "text/xml");
-            
-            // Basitleştirilmiş tablo okuma mantığı
-            let currentPQ = file.name.match(/\d\.\d{3}/) ? file.name.match(/\d\.\d{3}/)[0] : "Bilinmeyen";
-            const tables = xmlDoc.getElementsByTagName("w:tbl");
-            for (let i = 0; i < tables.length; i++) {
-                const rows = tables[i].getElementsByTagName("w:tr");
-                for (let r = 0; r < rows.length; r++) {
-                    const rCells = rows[r].getElementsByTagName("w:tc");
-                    if (rCells.length >= 7) {
-                        let step = rCells[0].textContent.trim();
-                        if (/^\d+$/.test(step)) {
-                            rawData.push({
-                                pq: currentPQ,
-                                step: step,
-                                action: rCells[1].textContent.trim(),
-                                office: rCells[2].textContent.trim(),
-                                estDate: rCells[4].textContent.trim(),
-                                progress: rCells[rCells.length-1].textContent.trim()
-                            });
-                        }
-                    }
-                }
-            }
-        }
-        saveToFirebase();
-    });
+    let currentLang = 'tr'; let window_loadedReportDate = null; 
+    let rawData = []; let pqMasterData = {}; let baseEIData = {}; let loadedFiles = new Set(); let charts = {};
+    let loadedExcelFile = null; let savedManagementNotes = ""; 
+    window.currentActiveAreas = []; window.currentFilteredGroups = {}; window.currentAreaSummaryRaw = []; window.loadedWordAreas = new Set(); window.currentAreaEIData = [];
+    
+    let dailyReviewedSet = new Set(); 
+    let dailyReviewedPQs = new Set(); 
+    let dailyPQNotes = {}; 
+    let offsiteStats = { total: 0, done: 0, pending: 0 };
 
-    // --- EXCEL DOSYASI OKUMA (TAM) ---
-    document.getElementById('excelInput').addEventListener('change', async (e) => {
+    // ==========================================
+    // 3. FIREBASE SENKRONİZASYONU (ESKİ LOCALSTORAGE YERİNE)
+    // ==========================================
+    function saveToLocalStorage() {
         showLoading();
-        const file = e.target.files[0];
-        const data = await file.arrayBuffer();
-        const wb = XLSX.read(data);
-        const ws = wb.Sheets[wb.SheetNames[0]];
-        const jsonData = XLSX.utils.sheet_to_json(ws);
-        
-        jsonData.forEach(row => {
-            let pq = row["PQ No"] || row["PQ"] || row["PQ NO"];
-            if(pq) pqMasterData[pq] = {
-                alan: row["ALAN"] || row["AREA"] || row["DENETİM ALANI"],
-                bulgu: row["BULGU"] || row["FINDING"] || row["AÇIKLAMA"]
+        try {
+            const dataToSave = {
+                rawData: rawData, pqMasterData: pqMasterData, baseEIData: baseEIData, loadedFiles: Array.from(loadedFiles),
+                loadedWordAreas: Array.from(window.loadedWordAreas), loadedExcelFile: loadedExcelFile,
+                managementNotes: document.getElementById('managementNotes').value,
+                dailyReviewed: Array.from(dailyReviewedSet), 
+                dailyReviewedPQs: Array.from(dailyReviewedPQs), 
+                dailyPQNotes: dailyPQNotes,
+                reportDate: window_loadedReportDate ? window_loadedReportDate.getTime() : null
             };
-        });
-        
-        // EI Verisi varsa oku
-        let eiSheet = wb.SheetNames.find(n => n.includes("EI"));
-        if(eiSheet) {
-            const wsEI = wb.Sheets[eiSheet];
-            const eiData = XLSX.utils.sheet_to_json(wsEI);
-            eiData.forEach(r => {
-                baseEIData[r["ALAN"] || r["AREA"]] = { total: r["TOPLAM PQ"], sat: r["MEVCUT"] };
+            // LocalStorage yerine doğrudan Firebase'e yazıyoruz
+            db.ref('icao_system').set(dataToSave).then(() => hideLoading());
+        } catch (e) { console.warn("Storage error", e); hideLoading(); }
+    }
+
+    function loadFromLocalStorage() {
+        showLoading();
+        try {
+            // LocalStorage okumak yerine Firebase'i anlık dinliyoruz
+            db.ref('icao_system').on('value', (snapshot) => {
+                hideLoading();
+                const data = snapshot.val();
+                if (data) {
+                    rawData = data.rawData || []; 
+                    pqMasterData = data.pqMasterData || {}; 
+                    baseEIData = data.baseEIData || {};
+                    loadedFiles = new Set(data.loadedFiles || []); 
+                    window.loadedWordAreas = new Set(data.loadedWordAreas || []);
+                    loadedExcelFile = data.loadedExcelFile || null; 
+                    savedManagementNotes = data.managementNotes || "";
+                    dailyReviewedSet = new Set(data.dailyReviewed || []); 
+                    dailyReviewedPQs = new Set(data.dailyReviewedPQs || []);
+                    dailyPQNotes = data.dailyPQNotes || {};
+                    
+                    document.getElementById('managementNotes').value = savedManagementNotes;
+                    window_loadedReportDate = data.reportDate ? new Date(data.reportDate) : null;
+
+                    if (Object.keys(baseEIData).length > 0) document.getElementById('eiPanel').style.display = "grid";
+                    updateDynamicSubtitle(); renderFileList(); refreshAllFilters(); render();
+                } else {
+                    renderFileList();
+                }
+            }, (error) => {
+                console.warn("Firebase okuma hatası:", error);
+                hideLoading();
+                renderFileList();
             });
-        }
-        saveToFirebase();
-    });
-
-    // --- FIREBASE VERİ YAZMA ---
-    function saveToFirebase() {
-        db.ref('icao_system').set({
-            rawData: rawData,
-            pqMasterData: pqMasterData,
-            baseEIData: baseEIData,
-            dailyReviewedPQs: Array.from(dailyReviewedPQs),
-            dailyPQNotes: dailyPQNotes,
-            managementNotes: document.getElementById('managementNotes').value
-        }).then(() => hideLoading());
+            
+            setTimeout(() => { hideLoading(); }, 5000);
+        } catch (e) { hideLoading(); renderFileList(); }
     }
 
-    function render() {
-        const tbody = document.getElementById('tableBody');
-        tbody.innerHTML = "";
+    window.onload = function() { loadFromLocalStorage(); };
+
+    // ==========================================
+    // 4. MEVCUT FONKSİYONLAR (DEĞİŞTİRİLMEDİ)
+    // ==========================================
+    function renderFileList() {
+        const wContainer = document.getElementById('wordFileList'); wContainer.innerHTML = "";
+        if (loadedFiles.size === 0) wContainer.innerHTML = `<div style="font-size: 11px; color: var(--muted); padding: 5px 0;">${t('descWord') || 'Word dosyası yüklenmedi.'}</div>`;
+        else Array.from(loadedFiles).forEach(f => { wContainer.innerHTML += `<div class="file-badge"><span class="truncate" style="max-width: 200px;" title="${f}">📝 ${f}</span><span class="file-remove-btn" onclick="removeWordFile('${f}')">✕</span></div>`; });
         
-        // Benzersiz PQ listesi oluştur
-        const pqs = [...new Set(rawData.map(d => d.pq))];
-        pqs.forEach(pq => {
-            const excel = pqMasterData[pq] || {};
-            const safeId = pq.replace(/\./g, '-');
-            const row = document.createElement('tr');
-            row.innerHTML = `
-                <td><b>${pq}</b></td>
-                <td>${excel.alan || '-'}</td>
-                <td><span class="badge ${dailyReviewedPQs.has(pq) ? 'badge-ok' : 'badge-danger'}">${dailyReviewedPQs.has(pq) ? 'Kapatıldı' : 'Açık'}</span></td>
-                <td><button onclick="togglePQRow('${safeId}')">Detay</button></td>
-            `;
-            tbody.appendChild(row);
-
-            const detail = document.createElement('tr');
-            detail.id = `detail-${safeId}`;
-            detail.className = "pq-detail-row";
-            detail.innerHTML = `
-                <td colspan="4" style="padding:20px; background:#fdfdfd;">
-                    <p><b>Bulgu:</b> ${excel.bulgu || 'Excel verisi yok.'}</p>
-                    <label><input type="checkbox" onchange="toggleReport('${pq}')" ${dailyReviewedPQs.has(pq) ? 'checked' : ''}> Rapora/EI'ye Ekle</label>
-                    <textarea style="width:100%; margin-top:10px;" onchange="updateNote('${pq}', this.value)" placeholder="PQ Notu...">${dailyPQNotes[pq] || ''}</textarea>
-                </td>
-            `;
-            tbody.appendChild(detail);
-        });
-        updateDashboard();
-        updateReport();
-    }
-
-    window.togglePQRow = (id) => document.getElementById(`detail-${id}`).classList.toggle('active');
-
-    function toggleReport(pq) {
-        if(dailyReviewedPQs.has(pq)) dailyReviewedPQs.delete(pq);
-        else dailyReviewedPQs.add(pq);
-        saveToFirebase();
-    }
-
-    function updateNote(pq, val) {
-        dailyPQNotes[pq] = val;
-        saveToFirebase();
-    }
-
-    function updateDashboard() {
-        document.getElementById('totalPqCount').innerText = Object.keys(pqMasterData).length;
-        document.getElementById('donePqCount').innerText = dailyReviewedPQs.size;
-        // EI Projeksiyonu Hesaplama (Basit)
-        if(Object.keys(baseEIData).length > 0) {
-            document.getElementById('eiPanel').style.display = "grid";
-            // ... detaylı EI çubuğu hesaplaması buraya gelecek ...
+        const eContainer = document.getElementById('excelFileList'); eContainer.innerHTML = "";
+        const eiStatusTxt = document.getElementById('eiStatusTxt');
+        if (!loadedExcelFile) { eContainer.innerHTML = `<div style="font-size: 11px; color: var(--warn); padding: 5px 0;">${t('descExcel') || 'Excel master verisi yüklenmedi.'}</div>`; eiStatusTxt.style.display = "none"; } 
+        else {
+            eContainer.innerHTML = `<div class="file-badge" style="border-color: var(--ok); background: rgba(16, 185, 129, 0.05);"><span class="truncate" style="max-width: 250px;" title="${loadedExcelFile}">📊 ${loadedExcelFile}</span><span class="file-remove-btn" onclick="removeExcelFile()">✕</span></div>`;
+            eiStatusTxt.innerHTML = `<span style="color:var(--primary); font-weight:600;">${Object.keys(pqMasterData).length} PQ eşleşti.</span><span style="color:var(--ok); font-weight:600;">${Object.keys(baseEIData).length > 0 ? (currentLang==='tr' ? " | 🚀 EI Projeksiyonu Aktif" : " | 🚀 EI Active") : ""}</span>`;
+            eiStatusTxt.style.display = "block";
         }
     }
 
-    function updateReport() {
-        let text = "✈️ GÜNLÜK CAP TAKİP RAPORU\n\n";
-        dailyReviewedPQs.forEach(pq => {
-            text += `PQ ${pq}: ${dailyPQNotes[pq] || 'İşlem tamamlandı.'}\n`;
-        });
-        document.getElementById('reportPreview').innerText = text;
-    }
+    function removeWordFile(fileName) { loadedFiles.delete(fileName); rawData = rawData.filter(d => d.sourceFile !== fileName); recalculateGlobalStateFromFiles(); refreshAllFilters(); saveToLocalStorage(); renderFileList(); render(); }
+    function removeExcelFile() { loadedExcelFile = null; pqMasterData = {}; baseEIData = {}; document.getElementById('eiPanel').style.display = "none"; refreshAllFilters(); saveToLocalStorage(); renderFileList(); render(); }
+    function recalculateGlobalStateFromFiles() { window.loadedWordAreas.clear(); window_loadedReportDate = null; const ICAO_ORDER = ['LEG', 'ORG', 'PEL', 'OPS', 'AIR', 'AIG', 'ANS', 'AGA']; loadedFiles.forEach(fileName => { let upperName = fileName.toUpperCase(); ICAO_ORDER.forEach(a => { if (upperName.includes(a)) window.loadedWordAreas.add(a); }); let dateMatch = fileName.match(/(\d{4})(\d{2})(\d{2})/); if(dateMatch && !window_loadedReportDate) window_loadedReportDate = new Date(dateMatch[1], parseInt(dateMatch[2], 10) - 1, parseInt(dateMatch[3], 10)); }); updateDynamicSubtitle(); }
+    function clearAllData() { if(confirm(currentLang==='tr' ? "Tüm bulut verileri silinecek. Emin misiniz?" : "All cloud data will be cleared. Are you sure?")) { db.ref('icao_system').remove().then(() => { location.reload(); }); } }
 
-    function switchTab(id) {
-        document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-        document.getElementById(`tab-${id}`).classList.add('active');
-        document.getElementById(`btn-tab-${id}`).classList.add('active');
-    }
-
-    function clearAllData() {
-        if(confirm("Tüm bulut verileri silinecek! Emin misiniz?")) {
-            db.ref('icao_system').remove().then(() => location.reload());
-        }
-    }
+    window.updateNote = function(pq, step, val) { let item = rawData.find(x => x.pq === pq && x.step === step); if(item) { item.note = val; saveToLocalStorage(); if(document.getElementById('tab-report').classList.contains('active')) updateReportPreview(); } }
+    window.toggleDailyReport = function(pq, step, isChecked) { let key = pq + "|" + step; if (isChecked) dailyReviewedSet.add(key); else dailyReviewedSet.delete(key); saveToLocalStorage(); if(document.getElementById('tab-report').classList.contains('active')) updateReportPreview(); }
+    window.toggleDailyReportPQ = function(pq, isChecked) { if(isChecked) dailyReviewedPQs.add(pq); else dailyReviewedPQs.delete(pq); saveToLocalStorage(); if(document.getElementById('tab-report').classList.contains('active')) updateReportPreview(); }
+    window.updatePQNote = function(pq, val) { dailyPQNotes[pq] = val; saveToLocalStorage(); if(document.getElementById('tab-report').classList.contains('active')) updateReportPreview(); }
 
     function showLoading() { document.getElementById('loadingOverlay').style.display = 'flex'; }
     function hideLoading() { document.getElementById('loadingOverlay').style.display = 'none'; }
+    function toggleLang() { currentLang = currentLang === 'tr' ? 'en' : 'tr'; document.documentElement.lang = currentLang; document.querySelectorAll('[data-i18n]').forEach(el => { const key = el.getAttribute('data-i18n'); if (dict[currentLang][key]) { if (el.tagName === 'INPUT' && el.type === 'text') el.placeholder = dict[currentLang][key]; else el.innerHTML = dict[currentLang][key]; } }); document.getElementById('searchInput').placeholder = currentLang === 'tr' ? "Örn: 4.015, Bulgu, Eylem..." : "e.g. 4.015, Finding, Action..."; document.querySelectorAll('.note-input').forEach(el => { el.placeholder = dict[currentLang].placeholderNote; }); updateDynamicSubtitle(); renderFileList(); render(); }
+    const t = (k) => dict[currentLang][k] || k;
+    function switchTab(tabId) { document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active')); document.querySelectorAll('.tab-btn').forEach(t => { t.classList.remove('active'); t.style.color = "var(--muted)"; }); document.getElementById('tab-' + tabId).classList.add('active'); let btn = document.getElementById('btn-tab-' + tabId); btn.classList.add('active'); if(tabId === 'report') { btn.style.color = "var(--primary)"; updateReportPreview(); } if(tabId === 'dashboard') { if(charts.s) charts.s.resize(); if(charts.d) charts.d.resize(); if(charts.o) charts.o.resize(); if(charts.ei) charts.ei.resize(); } }
+    
+    function downloadTemplate() { 
+        const wsData = [ { "PQ No": "4.015", "Denetim Alanı": "OPS", "CE": "CE-2", "PQ Sorusu": "Has the State promulgated...?", "Bulgu": "Türkiye has promulgated...", "Doğrulama Türü": "On-Site", "ICAO Değerlendirmesi": "Not Satisfactory", "Sorumlu": "Ahmet Yılmaz", "GÜNLÜK RAPORA EKLE": "EVET", "RAPOR NOTU": "İlgili mevzuat yayımlandı." } ]; 
+        const wsData2 = [ { "DENETİM ALANI": "LEG", "UYGULANABİLİR TOPLAM PQ": 110, "MEVCUT SATISFACTORY": 85 }, { "DENETİM ALANI": "ORG", "UYGULANABİLİR TOPLAM PQ": 80, "MEVCUT SATISFACTORY": 50 } ]; 
+        const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(wsData), "Excel_Veri"); XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(wsData2), "EI_Referans"); XLSX.writeFile(wb, "PQ_Excel_Master_Sablonu.xlsx"); 
+    }
+
+    window.exportBackupExcel = function() {
+        let backupData = [];
+        let allKnownPQs = new Set([...Array.from(dailyReviewedPQs), ...Object.keys(dailyPQNotes), ...Object.keys(pqMasterData)]);
+        Array.from(allKnownPQs).sort(sortPQs).forEach(pq => {
+            let m = pqMasterData[pq] || {}; let isAdded = dailyReviewedPQs.has(pq) ? "EVET" : ""; let note = dailyPQNotes[pq] || "";
+            if (isAdded === "EVET" || note.trim() !== "" || Object.keys(m).length > 0) { backupData.push({ "PQ NO": pq, "ALAN": m.alan || "", "CE": m.ce || "", "GÜNLÜK RAPORA EKLE": isAdded, "RAPOR NOTU": note }); }
+        });
+        if(backupData.length === 0) return alert("Dışa aktarılacak veri bulunamadı.");
+        const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(backupData), "Gunluk_Rapor_Yedek"); XLSX.writeFile(wb, "PQ_Gunluk_Rapor_Secimleri_Yedek.xlsx");
+    }
+
+    function normalizePQ(rawPq) { if (!rawPq) return ""; let str = rawPq.toString().trim().replace(',', '.'); if (/^\d{4}$/.test(str)) str = str.slice(0,1) + '.' + str.slice(1); if (/^\d{5}$/.test(str)) str = str.slice(0,2) + '.' + str.slice(2); let match = str.match(/\b(\d{1,2}\.\d{3})\b/); if (match) return match[1]; if (!isNaN(str) && str.includes('.')) { let parts = str.split('.'); if (parts[0].length >= 1 && parts[0].length <= 2) { if (parts[1].length === 1) return parts[0] + '.' + parts[1] + '00'; if (parts[1].length === 2) return parts[0] + '.' + parts[1] + '0'; if (parts[1].length === 3) return str; } } return str; }
+    function findPQColumn(row) { const keys = Object.keys(row); for (let k of keys) { let uk = k.toUpperCase().trim(); if (uk === 'PQ' || uk === 'PQ NO' || uk === 'PROTOKOL NO' || uk === 'PROTOKOL' || uk === 'PQ NUMBER') return k; } for (let k of keys) { let uk = k.toUpperCase(); if ((uk.includes('PQ') || uk.includes('PROTOKOL')) && !uk.includes('SORU') && !uk.includes('QUESTION')) return k; } return null; }
+    function getCol(row, keywords) { let key = Object.keys(row).find(k => keywords.some(kw => k.toUpperCase().includes(kw))); return key ? row[key] : ""; }
+    let getCellText = (cellNode) => { let text = ""; let paras = cellNode.getElementsByTagName("w:p"); for (let p = 0; p < paras.length; p++) { let ts = paras[p].getElementsByTagName("w:t"); for (let t = 0; t < ts.length; t++) text += ts[t].textContent; text += "\n"; } return text.trim(); };
+    function extractValidDateStr(txt) { if (!txt) return ""; let m = txt.match(/\d{1,2}[\.\/\-]\d{1,2}[\.\/\-]\d{2,4}/); return m ? m[0] : txt.trim(); }
+    function parseDateObj(txt) { if (!txt) return null; let m = txt.match(/(\d{1,2})[\.\/\-](\d{1,2})[\.\/\-](\d{2,4})/); if (m) { let day = parseInt(m[1], 10), month = parseInt(m[2], 10) - 1, year = parseInt(m[3], 10); if (year < 100) year += 2000; return new Date(year, month, day); } return null; }
+    function formatExactDate(date) { if (!date) return "-"; const months = currentLang === 'tr' ? ["Oca", "Şub", "Mar", "Nis", "May", "Haz", "Tem", "Ağu", "Eyl", "Eki", "Kas", "Ara"] : ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]; let d = date.getDate().toString().padStart(2, '0'); return `${d} ${months[date.getMonth()]} ${date.getFullYear()}`; }
+    function getStatus(d) { let p = d.progress.toLowerCase(); if (p.includes('completed') || p.includes('tamamlandı') || p.includes('100')) return { label: t('statusD'), color: 'ok', type: 'done' }; if (d.estDate) { let dt = parseDateObj(d.estDate); if (dt && dt < new Date()) return { label: t('statusL'), color: 'danger', type: 'late' }; } return { label: t('statusP'), color: 'warn', type: 'pending' }; }
+    function getCheckedValues(id) { const c = document.getElementById(id); if (!c) return ['all']; const cb = Array.from(c.querySelectorAll('input[type="checkbox"]:checked')); if (cb.length === 0) return ['all']; return cb.map(b => b.value); }
+    function sortPQs(a, b) { let pa = a.split('.').map(Number); let pb = b.split('.').map(Number); let numA1 = isNaN(pa[0]) ? 999 : pa[0]; let numB1 = isNaN(pb[0]) ? 999 : pb[0]; if (numA1 !== numB1) return numA1 - numB1; let numA2 = isNaN(pa[1]) ? 999 : pa[1]; let numB2 = isNaN(pb[1]) ? 999 : pb[1]; return numA2 - numB2; }
+    function updateDynamicSubtitle() { const subEl = document.getElementById('mainSubtitle'); if (window_loadedReportDate) { const trMonths = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"]; const enMonths = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]; let d = window_loadedReportDate.getDate(); let m = window_loadedReportDate.getMonth(); let y = window_loadedReportDate.getFullYear(); let dateStr = currentLang === 'tr' ? `${d} ${trMonths[m]} ${y}` : `${d} ${enMonths[m]} ${y}`; subEl.innerText = currentLang === 'tr' ? `Bu veriler, ${dateStr} tarihinde ICAO USOAP OLF'den alınan raporlardan temin edilmiştir.` : `This data was obtained from ICAO USOAP OLF reports dated ${dateStr}.`; subEl.style.color = "var(--primary)"; subEl.style.fontWeight = "600"; subEl.removeAttribute('data-i18n'); } else { subEl.innerText = dict[currentLang].appSubtitle; subEl.style.color = "var(--muted)"; subEl.style.fontWeight = "normal"; subEl.setAttribute('data-i18n', 'appSubtitle'); } }
+    function getEmptyStats() { return { pqs: { total: 0, onSite: 0, offSite: 0, completed: { total: 0, onSite: 0, offSite: 0 } }, actions: { total: 0, onSite: 0, offSite: 0 }, late: { total: 0, onSite: 0, offSite: 0 }, done: { total: 0, onSite: 0, offSite: 0 } }; }
+
+    function populateCheckboxes(set, id) { let container = document.getElementById(id); let currentlyChecked = getCheckedValues(id); container.innerHTML = ""; if(set.size > 0) { Array.from(set).sort().forEach(i => { let isChecked = currentlyChecked.includes(i) ? "checked" : ""; container.innerHTML += `<label><input type="checkbox" value="${i}" onchange="render()" ${isChecked}> ${i}</label>`; }); document.getElementById(id + 'Group').style.display = "flex"; } }
+    function refreshAllFilters() { let offices = new Set(), persons = new Set(), siteTypes = new Set(), areas = new Set(), ces = new Set(), icaos = new Set(); let activeAreas = window.loadedWordAreas || new Set(); rawData.forEach(d => { let m = pqMasterData[d.pq] || {}; let alan = m.alan ? m.alan.trim().toUpperCase() : null; if (activeAreas.size === 0 || (alan && activeAreas.has(alan))) { if (d.office) offices.add(d.office.trim()); } }); Object.values(pqMasterData).forEach(obj => { let alan = obj.alan ? obj.alan.trim().toUpperCase() : null; if (alan) areas.add(obj.alan); if (activeAreas.size === 0 || (alan && activeAreas.has(alan))) { if(obj.sorumlu) persons.add(obj.sorumlu); if(obj.tur) siteTypes.add(obj.tur); if(obj.ce) ces.add(obj.ce); if(obj.degerlendirme) icaos.add(obj.degerlendirme); } }); populateCheckboxes(offices, 'officeFilterList'); populateCheckboxes(persons, 'personFilterList'); populateCheckboxes(siteTypes, 'typeFilterList'); populateCheckboxes(ces, 'ceFilterList'); populateCheckboxes(icaos, 'icaoFilterList'); if (activeAreas.size > 0) { let restrictedAreas = new Set(); areas.forEach(a => { if (activeAreas.has(a.toString().trim().toUpperCase())) restrictedAreas.add(a); }); populateCheckboxes(restrictedAreas.size > 0 ? restrictedAreas : areas, 'areaFilterList'); } else populateCheckboxes(areas, 'areaFilterList'); }
+
+    document.getElementById('docxInput').addEventListener('change', async (e) => { const files = e.target.files; if (!files.length) return; showLoading(); await new Promise(r => setTimeout(r, 50)); try { for (let file of files) { if (loadedFiles.has(file.name)) continue; try { const zip = await JSZip.loadAsync(file); const xml = await zip.file("word/document.xml").async("string"); const parser = new DOMParser(); const xmlDoc = parser.parseFromString(xml, "text/xml"); let currentPQ = "Bilinmeyen PQ"; const tables = xmlDoc.getElementsByTagName("w:tbl"); for (let i = 0; i < tables.length; i++) { let tableText = ""; const tNodes = tables[i].getElementsByTagName("w:t"); for(let t=0; t<tNodes.length; t++) tableText += tNodes[t].textContent + " "; let pqMatch = tableText.match(/\b(\d{1,2}\.\d{3})\b/); if (pqMatch) currentPQ = normalizePQ(pqMatch[1]); const rows = tables[i].getElementsByTagName("w:tr"); for (let r = 0; r < rows.length; r++) { const rCells = rows[r].getElementsByTagName("w:tc"); if (rCells.length >= 7) { let step = getCellText(rCells[0]).trim(); if (/^\d+$/.test(step)) { let action = getCellText(rCells[1]) || ""; let office = getCellText(rCells[2]) || ""; let progress = getCellText(rCells[rCells.length - 1]) || ""; let isCompleted = progress.toLowerCase().includes('completed') || progress.toLowerCase().includes('tamamlandı') || progress.includes('100'); let estDateRaw = extractValidDateStr(getCellText(rCells[4]).replace(/click here( to enter a date\.?)?/ig, '')); let revDateRaw = extractValidDateStr(getCellText(rCells[5]).replace(/click here( to enter a date\.?)?/ig, '')); let compDateRaw = extractValidDateStr(getCellText(rCells[6]).replace(/click here( to enter a date\.?)?/ig, '')); let finalDate = estDateRaw; if (/^\d/.test(revDateRaw)) finalDate = revDateRaw; if (isCompleted && /^\d/.test(compDateRaw)) finalDate = compDateRaw; let isPlaceholder = action.toLowerCase().includes("click here") || office.toLowerCase().includes("click here"); if (!isPlaceholder && action.length > 5) { let exists = rawData.some(d => d.pq === currentPQ && d.step === step && d.action === action); if (!exists) rawData.push({ pq: currentPQ, step, action, office, estDate: finalDate, progress, sourceFile: file.name, note: "" }); } } } } } loadedFiles.add(file.name); } catch (err) { console.error(err); } } recalculateGlobalStateFromFiles(); renderFileList(); refreshAllFilters(); saveToLocalStorage(); render(); } finally { hideLoading(); e.target.value = ""; } });
+    
+    document.getElementById('excelInput').addEventListener('change', async (e) => { const file = e.target.files[0]; if(!file) return; showLoading(); await new Promise(r => setTimeout(r, 50)); try { const data = await file.arrayBuffer(); const wb = XLSX.read(data); const wsMaster = wb.Sheets[wb.SheetNames[0]]; const jsonData = XLSX.utils.sheet_to_json(wsMaster); 
+        let isBackupFile = jsonData.length > 0 && jsonData[0]['GÜNLÜK RAPORA EKLE'] !== undefined && jsonData[0]['BULGU'] === undefined; 
+        if(!isBackupFile) pqMasterData = {}; 
+        
+        jsonData.forEach(row => { 
+            let pqKey = findPQColumn(row); if(pqKey && row[pqKey]) { 
+                let pqStr = normalizePQ(row[pqKey]); 
+                if(pqStr) { 
+                    if(!isBackupFile) {
+                        pqMasterData[pqStr] = { alan: getCol(row, ['ALAN', 'AREA', 'DENETİM ALANI']), ce: getCol(row, ['CE', 'KRİTİK', 'CRITICAL']), soru: getCol(row, ['SORU', 'QUESTION']), bulgu: getCol(row, ['BULGU', 'DESCRIPTION', 'FINDING', 'AÇIKLAMA']), tur: getCol(row, ['TÜR', 'TYPE', 'DOĞRULAMA']), degerlendirme: getCol(row, ['DEĞERLENDİRME', 'STATUS', 'ICAO', 'DURUM']), sorumlu: getCol(row, ['SORUMLU', 'PERSONEL']) }; 
+                    }
+                    let rapEkle = getCol(row, ['GÜNLÜK RAPORA EKLE', 'RAPORA EKLE', 'REPORT']);
+                    if (rapEkle !== undefined && rapEkle !== null) { let val = String(rapEkle).trim().toUpperCase(); if (val === 'EVET' || val === 'X' || val === '1' || val === 'YES' || val === 'TRUE') dailyReviewedPQs.add(pqStr); else if (val === 'HAYIR' || val === 'NO' || val === '0' || val === 'FALSE') dailyReviewedPQs.delete(pqStr); }
+                    let rapNotu = getCol(row, ['RAPOR NOTU', 'PQ NOTU', 'GÜNLÜK AÇIKLAMA']);
+                    if (rapNotu !== undefined && rapNotu !== null && String(rapNotu).trim() !== "") dailyPQNotes[pqStr] = String(rapNotu);
+                } 
+            } 
+        }); 
+
+        let eiSheetName = wb.SheetNames.find(n => n.toUpperCase().includes('EI')); if (eiSheetName) { const wsEI = wb.Sheets[eiSheetName]; const jsonEI = XLSX.utils.sheet_to_json(wsEI); baseEIData = {}; jsonEI.forEach(row => { let alan = row['DENETİM ALANI'] || row['ALAN'] || row['AREA']; let total = parseInt(row['UYGULANABİLİR TOPLAM PQ'] || row['TOPLAM PQ'] || row['TOTAL PQ']); let sat = parseInt(row['MEVCUT SATISFACTORY'] || row['SATISFACTORY'] || row['MEVCUT']); if(alan && !isNaN(total) && !isNaN(sat)) { baseEIData[alan.toString().trim().toUpperCase()] = { total, sat }; } }); if (Object.keys(baseEIData).length > 0) document.getElementById('eiPanel').style.display = "grid"; else document.getElementById('eiPanel').style.display = "none"; } else if(!isBackupFile) document.getElementById('eiPanel').style.display = "none"; 
+        loadedExcelFile = file.name; renderFileList(); refreshAllFilters(); saveToLocalStorage(); render(); } catch (err) { alert("Excel Read Error."); } finally { hideLoading(); e.target.value = ""; } 
+    });
+
+    function getActiveFiltersText() { let filters = []; let search = document.getElementById('searchInput').value.trim(); if(search) filters.push({ ad: t('lblSearch'), deger: search }); let dStart = document.getElementById('dateStart').value; let dEnd = document.getElementById('dateEnd').value; if(dStart || dEnd) { let val = ""; if(dStart && dEnd) val = `${dStart} - ${dEnd}`; else if(dStart) val = `> ${dStart}`; else val = `< ${dEnd}`; filters.push({ ad: t('lblDate'), deger: val }); } const checkFilter = (id, labelText) => { const container = document.getElementById(id); if(!container) return; const cbs = Array.from(container.querySelectorAll('input[type="checkbox"]:checked')); if(cbs.length > 0) { filters.push({ ad: labelText, deger: cbs.map(cb => { if(cb.value==='late') return t('statusL'); if(cb.value==='pending') return t('statusP'); if(cb.value==='done') return t('statusD'); return cb.value; }).join(', ') }); } }; checkFilter('statusFilterList', t('fStatus')); checkFilter('officeFilterList', t('fOffice')); checkFilter('areaFilterList', t('fArea')); checkFilter('ceFilterList', t('fCe')); checkFilter('icaoFilterList', t('fIcao')); checkFilter('typeFilterList', t('fType')); checkFilter('personFilterList', t('fPerson')); if(window.loadedWordAreas && window.loadedWordAreas.size > 0) filters.push({ ad: t('wordConstraint'), deger: Array.from(window.loadedWordAreas).join(', ') }); return filters; }
+    function getFilteredData() { if (rawData.length === 0) return []; const search = document.getElementById('searchInput').value.toLowerCase(); const statusVals = getCheckedValues('statusFilterList'); const personVals = getCheckedValues('personFilterList'); const typeVals = getCheckedValues('typeFilterList'); const officeVals = getCheckedValues('officeFilterList'); const areaVals = getCheckedValues('areaFilterList'); const ceVals = getCheckedValues('ceFilterList'); const icaoVals = getCheckedValues('icaoFilterList'); const dateStart = document.getElementById('dateStart').value; const dateEnd = document.getElementById('dateEnd').value; return rawData.filter(d => { const excel = pqMasterData[d.pq] || {}; const statType = getStatus(d).type; const matchSearch = d.pq.includes(search) || d.action.toLowerCase().includes(search) || d.office.toLowerCase().includes(search) || (excel.bulgu && excel.bulgu.toLowerCase().includes(search)) || (excel.soru && excel.soru.toLowerCase().includes(search)) || (excel.sorumlu && excel.sorumlu.toLowerCase().includes(search)) || (d.note && d.note.toLowerCase().includes(search)); const matchStatus = statusVals.includes('all') || statusVals.includes(statType); const matchPerson = personVals.includes('all') || personVals.includes(excel.sorumlu); const matchType = typeVals.includes('all') || typeVals.includes(excel.tur); const matchOffice = officeVals.includes('all') || officeVals.includes(d.office.trim()); const matchArea = areaVals.includes('all') || areaVals.includes(excel.alan); const matchCE = ceVals.includes('all') || ceVals.includes(excel.ce); const matchIcao = icaoVals.includes('all') || icaoVals.includes(excel.degerlendirme); let matchDate = true; if ((dateStart || dateEnd) && d.estDate) { let itemDate = parseDateObj(d.estDate); if (itemDate) { if (dateStart && itemDate < new Date(dateStart)) matchDate = false; if (dateEnd && itemDate > new Date(dateEnd)) matchDate = false; } else matchDate = false; } else if ((dateStart || dateEnd) && !d.estDate) matchDate = false; return matchSearch && matchStatus && matchPerson && matchType && matchOffice && matchArea && matchCE && matchIcao && matchDate; }); }
+
+    function updateStatsDisplay(stats) {
+        document.getElementById('totalPqCount').innerText = stats.pqs.total; document.getElementById('activeActionCount').innerText = stats.actions.total; document.getElementById('lateCount').innerText = stats.late.total; document.getElementById('doneCount').innerText = stats.done.total;
+        if (stats.pqs.total === 0 && stats.actions.total === 0) { document.getElementById('pqDetails').innerHTML = ""; document.getElementById('actionDetails').innerHTML = ""; document.getElementById('lateDetails').innerHTML = ""; document.getElementById('doneDetails').innerHTML = ""; } else {
+            let pqExtra = stats.pqs.completed.total > 0 ? `<br><span style="color:var(--ok); font-weight:bold; margin-top:6px; display:inline-block; font-size:12px; background: rgba(16, 185, 129, 0.1); padding: 5px 8px; border-radius: 4px; border: 1px solid rgba(16, 185, 129, 0.2);">${t('pqDone')} (${stats.pqs.completed.total})<br><span style="color:var(--text); font-weight:normal; font-size:11px; margin-top:2px; display:inline-block;">(${stats.pqs.completed.onSite} On-Site / ${stats.pqs.completed.offSite} Off-Site)</span></span>` : "";
+            document.getElementById('pqDetails').innerHTML = `<b>${t('distr')}</b> ${stats.pqs.onSite} On-Site / ${stats.pqs.offSite} Off-Site ${pqExtra}`; document.getElementById('actionDetails').innerHTML = `<b>${t('distr')}</b> ${stats.actions.onSite} On-Site / ${stats.actions.offSite} Off-Site`; document.getElementById('lateDetails').innerHTML = `<b>${t('distr')}</b> ${stats.late.onSite} On-Site / ${stats.late.offSite} Off-Site`; document.getElementById('doneDetails').innerHTML = `<b>${t('distr')}</b> ${stats.done.onSite} On-Site / ${stats.done.offSite} Off-Site`;
+        }
+    }
+
+    function updateAreaSummary(filteredData) {
+        let areaStats = {}; const groups = {}; filteredData.forEach(d => { if (!groups[d.pq]) groups[d.pq] = []; groups[d.pq].push(d); });
+        Object.keys(groups).forEach(pq => {
+            const excel = pqMasterData[pq] || {}; let alan = excel.alan ? excel.alan.trim().toUpperCase() : "N/A"; let tur = (excel.tur || 'Other').toUpperCase();
+            let isOnSite = tur.includes('ON-SITE') || tur === 'ON SITE'; let isOffSite = tur.includes('OFF-SITE') || tur === 'OFF SITE'; let isPqCompleted = groups[pq].every(x => getStatus(x).type === 'done');
+            if(!areaStats[alan]) areaStats[alan] = { total: 0, totalOn: 0, totalOff: 0, done: 0, doneOn: 0, doneOff: 0, ongoing: 0, ongoingOn: 0, ongoingOff: 0 };
+            areaStats[alan].total++; if(isOnSite) areaStats[alan].totalOn++; if(isOffSite) areaStats[alan].totalOff++;
+            if(isPqCompleted) { areaStats[alan].done++; if(isOnSite) areaStats[alan].doneOn++; if(isOffSite) areaStats[alan].doneOff++; } else { areaStats[alan].ongoing++; if(isOnSite) areaStats[alan].ongoingOn++; if(isOffSite) areaStats[alan].ongoingOff++; }
+        });
+
+        const tbody = document.getElementById('areaSummaryBody'); tbody.innerHTML = ""; window.currentAreaSummaryRaw = [];
+        if(Object.keys(areaStats).length === 0) { document.getElementById('areaSummaryContainer').style.display = 'none'; return; }
+        document.getElementById('areaSummaryContainer').style.display = 'block';
+        
+        const ICAO_ORDER = ['LEG', 'ORG', 'PEL', 'OPS', 'AIR', 'AIG', 'ANS', 'AGA'];
+        Object.keys(areaStats).sort((a,b) => { let iA = ICAO_ORDER.indexOf(a); let iB = ICAO_ORDER.indexOf(b); return (iA===-1?999:iA) - (iB===-1?999:iB); }).forEach(alan => {
+            let s = areaStats[alan]; let pct = s.total > 0 ? ((s.done / s.total) * 100).toFixed(1) : 0; window.currentAreaSummaryRaw.push({ alan: alan, ...s, pct: pct });
+            let tr = document.createElement('tr');
+            tr.innerHTML = `<td style="vertical-align:middle; font-size:14px;"><b>${alan}</b></td><td style="text-align:center;"><b>${s.total}</b><br><i style="font-size:11px; color:var(--muted);">(${s.totalOn} On-Site, ${s.totalOff} Off-Site)</i></td><td style="text-align:center;"><span style="color:var(--ok); font-weight:bold; font-size:15px;">${s.done}</span><br><i style="font-size:11px; color:var(--muted);">(${s.doneOn} On-Site, ${s.doneOff} Off-Site)</i></td><td style="text-align:center;"><span style="color:var(--warn); font-weight:bold; font-size:15px;">${s.ongoing}</span><br><i style="font-size:11px; color:var(--muted);">(${s.ongoingOn} On-Site, ${s.ongoingOff} Off-Site)</i></td><td style="text-align:center; vertical-align:middle; font-size:14px;"><b>%${pct}</b></td>`;
+            tbody.appendChild(tr);
+        });
+    }
+
+    function updateWarnings(filteredData) {
+        const today = new Date(); today.setHours(0,0,0,0); const limit = new Date(); limit.setDate(today.getDate() + 30); limit.setHours(23,59,59,999);
+        let upcoming = filteredData.filter(d => { if(getStatus(d).type !== 'pending') return false; let dt = parseDateObj(d.estDate); if(!dt) return false; return dt >= today && dt <= limit; });
+        let pnl = document.getElementById('warningPanel'); let lst = document.getElementById('warningList');
+        if(upcoming.length === 0) { pnl.style.display = 'none'; return; }
+        pnl.style.display = 'block';
+        upcoming.sort((a,b) => { let res = sortPQs(a.pq, b.pq); if (res !== 0) return res; let dateA = parseDateObj(a.estDate); let dateB = parseDateObj(b.estDate); return dateA - dateB; });
+        lst.innerHTML = upcoming.map(d => {
+            let dt = parseDateObj(d.estDate); let diffDays = Math.ceil(Math.abs(dt - today) / (1000 * 60 * 60 * 24));
+            let area = pqMasterData[d.pq] && pqMasterData[d.pq].alan ? pqMasterData[d.pq].alan.trim() : 'N/A';
+            return `<div class="warning-item" onclick="switchTab('list'); window.togglePQ('${d.pq.replace(/\./g, '-')}');" title="Detayları görmek için tıklayın"><div><span class="badge badge-extra" style="margin-bottom: 6px; padding: 2px 8px; font-size: 10px;">${area}</span><br><b style="color:var(--text); font-size:14px;">PQ ${d.pq}</b> <span style="color:var(--primary); font-size:11px; font-weight:bold; margin-left:4px; background:rgba(37,99,235,0.1); padding:2px 6px; border-radius:4px;">${t('thStep')} ${d.step}</span><br><span style="color:var(--muted); font-size:11px; display:inline-block; margin-top:4px;">${d.office}</span></div><div style="text-align:right;"><span class="days-left">${diffDays} ${t('daysLeft')}</span><br><span style="color:var(--muted); font-size:11px;">${d.estDate}</span></div></div>`;
+        }).join('');
+    }
+
+    function updateEIProjections(filteredData) {
+        if (Object.keys(baseEIData).length === 0) return;
+        let absoluteGlobalTotal = 0; let absoluteGlobalBaseSat = 0;
+        Object.keys(baseEIData).forEach(k => { absoluteGlobalTotal += baseEIData[k].total; absoluteGlobalBaseSat += baseEIData[k].sat; });
+        let selectedAreas = getCheckedValues('areaFilterList'); let isGlobal = selectedAreas.includes('all');
+        let activeAreas = isGlobal ? Object.keys(baseEIData) : selectedAreas.filter(a => baseEIData[a]); if (activeAreas.length === 0) { activeAreas = Object.keys(baseEIData); isGlobal = true; }
+        window.currentActiveAreas = activeAreas;
+        let milestones = { Scope: { name: currentLang==='tr' ? "🌍 TÜRKİYE GENELİ (OVERALL)" : "🌍 TURKIYE SCOPE (OVERALL)", baseSat: absoluteGlobalBaseSat, total: absoluteGlobalTotal, realizedEvents: [], projectedEvents: [] } };
+        let areaStats = {};
+        activeAreas.forEach(a => { let b = baseEIData[a]; areaStats[a] = { total: b.total, baseSat: b.sat, realizedAdded: 0, projectedAdded: 0 }; milestones[a] = { name: a, baseSat: b.sat, total: b.total, realizedEvents: [], projectedEvents: [] }; });
+
+        const filteredGroups = {}; let loadedAreas = new Set(); 
+        filteredData.forEach(d => { if(!filteredGroups[d.pq]) filteredGroups[d.pq] = []; filteredGroups[d.pq].push(d); let m = pqMasterData[d.pq] || {}; if (m.alan) loadedAreas.add(m.alan.trim().toUpperCase()); });
+        window.currentFilteredGroups = filteredGroups;
+
+        let globalRealizedAdded = 0; let globalProjectedAdded = 0;
+        Object.keys(filteredGroups).forEach(pq => {
+            let m = pqMasterData[pq] || {}; let area = m.alan ? m.alan.trim().toUpperCase() : null; let items = filteredGroups[pq]; let isFullyCompleted = items.every(x => getStatus(x).type === 'done');
+            let maxDate = null; let hasInvalidDate = false; let maxFutureDate = null; let hasInvalidFutureDate = false;
+
+            if (isFullyCompleted) {
+                globalRealizedAdded++; items.forEach(pi => { let dObj = parseDateObj(pi.estDate); if (!dObj) hasInvalidDate = true; else if (!maxDate || dObj > maxDate) maxDate = dObj; });
+                if (!hasInvalidDate && maxDate) milestones.Scope.realizedEvents.push({ pq: pq, date: maxDate }); else milestones.Scope.baseSat++;
+            } else {
+                globalProjectedAdded++; let pendingItems = items.filter(x => getStatus(x).type !== 'done'); pendingItems.forEach(pi => { let dObj = parseDateObj(pi.estDate); if (!dObj) hasInvalidFutureDate = true; else if (!maxFutureDate || dObj > maxFutureDate) maxFutureDate = dObj; });
+                if (!hasInvalidFutureDate && maxFutureDate) milestones.Scope.projectedEvents.push({ pq: pq, date: maxFutureDate });
+            }
+
+            if (area && areaStats[area]) {
+                if (isFullyCompleted) { areaStats[area].realizedAdded++; if (!hasInvalidDate && maxDate) milestones[area].realizedEvents.push({ pq: pq, date: maxDate }); else milestones[area].baseSat++; } 
+                else { areaStats[area].projectedAdded++; if (!hasInvalidFutureDate && maxFutureDate) milestones[area].projectedEvents.push({ pq: pq, date: maxFutureDate }); }
+            }
+        });
+
+        let currentGlobalSat = absoluteGlobalBaseSat + globalRealizedAdded; let futureGlobalSat = currentGlobalSat + globalProjectedAdded;
+        let pctBase = absoluteGlobalTotal > 0 ? (absoluteGlobalBaseSat / absoluteGlobalTotal) * 100 : 0; 
+        let pctReal = absoluteGlobalTotal > 0 ? (currentGlobalSat / absoluteGlobalTotal) * 100 : 0; 
+        let pctProj = absoluteGlobalTotal > 0 ? (futureGlobalSat / absoluteGlobalTotal) * 100 : 0;
+
+        document.getElementById('lblBase').innerHTML = `%${pctBase.toFixed(2)}`; document.getElementById('lblReal').innerHTML = `%${pctReal.toFixed(2)}`; document.getElementById('lblProj').innerHTML = `%${pctProj.toFixed(2)}`;
+        document.getElementById('barBase').style.width = pctBase + '%'; document.getElementById('barBase').innerHTML = `%${pctBase.toFixed(2)}`;
+        document.getElementById('barReal').style.width = (pctReal - pctBase) + '%'; document.getElementById('barProj').style.width = (pctProj - pctReal) + '%';
+
+        let displayAreas = isGlobal ? activeAreas.filter(a => loadedAreas.has(a)) : activeAreas;
+        const tbodyMS = document.getElementById('milestoneTableBody'); tbodyMS.innerHTML = "";
+        
+        const ICAO_ORDER = ['LEG', 'ORG', 'PEL', 'OPS', 'AIR', 'AIG', 'ANS', 'AGA'];
+        let orderedKeys = ['Scope', ...displayAreas.sort((a,b) => { let iA = ICAO_ORDER.indexOf(a); let iB = ICAO_ORDER.indexOf(b); return (iA===-1?999:iA) - (iB===-1?999:iB); })]; 
+
+        orderedKeys.forEach(key => {
+            let m = milestones[key]; if(!m || m.total === 0) return;
+            m.realizedEvents.sort((a,b) => a.date - b.date); m.projectedEvents.sort((a,b) => a.date - b.date); 
+            let currentSat = m.baseSat; let currentPct = (currentSat / m.total) * 100; let achievedDates = {};
+            let targetLevels = [60, 70, 80, 90, 100];
+            targetLevels.forEach(lvl => { if (currentPct >= lvl) achievedDates[lvl] = { status: "base", dateStr: t('basePassed') }; else achievedDates[lvl] = null; });
+            m.realizedEvents.forEach(event => { currentSat++; currentPct = (currentSat / m.total) * 100; targetLevels.forEach(lvl => { if (!achievedDates[lvl] && currentPct >= lvl) achievedDates[lvl] = { status: "passed", dateStr: `${t('passed')}<br><span style="font-size:11px; font-weight:700; color:var(--text);">${formatExactDate(event.date)}</span>` }; }); });
+            m.projectedEvents.forEach(event => { currentSat++; currentPct = (currentSat / m.total) * 100; targetLevels.forEach(lvl => { if (!achievedDates[lvl] && currentPct >= lvl) achievedDates[lvl] = { status: "future", dateStr: formatExactDate(event.date) }; }); });
+
+            let tr = document.createElement('tr'); if (key === 'Scope') tr.className = "ms-global-row";
+            let html = `<td style="text-align: left;">${m.name}</td>`;
+            targetLevels.forEach(lvl => {
+                let valObj = achievedDates[lvl];
+                if (!valObj) html += `<td class="ms-unreachable">${t('unreachable')}</td>`;
+                else if (valObj.status === "base") html += `<td class="ms-passed">${valObj.dateStr}</td>`;
+                else if (valObj.status === "passed") html += `<td class="ms-passed">${valObj.dateStr}</td>`;
+                else html += `<td class="ms-future">${valObj.dateStr}</td>`;
+            });
+            tr.innerHTML = html; tbodyMS.appendChild(tr);
+        });
+
+        window.currentAreaEIData = displayAreas.map(a => {
+            let basePct = (areaStats[a].baseSat / areaStats[a].total) * 100;
+            let realPct = basePct + (areaStats[a].realizedAdded / areaStats[a].total) * 100;
+            let projPct = realPct + (areaStats[a].projectedAdded / areaStats[a].total) * 100;
+            return { alan: a, base: basePct.toFixed(2), real: realPct.toFixed(2), proj: projPct.toFixed(2) };
+        });
+
+        let chartLabels = window.currentAreaEIData.map(d => [ d.alan, `EI: %${d.base}`, `${t('eiLblReal')} %${d.real}`, `${t('eiLblProj')} %${d.proj}` ]);
+        const ctx = document.getElementById('eiChartCanvas').getContext('2d'); if (charts.ei) charts.ei.destroy();
+        charts.ei = new Chart(ctx, { type: 'bar', data: { labels: chartLabels, datasets: [ { label: 'EI (%)', data: displayAreas.map(a => (areaStats[a].baseSat / areaStats[a].total) * 100), backgroundColor: '#64748b' }, { label: t('eiLblReal'), data: displayAreas.map(a => (areaStats[a].realizedAdded / areaStats[a].total) * 100), backgroundColor: '#10b981' }, { label: t('eiLblProj'), data: displayAreas.map(a => (areaStats[a].projectedAdded / areaStats[a].total) * 100), backgroundColor: '#f59e0b' } ] }, options: { plugins: { title: { display: true, text: t('eiChart') }, tooltip: { callbacks: { label: function(c) { return c.dataset.label + ': %' + Number(c.parsed.y).toFixed(2); } } } }, responsive: true, maintainAspectRatio: false, scales: { x: { stacked: true, ticks: { font: { size: 11 } } }, y: { stacked: true, max: 100 } } } });
+    }
+
+    function updateCharts(data) {
+        const sType = { done: { 'On-Site': 0, 'Off-Site': 0, 'Other': 0 }, late: { 'On-Site': 0, 'Off-Site': 0, 'Other': 0 }, pending: { 'On-Site': 0, 'Off-Site': 0, 'Other': 0 } };
+        let totalLate = 0; let totalActions = data.length; let offices = {};
+        data.forEach(d => { const statType = getStatus(d).type; const excel = pqMasterData[d.pq] || {}; let tur = excel.tur || 'Other'; if(tur.toUpperCase().includes('ON-SITE') || tur.toUpperCase() === 'ON SITE') tur = 'On-Site'; else if(tur.toUpperCase().includes('OFF-SITE') || tur.toUpperCase() === 'OFF SITE') tur = 'Off-Site'; else tur = 'Other'; sType[statType][tur]++; if(statType === 'late') totalLate++; let o = d.office || 'N/A'; offices[o] = (offices[o] || 0) + 1; });
+        
+        const ctx1 = document.getElementById('statusChart').getContext('2d'); if (charts.s) charts.s.destroy(); 
+        charts.s = new Chart(ctx1, { type: 'bar', data: { labels: [t('statusD'), t('statusL'), t('statusP')], datasets: [ { label: 'On-Site', data: [sType.done['On-Site'], sType.late['On-Site'], sType.pending['On-Site']], backgroundColor: '#3b82f6' }, { label: 'Off-Site', data: [sType.done['Off-Site'], sType.late['Off-Site'], sType.pending['Off-Site']], backgroundColor: '#8b5cf6' }, { label: t('other'), data: [sType.done['Other'], sType.late['Other'], sType.pending['Other']], backgroundColor: '#cbd5e1' } ] }, options: { plugins: { title: { display: true, text: t('chart1') } }, responsive: true, maintainAspectRatio: false, scales: { x: { stacked: true }, y: { stacked: true } }, animation: false } });
+        
+        const ctx2 = document.getElementById('delayChart').getContext('2d'); if (charts.d) charts.d.destroy(); 
+        let delayPctNum = totalActions > 0 ? (totalLate / totalActions) * 100 : 0; let okPctNum = totalActions > 0 ? 100 - delayPctNum : 100; 
+        charts.d = new Chart(ctx2, { type: 'doughnut', data: { labels: [t('cDelay'), t('cOk')], datasets: [{ data: [delayPctNum, okPctNum], backgroundColor: ['#ef4444', '#f1f5f9'], hoverBackgroundColor: ['#dc2626', '#e2e8f0'], borderWidth: 0 }] }, options: { plugins: { title: { display: true, text: `${t('chart2')} (%${delayPctNum.toFixed(2)})` }, tooltip: { callbacks: { label: function(c) { return c.label + ': %' + Number(c.parsed).toFixed(2); } } } }, cutout: '75%', responsive: true, maintainAspectRatio: false, animation: false } });
+
+        const ctx3 = document.getElementById('officeChart').getContext('2d'); if (charts.o) charts.o.destroy(); let sortedOffices = Object.keys(offices).map(k => ({office: k, count: offices[k]})).sort((a,b) => b.count - a.count).slice(0,5); 
+        charts.o = new Chart(ctx3, { type: 'bar', data: { labels: sortedOffices.map(o => o.office.substring(0, 18) + (o.office.length > 18 ? '...' : '')), datasets: [{ label: t('pqActionNum'), data: sortedOffices.map(o => o.count), backgroundColor: '#10b981', borderRadius: 4 }] }, options: { plugins: { title: { display: true, text: t('chart3') }, legend: { display: false } }, indexAxis: 'y', responsive: true, maintainAspectRatio: false, animation: false } });
+    }
+
+    window.togglePQ = function(safePqId) { const detailRow = document.getElementById(`detail-${safePqId}`); const headRow = document.getElementById(`head-${safePqId}`); const icon = document.getElementById(`icon-${safePqId}`); if(detailRow.classList.contains('active')) { detailRow.classList.remove('active'); headRow.classList.remove('active'); icon.innerText = '🔽'; } else { detailRow.classList.add('active'); headRow.classList.add('active'); icon.innerText = '🔼'; } };
+
+    function calculateOffsiteStats() { offsiteStats = { total: 0, done: 0, pending: 0 }; const groups = {}; const filtered = getFilteredData(); filtered.forEach(d => { const excel = pqMasterData[d.pq] || {}; let tur = (excel.tur || '').toUpperCase(); if(tur.includes('OFF-SITE') || tur === 'OFF SITE') { if (!groups[d.pq]) groups[d.pq] = []; groups[d.pq].push(d); } }); const sortedPQs = Object.keys(groups); offsiteStats.total = sortedPQs.length; sortedPQs.forEach(pq => { const allActionsCount = groups[pq].length; const completedActionsCount = groups[pq].filter(d => getStatus(d).type === 'done').length; if (allActionsCount > 0 && allActionsCount === completedActionsCount) offsiteStats.done++; else offsiteStats.pending++; }); document.getElementById('repTotalOffsite').innerText = offsiteStats.total; document.getElementById('repDoneOffsite').innerText = offsiteStats.done; document.getElementById('repPendingOffsite').innerText = offsiteStats.pending; }
+
+    function updateReportPreview() {
+        const today = new Date();
+        const dateStr = today.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' });
+        const notes = document.getElementById('managementNotes').value;
+        
+        let html = `<div style="font-size:18px; font-weight:bold; margin-bottom:10px; color:var(--text);">📅 Günlük Off-Site Değerlendirme Raporu</div>`;
+        html += `<div style="font-size:13px; color:var(--muted); margin-bottom:20px;">Tarih: ${dateStr}</div>`;
+        
+        html += `<div style="background: rgba(37,99,235,0.05); padding: 15px; border-radius: 8px; border-left: 4px solid var(--primary); margin-bottom: 15px;">`;
+        html += `<b>📊 Genel Durum (Off-Site Kapsamı):</b><br>• Sistemde Kayıtlı Toplam Off-Site PQ: <b>${offsiteStats.total}</b><br>• Tüm Eylemleri Tamamlanan (Kapatılan): <b>${offsiteStats.done}</b><br>• Değerlendirmesi / Eylemleri Devam Eden: <b>${offsiteStats.pending}</b></div>`;
+
+        let reportEICalcs = {};
+        if (Object.keys(baseEIData).length > 0) {
+            Object.keys(baseEIData).forEach(area => { reportEICalcs[area] = { baseSat: baseEIData[area].sat, total: baseEIData[area].total, added: 0 }; });
+            dailyReviewedPQs.forEach(pq => { let m = pqMasterData[pq] || {}; let area = m.alan ? m.alan.trim().toUpperCase() : null; if(area && reportEICalcs[area]) reportEICalcs[area].added++; });
+
+            let eiHtml = `<div class="ei-highlight-box"><b>✈️ Rapora Özel Güncel EI Yansıması (Eklenen PQ'lara Göre):</b><br><p style="margin-top:5px; font-size:12px; color:var(--muted);"><i>Aşağıdaki oranlar, sadece "Rapora Ekle" seçeneği ile listeye aldığınız PQ'ların taban puan üzerine eklenmesiyle elde edilen o güne ait net ve kesin veridir.</i></p>`;
+            let hasEI = false;
+            ['AIR', 'OPS', 'LEG', 'ORG', 'PEL', 'AIG', 'ANS', 'AGA'].forEach(area => { 
+                if(reportEICalcs[area] && (reportEICalcs[area].added > 0 || area === 'AIR' || area === 'OPS')) {
+                    hasEI = true; let basePct = reportEICalcs[area].total > 0 ? ((reportEICalcs[area].baseSat / reportEICalcs[area].total) * 100).toFixed(2) : 0; let newPct = reportEICalcs[area].total > 0 ? (((reportEICalcs[area].baseSat + reportEICalcs[area].added) / reportEICalcs[area].total) * 100).toFixed(2) : 0;
+                    eiHtml += `<div style="margin-top:8px;"><b>${area}:</b> Taban Oran <b>%${basePct}</b> ➔ Raporlanan PQ'lar ile: <b style="color:var(--ok); font-size:16px;">%${newPct}</b> <i style="font-size:12px; color:var(--primary); font-weight:600;">(+${reportEICalcs[area].added} Kapatılan PQ)</i></div>`;
+                }
+            });
+            eiHtml += `</div>`; if(hasEI) html += eiHtml;
+        }
+
+        if(notes.trim() !== "") { html += `<div style="font-weight:bold; margin-bottom:8px;">📌 Yönetici Özeti:</div><div style="line-height: 1.8; margin-bottom: 25px;">${notes.replace(/\n/g, '<br>')}</div>`; } 
+
+        html += `<div style="font-weight:bold; margin-bottom:12px; font-size:16px; border-bottom:1px solid var(--border); padding-bottom:5px; margin-top:20px;">✅ Kapatıldığı Bildirilen PQ'lar (EI Yansıyanlar)</div>`;
+        if(dailyReviewedPQs.size === 0) { html += `<div style="color:var(--muted); font-style:italic; background:var(--kanban-bg); padding:15px; border-radius:6px;">Detaylı listeden PQ bazında rapora eklenen madde bulunmamaktadır. Ana listedeki yeşil kutucukla ekleyebilirsiniz.</div>`; } 
+        else {
+            let sortedPQsToReport = Array.from(dailyReviewedPQs).sort(sortPQs);
+            sortedPQsToReport.forEach(pq => {
+                let m = pqMasterData[pq] || {}; let note = dailyPQNotes[pq] || "";
+                let noteHtml = note ? `<div style="margin-top:8px; font-size:12px; color:var(--text); background:rgba(16,185,129,0.05); padding:8px; border-radius:4px; border:1px solid rgba(16,185,129,0.2);"><b>📝 Rapor Notu:</b> ${note.replace(/\n/g, '<br>')}</div>` : '';
+                html += `<div class="review-card" style="border-left-color: var(--ok); background: rgba(16, 185, 129, 0.05);"><div class="review-card-header"><span>PQ ${pq}</span><span style="background:var(--border); font-size:10px; padding:2px 6px; border-radius:4px;">${m.alan || '-'} | CE: ${m.ce || '-'}</span></div><div style="font-size:13px; color:var(--text); margin-bottom:8px;"><b>Bulgu:</b> ${m.bulgu || '-'}</div>${noteHtml}</div>`;
+            });
+        }
+
+        html += `<div style="font-weight:bold; margin-bottom:12px; font-size:16px; border-bottom:1px solid var(--border); padding-bottom:5px; margin-top:25px;">📝 Değerlendirilen / Not Düşülen Alt Eylemler</div>`;
+        if(dailyReviewedSet.size === 0) { html += `<div style="color:var(--muted); font-style:italic; background:var(--kanban-bg); padding:15px; border-radius:6px;">Detaylı CAP listesindeki adımların yanındaki kutucuklar işaretlendiğinde notlarınız burada otomatik listelenecektir.</div>`; } 
+        else {
+            dailyReviewedSet.forEach(key => {
+                let [pq, step] = key.split('|'); let item = rawData.find(x => x.pq === pq && x.step === step); let excel = pqMasterData[pq] || {};
+                if(item) {
+                    let alanBadge = excel.alan ? `<span style="background:var(--border); font-size:10px; padding:2px 6px; border-radius:4px; margin-left:5px;">${excel.alan}</span>` : '';
+                    html += `<div class="review-card"><div class="review-card-header"><span>PQ ${pq} (Adım ${step}) ${alanBadge}</span><span style="color:var(--muted); font-size:12px; font-weight:normal;">Sorumlu: ${item.office}</span></div><div style="font-size:13px; color:var(--text); margin-bottom:8px;"><b>Eylem:</b> ${item.action}</div><div style="font-size:13px; color:var(--warn); background:rgba(245,158,11,0.05); padding:8px; border-radius:4px; border:1px dashed rgba(245,158,11,0.3);"><b>Kişisel Not:</b> ${item.note ? item.note.replace(/\n/g, '<br>') : '<i>Not girilmedi.</i>'}</div></div>`;
+                }
+            });
+        }
+
+        document.getElementById('reportPreview').innerHTML = html;
+    }
+
+    function copyReportToClipboard() { const previewEl = document.getElementById('reportPreview'); const range = document.createRange(); range.selectNode(previewEl); window.getSelection().removeAllRanges(); window.getSelection().addRange(range); try { document.execCommand('copy'); alert(currentLang === 'tr' ? "Rapor panoya kopyalandı! E-postanıza veya sunumunuza yapıştırabilirsiniz." : "Report copied to clipboard!"); } catch(err) { alert("Kopyalama başarısız oldu."); } window.getSelection().removeAllRanges(); }
+
+    function render() {
+        calculateOffsiteStats(); 
+        if(document.getElementById('tab-report').classList.contains('active')) updateReportPreview();
+
+        const tbody = document.getElementById('tableBody'); tbody.innerHTML = ""; const filtered = getFilteredData();
+        if (filtered.length === 0) { 
+            if(rawData.length > 0) { 
+                tbody.innerHTML = `<tr><td colspan='4' style='text-align:center; padding: 50px; color: var(--muted);'>No results match the filter.</td></tr>`; 
+                updateCharts([]); if(Object.keys(baseEIData).length > 0) updateEIProjections([]); updateAreaSummary([]); updateWarnings([]);
+            } 
+            else { tbody.innerHTML = `<tr><td colspan='4' style='text-align:center; padding: 50px; color: var(--muted);'>${t('emptyState')}</td></tr>`; } 
+            updateStatsDisplay(getEmptyStats()); return; 
+        }
+
+        const groups = {}; filtered.forEach(d => { if (!groups[d.pq]) groups[d.pq] = []; groups[d.pq].push(d); });
+        const sortedPQs = Object.keys(groups).sort(sortPQs);
+
+        let stats = getEmptyStats(); stats.pqs.total = sortedPQs.length; stats.actions.total = filtered.length;
+        sortedPQs.forEach(pq => {
+            const excel = pqMasterData[pq] || {}; let tur = (excel.tur || t('other')).toUpperCase(); let isOnSite = tur.includes('ON-SITE') || tur === 'ON SITE'; let isOffSite = tur.includes('OFF-SITE') || tur === 'OFF SITE';
+            if (isOnSite) stats.pqs.onSite++; else if (isOffSite) stats.pqs.offSite++;
+            const allActionsCount = groups[pq].length; const completedActionsCount = groups[pq].filter(d => getStatus(d).type === 'done').length;
+            if (allActionsCount > 0 && allActionsCount === completedActionsCount) { stats.pqs.completed.total++; if (isOnSite) stats.pqs.completed.onSite++; else if (isOffSite) stats.pqs.completed.offSite++; }
+        });
+
+        filtered.forEach(d => {
+            const excel = pqMasterData[d.pq] || {}; let tur = (excel.tur || t('other')).toUpperCase(); let isOnSite = tur.includes('ON-SITE') || tur === 'ON SITE'; let isOffSite = tur.includes('OFF-SITE') || tur === 'OFF SITE';
+            if (isOnSite) stats.actions.onSite++; else if (isOffSite) stats.actions.offSite++;
+            const statType = getStatus(d).type; if (statType === 'late') { stats.late.total++; if (isOnSite) stats.late.onSite++; else if (isOffSite) stats.late.offSite++; } else if (statType === 'done') { stats.done.total++; if (isOnSite) stats.done.onSite++; else if (isOffSite) stats.done.offSite++; }
+        });
+
+        updateStatsDisplay(stats); updateEIProjections(filtered); updateAreaSummary(filtered); updateWarnings(filtered);
+
+        sortedPQs.forEach(pq => {
+            const excel = pqMasterData[pq] || {}; const finalBulgu = excel.bulgu || `<span style='color:var(--danger);'><i style='opacity:0.8'>N/A</i></span>`;
+            const allActionsCount = groups[pq].length; const completedActionsCount = groups[pq].filter(d => getStatus(d).type === 'done').length; const isPqCompleted = (allActionsCount > 0 && allActionsCount === completedActionsCount);
+            const progressPct = allActionsCount > 0 ? (completedActionsCount / allActionsCount) * 100 : 0; const progressClass = progressPct === 100 ? 'done' : (progressPct > 0 ? 'warn' : '');
+
+            let badgesHTML = ""; if(isPqCompleted) badgesHTML += `<span class="badge badge-pq-done">${t('pqDone')}</span>`;
+            if(excel.tur) badgesHTML += `<span class="badge badge-extra">📋 ${excel.tur}</span>`; if(excel.sorumlu) badgesHTML += `<span class="badge badge-person">👤 ${excel.sorumlu}</span>`;
+
+            const safePqId = pq.replace(/\./g, '-');
+            const headRow = document.createElement('tr'); headRow.className = 'pq-group-row'; headRow.id = `head-${safePqId}`; headRow.onclick = () => window.togglePQ(safePqId);
+            
+            headRow.innerHTML = `
+                <td><b style="font-size:16px; color:var(--text);">${pq}</b><br><span style="font-size:11px; color:var(--muted);">${excel.alan ? excel.alan.trim() : '-'} | CE: ${excel.ce ? excel.ce.trim() : '-'}</span></td>
+                <td><div style="font-size:11px; font-weight:600; color:var(--text); margin-bottom:3px;">${completedActionsCount} / ${allActionsCount} Adım (${Math.round(progressPct)}%)</div><div class="pq-progress-container"><div class="pq-progress-fill ${progressClass}" style="width: ${progressPct}%"></div></div></td>
+                <td><div style="display:flex; flex-wrap:wrap;">${badgesHTML}</div></td>
+                <td style="text-align:center;"><span id="icon-${safePqId}" style="font-size:16px; opacity:0.7;">🔽</span></td>
+            `; 
+            tbody.appendChild(headRow);
+
+            const detailRow = document.createElement('tr'); detailRow.className = 'pq-detail-row'; detailRow.id = `detail-${safePqId}`;
+
+            let excelMetaHTML = Object.keys(excel).length > 0 ? `<div class="finding-meta"><span>${t('mArea')}: <b>${excel.alan || '-'}</b></span><span>${t('mCe')}: <b>${excel.ce || '-'}</b></span></div><div style="margin-bottom: 8px;"><b>${t('mQ')}:</b> <span style="color:var(--muted)">${excel.soru || '-'}</span></div>` : ``;
+            
+            let isPqRepChecked = dailyReviewedPQs.has(pq) ? "checked" : "";
+            let currentPQNote = dailyPQNotes[pq] || "";
+            let pqReportToggleHTML = `<div style="margin-top: 15px; padding-top: 15px; border-top: 1px dashed var(--border); display:flex; flex-direction:column; gap:10px;">
+                <label style="font-size:13px; cursor:pointer; display:inline-flex; align-items:center; gap:8px; color:#0f5132; font-weight:700; background:rgba(16, 185, 129, 0.1); padding:8px 12px; border-radius:6px; border:1px solid rgba(16,185,129,0.3); transition: transform 0.1s; width:fit-content;">
+                    <input type="checkbox" onchange="toggleDailyReportPQ('${pq}', this.checked)" ${isPqRepChecked} style="width:16px; height:16px;"> 
+                    📈 Bu PQ'yu Tamamlandı Olarak Günlük Rapora Ekle ve EI'ye Yansıt
+                </label>
+                <textarea class="note-input" style="border-color:rgba(16,185,129,0.3); background:rgba(16,185,129,0.02); min-height:50px;" placeholder="Bu PQ için raporunuzda görünecek özel bir not/açıklama ekleyin (Excel 'RAPOR NOTU' sütunu ile de senkronize olur)..." onchange="updatePQNote('${pq}', this.value)">${currentPQNote}</textarea>
+            </div>`;
+
+            let stepsTableHTML = `<table class="inner-steps-table"><thead><tr><th style="width:50px;">${t('thStep')}</th><th>${t('thAction')}</th><th style="width:250px;">Adım Özel Notu</th><th style="width:120px;">${t('thOffice')}</th><th style="width:90px;">${t('thDate')}</th><th style="width:100px;">${t('thStatus')}</th></tr></thead><tbody>`;
+
+            groups[pq].forEach(d => {
+                let statusInfo = getStatus(d); let isRepChecked = dailyReviewedSet.has(pq + "|" + d.step) ? "checked" : "";
+                stepsTableHTML += `<tr><td><b>${d.step}</b></td><td><div style="font-size:13px; line-height:1.5;">${d.action}</div></td><td><textarea class="note-input" placeholder="${t('placeholderNote')}" onchange="updateNote('${pq}', '${d.step}', this.value)">${d.note || ""}</textarea><div style="margin-top: 8px;"><label style="font-size:11px; cursor:pointer; display:inline-flex; align-items:center; gap:5px; color:var(--primary); font-weight:600; background:rgba(37,99,235,0.05); padding:4px 8px; border-radius:4px;"><input type="checkbox" onchange="toggleDailyReport('${pq}', '${d.step}', this.checked)" ${isRepChecked}> 📉 Adımı Rapora Ekle</label></div></td><td style="color:var(--muted); font-size:12px;">${d.office}</td><td style="font-weight:600; font-size:12px;">${d.estDate}</td><td><span class="badge badge-${statusInfo.color}">${statusInfo.label}</span></td></tr>`;
+            });
+            stepsTableHTML += `</tbody></table>`;
+            detailRow.innerHTML = `<td colspan="4" style="padding:0;"><div class="detail-container"><div class="finding-box">${excelMetaHTML}<div><b>${t('mFinding')}:</b> ${finalBulgu}</div>${pqReportToggleHTML}</div>${stepsTableHTML}</div></td>`;
+            tbody.appendChild(detailRow);
+        });
+
+        updateCharts(filtered);
+    }
+
+    function buildPdfFlatTable(data, bgColor, textColor, titleText) { let arr = [ [{ text: titleText, colSpan: 5, style: 'tableTitle', color: textColor, border: [false, false, false, false] }, '', '', '', ''], [ {text: 'PQ', style: 'th', fillColor: bgColor, color: textColor}, {text: t('thStep'), style: 'th', fillColor: bgColor, color: textColor}, {text: t('thAction'), style: 'th', fillColor: bgColor, color: textColor}, {text: t('thOffice'), style: 'th', fillColor: bgColor, color: textColor}, {text: t('thDate'), style: 'th', fillColor: bgColor, color: textColor} ] ]; data.forEach(d => { let actionText = d.action.replace(/\n/g, ' '); if(d.note) actionText += `\n[${t('thNote')}: ${d.note}]`; arr.push([ {text: d.pq, bold: true, fillColor: bgColor, color: textColor}, {text: d.step, fillColor: bgColor, color: textColor}, {text: actionText, fillColor: bgColor, color: textColor}, {text: d.office, fillColor: bgColor, color: textColor}, {text: d.estDate, bold: true, fillColor: bgColor, color: textColor} ]); }); return arr; }
+    
+    function exportExcel() {
+        const filtered = getFilteredData(); if(filtered.length === 0) return alert("No data.");
+        let dashData = []; let activeFilters = getActiveFiltersText();
+        if(activeFilters.length > 0) { dashData.push({ "INDICATOR": t('excelFiltered'), "VALUE": "------------------------------------------------" }); activeFilters.forEach(f => { dashData.push({ "INDICATOR": f.ad, "VALUE": f.deger }); }); dashData.push({ "INDICATOR": "", "VALUE": "" }); }
+        dashData.push({ "INDICATOR": t('excelDash'), "VALUE": "------------------------------------------------" }); dashData.push({ "INDICATOR": t('statPqTotal'), "VALUE": document.getElementById('totalPqCount').innerText }); dashData.push({ "INDICATOR": t('statActTotal'), "VALUE": document.getElementById('activeActionCount').innerText }); dashData.push({ "INDICATOR": t('statDone'), "VALUE": document.getElementById('doneCount').innerText }); dashData.push({ "INDICATOR": t('statLate'), "VALUE": document.getElementById('lateCount').innerText }); dashData.push({ "INDICATOR": t('eiLblBase'), "VALUE": document.getElementById('lblBase').innerText }); dashData.push({ "INDICATOR": t('eiLblReal'), "VALUE": document.getElementById('lblReal').innerText }); dashData.push({ "INDICATOR": t('eiLblProj'), "VALUE": document.getElementById('lblProj').innerText });
+
+        let areaEIData = window.currentAreaEIData.map(d => { let obj = {}; obj[t('thArea')] = d.alan; obj["EI (%)"] = "%" + d.base; obj[t('eiLblReal')] = "%" + d.real; obj[t('eiLblProj')] = "%" + d.proj; return obj; });
+        let msData = []; document.querySelectorAll('#milestoneTableBody tr').forEach(tr => { let cells = tr.querySelectorAll('td'); if(cells.length === 6) { let obj = {}; obj[t('thAreaScope')] = cells[0].innerText; obj[t('th60')] = cells[1].innerText.replace(/\n/g, ' '); obj[t('th70')] = cells[2].innerText.replace(/\n/g, ' '); obj[t('th80')] = cells[3].innerText.replace(/\n/g, ' '); obj[t('th90')] = cells[4].innerText.replace(/\n/g, ' '); obj[t('th100')] = cells[5].innerText.replace(/\n/g, ' '); msData.push(obj); } });
+
+        const groups = {}; filtered.forEach(d => { if (!groups[d.pq]) groups[d.pq] = []; groups[d.pq].push(d); });
+        const sortedPQs = Object.keys(groups).sort(sortPQs); const exData = [];
+        sortedPQs.forEach(pq => { groups[pq].forEach(d => { const excel = pqMasterData[d.pq] || {}; let obj = {}; obj["PQ"] = d.pq; obj[t('thArea')] = excel.alan || ""; obj[t('fCe')] = excel.ce || ""; obj[t('mQ')] = excel.soru || ""; obj[t('mFinding')] = excel.bulgu || ""; obj[t('fType')] = excel.tur || ""; obj[t('fIcao')] = excel.degerlendirme || ""; obj[t('fPerson')] = excel.sorumlu || ""; obj[t('thStep')] = d.step; obj[t('thAction')] = d.action; obj[t('thNote')] = d.note || ""; obj[t('thOffice')] = d.office; obj[t('thDate')] = d.estDate; obj["Progress"] = d.progress; obj[t('thStatus')] = getStatus(d).label; exData.push(obj); }); });
+        
+        let exLate = exData.filter(x => x[t('thStatus')] === t('statusL')); let exPending = exData.filter(x => x[t('thStatus')] === t('statusP'));
+        const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(dashData), "Dashboard");
+        if (window.currentAreaSummaryRaw && window.currentAreaSummaryRaw.length > 0) { let excelSummaryData = window.currentAreaSummaryRaw.map(d => { let obj = {}; obj[t('thArea')] = d.alan; obj[t('thTotalCap')] = `${d.total} (${d.totalOn} On, ${d.totalOff} Off)`; obj[t('thDoneCap')] = `${d.done} (${d.doneOn} On, ${d.doneOff} Off)`; obj[t('thOngoingCap')] = `${d.ongoing} (${d.ongoingOn} On, ${d.ongoingOff} Off)`; obj[t('thProgress')] = `%${d.pct}`; return obj; }); XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(excelSummaryData), "CAP_Summary"); }
+        if (areaEIData.length > 0) XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(areaEIData), "EI_Proj");
+        if (msData.length > 0) XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(msData), "Milestones");
+        if (exLate.length > 0) XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(exLate), "Overdue_Late");
+        if (exPending.length > 0) XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(exPending), "Pending");
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(exData), "All_Actions"); XLSX.writeFile(wb, "ICAO_Dashboard_Report.xlsx");
+    }
+
+    function exportPDF() {
+        const filtered = getFilteredData(); if(filtered.length === 0) return alert("No data.");
+        let tableBody = [ [{ text: t('pdfMainList'), colSpan: 6, style: 'tableTitle', border: [false, false, false, false] }, '', '', '', '', ''], [ {text: t('pdfPqInfo'), style: 'th'}, {text: t('pdfPersonType'), style: 'th'}, {text: t('thStep'), style: 'th'}, {text: t('thAction'), style: 'th'}, {text: t('thOffice'), style: 'th'}, {text: t('pdfTargetStatus'), style: 'th'} ] ];
+        const groups = {}; filtered.forEach(d => { if (!groups[d.pq]) groups[d.pq] = []; groups[d.pq].push(d); }); const sortedPQs = Object.keys(groups).sort(sortPQs);
+        sortedPQs.forEach(pq => { groups[pq].forEach(d => { let m = pqMasterData[d.pq] || {}; let pqCell = [ { text: d.pq, bold: true, fontSize: 10 }, { text: `\n${t('fArea')}: ` + (m.alan||"-") + ` | CE: ` + (m.ce||"-"), fontSize: 8, color: '#2563eb' }, { text: "\n" + (m.bulgu || ""), fontSize: 8, color: '#475569', margin: [0, 2, 0, 0] } ]; let personCell = [ { text: m.sorumlu || "-", bold: true, fontSize: 9 }, { text: "\n" + (m.tur || "-"), fontSize: 8, color: '#64748b' } ]; let dateCell = [ { text: d.estDate, fontSize: 9 }, { text: "\n" + getStatus(d).label, fontSize: 8, bold:true, color: getStatus(d).type==='late'?'#b91c1c':'#0f5132' } ]; let actionText = d.action.replace(/\n/g, " "); if(d.note) actionText += `\n\n[${t('thNote')}: ${d.note}]`; tableBody.push([pqCell, personCell, d.step, actionText, d.office, dateCell]); }); });
+        
+        let msBody = [ [{ text: t('msTitle'), colSpan: 6, style: 'tableTitle', border: [false, false, false, false] }, '', '', '', '', ''], [ {text: t('thAreaScope'), style: 'th'}, {text: t('th60'), style: 'th'}, {text: t('th70'), style: 'th'}, {text: t('th80'), style: 'th'}, {text: t('th90'), style: 'th'}, {text: t('th100'), style: 'th'} ] ];
+        document.querySelectorAll('#milestoneTableBody tr').forEach(tr => { let cells = tr.querySelectorAll('td'); if(cells.length === 6) { msBody.push([ cells[0].innerText, cells[1].innerText.replace(/\n/g, ' '), cells[2].innerText.replace(/\n/g, ' '), cells[3].innerText.replace(/\n/g, ' '), cells[4].innerText.replace(/\n/g, ' '), cells[5].innerText.replace(/\n/g, ' ') ]); } });
+
+        let contentArray = [ { text: t('appTitle'), style: 'header' }, { text: document.getElementById('mainSubtitle').innerText, style: 'infoText', margin: [0, 0, 0, 15] } ];
+        let activeFilters = getActiveFiltersText();
+        if (activeFilters.length > 0) { let filterLines = activeFilters.map(f => `• ${f.ad}: ${f.deger}`).join('\n'); contentArray.push({ table: { widths: ['*'], body: [ [ { text: [ { text: '🔍 Filters\n', bold: true, fontSize: 10, color: '#334155' }, { text: filterLines, fontSize: 9, color: '#475569' } ], fillColor: '#f8fafc', border: [true, true, true, true], margin: [5, 5, 5, 5] } ] ] }, layout: { hLineWidth: function(i) { return 1; }, vLineWidth: function(i) { return 1; }, hLineColor: function(i) { return '#e2e8f0'; }, vLineColor: function(i) { return '#e2e8f0'; } }, margin: [0, 0, 0, 15] }); }
+
+        contentArray.push({ columns: [ { width: '50%', text: [ {text: `📈 Dashboard\n`, bold: true, fontSize: 11, color:'#2563eb'}, `${t('statPqTotal')}: ${document.getElementById('totalPqCount').innerText}\n${t('statActTotal')}: ${document.getElementById('activeActionCount').innerText}\n${t('statDone')}: ${document.getElementById('doneCount').innerText}\n${t('statLate')}: ${document.getElementById('lateCount').innerText}` ], style: 'summaryBox' }, { width: '50%', text: [ {text: `${t('eiTitle')}\n`, bold: true, fontSize: 11, color:'#2563eb'}, `${t('eiLblBase')} ${document.getElementById('lblBase').innerText}\n${t('eiLblReal')} ${document.getElementById('lblReal').innerText}\n${t('eiLblProj')} ${document.getElementById('lblProj').innerText}` ], style: 'summaryBox' } ], columnGap: 15, margin: [0, 0, 0, 15] });
+
+        if (window.currentAreaSummaryRaw && window.currentAreaSummaryRaw.length > 0) { let sumHeader = [ [{ text: t('sumTitle'), colSpan: 5, style: 'tableTitle', border: [false, false, false, false] }, '', '', '', ''], [ {text: t('thArea'), style: 'th'}, {text: t('thTotalCap'), style: 'th', alignment:'center'}, {text: t('thDoneCap'), style: 'th', alignment:'center'}, {text: t('thOngoingCap'), style: 'th', alignment:'center'}, {text: t('thProgress'), style: 'th', alignment:'center'} ] ]; let sumBody = window.currentAreaSummaryRaw.map(d => [ {text: d.alan, bold:true, margin: [0, 5, 0, 5]}, {text: [ {text: d.total.toString(), bold:true, fontSize: 10}, {text: `\n(${d.totalOn} On, ${d.totalOff} Off)`, italics:true, fontSize:8, color:'#64748b'} ], alignment:'center', margin: [0, 5, 0, 5]}, {text: [ {text: d.done.toString(), bold:true, fontSize: 10, color:'#10b981'}, {text: `\n(${d.doneOn} On, ${d.doneOff} Off)`, italics:true, fontSize:8, color:'#64748b'} ], alignment:'center', margin: [0, 5, 0, 5]}, {text: [ {text: d.ongoing.toString(), bold:true, fontSize: 10, color:'#f59e0b'}, {text: `\n(${d.ongoingOn} On, ${d.ongoingOff} Off)`, italics:true, fontSize:8, color:'#64748b'} ], alignment:'center', margin: [0, 5, 0, 5]}, {text: "%" + d.pct, bold:true, alignment:'center', margin: [0, 5, 0, 5]} ]); contentArray.push({ style: 'tEx', table: { headerRows: 2, widths: ['*', '*', '*', '*', 'auto'], body: sumHeader.concat(sumBody) }, layout: 'lightHorizontalLines', margin: [0, 10, 0, 25] }); }
+
+        if (window.currentAreaEIData && window.currentAreaEIData.length > 0) { let areaEIHeader = [ [{ text: t('eiChart'), colSpan: 4, style: 'tableTitle', border: [false, false, false, false] }, '', '', ''], [ {text: t('thArea'), style: 'th'}, {text: 'EI (%)', style: 'th'}, {text: t('eiLblReal'), style: 'th'}, {text: t('eiLblProj'), style: 'th'} ] ]; let areaEIBody = window.currentAreaEIData.map(d => [d.alan, "%" + d.base, "%" + d.real, "%" + d.proj]); contentArray.push({ style: 'tEx', table: { headerRows: 2, widths: ['*', '*', '*', '*'], body: areaEIHeader.concat(areaEIBody) }, layout: 'lightHorizontalLines', margin: [0, 10, 0, 25] }); }
+
+        if(msBody.length > 2) { contentArray.push({ style: 'tEx', table: { headerRows: 2, widths: ['*', 'auto', 'auto', 'auto', 'auto', 'auto'], body: msBody }, layout: 'lightHorizontalLines', margin: [0, 10, 0, 25] }); }
+
+        let lateFiltered = filtered.filter(d => getStatus(d).type === 'late'); if (lateFiltered.length > 0) { lateFiltered.sort((a, b) => sortPQs(a.pq, b.pq)); let latePdfBody = buildPdfFlatTable(lateFiltered, '#fee2e2', '#b91c1c', `🔴 ${t('statusL')} (${lateFiltered.length})`); contentArray.push({ style: 'tEx', table: { headerRows: 2, widths: ['10%', '10%', '*', '20%', '15%'], body: latePdfBody }, layout: 'lightHorizontalLines', margin: [0, 10, 0, 25] }); }
+        let pendingFiltered = filtered.filter(d => getStatus(d).type === 'pending'); if (pendingFiltered.length > 0) { pendingFiltered.sort((a, b) => sortPQs(a.pq, b.pq)); let pendingPdfBody = buildPdfFlatTable(pendingFiltered, '#fef3c7', '#b45309', `🟡 ${t('statusP')} (${pendingFiltered.length})`); contentArray.push({ style: 'tEx', table: { headerRows: 2, widths: ['10%', '10%', '*', '20%', '15%'], body: pendingPdfBody }, layout: 'lightHorizontalLines', margin: [0, 10, 0, 25] }); }
+
+        contentArray.push({ style: 'tEx', table: { headerRows: 2, widths: ['20%', '10%', 'auto', '*', '12%', '10%'], body: tableBody }, layout: 'lightHorizontalLines', margin: [0, 10, 0, 25] });
+        pdfMake.createPdf({ pageOrientation: 'landscape', content: contentArray, styles: { header: { fontSize: 18, bold: true, margin: [0, 0, 0, 5], color: '#1e293b' }, tableTitle: { fontSize: 14, bold: true, margin: [0, 5, 0, 5], color: '#1e293b' }, infoText: { fontSize: 10, color: '#64748b', italics: true }, summaryBox: { fontSize: 11, fillColor: '#f1f5f9', padding: 12, margin: [0, 0, 0, 10], lineHeight: 1.4 }, th: { bold: true, fontSize: 10, fillColor: '#e2e8f0', margin: [0, 5, 0, 5] }, tEx: { fontSize: 9 } } }).download('ICAO_Dashboard_Report.pdf');
+    }
+
+    ['searchInput', 'dateStart', 'dateEnd'].forEach(id => { document.getElementById(id).addEventListener('input', render); });
 </script>
 
 </body>
