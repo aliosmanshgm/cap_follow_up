@@ -272,7 +272,12 @@
             <div class="control-group" id="ceFilterListGroup" style="display: none;"><label data-i18n="fCe">Kritik Element</label><div class="checkbox-list" id="ceFilterList"></div></div>
             <div class="control-group" id="icaoFilterListGroup" style="display: none;"><label data-i18n="fIcao">ICAO Değ.</label><div class="checkbox-list" id="icaoFilterList"></div></div>
             <div class="control-group" id="typeFilterListGroup" style="display: none;"><label data-i18n="fType">Doğrulama Türü</label><div class="checkbox-list" id="typeFilterList"></div></div>
-            <div class="control-group" id="personFilterListGroup" style="display: none;"><label data-i18n="fPerson">Sorumlu Personel</label><div class="checkbox-list" id="personFilterList"></div></div>
+            
+            <div class="control-group" id="personFilterListGroup" style="display: none;">
+                <label data-i18n="fPerson">Sorumlu Personel</label>
+                <input type="text" id="personSearchInput" placeholder="🔍 İsim ara..." onkeyup="filterPersonCheckboxes()" style="padding: 6px; font-size: 12px; margin-bottom: 4px; border: 1px solid var(--border); border-radius: 4px; background: var(--bg); color: var(--text); outline: none;">
+                <div class="checkbox-list" id="personFilterList"></div>
+            </div>
         </div>
     </div>
 
@@ -862,6 +867,20 @@
         if(tabId === 'dashboard') { if(charts.s) charts.s.resize(); if(charts.d) charts.d.resize(); if(charts.o) charts.o.resize(); if(charts.ei) charts.ei.resize(); } 
     }
 
+    // YENİ EKLENEN PERSONEL FİLTRELEME FONKSİYONU
+    window.filterPersonCheckboxes = function() {
+        let filterText = document.getElementById('personSearchInput').value.toLowerCase();
+        let labels = document.getElementById('personFilterList').getElementsByTagName('label');
+        for (let i = 0; i < labels.length; i++) {
+            let txtValue = labels[i].textContent || labels[i].innerText;
+            if (txtValue.toLowerCase().indexOf(filterText) > -1) {
+                labels[i].style.display = "flex"; // CSS'deki orjinal haline geri döner
+            } else {
+                labels[i].style.display = "none";
+            }
+        }
+    };
+
     function removeWordFile(fileName) { loadedFiles.delete(fileName); rawData = rawData.filter(d => d.sourceFile !== fileName); recalculateGlobalStateFromFiles(); refreshAllFilters(); saveToLocalStorage(); renderFileList(); render(); }
     function removeExcelFile() { loadedExcelFile = null; pqMasterData = {}; baseEIData = {}; document.getElementById('eiPanel').style.display = "none"; refreshAllFilters(); saveToLocalStorage(); renderFileList(); render(); }
     function recalculateGlobalStateFromFiles() { window.loadedWordAreas.clear(); window_loadedReportDate = null; loadedFiles.forEach(fileName => { let upperName = fileName.toUpperCase(); ICAO_GLOBAL_ORDER.forEach(a => { if (upperName.includes(a)) window.loadedWordAreas.add(a); }); let dateMatch = fileName.match(/(\d{4})(\d{2})(\d{2})/); if(dateMatch && !window_loadedReportDate) window_loadedReportDate = new Date(dateMatch[1], parseInt(dateMatch[2], 10) - 1, parseInt(dateMatch[3], 10)); }); updateDynamicSubtitle(); }
@@ -909,7 +928,24 @@
             document.getElementById(id + 'Group').style.display = "flex"; 
         } 
     }
-    function refreshAllFilters() { let offices = new Set(), persons = new Set(), siteTypes = new Set(), areas = new Set(), ces = new Set(), icaos = new Set(); let activeAreas = window.loadedWordAreas || new Set(); rawData.forEach(d => { let m = pqMasterData[d.pq] || {}; let alan = m.alan ? m.alan.trim().toUpperCase() : null; if (activeAreas.size === 0 || (alan && activeAreas.has(alan))) { if (d.office) offices.add(d.office.trim()); } }); Object.values(pqMasterData).forEach(obj => { let alan = obj.alan ? obj.alan.trim().toUpperCase() : null; if (alan) areas.add(obj.alan); if (activeAreas.size === 0 || (alan && activeAreas.has(alan))) { if(obj.sorumlu) persons.add(obj.sorumlu); if(obj.tur) siteTypes.add(obj.tur); if(obj.ce) ces.add(obj.ce); if(obj.degerlendirme) icaos.add(obj.degerlendirme); } }); populateCheckboxes(offices, 'officeFilterList'); populateCheckboxes(persons, 'personFilterList'); populateCheckboxes(siteTypes, 'typeFilterList'); populateCheckboxes(ces, 'ceFilterList'); populateCheckboxes(icaos, 'icaoFilterList'); if (activeAreas.size > 0) { let restrictedAreas = new Set(); areas.forEach(a => { if (activeAreas.has(a.toString().trim().toUpperCase())) restrictedAreas.add(a); }); populateCheckboxes(restrictedAreas.size > 0 ? restrictedAreas : areas, 'areaFilterList', true); } else populateCheckboxes(areas, 'areaFilterList', true); }
+    
+    function refreshAllFilters() { 
+        let offices = new Set(), persons = new Set(), siteTypes = new Set(), areas = new Set(), ces = new Set(), icaos = new Set(); let activeAreas = window.loadedWordAreas || new Set(); 
+        rawData.forEach(d => { let m = pqMasterData[d.pq] || {}; let alan = m.alan ? m.alan.trim().toUpperCase() : null; if (activeAreas.size === 0 || (alan && activeAreas.has(alan))) { if (d.office) offices.add(d.office.trim()); } }); 
+        Object.values(pqMasterData).forEach(obj => { let alan = obj.alan ? obj.alan.trim().toUpperCase() : null; if (alan) areas.add(obj.alan); if (activeAreas.size === 0 || (alan && activeAreas.has(alan))) { if(obj.sorumlu) persons.add(obj.sorumlu); if(obj.tur) siteTypes.add(obj.tur); if(obj.ce) ces.add(obj.ce); if(obj.degerlendirme) icaos.add(obj.degerlendirme); } }); 
+        populateCheckboxes(offices, 'officeFilterList'); 
+        populateCheckboxes(persons, 'personFilterList'); 
+        populateCheckboxes(siteTypes, 'typeFilterList'); 
+        populateCheckboxes(ces, 'ceFilterList'); 
+        populateCheckboxes(icaos, 'icaoFilterList'); 
+        if (activeAreas.size > 0) { let restrictedAreas = new Set(); areas.forEach(a => { if (activeAreas.has(a.toString().trim().toUpperCase())) restrictedAreas.add(a); }); populateCheckboxes(restrictedAreas.size > 0 ? restrictedAreas : areas, 'areaFilterList', true); } else populateCheckboxes(areas, 'areaFilterList', true); 
+
+        // Eğer kişi arama kutusunda yazı varken liste yenilenirse (örn. yeni dosya yüklemesi), 
+        // arama filtresini tekrar uygula.
+        if(document.getElementById('personSearchInput') && document.getElementById('personSearchInput').value !== "") {
+            window.filterPersonCheckboxes();
+        }
+    }
 
     function getActiveFiltersText() { 
         let filters = []; let search = document.getElementById('searchInput').value.trim(); 
