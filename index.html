@@ -53,13 +53,17 @@
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
         .warning-panel { background: rgba(245, 158, 11, 0.05); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 12px; padding: 20px; margin-top: 25px; margin-bottom: 25px; display: none; }
-        .warning-panel h4 { margin: 0 0 15px 0; color: var(--warn); display: flex; align-items: center; gap: 8px; font-size: 16px; }
+        .warning-panel h4 { margin: 0; color: var(--warn); display: flex; align-items: center; gap: 8px; font-size: 16px; }
         .warning-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 10px; }
         .warning-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 15px; background: var(--card); border: 1px solid var(--border); border-left: 4px solid var(--warn); border-radius: 6px; font-size: 13px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); cursor: pointer; transition: transform 0.1s;}
         .warning-item:hover { transform: translateY(-2px); border-left: 4px solid var(--primary); box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         .days-left { font-weight: 800; color: var(--danger); font-size: 14px;}
 
-        .file-list-container { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+        /* KAYDIRILABİLİR (SCROLL) DOSYA LİSTESİ */
+        .file-list-container { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; max-height: 85px; overflow-y: auto; padding-right: 4px;}
+        .file-list-container::-webkit-scrollbar { width: 6px; }
+        .file-list-container::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+        
         .file-badge { display: inline-flex; align-items: center; background: var(--kanban-bg); border: 1px solid var(--border); padding: 4px 8px; border-radius: 6px; font-size: 11px; color: var(--text); font-weight: 500;}
         .file-remove-btn { margin-left: 6px; color: var(--danger); cursor: pointer; font-weight: bold; padding: 0 4px; border-radius: 4px; transition: background 0.2s; font-size: 12px; }
         .file-remove-btn:hover { background: #fee2e2; }
@@ -330,8 +334,14 @@
         </div>
 
         <div class="warning-panel" id="warningPanel">
-            <h4 data-i18n="warningTitle">⚠️ Yaklaşan Görevler (Önümüzdeki 30 Gün)</h4>
-            <div class="warning-grid" id="warningList"></div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap:wrap; gap:10px;">
+                <h4 style="margin: 0; color: var(--warn); display: flex; align-items: center; gap: 8px; font-size: 16px;" data-i18n="warningTitle">⚠️ Yaklaşan Görevler (Önümüzdeki 30 Gün)</h4>
+                <div style="display: flex; gap: 15px; font-size: 12px; font-weight: 600; background: var(--card); padding: 6px 12px; border-radius: 6px; border: 1px solid var(--border);">
+                    <label style="cursor:pointer; display:flex; align-items:center; gap:5px;"><input type="radio" name="warnView" value="list" checked onchange="render()" style="margin:0; width:auto; height:auto;"> ⏱️ Tarihe Göre</label>
+                    <label style="cursor:pointer; display:flex; align-items:center; gap:5px;"><input type="radio" name="warnView" value="group" onchange="render()" style="margin:0; width:auto; height:auto;"> 🗂️ Alana Göre</label>
+                </div>
+            </div>
+            <div id="warningList"></div>
         </div>
     </div>
 
@@ -372,7 +382,10 @@
             <div style="display: flex; gap: 20px; align-items: center; width: 100%;">
                 <div style="flex: 1;">
                     <label style="font-size: 12px; font-weight: bold; color: var(--muted);">📅 Eski Tarih (Referans)</label>
-                    <select id="trendSelectA" style="margin-top: 5px;"></select>
+                    <div style="display:flex; gap:5px; margin-top:5px;">
+                        <select id="trendSelectA" style="flex:1;"></select>
+                        <button onclick="deleteSelectedArchive()" class="btn-outline" style="border-color:var(--danger); color:var(--danger); padding: 5px 10px;" title="Seçili arşivi sil">🗑️</button>
+                    </div>
                 </div>
                 <div style="font-size: 24px; color: var(--muted); margin-top: 15px;">VS</div>
                 <div style="flex: 1;">
@@ -450,6 +463,20 @@
     // ==========================================
     // DEĞİŞKENLER VE TAM SÖZLÜK
     // ==========================================
+    const ICAO_GLOBAL_ORDER = ['LEG', 'ORG', 'PEL', 'OPS', 'AIR', 'AIG', 'ANS', 'AGA'];
+
+    // Alan sıralama fonksiyonu (Global Olarak Kullanılacak)
+    function sortAreas(a, b) {
+        let strA = a ? a.toString().trim().toUpperCase() : "";
+        let strB = b ? b.toString().trim().toUpperCase() : "";
+        let ia = ICAO_GLOBAL_ORDER.indexOf(strA);
+        let ib = ICAO_GLOBAL_ORDER.indexOf(strB);
+        if (ia === -1 && ib === -1) return strA.localeCompare(strB);
+        if (ia === -1) return 1;
+        if (ib === -1) return -1;
+        return ia - ib;
+    }
+
     const dict = {
         tr: {
             appTitle: "✈️ TÜRKİYE / USOAP CMA CAP İzleme", appSubtitle: "Analiz için lütfen Word (.docx) belgelerini yükleyiniz.",
@@ -520,12 +547,10 @@
     window.onload = function() {
         firebase.auth().onAuthStateChanged((user) => {
             if (user) {
-                // Kullanıcı giriş yaptıysa ekranı aç ve verileri yükle
                 document.getElementById('loginOverlay').style.display = 'none';
                 document.getElementById('mainAppContainer').style.display = 'block';
                 loadFromLocalStorage();
             } else {
-                // Çıkış yapıldıysa veya henüz girilmediyse giriş ekranını göster
                 document.getElementById('loadingOverlay').style.display = 'none';
                 document.getElementById('mainAppContainer').style.display = 'none';
                 document.getElementById('loginOverlay').style.display = 'flex';
@@ -551,7 +576,6 @@
         firebase.auth().signInWithEmailAndPassword(email, pass)
             .then(() => {
                 document.getElementById('loginOverlay').style.opacity = '1';
-                // onAuthStateChanged tetiklenecek
             })
             .catch((error) => {
                 document.getElementById('loginOverlay').style.opacity = '1';
@@ -561,13 +585,12 @@
     };
 
     // ==========================================
-    // 3. FIREBASE SENKRONİZASYONU VE ARŞİVLEME (GÜVENLİ FORMAT)
+    // 3. FIREBASE SENKRONİZASYONU VE ARŞİVLEME
     // ==========================================
     function saveToLocalStorage() {
-        if(!firebase.auth().currentUser) return; // Oturum yoksa kaydetme
+        if(!firebase.auth().currentUser) return; 
         showLoading();
         try {
-            // Firebase anahtarlarında (key) '.' kullanılamadığı için nesneleri diziye çeviriyoruz
             let safePqMasterData = [];
             Object.keys(pqMasterData).forEach(k => safePqMasterData.push({ key: k, data: pqMasterData[k] }));
 
@@ -599,7 +622,6 @@
                 rawData = data.rawData || []; 
                 baseEIData = data.baseEIData || {};
                 
-                // Firebase'den gelen dizileri tekrar nesneye (object) çeviriyoruz
                 pqMasterData = {};
                 if (Array.isArray(data.pqMasterData)) {
                     data.pqMasterData.forEach(item => { pqMasterData[item.key] = item.data; });
@@ -670,6 +692,21 @@
         db.ref('icao_archive/' + dateKey).set(dataToSave).then(() => {
             hideLoading(); alert("Mevcut durum başarıyla fotoğraflandı ve arşive eklendi!");
         }).catch(e => { console.error(e); hideLoading(); });
+    };
+
+    window.deleteSelectedArchive = function() {
+        let sel = document.getElementById('trendSelectA').value;
+        if(!sel || sel === 'current') return alert("Silinecek geçerli bir arşiv seçilmedi.");
+        if(confirm("Seçili arşivi kalıcı olarak SİLMEK istediğinize emin misiniz? Bu işlem geri alınamaz.")) {
+            showLoading();
+            db.ref('icao_archive/' + sel).remove()
+                .then(() => { 
+                    hideLoading(); 
+                    alert("Arşiv başarıyla silindi."); 
+                    document.getElementById('trendResultsArea').style.display = 'none'; 
+                })
+                .catch(e => { console.error(e); hideLoading(); alert("Silme hatası."); });
+        }
     };
 
     // ==========================================
@@ -827,7 +864,7 @@
 
     function removeWordFile(fileName) { loadedFiles.delete(fileName); rawData = rawData.filter(d => d.sourceFile !== fileName); recalculateGlobalStateFromFiles(); refreshAllFilters(); saveToLocalStorage(); renderFileList(); render(); }
     function removeExcelFile() { loadedExcelFile = null; pqMasterData = {}; baseEIData = {}; document.getElementById('eiPanel').style.display = "none"; refreshAllFilters(); saveToLocalStorage(); renderFileList(); render(); }
-    function recalculateGlobalStateFromFiles() { window.loadedWordAreas.clear(); window_loadedReportDate = null; const ICAO_ORDER = ['LEG', 'ORG', 'PEL', 'OPS', 'AIR', 'AIG', 'ANS', 'AGA']; loadedFiles.forEach(fileName => { let upperName = fileName.toUpperCase(); ICAO_ORDER.forEach(a => { if (upperName.includes(a)) window.loadedWordAreas.add(a); }); let dateMatch = fileName.match(/(\d{4})(\d{2})(\d{2})/); if(dateMatch && !window_loadedReportDate) window_loadedReportDate = new Date(dateMatch[1], parseInt(dateMatch[2], 10) - 1, parseInt(dateMatch[3], 10)); }); updateDynamicSubtitle(); }
+    function recalculateGlobalStateFromFiles() { window.loadedWordAreas.clear(); window_loadedReportDate = null; loadedFiles.forEach(fileName => { let upperName = fileName.toUpperCase(); ICAO_GLOBAL_ORDER.forEach(a => { if (upperName.includes(a)) window.loadedWordAreas.add(a); }); let dateMatch = fileName.match(/(\d{4})(\d{2})(\d{2})/); if(dateMatch && !window_loadedReportDate) window_loadedReportDate = new Date(dateMatch[1], parseInt(dateMatch[2], 10) - 1, parseInt(dateMatch[3], 10)); }); updateDynamicSubtitle(); }
     function clearAllData() { if(confirm(currentLang==='tr' ? "Tüm bulut verileri silinecek. Emin misiniz?" : "All cloud data will be cleared. Are you sure?")) { db.ref('icao_system').remove().then(() => { location.reload(); }); } }
 
     window.updateNote = function(pq, step, val) { let item = rawData.find(x => x.pq === pq && x.step === step); if(item) { item.note = val; saveToLocalStorage(); if(document.getElementById('tab-report').classList.contains('active')) updateReportPreview(); } }
@@ -863,8 +900,16 @@
     function updateDynamicSubtitle() { const subEl = document.getElementById('mainSubtitle'); if (window_loadedReportDate) { const trMonths = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"]; const enMonths = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]; let d = window_loadedReportDate.getDate(); let m = window_loadedReportDate.getMonth(); let y = window_loadedReportDate.getFullYear(); let dateStr = currentLang === 'tr' ? `${d} ${trMonths[m]} ${y}` : `${d} ${enMonths[m]} ${y}`; subEl.innerText = currentLang === 'tr' ? `Bu veriler, ${dateStr} tarihinde ICAO USOAP OLF'den alınan raporlardan temin edilmiştir.` : `This data was obtained from ICAO USOAP OLF reports dated ${dateStr}.`; subEl.style.color = "var(--primary)"; subEl.style.fontWeight = "600"; subEl.removeAttribute('data-i18n'); } else { subEl.innerText = dict[currentLang].appSubtitle; subEl.style.color = "var(--muted)"; subEl.style.fontWeight = "normal"; subEl.setAttribute('data-i18n', 'appSubtitle'); } }
     function getEmptyStats() { return { pqs: { total: 0, onSite: 0, offSite: 0, completed: { total: 0, onSite: 0, offSite: 0 } }, actions: { total: 0, onSite: 0, offSite: 0 }, late: { total: 0, onSite: 0, offSite: 0 }, done: { total: 0, onSite: 0, offSite: 0 } }; }
 
-    function populateCheckboxes(set, id) { let container = document.getElementById(id); let currentlyChecked = getCheckedValues(id); container.innerHTML = ""; if(set.size > 0) { Array.from(set).sort().forEach(i => { let isChecked = currentlyChecked.includes(i) ? "checked" : ""; container.innerHTML += `<label><input type="checkbox" value="${i}" onchange="render()" ${isChecked}> ${i}</label>`; }); document.getElementById(id + 'Group').style.display = "flex"; } }
-    function refreshAllFilters() { let offices = new Set(), persons = new Set(), siteTypes = new Set(), areas = new Set(), ces = new Set(), icaos = new Set(); let activeAreas = window.loadedWordAreas || new Set(); rawData.forEach(d => { let m = pqMasterData[d.pq] || {}; let alan = m.alan ? m.alan.trim().toUpperCase() : null; if (activeAreas.size === 0 || (alan && activeAreas.has(alan))) { if (d.office) offices.add(d.office.trim()); } }); Object.values(pqMasterData).forEach(obj => { let alan = obj.alan ? obj.alan.trim().toUpperCase() : null; if (alan) areas.add(obj.alan); if (activeAreas.size === 0 || (alan && activeAreas.has(alan))) { if(obj.sorumlu) persons.add(obj.sorumlu); if(obj.tur) siteTypes.add(obj.tur); if(obj.ce) ces.add(obj.ce); if(obj.degerlendirme) icaos.add(obj.degerlendirme); } }); populateCheckboxes(offices, 'officeFilterList'); populateCheckboxes(persons, 'personFilterList'); populateCheckboxes(siteTypes, 'typeFilterList'); populateCheckboxes(ces, 'ceFilterList'); populateCheckboxes(icaos, 'icaoFilterList'); if (activeAreas.size > 0) { let restrictedAreas = new Set(); areas.forEach(a => { if (activeAreas.has(a.toString().trim().toUpperCase())) restrictedAreas.add(a); }); populateCheckboxes(restrictedAreas.size > 0 ? restrictedAreas : areas, 'areaFilterList'); } else populateCheckboxes(areas, 'areaFilterList'); }
+    function populateCheckboxes(set, id, isArea = false) { 
+        let container = document.getElementById(id); let currentlyChecked = getCheckedValues(id); container.innerHTML = ""; 
+        if(set.size > 0) { 
+            let arr = Array.from(set);
+            if (isArea) arr.sort(sortAreas); else arr.sort();
+            arr.forEach(i => { let isChecked = currentlyChecked.includes(i) ? "checked" : ""; container.innerHTML += `<label><input type="checkbox" value="${i}" onchange="render()" ${isChecked}> ${i}</label>`; }); 
+            document.getElementById(id + 'Group').style.display = "flex"; 
+        } 
+    }
+    function refreshAllFilters() { let offices = new Set(), persons = new Set(), siteTypes = new Set(), areas = new Set(), ces = new Set(), icaos = new Set(); let activeAreas = window.loadedWordAreas || new Set(); rawData.forEach(d => { let m = pqMasterData[d.pq] || {}; let alan = m.alan ? m.alan.trim().toUpperCase() : null; if (activeAreas.size === 0 || (alan && activeAreas.has(alan))) { if (d.office) offices.add(d.office.trim()); } }); Object.values(pqMasterData).forEach(obj => { let alan = obj.alan ? obj.alan.trim().toUpperCase() : null; if (alan) areas.add(obj.alan); if (activeAreas.size === 0 || (alan && activeAreas.has(alan))) { if(obj.sorumlu) persons.add(obj.sorumlu); if(obj.tur) siteTypes.add(obj.tur); if(obj.ce) ces.add(obj.ce); if(obj.degerlendirme) icaos.add(obj.degerlendirme); } }); populateCheckboxes(offices, 'officeFilterList'); populateCheckboxes(persons, 'personFilterList'); populateCheckboxes(siteTypes, 'typeFilterList'); populateCheckboxes(ces, 'ceFilterList'); populateCheckboxes(icaos, 'icaoFilterList'); if (activeAreas.size > 0) { let restrictedAreas = new Set(); areas.forEach(a => { if (activeAreas.has(a.toString().trim().toUpperCase())) restrictedAreas.add(a); }); populateCheckboxes(restrictedAreas.size > 0 ? restrictedAreas : areas, 'areaFilterList', true); } else populateCheckboxes(areas, 'areaFilterList', true); }
 
     function getActiveFiltersText() { 
         let filters = []; let search = document.getElementById('searchInput').value.trim(); 
@@ -938,7 +983,7 @@
     function updateStatsDisplay(stats) {
         document.getElementById('totalPqCount').innerText = stats.pqs.total; document.getElementById('activeActionCount').innerText = stats.actions.total; document.getElementById('lateCount').innerText = stats.late.total; document.getElementById('doneCount').innerText = stats.done.total;
         if (stats.pqs.total === 0 && stats.actions.total === 0) { document.getElementById('pqDetails').innerHTML = ""; document.getElementById('actionDetails').innerHTML = ""; document.getElementById('lateDetails').innerHTML = ""; document.getElementById('doneDetails').innerHTML = ""; } else {
-            let pqExtra = stats.pqs.completed.total > 0 ? `<br><span style="color:var(--ok); font-weight:bold; margin-top:6px; display:inline-block; font-size:12px; background: rgba(16, 185, 129, 0.1); padding: 5px 8px; border-radius: 4px; border: 1px solid rgba(16, 185, 129, 0.2);">${t('pqDone')} (${stats.pqs.completed.total})</span>` : "";
+            let pqExtra = stats.pqs.completed.total > 0 ? `<br><div style="margin-top:6px; font-size:12px; background: rgba(16, 185, 129, 0.1); padding: 6px 8px; border-radius: 4px; border: 1px solid rgba(16, 185, 129, 0.2);"><span style="color:var(--ok); font-weight:bold;">${t('pqDone')} (${stats.pqs.completed.total})</span><br><span style="font-weight:normal; font-size:11px; color:var(--text);"><b>${t('distr')}</b> ${stats.pqs.completed.onSite} On-Site / ${stats.pqs.completed.offSite} Off-Site</span></div>` : "";
             document.getElementById('pqDetails').innerHTML = `<b>${t('distr')}</b> ${stats.pqs.onSite} On-Site / ${stats.pqs.offSite} Off-Site ${pqExtra}`; document.getElementById('actionDetails').innerHTML = `<b>${t('distr')}</b> ${stats.actions.onSite} On-Site / ${stats.actions.offSite} Off-Site`; document.getElementById('lateDetails').innerHTML = `<b>${t('distr')}</b> ${stats.late.onSite} On-Site / ${stats.late.offSite} Off-Site`; document.getElementById('doneDetails').innerHTML = `<b>${t('distr')}</b> ${stats.done.onSite} On-Site / ${stats.done.offSite} Off-Site`;
         }
     }
@@ -954,7 +999,7 @@
         const tbody = document.getElementById('areaSummaryBody'); tbody.innerHTML = ""; window.currentAreaSummaryRaw = [];
         if(Object.keys(areaStats).length === 0) { document.getElementById('areaSummaryContainer').style.display = 'none'; return; }
         document.getElementById('areaSummaryContainer').style.display = 'block';
-        Object.keys(areaStats).sort().forEach(alan => {
+        Object.keys(areaStats).sort(sortAreas).forEach(alan => {
             let s = areaStats[alan]; let pct = s.total > 0 ? ((s.done / s.total) * 100).toFixed(1) : 0; window.currentAreaSummaryRaw.push({ alan: alan, ...s, pct: pct });
             let tr = document.createElement('tr');
             tr.innerHTML = `<td style="vertical-align:middle; font-size:14px;"><b>${alan}</b></td><td style="text-align:center;"><b>${s.total}</b><br><i style="font-size:11px; color:var(--muted);">(${s.totalOn} On-Site, ${s.totalOff} Off-Site)</i></td><td style="text-align:center;"><span style="color:var(--ok); font-weight:bold; font-size:15px;">${s.done}</span><br><i style="font-size:11px; color:var(--muted);">(${s.doneOn} On-Site, ${s.doneOff} Off-Site)</i></td><td style="text-align:center;"><span style="color:var(--warn); font-weight:bold; font-size:15px;">${s.ongoing}</span><br><i style="font-size:11px; color:var(--muted);">(${s.ongoingOn} On-Site, ${s.ongoingOff} Off-Site)</i></td><td style="text-align:center; vertical-align:middle; font-size:14px;"><b>%${pct}</b></td>`;
@@ -967,11 +1012,50 @@
         let upcoming = filteredData.filter(d => { if(getStatus(d).type !== 'pending') return false; let dt = parseDateObj(d.estDate); if(!dt) return false; return dt >= today && dt <= limit; });
         let pnl = document.getElementById('warningPanel'); let lst = document.getElementById('warningList');
         if(upcoming.length === 0) { pnl.style.display = 'none'; return; } pnl.style.display = 'block';
-        upcoming.sort((a,b) => parseDateObj(a.estDate) - parseDateObj(b.estDate));
-        lst.innerHTML = upcoming.map(d => {
-            let dt = parseDateObj(d.estDate); let diffDays = Math.ceil(Math.abs(dt - today) / (1000 * 60 * 60 * 24)); let area = pqMasterData[d.pq] && pqMasterData[d.pq].alan ? pqMasterData[d.pq].alan.trim() : 'N/A';
+
+        // Hem tarihe hem de aynı günse ICAO alan sıralamasına göre dizilim:
+        upcoming.sort((a,b) => {
+            let dtA = parseDateObj(a.estDate); let dtB = parseDateObj(b.estDate);
+            if (dtA.getTime() !== dtB.getTime()) return dtA - dtB;
+            
+            let areaA = pqMasterData[a.pq] && pqMasterData[a.pq].alan ? pqMasterData[a.pq].alan.trim() : "";
+            let areaB = pqMasterData[b.pq] && pqMasterData[b.pq].alan ? pqMasterData[b.pq].alan.trim() : "";
+            return sortAreas(areaA, areaB);
+        });
+
+        const generateWarningCard = (d, tdy) => {
+            let dt = parseDateObj(d.estDate); let diffDays = Math.ceil(Math.abs(dt - tdy) / (1000 * 60 * 60 * 24)); let area = pqMasterData[d.pq] && pqMasterData[d.pq].alan ? pqMasterData[d.pq].alan.trim() : 'N/A';
             return `<div class="warning-item" onclick="switchTab('list'); window.togglePQ('${d.pq.replace(/\./g, '-')}');"><div><span class="badge badge-extra" style="margin-bottom: 6px; padding: 2px 8px; font-size: 10px;">${area}</span><br><b style="color:var(--text); font-size:14px;">PQ ${d.pq}</b> <span style="color:var(--primary); font-size:11px; font-weight:bold; margin-left:4px; background:rgba(37,99,235,0.1); padding:2px 6px; border-radius:4px;">${t('thStep')} ${d.step}</span><br><span style="color:var(--muted); font-size:11px; display:inline-block; margin-top:4px;">${d.office}</span></div><div style="text-align:right;"><span class="days-left">${diffDays} ${t('daysLeft')}</span><br><span style="color:var(--muted); font-size:11px;">${d.estDate}</span></div></div>`;
-        }).join('');
+        };
+
+        // Hangi görünüm seçili kontrol et
+        let viewModeElement = document.querySelector('input[name="warnView"]:checked');
+        let viewMode = viewModeElement ? viewModeElement.value : "list";
+
+        if(viewMode === "list") {
+            lst.className = "warning-grid";
+            lst.innerHTML = upcoming.map(d => generateWarningCard(d, today)).join('');
+        } else {
+            lst.className = "";
+            let html = "";
+            let grouped = {};
+            upcoming.forEach(d => { 
+                let area = pqMasterData[d.pq] && pqMasterData[d.pq].alan ? pqMasterData[d.pq].alan.trim().toUpperCase() : 'N/A'; 
+                if(!grouped[area]) grouped[area] = []; 
+                grouped[area].push(d); 
+            });
+            
+            // ICAO Standart Sıralaması
+            let sortedAreas = Object.keys(grouped).sort(sortAreas);
+            
+            sortedAreas.forEach(area => {
+                html += `<div style="margin-bottom:15px; background:var(--card); padding:15px; border-radius:8px; border:1px solid var(--border);">
+                    <h5 style="margin:0 0 10px 0; color:var(--text); border-bottom:1px dashed var(--border); padding-bottom:8px; font-size:14px;">📋 ${area} Denetim Alanı <span style="color:var(--muted); font-weight:normal; font-size:12px;">(${grouped[area].length} Eylem)</span></h5>
+                    <div class="warning-grid">` + grouped[area].map(d => generateWarningCard(d, today)).join('') + `</div>
+                </div>`;
+            });
+            lst.innerHTML = html;
+        }
     }
 
     function updateEIProjections(filteredData) {
@@ -1017,9 +1101,11 @@
         document.getElementById('barReal').style.width = (pctReal - pctBase) + '%'; document.getElementById('barProj').style.width = (pctProj - pctReal) + '%';
 
         let displayAreas = isGlobal ? activeAreas.filter(a => loadedAreas.has(a)) : activeAreas;
+        displayAreas.sort(sortAreas); // ICAO standardına göre sırala
+        
         const tbodyMS = document.getElementById('milestoneTableBody'); tbodyMS.innerHTML = "";
         
-        let orderedKeys = ['Scope', ...displayAreas.sort()]; 
+        let orderedKeys = ['Scope', ...displayAreas]; 
         orderedKeys.forEach(key => {
             let m = milestones[key]; if(!m || m.total === 0) return;
             m.realizedEvents.sort((a,b) => a.date - b.date); m.projectedEvents.sort((a,b) => a.date - b.date); 
@@ -1049,7 +1135,29 @@
 
         let chartLabels = window.currentAreaEIData.map(d => [ d.alan, `EI: %${d.base}`, `${t('eiLblReal')} %${d.real}`, `${t('eiLblProj')} %${d.proj}` ]);
         const ctx = document.getElementById('eiChartCanvas').getContext('2d'); if (charts.ei) charts.ei.destroy();
-        charts.ei = new Chart(ctx, { type: 'bar', data: { labels: chartLabels, datasets: [ { label: 'EI (%)', data: displayAreas.map(a => (areaStats[a].baseSat / areaStats[a].total) * 100), backgroundColor: '#64748b' }, { label: t('eiLblReal'), data: displayAreas.map(a => (areaStats[a].realizedAdded / areaStats[a].total) * 100), backgroundColor: '#10b981' }, { label: t('eiLblProj'), data: displayAreas.map(a => (areaStats[a].projectedAdded / areaStats[a].total) * 100), backgroundColor: '#f59e0b' } ] }, options: { plugins: { title: { display: true, text: t('eiChart') } }, responsive: true, maintainAspectRatio: false, scales: { x: { stacked: true }, y: { stacked: true, max: 100 } } } });
+        charts.ei = new Chart(ctx, { 
+            type: 'bar', 
+            data: { 
+                labels: chartLabels, 
+                datasets: [ 
+                    { label: 'EI (%)', data: displayAreas.map(a => (areaStats[a].baseSat / areaStats[a].total) * 100), backgroundColor: '#64748b' }, 
+                    { label: t('eiLblReal'), data: displayAreas.map(a => (areaStats[a].realizedAdded / areaStats[a].total) * 100), backgroundColor: '#10b981' }, 
+                    { label: t('eiLblProj'), data: displayAreas.map(a => (areaStats[a].projectedAdded / areaStats[a].total) * 100), backgroundColor: '#f59e0b' } 
+                ] 
+            }, 
+            options: { 
+                plugins: { title: { display: true, text: t('eiChart') } }, 
+                responsive: true, 
+                maintainAspectRatio: false, 
+                scales: { 
+                    x: { 
+                        stacked: true, 
+                        ticks: { autoSkip: false, font: { size: 10 } } 
+                    }, 
+                    y: { stacked: true, max: 100 } 
+                } 
+            } 
+        });
     }
 
     function updateCharts(data) {
