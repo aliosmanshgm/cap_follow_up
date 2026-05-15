@@ -284,7 +284,7 @@
     <div class="tabs-container">
         <button class="tab-btn active" onclick="switchTab('dashboard')" id="btn-tab-dashboard" data-i18n="tabDashboard">📊 Dashboard & Özetler</button>
         <button class="tab-btn" onclick="switchTab('list')" id="btn-tab-list" data-i18n="tabList">📋 Detaylı CAP Listesi</button>
-        <button class="tab-btn" onclick="switchTab('report')" id="btn-tab-report" data-i18n="tabReport">📈 Off-Site Günlük Rapor</button>
+        <button class="tab-btn" onclick="switchTab('report')" id="btn-tab-report" data-i18n="tabReport">📈 Yönetici & Değerlendirme Raporu</button>
         <button class="tab-btn" onclick="switchTab('trend')" id="btn-tab-trend" style="color: var(--primary);">🚀 Trend & Kıyaslama</button>
     </div>
 
@@ -366,16 +366,16 @@
             <div>
                 <div style="background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
                     <h3 style="margin: 0 0 15px 0; color: var(--primary); font-size: 18px;">📝 Yönetici Özeti</h3>
-                    <p style="font-size: 12px; color: var(--muted); margin-top: 0; margin-bottom: 15px;">Aşağıdaki alana günlük değerlendirmelerinizi yazın. Seçtiğiniz <b>PQ'lar</b> sağdaki rapora eklenecektir.</p>
+                    <p style="font-size: 12px; color: var(--muted); margin-top: 0; margin-bottom: 15px;">Aşağıdaki alana genel değerlendirmelerinizi yazın. Seçtiğiniz <b>PQ'lar</b> sağdaki rapora eklenecektir.</p>
                     <textarea id="managementNotes" class="report-textarea" placeholder="Örn: Bugünkü toplantıda..." oninput="updateReportPreview(); saveToLocalStorage();"></textarea>
                     <button onclick="copyReportToClipboard()" style="width: 100%; justify-content: center; margin-top: 10px; background: #059669; font-size: 15px; padding: 12px;">📋 Raporu Panoya Kopyala</button>
                 </div>
             </div>
             <div>
                 <div class="report-stat-row">
-                    <div class="report-stat-mini"><h4 id="repTotalOffsite">0</h4><p>Toplam Off-Site (PQ)</p></div>
-                    <div class="report-stat-mini done"><h4 id="repDoneOffsite" style="color: var(--ok);">0</h4><p>Tamamlanan</p></div>
-                    <div class="report-stat-mini pending"><h4 id="repPendingOffsite" style="color: var(--warn);">0</h4><p>Değerlendirmesi Süren</p></div>
+                    <div class="report-stat-mini"><h4 id="repTotal">0</h4><p>Toplam Kapsam (PQ)</p></div>
+                    <div class="report-stat-mini done"><h4 id="repDone" style="color: var(--ok);">0</h4><p>Tamamlanan</p></div>
+                    <div class="report-stat-mini pending"><h4 id="repPending" style="color: var(--warn);">0</h4><p>Değerlendirmesi Süren</p></div>
                 </div>
                 <div class="report-preview-box" id="reportPreview"></div>
             </div>
@@ -389,6 +389,7 @@
                     <label style="font-size: 12px; font-weight: bold; color: var(--muted);">📅 Eski Tarih (Referans)</label>
                     <div style="display:flex; gap:5px; margin-top:5px;">
                         <select id="trendSelectA" style="flex:1;"></select>
+                        <button onclick="restoreSelectedArchive()" class="btn-outline" style="border-color:var(--warn); color:var(--warn); padding: 5px 10px;" title="Seçili arşivi çalışma ekranına yükler">🔄 Ekrana Al</button>
                         <button onclick="deleteSelectedArchive()" class="btn-outline" style="border-color:var(--danger); color:var(--danger); padding: 5px 10px;" title="Seçili arşivi sil">🗑️</button>
                     </div>
                 </div>
@@ -470,7 +471,7 @@
     // ==========================================
     const ICAO_GLOBAL_ORDER = ['LEG', 'ORG', 'PEL', 'OPS', 'AIR', 'AIG', 'ANS', 'AGA'];
 
-    // Alan sıralama fonksiyonu (Global Olarak Kullanılacak)
+    // Alan sıralama fonksiyonu
     function sortAreas(a, b) {
         let strA = a ? a.toString().trim().toUpperCase() : "";
         let strB = b ? b.toString().trim().toUpperCase() : "";
@@ -486,7 +487,7 @@
         tr: {
             appTitle: "✈️ TÜRKİYE / USOAP CMA CAP İzleme", appSubtitle: "Analiz için lütfen Word (.docx) belgelerini yükleyiniz.",
             btnTheme: "🌓 Tema", btnClear: "🗑️ Tümünü Temizle", btnExcel: "📊 Excel Rapor", btnPdf: "📄 PDF Rapor", btnTemplate: "📄 Şablon", btnClose2: "Kapat",
-            tabDashboard: "📊 Dashboard & Özetler", tabList: "📋 Detaylı CAP Listesi", tabReport: "📈 Off-Site Günlük Rapor",
+            tabDashboard: "📊 Dashboard & Özetler", tabList: "📋 Detaylı CAP Listesi", tabReport: "📈 Yönetici & Değerlendirme Raporu",
             loadingText: "Veriler İşleniyor... Lütfen Bekleyin.", warningTitle: "⚠️ Yaklaşan Görevler (Önümüzdeki 30 Gün)", daysLeft: "gün kaldı",
             eiTitle: "🌍 Genel (Overall) Etkin Uygulama (EI) Oranı (%) Değişimi", eiSubtitle: "Sabit Türkiye geneli baz puanı üzerine, <b>ekranda filtrelenen eylemlerin</b> ulusal orana etkisi hesaplanmaktadır.",
             eiLblBase: "Overall EI (%):", eiLblReal: "Overall EI-Tamamlanlar Dahil (%):", eiLblProj: "Overall EI-Tümü Dahil (%):",
@@ -513,7 +514,7 @@
         en: {
             appTitle: "✈️ TURKIYE / USOAP CMA Audit CAP Monitoring", appSubtitle: "Please upload Word (.docx) documents for analysis.",
             btnTheme: "🌓 Theme", btnClear: "🗑️ Clear All", btnExcel: "📊 Excel Report", btnPdf: "📄 PDF Report", btnTemplate: "📄 Template", btnClose2: "Close",
-            tabDashboard: "📊 Dashboard & Summaries", tabList: "📋 Detailed CAP List", tabReport: "📈 Off-Site Daily Report",
+            tabDashboard: "📊 Dashboard & Summaries", tabList: "📋 Detailed CAP List", tabReport: "📈 Executive & Evaluation Report",
             loadingText: "Processing Data... Please Wait.", warningTitle: "⚠️ Upcoming Tasks (Next 30 Days)", daysLeft: "days left",
             eiTitle: "🌍 Overall Effective Implementation (EI) Rate (%) Projection", eiSubtitle: "Calculates the impact of <b>filtered actions on the screen</b> against the national base score.",
             eiLblBase: "Overall EI (%):", eiLblReal: "Overall EI (Inc. Completed):", eiLblProj: "Overall EI (Inc. All Projected):",
@@ -543,7 +544,9 @@
     
     let window_loadedReportDate = null; let rawData = []; let pqMasterData = {}; let baseEIData = {}; let loadedFiles = new Set(); let charts = {};
     let loadedExcelFile = null; let savedManagementNotes = ""; window.currentActiveAreas = []; window.currentFilteredGroups = {}; window.currentAreaSummaryRaw = []; window.loadedWordAreas = new Set(); window.currentAreaEIData = [];
-    let dailyReviewedSet = new Set(); let dailyReviewedPQs = new Set(); let dailyPQNotes = {}; let offsiteStats = { total: 0, done: 0, pending: 0 };
+    let dailyReviewedSet = new Set(); let dailyReviewedPQs = new Set(); let dailyPQNotes = {}; 
+    
+    let reportStats = { total: 0, done: 0, pending: 0, onSite: 0, offSite: 0 };
     let systemArchives = {};
 
     // ==========================================
@@ -715,6 +718,61 @@
     };
 
     // ==========================================
+    // GELİŞTİRİLEN ARŞİV GERİ YÜKLEME
+    // ==========================================
+    window.restoreSelectedArchive = function() {
+        let sel = document.getElementById('trendSelectA').value;
+        if(!sel || sel === 'current') return alert("Geri yüklemek için geçerli bir arşiv seçmelisiniz.");
+        
+        if(confirm("DİKKAT: Bu işlem, şu an aktif olarak üzerinde çalıştığınız tüm verileri temizleyecek ve yerine seçtiğiniz geçmiş arşivi yükleyecektir.\n\nEğer mevcut durumunuzu kaybetmek istemiyorsanız önce 'Anlık Arşivle' yapın.\n\nDevam etmek istiyor musunuz?")) {
+            showLoading();
+            let arch = systemArchives[sel];
+            
+            rawData = arch.rawData || [];
+            baseEIData = arch.baseEIData || {};
+            
+            pqMasterData = {};
+            if (arch.pqMasterData) {
+                if (Array.isArray(arch.pqMasterData)) {
+                    arch.pqMasterData.forEach(item => { pqMasterData[item.key] = item.data; });
+                } else {
+                    pqMasterData = arch.pqMasterData;
+                }
+            }
+            
+            dailyReviewedPQs = new Set(arch.dailyReviewedPQs || []);
+            dailyReviewedSet = new Set();
+            dailyPQNotes = {}; 
+            
+            if(arch.timestamp) {
+                window_loadedReportDate = new Date(arch.timestamp);
+            }
+            
+            window.loadedWordAreas = new Set(); 
+            rawData.forEach(d => {
+                let m = pqMasterData[d.pq];
+                if (m && m.alan) {
+                    window.loadedWordAreas.add(m.alan.trim().toUpperCase());
+                }
+            });
+
+            loadedFiles = new Set(["[Arşiv] " + (arch.note || arch.dateStr)]);
+            loadedExcelFile = "[Arşivden Gelen Master Veri]";
+            
+            saveToLocalStorage(); 
+            
+            hideLoading();
+            alert("✅ Arşiv başarıyla çalışma alanına yüklendi!\nŞimdi sekmelere gidip istediğiniz güncellemeyi yapabilir, ardından değişiklikleri kaydetmek için tekrar 'Anlık Arşivle' yapabilirsiniz.");
+            
+            switchTab('dashboard');
+            updateDynamicSubtitle();
+            refreshAllFilters();
+            renderFileList();
+            render();
+        }
+    };
+
+    // ==========================================
     // 4. TREND VE KIYASLAMA MANTIĞI
     // ==========================================
     function updateTrendDropdowns() {
@@ -867,14 +925,13 @@
         if(tabId === 'dashboard') { if(charts.s) charts.s.resize(); if(charts.d) charts.d.resize(); if(charts.o) charts.o.resize(); if(charts.ei) charts.ei.resize(); } 
     }
 
-    // YENİ EKLENEN PERSONEL FİLTRELEME FONKSİYONU
     window.filterPersonCheckboxes = function() {
         let filterText = document.getElementById('personSearchInput').value.toLowerCase();
         let labels = document.getElementById('personFilterList').getElementsByTagName('label');
         for (let i = 0; i < labels.length; i++) {
             let txtValue = labels[i].textContent || labels[i].innerText;
             if (txtValue.toLowerCase().indexOf(filterText) > -1) {
-                labels[i].style.display = "flex"; // CSS'deki orjinal haline geri döner
+                labels[i].style.display = "flex"; 
             } else {
                 labels[i].style.display = "none";
             }
@@ -916,7 +973,42 @@
     function getStatus(d) { let p = d.progress.toLowerCase(); if (p.includes('completed') || p.includes('tamamlandı') || p.includes('100')) return { label: t('statusD'), color: 'ok', type: 'done' }; if (d.estDate) { let dt = parseDateObj(d.estDate); if (dt && dt < new Date()) return { label: t('statusL'), color: 'danger', type: 'late' }; } return { label: t('statusP'), color: 'warn', type: 'pending' }; }
     function getCheckedValues(id) { const c = document.getElementById(id); if (!c) return ['all']; const cb = Array.from(c.querySelectorAll('input[type="checkbox"]:checked')); if (cb.length === 0) return ['all']; return cb.map(b => b.value); }
     function sortPQs(a, b) { let pa = a.split('.').map(Number); let pb = b.split('.').map(Number); let numA1 = isNaN(pa[0]) ? 999 : pa[0]; let numB1 = isNaN(pb[0]) ? 999 : pb[0]; if (numA1 !== numB1) return numA1 - numB1; let numA2 = isNaN(pa[1]) ? 999 : pa[1]; let numB2 = isNaN(pb[1]) ? 999 : pb[1]; return numA2 - numB2; }
-    function updateDynamicSubtitle() { const subEl = document.getElementById('mainSubtitle'); if (window_loadedReportDate) { const trMonths = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"]; const enMonths = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]; let d = window_loadedReportDate.getDate(); let m = window_loadedReportDate.getMonth(); let y = window_loadedReportDate.getFullYear(); let dateStr = currentLang === 'tr' ? `${d} ${trMonths[m]} ${y}` : `${d} ${enMonths[m]} ${y}`; subEl.innerText = currentLang === 'tr' ? `Bu veriler, ${dateStr} tarihinde ICAO USOAP OLF'den alınan raporlardan temin edilmiştir.` : `This data was obtained from ICAO USOAP OLF reports dated ${dateStr}.`; subEl.style.color = "var(--primary)"; subEl.style.fontWeight = "600"; subEl.removeAttribute('data-i18n'); } else { subEl.innerText = dict[currentLang].appSubtitle; subEl.style.color = "var(--muted)"; subEl.style.fontWeight = "normal"; subEl.setAttribute('data-i18n', 'appSubtitle'); } }
+    
+    // GÜNCELLEME: BAŞLIK ALTINDAKİ YAZININ ARŞİVDE DE DOĞRU ÇALIŞMASI
+    function updateDynamicSubtitle() { 
+        const subEl = document.getElementById('mainSubtitle'); 
+        if (window_loadedReportDate) { 
+            const trMonths = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"]; 
+            const enMonths = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]; 
+            let d = window_loadedReportDate.getDate(); 
+            let m = window_loadedReportDate.getMonth(); 
+            let y = window_loadedReportDate.getFullYear(); 
+            let dateStr = currentLang === 'tr' ? `${d} ${trMonths[m]} ${y}` : `${d} ${enMonths[m]} ${y}`; 
+            
+            // Eğer veriler arşivden geldiyse ek etiket koy
+            let isArchive = Array.from(loadedFiles).some(f => f.includes('[Arşiv]'));
+            
+            if (isArchive) {
+                subEl.innerText = currentLang === 'tr'
+                    ? `📦 [ARŞİV] Bu veriler, ${dateStr} tarihli arşiv kayıtlarından geri yüklenmiştir.`
+                    : `📦 [ARCHIVE] This data was restored from archive records dated ${dateStr}.`;
+            } else {
+                subEl.innerText = currentLang === 'tr'
+                    ? `Bu veriler, ${dateStr} tarihinde ICAO USOAP OLF'den alınan raporlardan temin edilmiştir.`
+                    : `This data was obtained from ICAO USOAP OLF reports dated ${dateStr}.`;
+            }
+
+            subEl.style.color = "var(--primary)"; 
+            subEl.style.fontWeight = "600"; 
+            subEl.removeAttribute('data-i18n'); 
+        } else { 
+            subEl.innerText = dict[currentLang].appSubtitle; 
+            subEl.style.color = "var(--muted)"; 
+            subEl.style.fontWeight = "normal"; 
+            subEl.setAttribute('data-i18n', 'appSubtitle'); 
+        } 
+    }
+    
     function getEmptyStats() { return { pqs: { total: 0, onSite: 0, offSite: 0, completed: { total: 0, onSite: 0, offSite: 0 } }, actions: { total: 0, onSite: 0, offSite: 0 }, late: { total: 0, onSite: 0, offSite: 0 }, done: { total: 0, onSite: 0, offSite: 0 } }; }
 
     function populateCheckboxes(set, id, isArea = false) { 
@@ -940,8 +1032,6 @@
         populateCheckboxes(icaos, 'icaoFilterList'); 
         if (activeAreas.size > 0) { let restrictedAreas = new Set(); areas.forEach(a => { if (activeAreas.has(a.toString().trim().toUpperCase())) restrictedAreas.add(a); }); populateCheckboxes(restrictedAreas.size > 0 ? restrictedAreas : areas, 'areaFilterList', true); } else populateCheckboxes(areas, 'areaFilterList', true); 
 
-        // Eğer kişi arama kutusunda yazı varken liste yenilenirse (örn. yeni dosya yüklemesi), 
-        // arama filtresini tekrar uygula.
         if(document.getElementById('personSearchInput') && document.getElementById('personSearchInput').value !== "") {
             window.filterPersonCheckboxes();
         }
@@ -1049,11 +1139,9 @@
         let pnl = document.getElementById('warningPanel'); let lst = document.getElementById('warningList');
         if(upcoming.length === 0) { pnl.style.display = 'none'; return; } pnl.style.display = 'block';
 
-        // Hem tarihe hem de aynı günse ICAO alan sıralamasına göre dizilim:
         upcoming.sort((a,b) => {
             let dtA = parseDateObj(a.estDate); let dtB = parseDateObj(b.estDate);
             if (dtA.getTime() !== dtB.getTime()) return dtA - dtB;
-            
             let areaA = pqMasterData[a.pq] && pqMasterData[a.pq].alan ? pqMasterData[a.pq].alan.trim() : "";
             let areaB = pqMasterData[b.pq] && pqMasterData[b.pq].alan ? pqMasterData[b.pq].alan.trim() : "";
             return sortAreas(areaA, areaB);
@@ -1064,7 +1152,6 @@
             return `<div class="warning-item" onclick="switchTab('list'); window.togglePQ('${d.pq.replace(/\./g, '-')}');"><div><span class="badge badge-extra" style="margin-bottom: 6px; padding: 2px 8px; font-size: 10px;">${area}</span><br><b style="color:var(--text); font-size:14px;">PQ ${d.pq}</b> <span style="color:var(--primary); font-size:11px; font-weight:bold; margin-left:4px; background:rgba(37,99,235,0.1); padding:2px 6px; border-radius:4px;">${t('thStep')} ${d.step}</span><br><span style="color:var(--muted); font-size:11px; display:inline-block; margin-top:4px;">${d.office}</span></div><div style="text-align:right;"><span class="days-left">${diffDays} ${t('daysLeft')}</span><br><span style="color:var(--muted); font-size:11px;">${d.estDate}</span></div></div>`;
         };
 
-        // Hangi görünüm seçili kontrol et
         let viewModeElement = document.querySelector('input[name="warnView"]:checked');
         let viewMode = viewModeElement ? viewModeElement.value : "list";
 
@@ -1081,7 +1168,6 @@
                 grouped[area].push(d); 
             });
             
-            // ICAO Standart Sıralaması
             let sortedAreas = Object.keys(grouped).sort(sortAreas);
             
             sortedAreas.forEach(area => {
@@ -1137,7 +1223,7 @@
         document.getElementById('barReal').style.width = (pctReal - pctBase) + '%'; document.getElementById('barProj').style.width = (pctProj - pctReal) + '%';
 
         let displayAreas = isGlobal ? activeAreas.filter(a => loadedAreas.has(a)) : activeAreas;
-        displayAreas.sort(sortAreas); // ICAO standardına göre sırala
+        displayAreas.sort(sortAreas); 
         
         const tbodyMS = document.getElementById('milestoneTableBody'); tbodyMS.innerHTML = "";
         
@@ -1214,12 +1300,45 @@
 
     window.togglePQ = function(safePqId) { const detailRow = document.getElementById(`detail-${safePqId}`); const headRow = document.getElementById(`head-${safePqId}`); const icon = document.getElementById(`icon-${safePqId}`); if(detailRow.classList.contains('active')) { detailRow.classList.remove('active'); headRow.classList.remove('active'); icon.innerText = '🔽'; } else { detailRow.classList.add('active'); headRow.classList.add('active'); icon.innerText = '🔼'; } };
 
-    function calculateOffsiteStats() { offsiteStats = { total: 0, done: 0, pending: 0 }; const groups = {}; const filtered = getFilteredData(); filtered.forEach(d => { const excel = pqMasterData[d.pq] || {}; let tur = (excel.tur || '').toUpperCase(); if(tur.includes('OFF-SITE')) { if (!groups[d.pq]) groups[d.pq] = []; groups[d.pq].push(d); } }); const sortedPQs = Object.keys(groups); offsiteStats.total = sortedPQs.length; sortedPQs.forEach(pq => { const allActionsCount = groups[pq].length; const completedActionsCount = groups[pq].filter(d => getStatus(d).type === 'done').length; if (allActionsCount > 0 && allActionsCount === completedActionsCount) offsiteStats.done++; else offsiteStats.pending++; }); document.getElementById('repTotalOffsite').innerText = offsiteStats.total; document.getElementById('repDoneOffsite').innerText = offsiteStats.done; document.getElementById('repPendingOffsite').innerText = offsiteStats.pending; }
+    function calculateReportStats() { 
+        reportStats = { total: 0, done: 0, pending: 0, onSite: 0, offSite: 0 }; 
+        const groups = {}; 
+        const filtered = getFilteredData(); 
+        filtered.forEach(d => { 
+            if (!groups[d.pq]) groups[d.pq] = []; 
+            groups[d.pq].push(d); 
+        }); 
+        
+        const sortedPQs = Object.keys(groups); 
+        reportStats.total = sortedPQs.length; 
+        
+        sortedPQs.forEach(pq => { 
+            const allActionsCount = groups[pq].length; 
+            const completedActionsCount = groups[pq].filter(d => getStatus(d).type === 'done').length; 
+            if (allActionsCount > 0 && allActionsCount === completedActionsCount) {
+                reportStats.done++; 
+            } else {
+                reportStats.pending++; 
+            }
+            
+            const excel = pqMasterData[pq] || {}; 
+            let tur = (excel.tur || '').toUpperCase(); 
+            if(tur.includes('ON-SITE')) reportStats.onSite++;
+            else if(tur.includes('OFF-SITE')) reportStats.offSite++;
+        }); 
+        
+        document.getElementById('repTotal').innerText = reportStats.total; 
+        document.getElementById('repDone').innerText = reportStats.done; 
+        document.getElementById('repPending').innerText = reportStats.pending; 
+    }
 
     function updateReportPreview() {
-        const today = new Date(); const dateStr = today.toLocaleDateString(currentLang === 'tr' ? 'tr-TR' : 'en-US', { day: 'numeric', month: 'long', year: 'numeric' }); const notes = document.getElementById('managementNotes').value;
-        let html = `<div style="font-size:18px; font-weight:bold; margin-bottom:10px; color:var(--text);">📅 Günlük Off-Site Değerlendirme Raporu</div><div style="font-size:13px; color:var(--muted); margin-bottom:20px;">Tarih: ${dateStr}</div>`;
-        html += `<div style="background: rgba(37,99,235,0.05); padding: 15px; border-radius: 8px; border-left: 4px solid var(--primary); margin-bottom: 15px;"><b>📊 Genel Durum (Off-Site Kapsamı):</b><br>• Sistemde Kayıtlı Toplam Off-Site PQ: <b>${offsiteStats.total}</b><br>• Tüm Eylemleri Tamamlanan: <b>${offsiteStats.done}</b><br>• Değerlendirmesi Süren: <b>${offsiteStats.pending}</b></div>`;
+        const today = new Date(); 
+        const dateStr = today.toLocaleDateString(currentLang === 'tr' ? 'tr-TR' : 'en-US', { day: 'numeric', month: 'long', year: 'numeric' }); 
+        const notes = document.getElementById('managementNotes').value;
+        
+        let html = `<div style="font-size:18px; font-weight:bold; margin-bottom:10px; color:var(--text);">📋 Yönetici Değerlendirme Raporu</div><div style="font-size:13px; color:var(--muted); margin-bottom:20px;">Oluşturulma Tarihi: ${dateStr}</div>`;
+        html += `<div style="background: rgba(37,99,235,0.05); padding: 15px; border-radius: 8px; border-left: 4px solid var(--primary); margin-bottom: 15px;"><b>📊 Genel Durum (Filtrelenen Kapsam):</b><br>• Rapordaki Toplam PQ: <b>${reportStats.total}</b> <i style="font-size:11px; color:var(--muted);">(${reportStats.onSite} On-Site / ${reportStats.offSite} Off-Site)</i><br>• Tüm Eylemleri Tamamlanan: <b>${reportStats.done}</b><br>• Değerlendirmesi Süren: <b>${reportStats.pending}</b></div>`;
 
         let reportEICalcs = {};
         if (Object.keys(baseEIData).length > 0) {
@@ -1252,7 +1371,7 @@
     }
 
     function render() {
-        calculateOffsiteStats(); 
+        calculateReportStats(); 
         if(document.getElementById('tab-report').classList.contains('active')) updateReportPreview();
 
         const tbody = document.getElementById('tableBody'); tbody.innerHTML = ""; const filtered = getFilteredData();
@@ -1309,7 +1428,7 @@
             let pqReportToggleHTML = `<div style="margin-top: 15px; padding-top: 15px; border-top: 1px dashed var(--border); display:flex; flex-direction:column; gap:10px;">
                 <label style="font-size:13px; cursor:pointer; display:inline-flex; align-items:center; gap:8px; color:#0f5132; font-weight:700; background:rgba(16, 185, 129, 0.1); padding:8px 12px; border-radius:6px; border:1px solid rgba(16,185,129,0.3); transition: transform 0.1s; width:fit-content;">
                     <input type="checkbox" onchange="toggleDailyReportPQ('${pq}', this.checked)" ${isPqRepChecked} style="width:16px; height:16px;"> 
-                    📈 Bu PQ'yu Tamamlandı Olarak Günlük Rapora Ekle ve EI'ye Yansıt
+                    📈 Bu PQ'yu Tamamlandı Olarak Rapora Ekle ve EI'ye Yansıt
                 </label>
                 <textarea class="note-input" style="border-color:rgba(16,185,129,0.3); background:rgba(16,185,129,0.02); min-height:50px;" placeholder="Bu PQ için raporunuzda görünecek özel bir not/açıklama ekleyin (Excel 'RAPOR NOTU' sütunu ile de senkronize olur)..." onchange="updatePQNote('${pq}', this.value)">${currentPQNote}</textarea>
             </div>`;
