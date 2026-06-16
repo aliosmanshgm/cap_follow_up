@@ -299,7 +299,6 @@
             
             <button onclick="clearFilters()" class="btn-outline" style="width:100%; margin-bottom:15px; border-color:var(--danger); color:var(--danger); justify-content:center;">🗑️ Filtreleri Temizle</button>
 
-            <!-- AKTİF AKILLI ETİKETLER ALANI -->
             <div class="control-group" id="activeTagsGroup" style="display: none; background: rgba(37,99,235,0.05); padding: 10px; border-radius: 8px; border: 1px dashed var(--primary);">
                 <label style="color: var(--primary);">🎯 Aktif Akıllı Etiketler <span class="control-hint">(OR mantığı ile çalışır)</span></label>
                 <div id="activeTagsContainer" style="display:flex; flex-wrap:wrap; gap:5px; margin-top:5px;"></div>
@@ -307,14 +306,14 @@
 
             <div class="control-group">
                 <label data-i18n="lblSearch">Kelime / PQ Ara</label>
-                <input type="text" id="searchInput" placeholder="Örn: 4.015, Bulgu, Eylem...">
+                <input type="text" id="searchInput" placeholder="Örn: 4.015, Bulgu, Eylem..." oninput="render()">
             </div>
             
             <div class="control-group">
                 <label data-i18n="lblDate">Hedef Tarih Sınırı</label>
                 <div style="display: flex; gap: 10px;">
-                    <input type="date" id="dateStart">
-                    <input type="date" id="dateEnd">
+                    <input type="date" id="dateStart" onchange="render()">
+                    <input type="date" id="dateEnd" onchange="render()">
                 </div>
             </div>
 
@@ -336,15 +335,15 @@
             </div>
 
             <div class="control-group" id="officeFilterListGroup" style="display: none;">
-                <label data-i18n="fOffice">Sorumlu Ofis</label>
+                <label data-i18n="fOffice">Eylem Sorumlu Ofis (Word)</label>
                 <input type="text" id="officeSearchInput" class="filter-search-input" placeholder="🔍 Ofis ara..." onkeyup="filterCheckboxes('officeSearchInput', 'officeFilterList')">
                 <div class="checkbox-list" id="officeFilterList"></div>
             </div>
 
-            <div class="control-group" id="personFilterListGroup" style="display: none;">
-                <label data-i18n="fPerson">Sorumlu Personel</label>
+            <div class="control-group" id="personFilterListGroup" style="display: none; background: rgba(16, 185, 129, 0.05); padding: 8px; border-radius: 6px; border: 1px dashed #10b981;">
+                <label data-i18n="fPerson" style="color: #047857;">PQ Sorumlu Personel (Excel)</label>
                 <input type="text" id="personSearchInput" class="filter-search-input" placeholder="🔍 İsim ara..." onkeyup="filterCheckboxes('personSearchInput', 'personFilterList')">
-                <div class="checkbox-list" id="personFilterList"></div>
+                <div class="checkbox-list" id="personFilterList" style="border-color: #a7f3d0; background: var(--card);"></div>
             </div>
 
             <div class="control-group" id="areaFilterListGroup" style="display: none;"><label data-i18n="fArea">Denetim Alanı</label><div class="checkbox-list" id="areaFilterList"></div></div>
@@ -401,8 +400,6 @@
             </div>
         </div>
 
-        <!-- YENİ SEKMELER -->
-        
         <div id="tab-milestones" class="tab-content">
             <div class="table-wrapper" style="padding: 20px; background: var(--card);">
                 <h4 style="margin: 0 0 15px 0; color: var(--text); display: flex; justify-content: space-between; align-items: center;">
@@ -439,8 +436,6 @@
                 <div id="warningList"></div>
             </div>
         </div>
-
-        <!-- /YENİ SEKMELER -->
 
         <div id="tab-list" class="tab-content">
             <div class="table-wrapper">
@@ -613,7 +608,7 @@
 
 <script>
     window.toggleFiltersPanel = function() { document.getElementById('rightFiltersPanel').classList.toggle('open'); };
-    window.activeSmartTags = new Set(); // YENİ: Akıllı etiketleri hafızada tutar
+    window.activeSmartTags = new Set(); 
 
     window.filterCheckboxes = function(inputId, listId) {
         let filterText = document.getElementById(inputId).value.toLowerCase();
@@ -633,7 +628,7 @@
         if(document.getElementById('officeSearchInput')) document.getElementById('officeSearchInput').value = '';
         if(document.getElementById('personSearchInput')) document.getElementById('personSearchInput').value = '';
         
-        window.activeSmartTags.clear(); // Etiketleri temizle
+        window.activeSmartTags.clear(); 
         
         window.filterCheckboxes('officeSearchInput', 'officeFilterList');
         window.filterCheckboxes('personSearchInput', 'personFilterList');
@@ -641,7 +636,6 @@
         render();
     };
 
-    // YENİ: Akıllı etiket tıklama mantığı (Arama kutusuna yazmak yerine seti günceller)
     window.toggleSmartTag = function(keyword, event) {
         if(event) event.stopPropagation();
         if(window.activeSmartTags.has(keyword)) {
@@ -652,7 +646,6 @@
         render();
     };
 
-    // YENİ: Filtreler panosundaki etiketleri günceller
     function updateActiveTagsUI() {
         let container = document.getElementById('activeTagsContainer');
         let group = document.getElementById('activeTagsGroup');
@@ -1267,7 +1260,6 @@
         });
     }
 
-    // YENİ: Akıllı Etiket Oluşturucu revize edildi (Arama kutusuna yazmaz, Seti tetikler)
     function generateSmartTags(actionText, ceValue = "") {
         let tags = [];
         let lower = (actionText || "").toLowerCase();
@@ -1436,16 +1428,53 @@
     
     document.getElementById('excelInput').addEventListener('change', async (e) => { const file = e.target.files[0]; if(!file) return; showLoading(); await new Promise(r => setTimeout(r, 50)); try { const data = await file.arrayBuffer(); const wb = XLSX.read(data); const wsMaster = wb.Sheets[wb.SheetNames[0]]; const jsonData = XLSX.utils.sheet_to_json(wsMaster); let isBackupFile = jsonData.length > 0 && jsonData[0]['GÜNLÜK RAPORA EKLE'] !== undefined && jsonData[0]['BULGU'] === undefined; if(!isBackupFile) pqMasterData = {}; jsonData.forEach(row => { let pqKey = findPQColumn(row); if(pqKey && row[pqKey]) { let pqStr = normalizePQ(row[pqKey]); if(pqStr) { if(!isBackupFile) { pqMasterData[pqStr] = { alan: getCol(row, ['ALAN', 'AREA', 'DENETİM ALANI']), ce: getCol(row, ['CE', 'KRİTİK', 'CRITICAL']), soru: getCol(row, ['SORU', 'QUESTION']), bulgu: getCol(row, ['BULGU', 'DESCRIPTION', 'FINDING', 'AÇIKLAMA']), tur: getCol(row, ['TÜR', 'TYPE', 'DOĞRULAMA']), degerlendirme: getCol(row, ['DEĞERLENDİRME', 'STATUS', 'ICAO', 'DURUM']), sorumlu: getCol(row, ['SORUMLU', 'PERSONEL']) }; } let rapEkle = getCol(row, ['GÜNLÜK RAPORA EKLE', 'RAPORA EKLE', 'REPORT']); if (rapEkle !== undefined && rapEkle !== null) { let val = String(rapEkle).trim().toUpperCase(); if (val === 'EVET' || val === 'X' || val === '1' || val === 'YES' || val === 'TRUE') dailyReviewedPQs.add(pqStr); else if (val === 'HAYIR' || val === 'NO' || val === '0' || val === 'FALSE') dailyReviewedPQs.delete(pqStr); } let rapNotu = getCol(row, ['RAPOR NOTU', 'PQ NOTU', 'GÜNLÜK AÇIKLAMA']); if (rapNotu !== undefined && rapNotu !== null && String(rapNotu).trim() !== "") dailyPQNotes[pqStr] = String(rapNotu); } } }); let eiSheetName = wb.SheetNames.find(n => n.toUpperCase().includes('EI')); if (eiSheetName) { const wsEI = wb.Sheets[eiSheetName]; const jsonEI = XLSX.utils.sheet_to_json(wsEI); baseEIData = {}; jsonEI.forEach(row => { let alan = row['DENETİM ALANI'] || row['ALAN'] || row['AREA']; let total = parseInt(row['UYGULANABİLİR TOPLAM PQ'] || row['TOPLAM PQ'] || row['TOTAL PQ']); let sat = parseInt(row['MEVCUT SATISFACTORY'] || row['SATISFACTORY'] || row['MEVCUT']); if(alan && !isNaN(total) && !isNaN(sat)) { baseEIData[alan.toString().trim().toUpperCase()] = { total, sat }; } }); if (Object.keys(baseEIData).length > 0) { document.getElementById('eiOverallProgressPanel').style.display = "grid"; document.getElementById('eiChartPanel').style.display = "block"; } else { document.getElementById('eiOverallProgressPanel').style.display = "none"; document.getElementById('eiChartPanel').style.display = "none"; } } else if(!isBackupFile) { document.getElementById('eiOverallProgressPanel').style.display = "none"; document.getElementById('eiChartPanel').style.display = "none"; } loadedExcelFile = file.name; renderFileList(); refreshAllFilters(); saveToLocalStorage(); render(); } catch (err) { alert("Excel Read Error."); } finally { hideLoading(); e.target.value = ""; } });
 
-    // YENİ: Akıllı Etiket (Smart Tag) OR filtrelemesi revize edildi.
+    // DÜZELTME: Arama ve Tarih Sınırı Mantığı daha hassas hale getirildi.
     function getFilteredData() { 
         if (rawData.length === 0) return []; 
-        const search = document.getElementById('searchInput').value.toLowerCase(); const statusVals = getCheckedValues('statusFilterList'); const pqStatusVals = getCheckedValues('pqStatusFilterList'); const personVals = getCheckedValues('personFilterList'); const typeVals = getCheckedValues('typeFilterList'); const officeVals = getCheckedValues('officeFilterList'); const areaVals = getCheckedValues('areaFilterList'); const ceVals = getCheckedValues('ceFilterList'); const icaoVals = getCheckedValues('icaoFilterList'); const dateStart = document.getElementById('dateStart').value; const dateEnd = document.getElementById('dateEnd').value; const pqCompletionMap = {}; rawData.forEach(d => { if (pqCompletionMap[d.pq] === undefined) pqCompletionMap[d.pq] = true; if (getStatus(d).type !== 'done') pqCompletionMap[d.pq] = false; });
+        const search = document.getElementById('searchInput').value.toLowerCase(); 
+        const statusVals = getCheckedValues('statusFilterList'); 
+        const pqStatusVals = getCheckedValues('pqStatusFilterList'); 
+        const personVals = getCheckedValues('personFilterList'); 
+        const typeVals = getCheckedValues('typeFilterList'); 
+        const officeVals = getCheckedValues('officeFilterList'); 
+        const areaVals = getCheckedValues('areaFilterList'); 
+        const ceVals = getCheckedValues('ceFilterList'); 
+        const icaoVals = getCheckedValues('icaoFilterList'); 
+        
+        // Tarih nesnelerini güvenli bir şekilde başa ve sona ayarlıyoruz.
+        const dateStart = document.getElementById('dateStart').value; 
+        const dateEnd = document.getElementById('dateEnd').value; 
+        let dStartObj = dateStart ? new Date(dateStart + "T00:00:00") : null;
+        let dEndObj = dateEnd ? new Date(dateEnd + "T23:59:59") : null;
+
+        const pqCompletionMap = {}; 
+        rawData.forEach(d => { if (pqCompletionMap[d.pq] === undefined) pqCompletionMap[d.pq] = true; if (getStatus(d).type !== 'done') pqCompletionMap[d.pq] = false; });
+        
         return rawData.filter(d => { 
             const excel = pqMasterData[d.pq] || {}; const statType = getStatus(d).type; 
             const matchSearch = d.pq.includes(search) || d.action.toLowerCase().includes(search) || d.office.toLowerCase().includes(search) || (excel.bulgu && excel.bulgu.toLowerCase().includes(search)) || (excel.sorumlu && excel.sorumlu.toLowerCase().includes(search)) || (excel.ce && excel.ce.toLowerCase().includes(search)) || (d.note && d.note.toLowerCase().includes(search)); 
-            const matchStatus = statusVals.includes('all') || statusVals.includes(statType); let matchPqStatus = pqStatusVals.includes('all'); if (!matchPqStatus) { if (pqStatusVals.includes('pq-done') && pqCompletionMap[d.pq]) matchPqStatus = true; if (pqStatusVals.includes('pq-open') && !pqCompletionMap[d.pq]) matchPqStatus = true; }
-            const matchPerson = personVals.includes('all') || personVals.includes(excel.sorumlu); const matchType = typeVals.includes('all') || typeVals.includes(excel.tur); const matchOffice = officeVals.includes('all') || officeVals.includes(d.office.trim()); const matchArea = areaVals.includes('all') || areaVals.includes(excel.alan); const matchCE = ceVals.includes('all') || ceVals.includes(excel.ce); const matchIcao = icaoVals.includes('all') || icaoVals.includes(excel.degerlendirme); 
-            let matchDate = true; if ((dateStart || dateEnd) && d.estDate) { let itemDate = parseDateObj(d.estDate); if (itemDate) { if (dateStart && itemDate < new Date(dateStart)) matchDate = false; if (dateEnd && itemDate > new Date(dateEnd)) matchDate = false; } else matchDate = false; } else if ((dateStart || dateEnd) && !d.estDate) matchDate = false; 
+            const matchStatus = statusVals.includes('all') || statusVals.includes(statType); 
+            
+            let matchPqStatus = pqStatusVals.includes('all'); 
+            if (!matchPqStatus) { if (pqStatusVals.includes('pq-done') && pqCompletionMap[d.pq]) matchPqStatus = true; if (pqStatusVals.includes('pq-open') && !pqCompletionMap[d.pq]) matchPqStatus = true; }
+            
+            const matchPerson = personVals.includes('all') || personVals.includes(excel.sorumlu); 
+            const matchType = typeVals.includes('all') || typeVals.includes(excel.tur); 
+            const matchOffice = officeVals.includes('all') || officeVals.includes(d.office.trim()); 
+            const matchArea = areaVals.includes('all') || areaVals.includes(excel.alan); 
+            const matchCE = ceVals.includes('all') || ceVals.includes(excel.ce); 
+            const matchIcao = icaoVals.includes('all') || icaoVals.includes(excel.degerlendirme); 
+            
+            let matchDate = true; 
+            if (dStartObj || dEndObj) {
+                if (d.estDate) {
+                    let itemDate = parseDateObj(d.estDate);
+                    if (itemDate) {
+                        if (dStartObj && itemDate < dStartObj) matchDate = false;
+                        if (dEndObj && itemDate > dEndObj) matchDate = false;
+                    } else matchDate = false;
+                } else matchDate = false;
+            }
             
             let matchTags = true;
             if (window.activeSmartTags && window.activeSmartTags.size > 0) {
@@ -1588,7 +1617,7 @@
     function render() {
         calculateReportStats(); if(document.getElementById('tab-report').classList.contains('active')) updateReportPreview();
         const tbody = document.getElementById('tableBody'); tbody.innerHTML = ""; const filtered = getFilteredData();
-        updateActiveTagsUI(); // YENİ: Sağ taraftaki filtreler alanında aktif etiketleri gösterir
+        updateActiveTagsUI(); 
         
         if (filtered.length === 0) { if(rawData.length > 0) { tbody.innerHTML = `<tr><td colspan='4' style='text-align:center; padding: 50px; color: var(--muted);'>Sonuç bulunamadı.</td></tr>`; updateCharts([]); if(Object.keys(baseEIData).length > 0) updateEIProjections([]); updateAreaSummary([]); updateWarnings([]); renderKanban([]); } else { tbody.innerHTML = `<tr><td colspan='4' style='text-align:center; padding: 50px; color: var(--muted);'>${t('emptyState')}</td></tr>`; } updateStatsDisplay(getEmptyStats()); return; }
         const groups = {}; filtered.forEach(d => { if (!groups[d.pq]) groups[d.pq] = []; groups[d.pq].push(d); }); const sortedPQs = Object.keys(groups).sort(sortPQs);
