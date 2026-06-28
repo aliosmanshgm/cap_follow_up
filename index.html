@@ -562,8 +562,12 @@
         const files = e.target.files; if (!files.length) return; 
         showLoading(); 
         try { 
+            let existingDataMap = new Set();
+            rawData.forEach(d => existingDataMap.add(`${d.pq}|${d.step}|${d.action}`));
+
             for (let file of files) { 
                 if (loadedFiles.has(file.name)) continue; 
+                await new Promise(r => setTimeout(r, 10)); // UI thread'ini rahatlatmak için yield
                 try { 
                     const zip = await JSZip.loadAsync(file); const xml = await zip.file("word/document.xml").async("string"); 
                     const xmlDoc = new DOMParser().parseFromString(xml, "text/xml"); 
@@ -607,8 +611,11 @@
                         if (filledSteps.length > 0) {
                             // En az bir geçerli adım varsa, sadece DOLU olanları listeye ekle, boş satırları yok say.
                             filledSteps.forEach(s => {
-                                let exists = rawData.some(d => d.pq === currentPQ && d.step === s.step && d.action === s.action); 
-                                if (!exists) { rawData.push({ pq: currentPQ, step: s.step, action: s.action, office: s.office, estDate: s.estDate, progress: s.progress, sourceFile: file.name, note: "", isEmptyCap: false }); } 
+                                let mapKey = `${currentPQ}|${s.step}|${s.action}`;
+                                if (!existingDataMap.has(mapKey)) { 
+                                    rawData.push({ pq: currentPQ, step: s.step, action: s.action, office: s.office, estDate: s.estDate, progress: s.progress, sourceFile: file.name, note: "", isEmptyCap: false }); 
+                                    existingDataMap.add(mapKey);
+                                } 
                             });
                         } else {
                             // Sadece tablonun tamamı boş ise (veya adım yoksa) "Eksik CAP" olarak işaretle.
@@ -642,29 +649,50 @@
         const file = e.target.files[0]; if(!file) return; 
         showLoading(); 
         try { 
-            const data = await file.arrayBuffer(); const wb = XLSX.read(data); const wsMaster = wb.Sheets[wb.SheetNames[0]]; const jsonData = XLSX.utils.sheet_to_json(wsMaster); 
+            const data = await file.arrayBuffer(); 
+            await new Promise(r => setTimeout(r, 10)); // UI thread'ini rahatlat
+            const wb = XLSX.read(data); const wsMaster = wb.Sheets[wb.SheetNames[0]]; const jsonData = XLSX.utils.sheet_to_json(wsMaster); 
+            await new Promise(r => setTimeout(r, 10)); // UI thread'ini rahatlat
+
             let isBackupFile = jsonData.length > 0 && jsonData[0]['GÜNLÜK RAPORA EKLE'] !== undefined && jsonData[0]['BULGU'] === undefined; 
             if(!isBackupFile) pqMasterData = {}; 
             
+            let allKeys = [];
+            for(let i=0; i<Math.min(20, jsonData.length); i++) { Object.keys(jsonData[i]).forEach(k => { if(!allKeys.includes(k)) allKeys.push(k); }); }
+            let kMap = {
+                pq: allKeys.find(k => { let uk = k.toUpperCase().trim(); return uk === 'PQ' || uk === 'PQ NO' || uk === 'PROTOKOL NO' || uk === 'PROTOKOL' || uk === 'PQ NUMBER'; }) || allKeys.find(k => { let uk = k.toUpperCase(); return (uk.includes('PQ') || uk.includes('PROTOKOL')) && !uk.includes('SORU') && !uk.includes('QUESTION'); }),
+                icaoKapanis: allKeys.find(k => ['ICAO KAPATTI MI', 'ICAO ONAYI', 'KAPANDI', 'KAPATILDI', 'ICAO CLOSED'].some(kw => k.toUpperCase().includes(kw))),
+                validasyon: allKeys.find(k => ['VALIDASYON GÖREVİ', 'VALIDASYON', 'GÖREV', 'MISSION', 'EVENT', 'DENETİM'].some(kw => k.toUpperCase().includes(kw))),
+                alan: allKeys.find(k => ['ALAN', 'AREA', 'DENETİM ALANI'].some(kw => k.toUpperCase().includes(kw))),
+                ce: allKeys.find(k => ['CE', 'KRİTİK', 'CRITICAL'].some(kw => k.toUpperCase().includes(kw))),
+                soru: allKeys.find(k => ['SORU', 'QUESTION'].some(kw => k.toUpperCase().includes(kw))),
+                bulgu: allKeys.find(k => ['BULGU', 'DESCRIPTION', 'FINDING', 'AÇIKLAMA'].some(kw => k.toUpperCase().includes(kw))),
+                tur: allKeys.find(k => ['TÜR', 'TYPE', 'DOĞRULAMA'].some(kw => k.toUpperCase().includes(kw))),
+                degerlendirme: allKeys.find(k => ['DEĞERLENDİRME', 'STATUS', 'ICAO', 'DURUM'].some(kw => k.toUpperCase().includes(kw))),
+                sorumlu: allKeys.find(k => ['SORUMLU', 'PERSONEL'].some(kw => k.toUpperCase().includes(kw))),
+                rapEkle: allKeys.find(k => ['GÜNLÜK RAPORA EKLE', 'RAPORA EKLE', 'REPORT'].some(kw => k.toUpperCase().includes(kw))),
+                rapNotu: allKeys.find(k => ['RAPOR NOTU', 'PQ NOTU', 'GÜNLÜK AÇIKLAMA'].some(kw => k.toUpperCase().includes(kw)))
+            };
+
             jsonData.forEach(row => { 
-                let pqKey = findPQColumn(row); 
+                let pqKey = kMap.pq; 
                 if(pqKey && row[pqKey]) { 
                     let pqStr = normalizePQ(row[pqKey]); 
                     if(pqStr) { 
-                        let icaoKapanis = getCol(row, ['ICAO KAPATTI MI', 'ICAO ONAYI', 'KAPANDI', 'KAPATILDI', 'ICAO CLOSED']);
-                        let validasyonGorevi = getCol(row, ['VALIDASYON GÖREVİ', 'VALIDASYON', 'GÖREV', 'MISSION', 'EVENT', 'DENETİM']);
+                        let icaoKapanis = kMap.icaoKapanis ? row[kMap.icaoKapanis] : undefined;
+                        let validasyonGorevi = kMap.validasyon ? row[kMap.validasyon] : undefined;
                         let isIcaoClosed = (icaoKapanis && icaoKapanis.toString().toUpperCase().trim() === 'EVET');
 
                         if(!isBackupFile) { 
-                            let alan = getCol(row, ['ALAN', 'AREA', 'DENETİM ALANI']) || "DİĞER";
+                            let alan = (kMap.alan ? row[kMap.alan] : undefined) || "DİĞER";
                             pqMasterData[pqStr] = { 
-                                alan: alan, ce: getCol(row, ['CE', 'KRİTİK', 'CRITICAL']), soru: getCol(row, ['SORU', 'QUESTION']), bulgu: getCol(row, ['BULGU', 'DESCRIPTION', 'FINDING', 'AÇIKLAMA']), tur: getCol(row, ['TÜR', 'TYPE', 'DOĞRULAMA']), degerlendirme: getCol(row, ['DEĞERLENDİRME', 'STATUS', 'ICAO', 'DURUM']), sorumlu: getCol(row, ['SORUMLU', 'PERSONEL']),
+                                alan: alan, ce: kMap.ce ? row[kMap.ce] : undefined, soru: kMap.soru ? row[kMap.soru] : undefined, bulgu: kMap.bulgu ? row[kMap.bulgu] : undefined, tur: kMap.tur ? row[kMap.tur] : undefined, degerlendirme: kMap.degerlendirme ? row[kMap.degerlendirme] : undefined, sorumlu: kMap.sorumlu ? row[kMap.sorumlu] : undefined,
                                 isIcaoClosed: isIcaoClosed, validasyonGorevi: validasyonGorevi || "Belirtilmedi"
                             }; 
                         } 
 
-                        let rapEkle = getCol(row, ['GÜNLÜK RAPORA EKLE', 'RAPORA EKLE', 'REPORT']); if (rapEkle !== undefined && rapEkle !== null) { let val = String(rapEkle).trim().toUpperCase(); if (val === 'EVET' || val === 'X' || val === '1' || val === 'YES' || val === 'TRUE') dailyReviewedPQs.add(pqStr); else if (val === 'HAYIR' || val === 'NO' || val === '0' || val === 'FALSE') dailyReviewedPQs.delete(pqStr); } 
-                        let rapNotu = getCol(row, ['RAPOR NOTU', 'PQ NOTU', 'GÜNLÜK AÇIKLAMA']); if (rapNotu !== undefined && rapNotu !== null && String(rapNotu).trim() !== "") dailyPQNotes[pqStr] = String(rapNotu); 
+                        let rapEkle = kMap.rapEkle ? row[kMap.rapEkle] : undefined; if (rapEkle !== undefined && rapEkle !== null) { let val = String(rapEkle).trim().toUpperCase(); if (val === 'EVET' || val === 'X' || val === '1' || val === 'YES' || val === 'TRUE') dailyReviewedPQs.add(pqStr); else if (val === 'HAYIR' || val === 'NO' || val === '0' || val === 'FALSE') dailyReviewedPQs.delete(pqStr); } 
+                        let rapNotu = kMap.rapNotu ? row[kMap.rapNotu] : undefined; if (rapNotu !== undefined && rapNotu !== null && String(rapNotu).trim() !== "") dailyPQNotes[pqStr] = String(rapNotu); 
                     } 
                 } 
             }); 
@@ -816,7 +844,13 @@
         }); 
     }
 
+    let renderTimeout = null;
     function render() {
+        if(renderTimeout) clearTimeout(renderTimeout);
+        renderTimeout = setTimeout(() => { executeRender(); }, 50);
+    }
+
+    function executeRender() {
         const filteredData = getFilteredData(); updateActiveTagsUI();
         let stats = { pqs: { total: 0, onSite: 0, offSite: 0, completed: { total: 0, onSite: 0, offSite: 0 } }, actions: { total: 0, onSite: 0, offSite: 0 }, late: { total: 0, onSite: 0, offSite: 0 }, pending: { total: 0, onSite: 0, offSite: 0 }, done: { total: 0, onSite: 0, offSite: 0 } };
         const groups = {}; window.currentFilteredGroups = groups;
@@ -858,10 +892,11 @@
     window.updatePQNote = function(pq, val) { dailyPQNotes[pq] = val; saveToLocalStorage(); if(document.getElementById('tab-report').classList.contains('active')) updateReportPreview(); }
 
     function renderTable(filteredData, groups) {
-        const tbody = document.getElementById('tableBody'); tbody.innerHTML = "";
+        const tbody = document.getElementById('tableBody'); 
         if (filteredData.length === 0) { tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding: 50px; color: var(--muted);">Veri bulunamadı.</td></tr>`; return; }
         
         let sortedPQs = Object.keys(groups).sort(sortPQs);
+        let finalHtml = "";
         sortedPQs.forEach(pq => {
             const items = groups[pq]; const excel = pqMasterData[pq] || {}; const safeId = pq.replace(/\./g, '-');
             const totalItems = items.length; const doneItems = items.filter(i => getStatus(i).type === 'done').length; const pct = Math.round((doneItems / totalItems) * 100);
@@ -886,8 +921,9 @@
                 detailHtml += `<tr><td><b>${item.step}</b></td><td><div style="margin-bottom:8px;">${item.action}</div><div style="margin-bottom:8px;">${tagsHtml}</div><textarea class="note-input" placeholder="Kişisel not ekle..." onchange="updateNote('${pq}', '${item.step}', this.value)">${item.note || ''}</textarea></td><td><b>${item.office}</b></td><td style="white-space:nowrap;">${item.estDate}</td><td style="color:var(--${s.color}); font-weight:bold; white-space:nowrap;">${s.label}</td></tr>`;
             });
             detailHtml += `</tbody></table></div></td></tr>`;
-            tbody.innerHTML += html + detailHtml;
+            finalHtml += html + detailHtml;
         });
+        tbody.innerHTML = finalHtml;
     }
 
     function updateAreaSummary(filteredData) {
@@ -912,15 +948,21 @@
 
     function renderKanban(filteredData) {
         document.getElementById('kb-late').innerHTML = ''; document.getElementById('kb-pending').innerHTML = ''; document.getElementById('kb-done').innerHTML = ''; let lateCount = 0, pendingCount = 0, doneCount = 0; let renderLimit = 100;
+        let lateHtml = '', pendingHtml = '', doneHtml = '';
         filteredData.forEach(d => {
             const stat = getStatus(d); const m = pqMasterData[d.pq] || {}; let isRendered = false;
             if(stat.type === 'late') { lateCount++; if(lateCount <= renderLimit) isRendered = true; } if(stat.type === 'pending') { pendingCount++; if(pendingCount <= renderLimit) isRendered = true; } if(stat.type === 'done') { doneCount++; if(doneCount <= renderLimit) isRendered = true; }
             if(isRendered) {
                 let tagsHtml = generateSmartTags(d.action, m.ce || '');
                 let cardHtml = `<div class="kanban-card" onclick="switchTab('list'); window.togglePQ('${d.pq.replace(/\./g, '-')}');"><div class="kanban-card-meta"><span><b style="color:var(--text); font-size:13px;">PQ ${d.pq}</b> <span style="background:rgba(0,0,0,0.05); padding:2px 6px; border-radius:4px;">${m.alan || 'N/A'}</span></span><span>${d.estDate}</span></div><div class="kanban-card-title">${d.action.substring(0, 150)}${d.action.length > 150 ? '...' : ''}</div><div style="margin-bottom: 5px;">${tagsHtml}</div><div class="kanban-card-footer"><span style="font-size:11px; font-weight:bold; color:var(--primary);">Adım ${d.step}</span><span style="font-size:10px; color:var(--muted); background:var(--bg); padding:2px 6px; border-radius:4px; border:1px solid var(--border);">${d.office}</span></div></div>`;
-                document.getElementById(`kb-${stat.type}`).innerHTML += cardHtml;
+                if(stat.type === 'late') lateHtml += cardHtml;
+                if(stat.type === 'pending') pendingHtml += cardHtml;
+                if(stat.type === 'done') doneHtml += cardHtml;
             }
         });
+        document.getElementById('kb-late').innerHTML = lateHtml;
+        document.getElementById('kb-pending').innerHTML = pendingHtml;
+        document.getElementById('kb-done').innerHTML = doneHtml;
         document.getElementById('kb-late-count').innerText = lateCount > renderLimit ? `100+ (${lateCount})` : lateCount; document.getElementById('kb-pending-count').innerText = pendingCount > renderLimit ? `100+ (${pendingCount})` : pendingCount; document.getElementById('kb-done-count').innerText = doneCount > renderLimit ? `100+ (${doneCount})` : doneCount;
     }
 
