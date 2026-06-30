@@ -16,6 +16,9 @@
 
     <style>
         :root{--bg:#f8fafc;--card:#ffffff;--text:#0f172a;--muted:#64748b;--border:#e2e8f0;--primary:#2563eb;--danger:#ef4444;--warn:#f59e0b;--ok:#10b981;--kanban-bg:#f1f5f9;--gold:#eab308;--icao-blue:#3b82f6}body.dark-mode{--bg:#0f172a;--card:#1e293b;--text:#f8fafc;--muted:#94a3b8;--border:#334155;--primary:#3b82f6;--kanban-bg:#0f172a}body{font-family:'Inter',system-ui,sans-serif;background-color:var(--bg);color:var(--text);margin:0;padding:0;overflow:hidden;line-height:1.5}#loginOverlay{display:flex;position:fixed;top:0;left:0;width:100%;height:100%;background:var(--bg);z-index:10000;justify-content:center;align-items:center;flex-direction:column}.login-box{background:var(--card);padding:40px;border-radius:12px;box-shadow:0 10px 25px rgba(0,0,0,0.1);border:1px solid var(--border);width:320px;text-align:center}.login-box h2{margin-top:0;color:var(--primary);margin-bottom:5px}.login-box p{color:var(--muted);font-size:13px;margin-bottom:25px}.login-input{width:100%;margin-bottom:15px;padding:12px;box-sizing:border-box;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text)}.login-btn{width:100%;justify-content:center;padding:12px;background:var(--primary);color:white;border:none;border-radius:6px;font-weight:bold;cursor:pointer}.login-btn:hover{filter:brightness(1.1)}.tab-content{display:none;animation:fadeIn 0.3s ease}.tab-content.active{display:block}@keyframes fadeIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}#loadingOverlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(255,255,255,0.8);z-index:9999;justify-content:center;align-items:center;flex-direction:column;backdrop-filter:blur(3px)}body.dark-mode #loadingOverlay{background:rgba(15,23,42,0.8)}.spinner{border:5px solid var(--border);border-top:5px solid var(--primary);border-radius:50%;width:50px;height:50px;animation:spin 1s linear infinite}@keyframes spin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}.warning-panel{background:rgba(245,158,11,0.05);border:1px solid rgba(245,158,11,0.3);border-radius:12px;padding:20px;display:block}.warning-panel h4{margin:0;color:var(--warn);display:flex;align-items:center;gap:8px;font-size:16px}.warning-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px}.warning-item{display:flex;justify-content:space-between;align-items:center;padding:10px 15px;background:var(--card);border:1px solid var(--border);border-left:4px solid var(--warn);border-radius:6px;font-size:13px;box-shadow:0 1px 3px rgba(0,0,0,0.05);cursor:pointer;transition:transform 0.1s}.warning-item:hover{transform:translateY(-2px);border-left:4px solid var(--primary);box-shadow:0 4px 6px rgba(0,0,0,0.1)}.days-left{font-weight:800;color:var(--danger);font-size:14px}.file-list-container{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;max-height:85px;overflow-y:auto;padding-right:4px}.sidebar .file-list-container{max-height:70px}.file-list-container::-webkit-scrollbar{width:4px}.file-list-container::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}.file-badge{display:inline-flex;align-items:center;background:var(--kanban-bg);border:1px solid var(--border);padding:4px 8px;border-radius:6px;font-size:10px;color:var(--text);font-weight:500}.file-remove-btn{margin-left:6px;color:var(--danger);cursor:pointer;font-weight:bold;padding:0 4px;border-radius:4px;transition:background 0.2s;font-size:11px}.file-remove-btn:hover{background:#fee2e2}.note-input{width:100%;border:1px dashed var(--border);background:var(--card);color:var(--text);padding:8px;border-radius:6px;font-size:12px;transition:border 0.2s;box-sizing:border-box;resize:vertical;min-height:40px;font-family:inherit}.note-input:focus{border:1px solid var(--primary);outline:none;background:var(--bg)}.ei-panel{background:var(--card);border-radius:12px;border:1px solid var(--border);padding:25px;margin-bottom:25px;display:grid;grid-template-columns:1fr 1.5fr;gap:30px;box-shadow:0 4px 6px -1px rgba(0,0,0,0.05)}.ei-bar-wrapper{width:100%;background:var(--border);height:36px;border-radius:18px;overflow:hidden;display:flex;margin:20px 0;box-shadow:inset 0 2px 4px rgba(0,0,0,0.1)}.ei-bar-base{background:#64748b;height:100%;transition:width 0.8s ease-in-out;display:flex;align-items:center;justify-content:center;color:white;font-size:13px;font-weight:bold;white-space:nowrap;overflow:hidden}.ei-bar-icao{background:var(--icao-blue);height:100%;transition:width 0.8s ease-in-out}.ei-bar-real{background:var(--ok);height:100%;transition:width 0.8s ease-in-out}.ei-bar-proj{background:var(--warn);height:100%;transition:width 0.8s ease-in-out;background-image:repeating-linear-gradient(45deg,transparent,transparent 10px,rgba(255,255,255,0.2) 10px,rgba(255,255,255,0.2) 20px)}.ei-stats-text{display:flex;flex-direction:column;gap:10px;font-size:14px;font-weight:600;color:var(--text);margin-top:15px}.ei-stats-text div{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:var(--kanban-bg);border-radius:6px}.dot{width:12px;height:12px;border-radius:50%;display:inline-block;margin-right:8px}.milestone-table{width:100%;border-collapse:collapse;font-size:13px;text-align:center}.milestone-table th{background:var(--kanban-bg);padding:10px;border-radius:6px 6px 0 0;color:var(--muted);font-weight:700}.milestone-table td{padding:10px;border-bottom:1px solid var(--border);color:var(--text);font-weight:500}.milestone-table tr:hover td{background:var(--kanban-bg)}.ms-passed{color:var(--ok);font-weight:bold}.ms-future{color:var(--warn);font-weight:bold}.ms-unreachable{color:var(--danger);font-size:11px;opacity:0.8}.ms-global-row td{background:rgba(37,99,235,0.05);font-weight:bold;font-size:14px;border-bottom:2px solid var(--primary)}.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:15px;margin-bottom:25px}@media (max-width: 1100px){.stats-grid{grid-template-columns:repeat(2,1fr)}}.stat-card{background:var(--card);padding:15px;border-radius:12px;border:1px solid var(--border);text-align:center;display:flex;flex-direction:column;justify-content:flex-start}.stat-card h3{margin:0;font-size:24px;color:var(--primary)}.stat-card p{margin:5px 0 0;color:var(--muted);font-weight:500;font-size:13px}.stat-detail{margin-top:8px;font-size:12px;color:var(--muted);font-weight:500;line-height:1.4;background:var(--bg);padding:6px 10px;border-radius:6px;display:inline-block}.stat-detail:empty{display:none;padding:0;margin:0}input[type="text"],input[type="date"],select{padding:8px;border:1px solid var(--border);border-radius:6px;background:var(--card);color:var(--text);width:100%;box-sizing:border-box;font-size:12px}input[type="file"]{padding:4px;border:1px solid var(--border);border-radius:6px;background:var(--card);color:var(--text);cursor:pointer;width:100%;font-size:11px}.checkbox-list{border:1px solid var(--border);border-radius:6px;background:var(--card);min-height:70px;max-height:140px;overflow-y:auto;padding:5px}.checkbox-list label{display:flex;align-items:center;gap:6px;padding:4px 6px;cursor:pointer;font-size:11px;text-transform:none;font-weight:500;color:var(--text);transition:background 0.1s;border-radius:4px;margin-bottom:0 !important}.checkbox-list label:hover{background:var(--kanban-bg)}.checkbox-list input[type="checkbox"]{width:13px;height:13px;cursor:pointer;accent-color:var(--primary);margin:0;flex-shrink:0}.filter-search-input{padding:6px;font-size:11px;margin-bottom:5px;border:1px solid var(--border);border-radius:4px;background:var(--bg);color:var(--text);outline:none;width:100%;box-sizing:border-box}button{background:var(--primary);color:white;border:none;padding:8px 12px;border-radius:6px;cursor:pointer;font-weight:600;transition:all 0.2s;white-space:nowrap;height:fit-content;display:flex;align-items:center;gap:5px;font-size:13px}button:hover{filter:brightness(1.1);transform:translateY(-1px)}.btn-outline{background:transparent;border:1px solid var(--border);color:var(--text)}.btn-outline:hover{background:var(--border)}.table-wrapper{background:var(--card);border-radius:12px;border:1px solid var(--border);overflow:hidden;box-shadow:0 4px 6px -1px rgba(0,0,0,0.05)}table{width:100%;border-collapse:collapse;table-layout:fixed}th{background:rgba(0,0,0,0.02);padding:15px;text-align:left;font-size:12px;text-transform:uppercase;color:var(--muted);border-bottom:2px solid var(--border);letter-spacing:0.5px}td{padding:15px;border-bottom:1px solid var(--border);vertical-align:top;font-size:14px}.pq-group-row{background:var(--card);cursor:pointer;transition:background 0.2s}.pq-group-row:hover{background:var(--kanban-bg)}.pq-group-row td{padding:15px;vertical-align:middle}.pq-group-row.active{background:var(--kanban-bg);border-left:4px solid var(--primary)}.pq-group-row.active td:first-child{padding-left:11px}.pq-detail-row{background:var(--kanban-bg);display:none}.pq-detail-row.active{display:table-row}.detail-container{padding:20px;border-left:4px solid var(--primary);background:var(--kanban-bg);box-shadow:inset 0 2px 4px rgba(0,0,0,0.02)}.inner-steps-table{width:100%;border-collapse:collapse;margin-top:15px;background:var(--card);border-radius:8px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.05)}.inner-steps-table th{background:rgba(0,0,0,0.03);padding:12px;font-size:11px;color:var(--muted);text-transform:uppercase;border-bottom:1px solid var(--border)}.inner-steps-table td{padding:12px;border-bottom:1px solid var(--border);font-size:13px;vertical-align:top}.pq-progress-container{width:100%;height:6px;background:var(--border);border-radius:3px;overflow:hidden;margin-top:5px}.pq-progress-fill{height:100%;background:var(--primary);transition:width 0.3s ease}.pq-progress-fill.done{background:var(--ok)}.pq-progress-fill.warn{background:var(--warn)}.finding-box{margin-top:0;font-size:13px;color:var(--text);background:var(--card);padding:20px;border-radius:8px;border:1px solid var(--border);line-height:1.6}.finding-meta{display:flex;gap:20px;flex-wrap:wrap;margin-bottom:12px;padding-bottom:12px;border-bottom:1px dashed var(--border);font-size:12px;color:var(--muted)}.finding-meta span b{color:var(--text)}.truncate{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;text-overflow:ellipsis}.badge{display:inline-flex;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:700;align-items:center;white-space:nowrap;margin-right:5px;margin-bottom:5px}.badge-extra{background:var(--border);color:var(--text);border:1px solid var(--muted)}.badge-pq-done{background:#059669;color:#ffffff;border:1px solid #047857;font-size:12px;padding:5px 12px}.smart-tag{display:inline-block;padding:2px 6px;border-radius:4px;font-size:10px;font-weight:bold;margin-right:4px;margin-top:6px;cursor:pointer;transition:all 0.2s ease}.smart-tag:hover{transform:translateY(-2px);box-shadow:0 3px 5px rgba(0,0,0,0.1);filter:brightness(0.95)}.modal{display:none;position:fixed;z-index:1000;left:0;top:0;width:100%;height:100%;background:rgba(0,0,0,0.5);backdrop-filter:blur(4px)}.modal-content{background:var(--card);margin:5% auto;padding:30px;border-radius:16px;width:65%;max-height:85vh;overflow-y:auto;box-shadow:0 20px 25px -5px rgba(0,0,0,0.1)}.modal-header{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);padding-bottom:15px;margin-bottom:20px}.visual-area{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px;margin-bottom:25px}canvas{max-height:280px;width:100% !important;background:white}.report-layout{display:grid;grid-template-columns:1fr 2fr;gap:20px}.report-textarea{width:100%;height:150px;border:1px solid var(--border);border-radius:8px;padding:15px;font-family:inherit;font-size:14px;resize:vertical;background:var(--kanban-bg);color:var(--text);box-sizing:border-box;margin-bottom:15px}.report-textarea:focus{outline:none;border-color:var(--primary);background:var(--card)}.report-preview-box{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:25px;font-size:14px;line-height:1.6;color:var(--text);height:100%;box-sizing:border-box;overflow-y:auto;max-height:800px;box-shadow:inset 0 2px 4px rgba(0,0,0,0.02)}.report-stat-row{display:flex;gap:10px;margin-bottom:15px}.report-stat-mini{flex:1;background:var(--kanban-bg);padding:15px;border-radius:8px;text-align:center;border:1px solid var(--border)}.report-stat-mini.done{border-bottom:4px solid var(--ok)}.report-stat-mini.pending{border-bottom:4px solid var(--warn)}.report-stat-mini h4{margin:0;font-size:24px;color:var(--text)}.report-stat-mini p{margin:5px 0 0;font-size:12px;color:var(--muted);text-transform:uppercase;font-weight:600}.review-card{background:var(--card);border:1px solid var(--border);border-left:4px solid var(--primary);padding:15px;border-radius:6px;margin-bottom:10px}.review-card-header{display:flex;justify-content:space-between;margin-bottom:8px;font-weight:bold;color:var(--text)}.ei-highlight-box{background:rgba(16,185,129,0.05);border:1px solid rgba(16,185,129,0.2);padding:20px;border-radius:8px;margin-bottom:20px;box-shadow:0 2px 4px rgba(0,0,0,0.02)}.delta-card{text-align:center;padding:20px 15px;border-radius:12px;border:1px solid var(--border);background:var(--card);box-shadow:0 2px 5px rgba(0,0,0,0.02);display:flex;flex-direction:column;justify-content:space-between}.delta-val{font-size:28px;font-weight:bold;margin:8px 0}.delta-pos{color:var(--ok)}.delta-neg{color:var(--danger)}.delta-neu{color:var(--muted)}#mainAppContainer{display:flex !important;height:100vh;padding:0;margin:0;max-width:100%;overflow:hidden}.sidebar{width:280px;background:var(--card);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:20px 0 0 0;box-shadow:2px 0 5px rgba(0,0,0,0.02);z-index:10}.main-content{flex:1;overflow-y:auto;padding:0 30px 20px 30px;background:var(--bg)}.header{position:sticky;top:0;background:var(--bg);z-index:100;display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;padding:20px 0 15px 0;border-bottom:1px solid var(--border)}.tabs-container{display:flex;flex-direction:column;gap:8px;border-bottom:none;padding:0 15px;margin-top:15px;margin-bottom:15px;overflow-y:auto}.tab-btn{text-align:left;border:none;border-radius:8px;padding:12px 15px;font-size:13px;color:var(--muted);background:transparent;cursor:pointer;font-weight:700;transition:all 0.2s}.tab-btn:hover{color:var(--primary);background:var(--kanban-bg)}.tab-btn.active{border-bottom:none;border-left:4px solid var(--primary);background:var(--kanban-bg);border-radius:0 8px 8px 0;color:var(--primary)}.right-panel{position:fixed;top:0;right:-420px;width:340px;height:100vh;background:var(--card);box-shadow:-4px 0 15px rgba(0,0,0,0.05);transition:right 0.3s cubic-bezier(0.4,0,0.2,1);z-index:9999;overflow-y:auto;padding:20px;border-left:1px solid var(--border);display:flex;flex-direction:column;box-sizing:border-box}.right-panel.open{right:0}.right-panel-header{display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid var(--border);padding-bottom:15px;margin-bottom:20px}.right-panel-close{background:none;border:none;font-size:18px;cursor:pointer;color:var(--muted);padding:0;height:auto}.right-panel-close:hover{color:var(--danger);transform:scale(1.1)}.right-panel .control-group{width:100%;min-width:100%;margin-bottom:12px}.right-panel .control-group label{display:block;margin-bottom:4px;font-size:11px;font-weight:600;color:var(--muted)}.right-panel .control-group label span.control-hint{font-weight:normal;font-size:10px;color:var(--muted)}.pq-group-row,.pq-detail-row{content-visibility:auto}.kanban-board{display:flex;gap:15px;height:100%;padding-bottom:20px;overflow-x:auto;align-items:stretch}.kanban-column{flex:1;min-width:320px;background:rgba(0,0,0,0.03);border-radius:12px;padding:15px;display:flex;flex-direction:column;max-height:calc(100vh - 180px)}.kanban-column-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:15px;padding-bottom:10px;border-bottom:2px solid var(--border)}.kanban-column-header h4{margin:0;font-size:15px;color:var(--text);display:flex;align-items:center;gap:8px}.kanban-count{background:var(--card);padding:2px 8px;border-radius:12px;font-size:11px;border:1px solid var(--border);font-weight:bold}.kanban-cards{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:12px;padding-right:5px}.kanban-cards::-webkit-scrollbar{width:6px}.kanban-cards::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}.kanban-card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:15px;box-shadow:0 2px 4px rgba(0,0,0,0.02);transition:transform 0.1s,box-shadow 0.1s;display:flex;flex-direction:column;cursor:pointer;border-left:4px solid var(--border)}.kanban-card:hover{transform:translateY(-2px);box-shadow:0 4px 8px rgba(0,0,0,0.05)}.kanban-card-meta{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;font-size:11px;color:var(--muted)}.kanban-card-title{font-size:13px;font-weight:500;color:var(--text);margin-bottom:10px;line-height:1.4}.kanban-card-footer{display:flex;justify-content:space-between;align-items:flex-end;margin-top:auto;border-top:1px dashed var(--border);padding-top:8px}
+    
+        .past-panel{background:rgba(239,68,68,0.05);border-color:rgba(239,68,68,0.30)}.past-panel h4{color:var(--danger)!important}.past-summary-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin:0 0 15px 0}.past-summary-card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px 12px}.past-summary-card b{display:block;font-size:20px;color:var(--danger);line-height:1.1}.past-summary-card span{font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase}.task-card-critical{border-left-color:var(--danger)!important}.task-card-upcoming{border-left-color:var(--warn)!important}.trend-insight-box{background:linear-gradient(135deg,rgba(37,99,235,0.08),rgba(16,185,129,0.08));border:1px solid rgba(37,99,235,0.20);border-radius:12px;padding:18px;margin-bottom:18px}.trend-insight-box h4{margin:0 0 8px 0;color:var(--primary);font-size:15px}.trend-insight-box p{margin:0;color:var(--text);font-size:13px;line-height:1.6}.mini-kpi-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:10px;margin:10px 0}.mini-kpi{background:var(--kanban-bg);border:1px solid var(--border);border-radius:8px;padding:10px;text-align:center}.mini-kpi strong{display:block;font-size:18px;color:var(--text)}.mini-kpi span{font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase}
+
     </style>
 </head>
 <body>
@@ -50,6 +53,7 @@
             <button class="tab-btn" onclick="switchTab('milestones')" id="btn-tab-milestones">🗓️ Hedef Tabloları</button>
             <button class="tab-btn" onclick="switchTab('summary')" id="btn-tab-summary">📈 Alan Özetleri</button>
             <button class="tab-btn" onclick="switchTab('upcoming')" id="btn-tab-upcoming">⚠️ Yaklaşan Görevler</button>
+            <button class="tab-btn" onclick="switchTab('past')" id="btn-tab-past" style="color: var(--danger);">⏳ Geçmiş Görevler</button>
             <button class="tab-btn" onclick="switchTab('list')" id="btn-tab-list">📋 Detaylı CAP Listesi</button>
             <button class="tab-btn" onclick="switchTab('kanban')" id="btn-tab-kanban">🗂️ Kanban Board</button>
             <button class="tab-btn" onclick="switchTab('report')" id="btn-tab-report">📝 Yönetici Raporu</button>
@@ -190,7 +194,7 @@
                         </div>
                         <div class="ei-stats-text">
                             <div><span><i class="dot" style="background:#64748b;"></i> <b>CMAA EI (%):</b></span> <span id="lblBase">%0.00</span></div>
-                            <div><span><i class="dot" style="background:var(--icao-blue);"></i> <b>OSVA EI (%):</b></span> <span id="lblIcao" style="color:var(--icao-blue);">%0.00</span></div>
+                            <div><span><i class="dot" style="background:var(--icao-blue);"></i> <b>ICAO Validasyonları EI (%):</b></span> <span id="lblIcao" style="color:var(--icao-blue);">%0.00</span></div>
                             <div><span><i class="dot" style="background:var(--ok);"></i> <b>CAP Adımları Tamamlanmışlar Dahil EI (%):</b></span> <span id="lblLocal" style="color:var(--ok);">%0.00</span></div>
                             <div style="border-left: 4px solid var(--warn);"><span><i class="dot" style="background:var(--warn);"></i> <b>Tüm CAP'ler Tamamlanmışlar Dahil EI (%):</b></span> <span id="lblProj" style="color:var(--warn); font-size: 16px;">%0.00</span></div>
                         </div>
@@ -226,21 +230,24 @@
                     <span>🗓️ Genel ve Alan Bazında Hedef Tablosu</span>
                     <button onclick="showGapReport()" style="background: var(--danger); font-size: 11px; padding: 4px 10px; border-radius: 6px;">🔍 Kök Neden: Neden Ulaşılamıyor?</button>
                 </h4>
-                <p style="font-size:12px; color:var(--muted); margin-top:0;">Ekranda filtrelenen eylemlerin başarıyla tamamlanması durumunda hedeflenen oranlara ne zaman ulaşılacağını gösterir.</p>
-                <table class="milestone-table">
-                    <thead><tr><th style="text-align: left;">Denetim Alanı / Kapsam</th><th>CMAA (Başlangıç)</th><th>%60 Hedefi</th><th>%70 Hedefi</th><th>%80 Hedefi</th><th>%90 Hedefi</th><th>%100 Hedefi</th></tr></thead>
-                    <tbody id="milestoneTableBody"></tbody>
-                </table>
+                <p style="font-size:12px; color:var(--muted); margin-top:0;">Hesaplama PQ bazındadır: bir PQ, ancak o PQ'ya ait tüm dolu CAP adımları tamamlandığında EI projeksiyonuna eklenir. Tarih, ilgili PQ'nun tüm adımları içindeki en geç hedef/tamamlanma tarihidir.</p>
+                <div style="overflow-x:auto;">
+                    <table id="milestoneTable" class="milestone-table" style="min-width: 1120px;">
+                        <thead><tr id="milestoneHeaderRow"><th style="text-align: left; width: 18%;">Denetim Alanı / Kapsam</th><th>CMAA (Başlangıç)</th><th>ICAO Validasyonu</th><th>Mevcut EI</th><th>%60 Hedefi</th><th>%70 Hedefi</th><th>%80 Hedefi</th><th>%90 Hedefi</th><th>%100 Hedefi</th></tr></thead>
+                        <tbody id="milestoneTableBody"></tbody>
+                    </table>
+                </div>
             </div>
 
             <div class="table-wrapper" style="padding: 20px; background: var(--card); margin-top: 20px;">
                 <h4 style="margin: 0 0 15px 0; color: var(--primary);">🎯 Hedef Simülatörü</h4>
-                <div style="display:flex; gap:10px; align-items:flex-end;">
-                    <div style="flex:1;">
+                <p style="font-size:12px; color:var(--muted); margin-top:-8px;">Seçilen hedef orana ulaşmak için mevcut CAP havuzunun yeterli olup olmadığını ve yeterliyse hangi tarihte yakalanabileceğini hesaplar.</p>
+                <div style="display:flex; gap:10px; align-items:flex-end; flex-wrap:wrap;">
+                    <div style="flex:1; min-width:220px;">
                         <label style="font-size:11px; font-weight:bold; color:var(--muted);">Denetim Alanı</label>
                         <select id="simAreaSelect" style="width:100%;"></select>
                     </div>
-                    <div style="flex:1;">
+                    <div style="flex:1; min-width:180px;">
                         <label style="font-size:11px; font-weight:bold; color:var(--muted);">Hedef Oran (%)</label>
                         <select id="simTargetSelect" style="width:100%;">
                             <option value="60">%60</option>
@@ -256,6 +263,25 @@
                     </div>
                 </div>
                 <div id="simResult" style="margin-top:15px; font-size:14px; font-weight:600; color:var(--text); padding:15px; background:var(--kanban-bg); border-radius:6px; border:1px dashed var(--border); display:none;"></div>
+            </div>
+
+            <div class="table-wrapper" style="padding: 20px; background: var(--card); margin-top: 20px; border-color: rgba(16,185,129,0.35);">
+                <h4 style="margin: 0 0 15px 0; color: var(--ok);">📅 Tarih Bazlı EI Projeksiyon Simülatörü</h4>
+                <p style="font-size:12px; color:var(--muted); margin-top:-8px;">Örnek: <b>31.12.2026</b> girildiğinde, o tarihe kadar hedef tarihi gelen tüm açık CAP adımlarının tamamlanacağı olumlu varsayımıyla EI oranını hesaplar.</p>
+                <div style="display:flex; gap:10px; align-items:flex-end; flex-wrap:wrap;">
+                    <div style="flex:1; min-width:220px;">
+                        <label style="font-size:11px; font-weight:bold; color:var(--muted);">Denetim Alanı</label>
+                        <select id="dateSimAreaSelect" style="width:100%;"></select>
+                    </div>
+                    <div style="flex:1; min-width:180px;">
+                        <label style="font-size:11px; font-weight:bold; color:var(--muted);">Projeksiyon Tarihi</label>
+                        <input type="text" id="dateSimTargetDate" placeholder="31.12.2026" value="31.12.2026" style="width:100%;">
+                    </div>
+                    <div>
+                        <button onclick="runDateSimulator()" style="background:var(--ok);">Tarihe Göre Hesapla</button>
+                    </div>
+                </div>
+                <div id="dateSimResult" style="margin-top:15px; font-size:14px; font-weight:600; color:var(--text); padding:15px; background:var(--kanban-bg); border-radius:6px; border:1px dashed var(--border); display:none;"></div>
             </div>
         </div>
 
@@ -279,6 +305,29 @@
                     </div>
                 </div>
                 <div id="warningList"></div>
+            </div>
+        </div>
+
+        <div id="tab-past" class="tab-content">
+            <div class="warning-panel past-panel" id="pastTasksPanel" style="margin-top: 0;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap:wrap; gap:10px;">
+                    <div>
+                        <h4 style="margin: 0; display: flex; align-items: center; gap: 8px; font-size: 15px;">⏳ Geçmiş Görevler / Tarihi Geçmiş Açık Eylemler</h4>
+                        <p style="font-size:12px; color:var(--muted); margin:4px 0 0 0;">Tamamlanmamış ve hedef tarihi bugün itibarıyla geçmiş CAP adımlarını listeler.</p>
+                    </div>
+                    <div style="display: flex; gap: 10px; font-size: 11px; font-weight: 600; background: var(--card); padding: 4px 10px; border-radius: 6px; border: 1px solid var(--border); align-items:center; flex-wrap:wrap;">
+                        <select id="pastRangeSelect" onchange="render()" style="width:auto; min-width:130px; padding:5px; font-size:11px;">
+                            <option value="all">Tüm geçmiş</option>
+                            <option value="30">Son 30 gün</option>
+                            <option value="90">Son 90 gün</option>
+                            <option value="180">Son 180 gün</option>
+                        </select>
+                        <label style="cursor:pointer; display:flex; align-items:center; gap:5px;"><input type="radio" name="pastView" value="list" checked onchange="render()" style="margin:0; width:auto; height:auto;"> ⏱️ Tarihe Göre</label>
+                        <label style="cursor:pointer; display:flex; align-items:center; gap:5px;"><input type="radio" name="pastView" value="group" onchange="render()" style="margin:0; width:auto; height:auto;"> 🗂️ Alana Göre</label>
+                    </div>
+                </div>
+                <div id="pastTasksSummary"></div>
+                <div id="pastTasksList"></div>
             </div>
         </div>
 
@@ -372,9 +421,13 @@
             </div>
 
             <div id="trendResultsArea" style="display: none;">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 15px;">
+                <div id="trendInsightBox" class="trend-insight-box"></div>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 15px; gap:10px; flex-wrap:wrap;">
                     <h3 style="margin:0; color:var(--text); font-size: 16px;">📊 Fark Analizi (Delta) Özeti</h3>
-                    <button onclick="exportTrendPDF()" style="background: #dc2626; color:white;">📄 Kıyaslama Raporu (PDF)</button>
+                    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                        <button onclick="exportTrendExcel()" style="background:#059669; color:white;">📊 Kıyaslama Excel</button>
+                        <button onclick="exportTrendPDF()" style="background: #dc2626; color:white;">📄 Kıyaslama Raporu (PDF)</button>
+                    </div>
                 </div>
                 
                 <div class="visual-area" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
@@ -459,7 +512,7 @@
         document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active')); document.querySelectorAll('.tab-btn').forEach(t => { t.classList.remove('active'); t.style.color = "var(--muted)"; }); 
         document.getElementById('tab-' + tabId).classList.add('active'); let btn = document.getElementById('btn-tab-' + tabId); btn.classList.add('active'); 
         if(tabId === 'report' || tabId === 'trend' || tabId === 'kanban') { btn.style.color = "var(--primary)"; }
-        if(tabId === 'empty-caps') { btn.style.color = "var(--danger)"; }
+        if(tabId === 'past' || tabId === 'empty-caps') { btn.style.color = "var(--danger)"; }
         if(tabId === 'icao-closed') { btn.style.color = "#ca8a04"; }
         if(tabId === 'report') updateReportPreview(); document.getElementById('rightFiltersPanel').classList.remove('open');
         if(tabId === 'dashboard') { if(charts.s) charts.s.resize(); if(charts.d) charts.d.resize(); if(charts.o) charts.o.resize(); if(charts.ei) charts.ei.resize(); } 
@@ -514,9 +567,19 @@
     function normalizePQ(rawPq) { if (!rawPq) return ""; let str = rawPq.toString().trim().replace(',', '.'); if (/^\d{4}$/.test(str)) str = str.slice(0,1) + '.' + str.slice(1); if (/^\d{5}$/.test(str)) str = str.slice(0,2) + '.' + str.slice(2); let match = str.match(/\b(\d{1,2}\.\d{3})\b/); if (match) return match[1]; if (!isNaN(str) && str.includes('.')) { let parts = str.split('.'); if (parts[0].length >= 1 && parts[0].length <= 2) { if (parts[1].length === 1) return parts[0] + '.' + parts[1] + '00'; if (parts[1].length === 2) return parts[0] + '.' + parts[1] + '0'; if (parts[1].length === 3) return str; } } return str; }
     function findPQColumn(row) { const keys = Object.keys(row); for (let k of keys) { let uk = k.toUpperCase().trim(); if (uk === 'PQ' || uk === 'PQ NO' || uk === 'PROTOKOL NO' || uk === 'PROTOKOL' || uk === 'PQ NUMBER') return k; } for (let k of keys) { let uk = k.toUpperCase(); if ((uk.includes('PQ') || uk.includes('PROTOKOL')) && !uk.includes('SORU') && !uk.includes('QUESTION')) return k; } return null; }
     function getCol(row, keywords) { let key = Object.keys(row).find(k => keywords.some(kw => k.toUpperCase().includes(kw))); return key ? row[key] : ""; }
-    let getCellText = (cellNode) => { let text = ""; let paras = cellNode.getElementsByTagName("w:p"); for (let p = 0; p < paras.length; p++) { let ts = paras[p].getElementsByTagName("w:t"); for (let t = 0; t < ts.length; t++) text += ts[t].textContent; text += "\n"; } return text.trim(); };
-    function extractValidDateStr(txt) { if (!txt) return ""; let m = txt.match(/\d{1,2}[\.\/\-]\d{1,2}[\.\/\-]\d{2,4}/); return m ? m[0] : txt.trim(); }
-    function parseDateObj(txt) { if (!txt) return null; let m = txt.match(/(\d{1,2})[\.\/\-](\d{1,2})[\.\/\-](\d{2,4})/); if (m) { let day = parseInt(m[1], 10), month = parseInt(m[2], 10) - 1, year = parseInt(m[3], 10); if (year < 100) year += 2000; return new Date(year, month, day); } return null; }
+    function getDirectChildElements(node, localName) {
+        return Array.from(node.childNodes || []).filter(n => n.nodeType === 1 && (n.localName === localName || n.nodeName === "w:" + localName));
+    }
+    function getRowCells(rowNode) {
+        let directCells = getDirectChildElements(rowNode, "tc");
+        return directCells.length > 0 ? directCells : Array.from(rowNode.getElementsByTagName("w:tc"));
+    }
+    function cleanDocxCellText(txt) {
+        return (txt || "").replace(/\u00a0/g, " ").replace(/[ \t]+\n/g, "\n").replace(/\n[ \t]+/g, "\n").replace(/\n{3,}/g, "\n\n").trim();
+    }
+    let getCellText = (cellNode) => { let text = ""; let paras = cellNode.getElementsByTagName("w:p"); for (let p = 0; p < paras.length; p++) { let ts = paras[p].getElementsByTagName("w:t"); for (let t = 0; t < ts.length; t++) text += ts[t].textContent; text += "\n"; } return cleanDocxCellText(text); };
+    function extractValidDateStr(txt) { if (!txt) return ""; let cleaned = txt.replace(/click here( to enter a date\.?)?/ig, '').replace(/(\d{1,2}[\.\/\-]\d{1,2}[\.\/\-]\d{2})\s+(\d{2})/g, '$1$2').replace(/\s+/g, ' ').trim(); let m = cleaned.match(/\d{1,2}[\.\/\-]\d{1,2}[\.\/\-]\d{2,4}/); return m ? m[0] : cleaned; }
+    function parseDateObj(txt) { if (!txt) return null; let raw = txt.toString().trim(); let iso = raw.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/); let day, month, year; if (iso) { year = parseInt(iso[1], 10); month = parseInt(iso[2], 10) - 1; day = parseInt(iso[3], 10); } else { let m = raw.match(/(\d{1,2})[\.\/\-](\d{1,2})[\.\/\-](\d{2,4})/); if (!m) return null; day = parseInt(m[1], 10); month = parseInt(m[2], 10) - 1; year = parseInt(m[3], 10); if (year < 100) year += 2000; } let dt = new Date(year, month, day); if (dt.getFullYear() !== year || dt.getMonth() !== month || dt.getDate() !== day) return null; dt.setHours(0,0,0,0); return dt; }
     function getStatus(d) { let p = (d.progress || "").toLowerCase(); if (p.includes('completed') || p.includes('tamamlandı') || p.includes('100') || p.trim() === '100') return { label: 'Tamamlandı', color: 'ok', type: 'done' }; if (d.estDate && d.estDate !== "Kapatıldı" && d.estDate !== "Tarih Yok") { let dt = parseDateObj(d.estDate); if (dt && dt < new Date()) return { label: 'Gecikmiş', color: 'danger', type: 'late' }; } return { label: 'Bekliyor', color: 'warn', type: 'pending' }; }
     function getCheckedValues(id) { const c = document.getElementById(id); if (!c) return ['all']; const cb = Array.from(c.querySelectorAll('input[type="checkbox"]:checked')); if (cb.length === 0) return ['all']; return cb.map(b => b.value); }
     
@@ -558,83 +621,158 @@
     }
 
     // WORD DOSYASI YÜKLEME VE YENİ UYARI MANTIĞI
-    document.getElementById('docxInput').addEventListener('change', async (e) => { 
-        const files = e.target.files; if (!files.length) return; 
-        showLoading(); 
-        try { 
-            for (let file of files) { 
-                if (loadedFiles.has(file.name)) continue; 
-                try { 
-                    const zip = await JSZip.loadAsync(file); const xml = await zip.file("word/document.xml").async("string"); 
-                    const xmlDoc = new DOMParser().parseFromString(xml, "text/xml"); 
-                    
-                    const tables = xmlDoc.getElementsByTagName("w:tbl"); 
-                    for (let i = 0; i < tables.length; i++) { 
-                        let tableText = ""; 
-                        const tNodes = tables[i].getElementsByTagName("w:t"); 
-                        for(let t=0; t<tNodes.length; t++) tableText += tNodes[t].textContent + " "; 
-                        
-                        let currentPQ = "Bilinmeyen PQ";
-                        let pqMatch = tableText.match(/\b(\d{1,2}\.\d{3})\b/); 
-                        if (pqMatch) {
-                            currentPQ = normalizePQ(pqMatch[1]); 
-                        }
+    // 30.06.2026 düzeltmesi: ICAO OLF bazı DOCX çıktılarında tüm PQ'ları tek büyük Word tablosu içinde üretiyor.
+    // Bu parser artık "tablo = tek PQ" varsayımı yapmaz; satır satır ilerleyerek her yeni PROTOCOL FINDING/PQ başlığında bölümü değiştirir.
+    function detectPQHeaderFromCells(cellTexts) {
+        const normalizedCells = cellTexts.map(t => (t || "").replace(/\s+/g, " ").trim());
+        const rowText = normalizedCells.join(" ").trim();
+        if (!rowText) return "";
 
-                        let tempSteps = [];
+        // Gerçek PQ başlık satırı; örn: Not Satisfactory / CE-2 / 8.001 / soru metni.
+        // Eylem satırlarında geçen "PQ No. 8.053" gibi referansları yanlışlıkla yeni bölüm saymamak için
+        // CE veya Satisfactory bağlamı arıyoruz ve PQ'nun bir hücrenin başında olmasını tercih ediyoruz.
+        const hasStatusContext = /\b(?:Not\s+)?Satisfactory\b/i.test(rowText);
+        const hasCeContext = /\bCE-\d+\b/i.test(rowText);
+        const pqAtCellStart = normalizedCells.map(t => t.match(/^\s*(\d{1,2}\.\d{3})\b/)).find(Boolean);
+        if (pqAtCellStart && (hasStatusContext || hasCeContext)) return normalizePQ(pqAtCellStart[1]);
 
-                        const rows = tables[i].getElementsByTagName("w:tr"); 
-                        for (let r = 0; r < rows.length; r++) { 
-                            const rCells = rows[r].getElementsByTagName("w:tc"); 
-                            if (rCells.length >= 7) { 
-                                let step = getCellText(rCells[0]).trim(); 
-                                if (/^\d+$/.test(step)) { 
-                                    let action = getCellText(rCells[1]) || ""; let office = getCellText(rCells[2]) || ""; let progress = getCellText(rCells[rCells.length - 1]) || ""; 
-                                    let isCompleted = progress.toLowerCase().includes('completed') || progress.toLowerCase().includes('tamamlandı') || progress.includes('100'); 
-                                    let estDateRaw = extractValidDateStr(getCellText(rCells[4]).replace(/click here( to enter a date\.?)?/ig, '')); 
-                                    let revDateRaw = extractValidDateStr(getCellText(rCells[5]).replace(/click here( to enter a date\.?)?/ig, '')); 
-                                    let compDateRaw = extractValidDateStr(getCellText(rCells[6]).replace(/click here( to enter a date\.?)?/ig, '')); 
-                                    let finalDate = estDateRaw; if (/^\d/.test(revDateRaw)) finalDate = revDateRaw; if (isCompleted && /^\d/.test(compDateRaw)) finalDate = compDateRaw; 
+        // Yedek kural: bazı Word çıktılarında PQ hücresi başta görünmeyebilir; yine de CE/Status bağlamı varsa başlık kabul et.
+        if (hasStatusContext && hasCeContext) {
+            const pqAnywhere = rowText.match(/\b(\d{1,2}\.\d{3})\b/);
+            if (pqAnywhere) return normalizePQ(pqAnywhere[1]);
+        }
+        return "";
+    }
 
-                                    let isPlaceholder = action.trim() === "" || action.toLowerCase().includes("click here") || action.trim().length < 4; 
-                                    
-                                    tempSteps.push({ step, action, office, estDate: finalDate, progress, isPlaceholder });
-                                } 
-                            } 
-                        } 
-                        
-                        let filledSteps = tempSteps.filter(s => !s.isPlaceholder);
+    function parseCapStepFromRow(rCells) {
+        if (!rCells || rCells.length < 7) return null;
+        let step = getCellText(rCells[0]).trim();
+        if (!/^\d+$/.test(step)) return null;
 
-                        if (filledSteps.length > 0) {
-                            // En az bir geçerli adım varsa, sadece DOLU olanları listeye ekle, boş satırları yok say.
-                            filledSteps.forEach(s => {
-                                let exists = rawData.some(d => d.pq === currentPQ && d.step === s.step && d.action === s.action); 
-                                if (!exists) { rawData.push({ pq: currentPQ, step: s.step, action: s.action, office: s.office, estDate: s.estDate, progress: s.progress, sourceFile: file.name, note: "", isEmptyCap: false }); } 
-                            });
-                        } else {
-                            // Sadece tablonun tamamı boş ise (veya adım yoksa) "Eksik CAP" olarak işaretle.
-                            if (tempSteps.length > 0 || tableText.includes("PROTOCOL FINDING") || tableText.includes("CAP Action Items")) {
-                                if (currentPQ !== "Bilinmeyen PQ") {
-                                    let exists = rawData.some(d => d.pq === currentPQ); 
-                                    if (!exists) { 
-                                        rawData.push({ 
-                                            pq: currentPQ, step: "-", action: "⚠️ OLF üzerinde CAP (Eylem Planı) adımları hiç girilmemiştir veya tamamı boştur.", 
-                                            office: "Belirtilmedi", estDate: "Tarih Yok", progress: "0%", sourceFile: file.name, note: "", isEmptyCap: true
-                                        }); 
-                                    }
-                                }
-                            }
-                        }
-                    } 
-                    loadedFiles.add(file.name); 
-                } catch (err) { console.error("Zip parse error:", err); } 
-            } 
-            recalculateGlobalStateFromFiles(); 
-            renderFileList(); refreshAllFilters(); saveToLocalStorage(); render(); 
+        let action = cleanDocxCellText(getCellText(rCells[1]) || "");
+        let office = cleanDocxCellText(getCellText(rCells[2]) || "");
+        let progress = cleanDocxCellText(getCellText(rCells[rCells.length - 1]) || "");
+        let isCompleted = progress.toLowerCase().includes('completed') || progress.toLowerCase().includes('tamamlandı') || progress.includes('100');
+
+        let estDateRaw = extractValidDateStr(getCellText(rCells[4]));
+        let revDateRaw = extractValidDateStr(getCellText(rCells[5]));
+        let compDateRaw = extractValidDateStr(getCellText(rCells[6]));
+        let finalDate = estDateRaw;
+        if (/^\d/.test(revDateRaw)) finalDate = revDateRaw;
+        if (isCompleted && /^\d/.test(compDateRaw)) finalDate = compDateRaw;
+
+        let isPlaceholder = action.trim() === "" || action.toLowerCase().includes("click here") || action.trim().length < 4;
+        return { step, action, office, estDate: finalDate || "Tarih Yok", progress: progress || "0%", isPlaceholder };
+    }
+
+    function pushParsedCapSection(section, fileName) {
+        let result = { addedActions: 0, addedEmptyCaps: 0 };
+        if (!section || !section.pq || section.pq === "Bilinmeyen PQ") return result;
+
+        let filledSteps = section.tempSteps.filter(s => !s.isPlaceholder);
+        if (filledSteps.length > 0) {
+            filledSteps.forEach(s => {
+                let exists = rawData.some(d => d.pq === section.pq && d.step === s.step && d.action === s.action);
+                if (!exists) {
+                    rawData.push({ pq: section.pq, step: s.step, action: s.action, office: s.office, estDate: s.estDate, progress: s.progress, sourceFile: fileName, note: "", isEmptyCap: false });
+                    result.addedActions++;
+                }
+            });
+        } else if (section.tempSteps.length > 0 || section.hasCapMarker || section.hasProtocolMarker) {
+            let exists = rawData.some(d => d.pq === section.pq);
+            if (!exists) {
+                rawData.push({
+                    pq: section.pq,
+                    step: "-",
+                    action: "⚠️ OLF üzerinde CAP (Eylem Planı) adımları hiç girilmemiştir veya tamamı boştur.",
+                    office: "Belirtilmedi",
+                    estDate: "Tarih Yok",
+                    progress: "0%",
+                    sourceFile: fileName,
+                    note: "",
+                    isEmptyCap: true
+                });
+                result.addedEmptyCaps++;
+            }
+        }
+        return result;
+    }
+
+    function parseDocxCapTables(xmlDoc, fileName) {
+        const tables = Array.from(xmlDoc.getElementsByTagName("w:tbl"));
+        let stats = { tables: tables.length, pqSections: 0, addedActions: 0, addedEmptyCaps: 0 };
+
+        tables.forEach((table) => {
+            let currentSection = null;
+            const rows = Array.from(table.getElementsByTagName("w:tr"));
+
+            const finalizeCurrentSection = () => {
+                let added = pushParsedCapSection(currentSection, fileName);
+                stats.addedActions += added.addedActions;
+                stats.addedEmptyCaps += added.addedEmptyCaps;
+                currentSection = null;
+            };
+
+            rows.forEach((row) => {
+                const rCells = getRowCells(row);
+                const cellTexts = rCells.map(c => getCellText(c));
+                const rowText = cellTexts.join(" ");
+                const detectedPQ = detectPQHeaderFromCells(cellTexts);
+
+                if (detectedPQ) {
+                    finalizeCurrentSection();
+                    currentSection = { pq: detectedPQ, tempSteps: [], hasCapMarker: false, hasProtocolMarker: true };
+                    stats.pqSections++;
+                    return;
+                }
+
+                if (!currentSection) return;
+
+                if (rowText.includes("CAP Action Items")) currentSection.hasCapMarker = true;
+                if (rowText.includes("PROTOCOL FINDING")) currentSection.hasProtocolMarker = true;
+
+                let parsedStep = parseCapStepFromRow(rCells);
+                if (parsedStep) currentSection.tempSteps.push(parsedStep);
+            });
+
+            finalizeCurrentSection();
+        });
+
+        if (stats.pqSections === 0) {
+            console.warn(`DOCX içinde PQ başlığı bulunamadı: ${fileName}`);
+        } else {
+            console.info(`DOCX okundu: ${fileName} | Tablo: ${stats.tables} | PQ: ${stats.pqSections} | Eylem: ${stats.addedActions} | Boş CAP: ${stats.addedEmptyCaps}`);
+        }
+        return stats;
+    }
+
+    document.getElementById('docxInput').addEventListener('change', async (e) => {
+        const files = e.target.files; if (!files.length) return;
+        showLoading();
+        try {
+            for (let file of files) {
+                if (loadedFiles.has(file.name)) continue;
+                try {
+                    const zip = await JSZip.loadAsync(file);
+                    const documentFile = zip.file("word/document.xml");
+                    if (!documentFile) throw new Error("word/document.xml bulunamadı. Dosya geçerli bir DOCX olmayabilir.");
+
+                    const xml = await documentFile.async("string");
+                    const xmlDoc = new DOMParser().parseFromString(xml, "text/xml");
+                    parseDocxCapTables(xmlDoc, file.name);
+                    loadedFiles.add(file.name);
+                } catch (err) {
+                    console.error("DOCX parse error:", err);
+                    alert(`${file.name} okunurken hata oluştu: ${err.message || err}`);
+                }
+            }
+            recalculateGlobalStateFromFiles();
+            renderFileList(); refreshAllFilters(); saveToLocalStorage(); render();
         } catch(e) {
             alert("Word dosyasını okurken bir hata oluştu: " + e.message);
-        } finally { 
-            hideLoading(); e.target.value = ""; 
-        } 
+        } finally {
+            hideLoading(); e.target.value = "";
+        }
     });
     
     // EXCEL OKUMASI 
@@ -847,7 +985,7 @@
             document.getElementById('pqDetails').innerHTML = `<b>Dağılım:</b> ${stats.pqs.onSite} On-Site / ${stats.pqs.offSite} Off-Site ${pqExtra}`; document.getElementById('actionDetails').innerHTML = `<b>Dağılım:</b> ${stats.actions.onSite} On-Site / ${stats.actions.offSite} Off-Site`; document.getElementById('lateDetails').innerHTML = `<b>Dağılım:</b> ${stats.late.onSite} On-Site / ${stats.late.offSite} Off-Site`; document.getElementById('doneDetails').innerHTML = `<b>Dağılım:</b> ${stats.done.onSite} On-Site / ${stats.done.offSite} Off-Site`; document.getElementById('pendingDetails').innerHTML = `<b>Dağılım:</b> ${stats.pending.onSite} On-Site / ${stats.pending.offSite} Off-Site`;
         }
 
-        renderTable(filteredData, groups); updateCharts(filteredData); updateAreaSummary(filteredData); updateWarnings(filteredData); updateEIProjections(filteredData); renderKanban(filteredData);
+        renderTable(filteredData, groups); updateCharts(filteredData); updateAreaSummary(filteredData); updateWarnings(filteredData); updatePastTasks(filteredData); updateEIProjections(filteredData); renderKanban(filteredData);
         if(document.getElementById('tab-report').classList.contains('active')) updateReportPreview();
     }
 
@@ -936,137 +1074,501 @@
         else { lst.className = ""; let html = ""; let grouped = {}; upcoming.forEach(d => { let area = (pqMasterData[d.pq]||{}).alan ? pqMasterData[d.pq].alan.trim().toUpperCase() : 'N/A'; if(!grouped[area]) grouped[area] = []; grouped[area].push(d); }); Object.keys(grouped).sort(sortAreas).forEach(area => { html += `<div style="margin-bottom:15px; background:var(--card); padding:15px; border-radius:8px; border:1px solid var(--border);"><h5 style="margin:0 0 10px 0; color:var(--text); border-bottom:1px dashed var(--border); padding-bottom:8px; font-size:14px;">📋 ${area} Denetim Alanı <span style="color:var(--muted); font-weight:normal; font-size:12px;">(${grouped[area].length} Eylem)</span></h5><div class="warning-grid">` + grouped[area].map(d => genCard(d, today)).join('') + `</div></div>`; }); lst.innerHTML = html; }
     }
 
+    function getUpcomingTasks(filteredData) {
+        const today = new Date(); today.setHours(0,0,0,0);
+        const limit = new Date(); limit.setDate(today.getDate() + 30); limit.setHours(23,59,59,999);
+        return (filteredData || []).filter(d => {
+            if (getStatus(d).type !== 'pending') return false;
+            if (!d.estDate || d.estDate === "Kapatıldı" || d.estDate === "Tarih Yok") return false;
+            let dt = parseDateObj(d.estDate);
+            return dt && dt >= today && dt <= limit;
+        }).sort((a,b) => {
+            let dtA = parseDateObj(a.estDate), dtB = parseDateObj(b.estDate);
+            if (dtA && dtB && dtA.getTime() !== dtB.getTime()) return dtA - dtB;
+            return sortAreas((pqMasterData[a.pq]||{}).alan||"", (pqMasterData[b.pq]||{}).alan||"") || sortPQs(a.pq, b.pq);
+        });
+    }
+
+    function getPastTasks(filteredData, rangeDays = null) {
+        const today = new Date(); today.setHours(0,0,0,0);
+        let minDate = null;
+        if (rangeDays && Number(rangeDays) > 0) {
+            minDate = new Date(today);
+            minDate.setDate(today.getDate() - Number(rangeDays));
+            minDate.setHours(0,0,0,0);
+        }
+        return (filteredData || []).filter(d => {
+            if (getStatus(d).type !== 'late') return false;
+            if (!d.estDate || d.estDate === "Kapatıldı" || d.estDate === "Tarih Yok") return false;
+            let dt = parseDateObj(d.estDate);
+            if (!dt || dt >= today) return false;
+            if (minDate && dt < minDate) return false;
+            return true;
+        }).sort((a,b) => {
+            let dtA = parseDateObj(a.estDate), dtB = parseDateObj(b.estDate);
+            if (dtA && dtB && dtA.getTime() !== dtB.getTime()) return dtA - dtB;
+            return sortAreas((pqMasterData[a.pq]||{}).alan||"", (pqMasterData[b.pq]||{}).alan||"") || sortPQs(a.pq, b.pq);
+        });
+    }
+
+    function taskCardHtml(d, mode) {
+        const today = new Date(); today.setHours(0,0,0,0);
+        let dt = parseDateObj(d.estDate);
+        let m = pqMasterData[d.pq] || {};
+        let diffDays = dt ? Math.ceil(Math.abs(today - dt) / (1000 * 60 * 60 * 24)) : 0;
+        let isPast = mode === 'past';
+        let color = isPast ? 'var(--danger)' : 'var(--warn)';
+        let label = isPast ? `${diffDays} gün gecikti` : `${diffDays} gün kaldı`;
+        let cls = isPast ? 'task-card-critical' : 'task-card-upcoming';
+        return `<div class="warning-item ${cls}" onclick="switchTab('list'); window.togglePQ('${d.pq.replace(/\./g, '-')}');">
+            <div>
+                <span class="badge badge-extra" style="margin-bottom: 6px; padding: 2px 8px; font-size: 10px;">${m.alan || 'N/A'}</span><br>
+                <b style="color:var(--text); font-size:14px;">PQ ${d.pq}</b>
+                <span style="color:var(--primary); font-size:11px; font-weight:bold; margin-left:4px; background:rgba(37,99,235,0.1); padding:2px 6px; border-radius:4px;">Adım ${d.step}</span><br>
+                <span style="color:var(--muted); font-size:11px; display:inline-block; margin-top:4px;">${escapeHtml(d.office || '-')}</span>
+            </div>
+            <div style="text-align:right; min-width:90px;">
+                <span class="days-left" style="color:${color};">${label}</span><br>
+                <span style="color:var(--muted); font-size:11px;">${d.estDate}</span>
+            </div>
+        </div>`;
+    }
+
+    function renderTaskGroupHtml(tasks, mode) {
+        let grouped = {};
+        tasks.forEach(d => {
+            let area = (pqMasterData[d.pq] || {}).alan ? pqMasterData[d.pq].alan.trim().toUpperCase() : 'N/A';
+            if (!grouped[area]) grouped[area] = [];
+            grouped[area].push(d);
+        });
+        let html = "";
+        Object.keys(grouped).sort(sortAreas).forEach(area => {
+            html += `<div style="margin-bottom:15px; background:var(--card); padding:15px; border-radius:8px; border:1px solid var(--border);"><h5 style="margin:0 0 10px 0; color:var(--text); border-bottom:1px dashed var(--border); padding-bottom:8px; font-size:14px;">📋 ${area} Denetim Alanı <span style="color:var(--muted); font-weight:normal; font-size:12px;">(${grouped[area].length} Eylem)</span></h5><div class="warning-grid">` + grouped[area].map(d => taskCardHtml(d, mode)).join('') + `</div></div>`;
+        });
+        return html;
+    }
+
+    function updatePastTasks(filteredData) {
+        let listEl = document.getElementById('pastTasksList');
+        let summaryEl = document.getElementById('pastTasksSummary');
+        if (!listEl || !summaryEl) return;
+        let rangeVal = (document.getElementById('pastRangeSelect') || {}).value || 'all';
+        let rangeDays = rangeVal === 'all' ? null : parseInt(rangeVal, 10);
+        let past = getPastTasks(filteredData, rangeDays);
+        if (past.length === 0) {
+            summaryEl.innerHTML = '';
+            listEl.className = '';
+            listEl.innerHTML = `<div style="padding: 30px; text-align: center; color: var(--muted); font-size:14px;">Seçilen kapsama göre tarihi geçmiş açık eylem bulunmamaktadır.</div>`;
+            return;
+        }
+        const today = new Date(); today.setHours(0,0,0,0);
+        let pqCount = new Set(past.map(d => d.pq)).size;
+        let delays = past.map(d => { let dt = parseDateObj(d.estDate); return dt ? Math.ceil((today - dt) / (1000 * 60 * 60 * 24)) : 0; });
+        let maxDelay = delays.length ? Math.max(...delays) : 0;
+        let avgDelay = delays.length ? Math.round(delays.reduce((a,b) => a+b, 0) / delays.length) : 0;
+        let oldest = past[0] && past[0].estDate ? past[0].estDate : '-';
+        summaryEl.innerHTML = `<div class="past-summary-grid">
+            <div class="past-summary-card"><b>${past.length}</b><span>Gecikmiş eylem</span></div>
+            <div class="past-summary-card"><b>${pqCount}</b><span>Etkilenen PQ</span></div>
+            <div class="past-summary-card"><b>${maxDelay}</b><span>En yüksek gecikme günü</span></div>
+            <div class="past-summary-card"><b>${avgDelay}</b><span>Ortalama gecikme günü</span></div>
+            <div class="past-summary-card"><b style="font-size:15px; margin-top:3px;">${oldest}</b><span>En eski hedef tarih</span></div>
+        </div>`;
+        let viewModeElement = document.querySelector('input[name="pastView"]:checked');
+        let viewMode = viewModeElement ? viewModeElement.value : 'list';
+        if (viewMode === 'group') {
+            listEl.className = '';
+            listEl.innerHTML = renderTaskGroupHtml(past, 'past');
+        } else {
+            listEl.className = 'warning-grid';
+            listEl.innerHTML = past.map(d => taskCardHtml(d, 'past')).join('');
+        }
+    }
+
+
+    function normalizeAreaKey(val) { return (val || "").toString().trim().toUpperCase(); }
+    function pctText(value) { return `%${(isFinite(value) ? value : 0).toFixed(2)}`; }
+    function ratioPct(done, total) { return total > 0 ? (done / total) * 100 : 0; }
+    function getBucketCurrentSat(bucket) { return bucket.baseSatOnly + bucket.icaoClosed + bucket.localCompleted; }
+    function getBucketProjectedSat(bucket) { return getBucketCurrentSat(bucket) + bucket.projected; }
+    function getBucketMaxPct(bucket) { return ratioPct(getBucketProjectedSat(bucket), bucket.total); }
+    function todayMidnight() { let t = new Date(); t.setHours(0,0,0,0); return t; }
+
+    function escapeHtml(str) {
+        return (str === undefined || str === null ? '' : str.toString()).replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
+    }
+
+    function hasExplicitValidationTask(val) {
+        let s = (val === undefined || val === null ? '' : val.toString()).trim();
+        if (!s) return false;
+        let n = s.toLocaleUpperCase('tr-TR');
+        return !(n === 'BELİRTİLMEDİ' || n === 'BELIRTILMEDI' || n === '-' || n === 'YOK' || n === 'N/A');
+    }
+
+    function normalizeValidationTaskName(val, fallbackForClosed = false) {
+        let s = (val === undefined || val === null ? '' : val.toString()).trim();
+        if (hasExplicitValidationTask(s)) return s;
+        return fallbackForClosed ? 'Validasyon Görevi Belirtilmedi' : '';
+    }
+
+    function addValidationTaskToModel(model, task) {
+        if (!model || !task) return;
+        if (!model.validationTaskSet.has(task)) {
+            model.validationTaskSet.add(task);
+            model.validationTasks.push(task);
+        }
+    }
+
+    function addValidationClosureToBucket(bucket, task, pq) {
+        if (!bucket || !task) return;
+        bucket.validationCounts[task] = (bucket.validationCounts[task] || 0) + 1;
+        if (!bucket.validationPQs[task]) bucket.validationPQs[task] = [];
+        bucket.validationPQs[task].push(pq);
+    }
+
+    function getBucketValidationCount(bucket, task) {
+        if (!bucket || !task || !bucket.validationCounts) return 0;
+        return bucket.validationCounts[task] || 0;
+    }
+
+    function getBucketSatAfterValidation(bucket, validationTasks, uptoIndex) {
+        if (!bucket) return 0;
+        let sat = bucket.baseSatOnly;
+        (validationTasks || []).slice(0, uptoIndex + 1).forEach(task => { sat += getBucketValidationCount(bucket, task); });
+        return sat;
+    }
+
+    function validationTaskHeaderHtml(task) {
+        let safe = escapeHtml(task);
+        return `<th title="${safe}" style="min-width:120px;"><span style="display:block; font-size:9px; color:var(--icao-blue); letter-spacing:0.3px; margin-bottom:2px;">ICAO VALIDASYONU</span>${safe}</th>`;
+    }
+
+    function renderMilestoneHeader(validationTasks) {
+        let row = document.getElementById('milestoneHeaderRow');
+        if (!row) return;
+        let tasks = validationTasks || [];
+        let validationHeaders = tasks.length > 0 ? tasks.map(validationTaskHeaderHtml).join('') : '<th>ICAO Validasyonu</th>';
+        row.innerHTML = `<th style="text-align: left; width: 18%;">Denetim Alanı / Kapsam</th><th>CMAA (Başlangıç)</th>${validationHeaders}<th>Mevcut EI</th><th>%60 Hedefi</th><th>%70 Hedefi</th><th>%80 Hedefi</th><th>%90 Hedefi</th><th>%100 Hedefi</th>`;
+        let table = document.getElementById('milestoneTable');
+        if (table) table.style.minWidth = `${1120 + Math.max(0, tasks.length - 1) * 135}px`;
+    }
+
+    function validationMilestoneCellHtml(bucket, validationTasks, idx) {
+        let task = validationTasks[idx];
+        let added = getBucketValidationCount(bucket, task);
+        let sat = getBucketSatAfterValidation(bucket, validationTasks, idx);
+        let pct = ratioPct(sat, bucket.total);
+        let pqPreview = (bucket.validationPQs && bucket.validationPQs[task]) ? bucket.validationPQs[task].slice().sort(sortPQs).slice(0, 5).map(p => `PQ ${p}`).join(', ') : '';
+        let more = (bucket.validationPQs && bucket.validationPQs[task] && bucket.validationPQs[task].length > 5) ? ` +${bucket.validationPQs[task].length - 5}` : '';
+        let detail = added > 0 ? `+${added} PQ | ${sat}/${bucket.total}` : `0 PQ | ${sat}/${bucket.total}`;
+        let title = pqPreview ? ` title="${escapeHtml(pqPreview + more)}"` : '';
+        let muted = added > 0 ? '' : ' color:var(--muted); opacity:0.75;';
+        return `<td class="${added > 0 ? 'ms-passed' : ''}"${title} style="${muted}"><b>${pctText(pct)}</b><br><span style="font-size:10px; color:var(--muted);">${detail}</span></td>`;
+    }
+
+    function validationNoDataCellHtml(bucket) {
+        return `<td style="color:var(--muted); opacity:0.75;"><b>${pctText(ratioPct(bucket.baseSatOnly, bucket.total))}</b><br><span style="font-size:10px;">Kayıt yok</span></td>`;
+    }
+
+    function parseUserDateInput(txt) {
+        if (!txt) return null;
+        let raw = txt.toString().trim();
+        let iso = raw.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+        if (iso) return parseDateObj(`${iso[1]}-${iso[2]}-${iso[3]}`);
+        return parseDateObj(raw);
+    }
+
+    function createEIBucket(name, total, baseSat) {
+        return {
+            name: name,
+            total: total || 0,
+            baseSatOnly: baseSat || 0,
+            icaoClosed: 0,
+            localCompleted: 0,
+            projected: 0,
+            noCap: 0,
+            realizedEvents: [],
+            projectedEvents: [],
+            undatedLocal: 0,
+            undatedProjected: 0,
+            validationCounts: {},
+            validationPQs: {}
+        };
+    }
+
+    function isUsableCapStep(item) {
+        if (!item || item.isEmptyCap) return false;
+        if (item.step === "-") return false;
+        let action = (item.action || "").toString().trim();
+        if (!action || action.includes("OLF üzerinde CAP")) return false;
+        return true;
+    }
+
+    function getPQClosureInfo(pq, items) {
+        let steps = (items || []).filter(isUsableCapStep);
+        if (steps.length === 0) {
+            return { pq, hasUsableCap: false, allDone: false, closureDate: null, latestKnownDate: null, missingDates: 0, totalSteps: 0, doneSteps: 0 };
+        }
+
+        let allDone = steps.every(x => getStatus(x).type === 'done');
+        let latest = null;
+        let missingDates = 0;
+        steps.forEach(step => {
+            let dt = parseDateObj(step.estDate);
+            if (!dt) { missingDates++; return; }
+            if (!latest || dt > latest) latest = dt;
+        });
+
+        return {
+            pq,
+            hasUsableCap: true,
+            allDone,
+            closureDate: missingDates === 0 ? latest : null,
+            latestKnownDate: latest,
+            missingDates,
+            totalSteps: steps.length,
+            doneSteps: steps.filter(x => getStatus(x).type === 'done').length
+        };
+    }
+
+    function groupRowsByPQ(rows) {
+        let groups = {};
+        (rows || []).forEach(d => { if(!groups[d.pq]) groups[d.pq] = []; groups[d.pq].push(d); });
+        return groups;
+    }
+
+    function expandFilteredRowsToFullPqGroups(filteredData) {
+        if (!filteredData || filteredData.length === 0) return [];
+        let selectedPQs = new Set(filteredData.map(d => d.pq));
+        return rawData.filter(d => selectedPQs.has(d.pq));
+    }
+
+    function addPQToBucket(bucket, field, pq, date) {
+        if (!bucket) return;
+        bucket[field]++;
+        if (field === 'localCompleted') {
+            if (date) bucket.realizedEvents.push({ pq, date });
+            else bucket.undatedLocal++;
+        }
+        if (field === 'projected') {
+            if (date) bucket.projectedEvents.push({ pq, date });
+            else bucket.undatedProjected++;
+        }
+    }
+
+    function buildEIProjectionModel(sourceRows) {
+        let model = { scope: createEIBucket("🌍 TÜRKİYE GENELİ", 0, 0), areas: {}, activeAreas: new Set(), pqInfos: [], validationTasks: [], validationTaskSet: new Set() };
+
+        Object.keys(baseEIData).forEach(area => {
+            let b = baseEIData[area] || {};
+            model.areas[area] = createEIBucket(area, b.total || 0, b.sat || 0);
+            model.scope.total += b.total || 0;
+            model.scope.baseSatOnly += b.sat || 0;
+        });
+
+        Object.entries(pqMasterData).forEach(([pq, m]) => {
+            let area = normalizeAreaKey(m.alan);
+            if (!area || !model.areas[area]) return;
+
+            let explicitTask = normalizeValidationTaskName(m.validasyonGorevi, false);
+            if (explicitTask) addValidationTaskToModel(model, explicitTask);
+
+            if (m.isIcaoClosed) {
+                let task = normalizeValidationTaskName(m.validasyonGorevi, true);
+                addValidationTaskToModel(model, task);
+                model.areas[area].icaoClosed++;
+                model.scope.icaoClosed++;
+                addValidationClosureToBucket(model.areas[area], task, pq);
+                addValidationClosureToBucket(model.scope, task, pq);
+            }
+        });
+
+        let groups = groupRowsByPQ(sourceRows || []);
+        Object.keys(groups).forEach(pq => {
+            let m = pqMasterData[pq] || {};
+            if (m.isIcaoClosed) return;
+
+            let area = normalizeAreaKey(m.alan);
+            if (!area || !model.areas[area]) return;
+            model.activeAreas.add(area);
+
+            let info = getPQClosureInfo(pq, groups[pq]);
+            info.area = area;
+            model.pqInfos.push(info);
+
+            if (!info.hasUsableCap) {
+                model.areas[area].noCap++;
+                model.scope.noCap++;
+                return;
+            }
+
+            if (info.allDone) {
+                addPQToBucket(model.areas[area], 'localCompleted', pq, info.closureDate);
+                addPQToBucket(model.scope, 'localCompleted', pq, info.closureDate);
+            } else {
+                addPQToBucket(model.areas[area], 'projected', pq, info.closureDate);
+                addPQToBucket(model.scope, 'projected', pq, info.closureDate);
+            }
+        });
+
+        Object.values(model.areas).forEach(b => {
+            b.realizedEvents.sort((a,b) => a.date - b.date || sortPQs(a.pq, b.pq));
+            b.projectedEvents.sort((a,b) => a.date - b.date || sortPQs(a.pq, b.pq));
+        });
+        model.scope.realizedEvents.sort((a,b) => a.date - b.date || sortPQs(a.pq, b.pq));
+        model.scope.projectedEvents.sort((a,b) => a.date - b.date || sortPQs(a.pq, b.pq));
+        return model;
+    }
+
+    function resolveMilestone(bucket, targetPct, validationTasks = []) {
+        if (!bucket || bucket.total <= 0) return { status: 'unreachable', html: 'Veri yok' };
+        let reqSat = Math.ceil((targetPct / 100) * bucket.total);
+        let currentSat = getBucketCurrentSat(bucket);
+        let maxSat = getBucketProjectedSat(bucket);
+
+        let c = bucket.baseSatOnly;
+        if (c >= reqSat) return { status: 'base', html: `CMAA'da geçildi<br><span style="font-size:10px;">${c}/${bucket.total}</span>` };
+
+        let countedIcao = 0;
+        (validationTasks || []).forEach(task => {
+            if (c >= reqSat) return;
+            let inc = getBucketValidationCount(bucket, task);
+            countedIcao += inc;
+            c += inc;
+            if (c >= reqSat) {
+                return;
+            }
+        });
+        if (c >= reqSat) {
+            let crossingTask = null;
+            let tmp = bucket.baseSatOnly;
+            for (let task of (validationTasks || [])) {
+                tmp += getBucketValidationCount(bucket, task);
+                if (tmp >= reqSat) { crossingTask = task; break; }
+            }
+            return { status: 'current', html: `${escapeHtml(crossingTask || 'ICAO Validasyonu')}<br><span style="font-size:10px;">ICAO onayı</span>` };
+        }
+
+        let remainingIcao = Math.max(0, bucket.icaoClosed - countedIcao);
+        c += remainingIcao;
+        if (c >= reqSat) return { status: 'current', html: `Mevcut<br><span style="font-size:10px;">ICAO onayı dahil</span>` };
+
+        for (let e of bucket.realizedEvents) {
+            c++;
+            if (c >= reqSat) return { status: 'passed', html: `Tamamlandı<br><span style="font-size:11px;">${formatExactDate(e.date)}</span>` };
+        }
+
+        c += bucket.undatedLocal;
+        if (c >= reqSat || currentSat >= reqSat) return { status: 'current-unknown', html: `Mevcut<br><span style="font-size:10px;">tarih eksik</span>` };
+
+        for (let e of bucket.projectedEvents) {
+            c++;
+            if (c >= reqSat) return { status: 'future', html: `${formatExactDate(e.date)}<br><span style="font-size:10px;">PQ ${e.pq}</span>` };
+        }
+
+        c += bucket.undatedProjected;
+        if (c >= reqSat || maxSat >= reqSat) return { status: 'unknown', html: `Tarih belirsiz<br><span style="font-size:10px;">eksik tarihli CAP</span>` };
+
+        return { status: 'unreachable', html: `Ulaşılamıyor<br><span style="font-size:10px;">maks. ${pctText(ratioPct(maxSat, bucket.total))}</span>` };
+    }
+
+    function milestoneCellHtml(bucket, targetPct, validationTasks = []) {
+        let r = resolveMilestone(bucket, targetPct, validationTasks);
+        if (r.status === 'future') return `<td class="ms-future">${r.html}</td>`;
+        if (r.status === 'unreachable' || r.status === 'unknown') return `<td class="ms-unreachable">${r.html}</td>`;
+        return `<td class="ms-passed">${r.html}</td>`;
+    }
+
+    function refreshSimulatorAreaSelects() {
+        ['simAreaSelect', 'dateSimAreaSelect'].forEach(id => {
+            let el = document.getElementById(id);
+            if (!el) return;
+            let previous = el.value;
+            el.innerHTML = `<option value="GLOBAL">🌍 TÜRKİYE GENELİ</option>`;
+            Object.keys(baseEIData).sort(sortAreas).forEach(a => { el.innerHTML += `<option value="${a}">${a} Alanı</option>`; });
+            if (previous && Array.from(el.options).some(o => o.value === previous)) el.value = previous;
+        });
+    }
+
+    function getBucketForArea(model, area) {
+        if (!model) return null;
+        if (area === 'GLOBAL') return model.scope;
+        return model.areas[area] || null;
+    }
+
     function updateEIProjections(filteredData) {
         if (Object.keys(baseEIData).length === 0) return;
 
-        let absGT = 0, absGS = 0, absIcao = 0;
-        let aStats = {};
-        
-        Object.keys(baseEIData).forEach(a => {
-            let b = baseEIData[a];
-            aStats[a] = { total: b.total, baseSat: b.sat, icaoClosed: 0, localCompleted: 0, projected: 0 };
-            absGT += b.total;
-            absGS += b.sat;
-        });
+        let projectionRows = expandFilteredRowsToFullPqGroups(filteredData);
+        let model = buildEIProjectionModel(projectionRows);
+        window.currentProjectionModel = model;
 
-        Object.values(pqMasterData).forEach(m => {
-            let area = m.alan ? m.alan.trim().toUpperCase() : null;
-            if (area && aStats[area] && m.isIcaoClosed) {
-                aStats[area].icaoClosed++;
-                absIcao++;
-            }
-        });
+        let scope = model.scope;
+        let absGT = scope.total;
+        let cBase = scope.baseSatOnly;
+        let cIcao = cBase + scope.icaoClosed;
+        let cLocal = cIcao + scope.localCompleted;
+        let cProj = cLocal + scope.projected;
 
-        const fGroups = {};
-        let lAreas = new Set();
-        filteredData.forEach(d => {
-            if(!fGroups[d.pq]) fGroups[d.pq] = [];
-            fGroups[d.pq].push(d);
-            let m = pqMasterData[d.pq] || {};
-            if (m.alan) lAreas.add(m.alan.trim().toUpperCase());
-        });
+        let pctB = ratioPct(cBase, absGT);
+        let pctI = ratioPct(cIcao, absGT);
+        let pctL = ratioPct(cLocal, absGT);
+        let pctP = ratioPct(cProj, absGT);
 
-        let gLocal = 0, gProj = 0;
-        let ms = { Scope: { name: "🌍 TÜRKİYE GENELİ", baseSat: absGS + absIcao, total: absGT, realizedEvents: [], projectedEvents: [] } }; 
-        Object.keys(aStats).forEach(a => {
-            ms[a] = { name: a, baseSat: aStats[a].baseSat + aStats[a].icaoClosed, total: aStats[a].total, realizedEvents: [], projectedEvents: [] }; 
-        });
+        document.getElementById('lblBase').innerHTML = `${pctText(pctB)} <span style="font-size:12px; font-weight:normal; color:var(--muted); margin-left:5px;">(${cBase}/${absGT})</span>`;
+        document.getElementById('lblIcao').innerHTML = `${pctText(pctI)} <span style="font-size:12px; font-weight:normal; color:var(--icao-blue); margin-left:5px;">(${cIcao}/${absGT})</span>`;
+        document.getElementById('lblLocal').innerHTML = `${pctText(pctL)} <span style="font-size:12px; font-weight:normal; color:var(--ok); margin-left:5px;">(${cLocal}/${absGT})</span>`;
+        document.getElementById('lblProj').innerHTML = `${pctText(pctP)} <span style="font-size:13px; font-weight:normal; color:var(--warn); margin-left:5px;">(${cProj}/${absGT})</span>`;
 
-        Object.keys(fGroups).forEach(pq => {
-            let m = pqMasterData[pq] || {};
-            let area = m.alan ? m.alan.trim().toUpperCase() : null;
-            
-            if (m.isIcaoClosed) return; 
+        document.getElementById('barBase').style.width = Math.max(0, Math.min(100, pctB)) + '%';
+        document.getElementById('barBase').innerHTML = pctText(pctB);
+        document.getElementById('barIcao').style.width = Math.max(0, pctI - pctB) + '%';
+        document.getElementById('barLocal').style.width = Math.max(0, pctL - pctI) + '%';
+        document.getElementById('barProj').style.width = Math.max(0, pctP - pctL) + '%';
 
-            let items = fGroups[pq];
-            let isDone = items.every(x => getStatus(x).type === 'done');
-
-            let mD = null, mFD = null, invD = false, invFD = false; 
-            if (isDone) {
-                gLocal++;
-                if (area && aStats[area]) aStats[area].localCompleted++;
-                
-                items.forEach(pi => { if(pi.estDate === "Kapatıldı") invD = true; else { let dObj = parseDateObj(pi.estDate); if (!dObj) invD = true; else if (!mD || dObj > mD) mD = dObj; } }); 
-                if (!invD && mD) { ms.Scope.realizedEvents.push({ pq: pq, date: mD }); if(area && ms[area]) ms[area].realizedEvents.push({ pq: pq, date: mD }); } 
-                else { ms.Scope.baseSat++; if(area && ms[area]) ms[area].baseSat++; } 
-            } else {
-                gProj++;
-                if (area && aStats[area]) aStats[area].projected++;
-                
-                items.filter(x => getStatus(x).type !== 'done').forEach(pi => { if(pi.estDate === "Kapatıldı" || pi.estDate === "Tarih Yok") invFD = true; else { let dObj = parseDateObj(pi.estDate); if (!dObj) invFD = true; else if (!mFD || dObj > mFD) mFD = dObj; } }); 
-                if (!invFD && mFD) { ms.Scope.projectedEvents.push({ pq: pq, date: mFD }); if(area && ms[area]) ms[area].projectedEvents.push({ pq: pq, date: mFD }); } 
-            }
-        });
-
-        let cBase = absGS;
-        let cIcao = cBase + absIcao;
-        let cLocal = cIcao + gLocal;
-        let cProj = cLocal + gProj;
-
-        let pctB = absGT > 0 ? (cBase / absGT) * 100 : 0;
-        let pctI = absGT > 0 ? (cIcao / absGT) * 100 : 0;
-        let pctL = absGT > 0 ? (cLocal / absGT) * 100 : 0;
-        let pctP = absGT > 0 ? (cProj / absGT) * 100 : 0;
-
-        document.getElementById('lblBase').innerHTML = `%${pctB.toFixed(2)} <span style="font-size:12px; font-weight:normal; color:var(--muted); margin-left:5px;">(${cBase}/${absGT})</span>`;
-        document.getElementById('lblIcao').innerHTML = `%${pctI.toFixed(2)} <span style="font-size:12px; font-weight:normal; color:var(--icao-blue); margin-left:5px;">(${cIcao}/${absGT})</span>`;
-        document.getElementById('lblLocal').innerHTML = `%${pctL.toFixed(2)} <span style="font-size:12px; font-weight:normal; color:var(--ok); margin-left:5px;">(${cLocal}/${absGT})</span>`;
-        document.getElementById('lblProj').innerHTML = `%${pctP.toFixed(2)} <span style="font-size:13px; font-weight:normal; color:var(--warn); margin-left:5px;">(${cProj}/${absGT})</span>`;
-
-        document.getElementById('barBase').style.width = pctB + '%';
-        document.getElementById('barBase').innerHTML = `%${pctB.toFixed(2)}`;
-        document.getElementById('barIcao').style.width = (pctI - pctB) + '%';
-        document.getElementById('barLocal').style.width = (pctL - pctI) + '%';
-        document.getElementById('barProj').style.width = (pctP - pctL) + '%';
-
-        let sAreas = getCheckedValues('areaFilterList'); 
-        let isG = sAreas.includes('all'); 
-        let aAreas = isG ? Object.keys(baseEIData) : sAreas.filter(a => baseEIData[a]); 
+        let sAreas = getCheckedValues('areaFilterList');
+        let isG = sAreas.includes('all');
+        let aAreas = isG ? Object.keys(baseEIData) : sAreas.map(normalizeAreaKey).filter(a => baseEIData[a]);
         if (aAreas.length === 0) { aAreas = Object.keys(baseEIData); isG = true; }
-        let dAreas = isG ? aAreas.filter(a => lAreas.has(a) || aStats[a].icaoClosed > 0) : aAreas; 
-        dAreas.sort(sortAreas); 
-        
-        const tbodyMS = document.getElementById('milestoneTableBody'); tbodyMS.innerHTML = ""; 
-        let ordKeys = ['Scope', ...dAreas]; 
-        ordKeys.forEach(k => { 
-            let m = ms[k]; if(!m || m.total === 0) return; 
-            m.realizedEvents.sort((a,b) => a.date - b.date); 
-            m.projectedEvents.sort((a,b) => a.date - b.date); 
-            let cS = m.baseSat; 
-            let cP = (cS / m.total) * 100; 
-            
-            let aD = {}; 
-            [60, 70, 80, 90, 100].forEach(lvl => { if (cP >= lvl) aD[lvl] = { status: "base", dateStr: "✔️ Geçildi" }; else aD[lvl] = null; }); 
-            m.realizedEvents.forEach(e => { cS++; cP = (cS / m.total) * 100; [60, 70, 80, 90, 100].forEach(lvl => { if (!aD[lvl] && cP >= lvl) aD[lvl] = { status: "passed", dateStr: `✔️ Geçildi<br><span style="font-size:11px;">${formatExactDate(e.date)}</span>` }; }); }); 
-            m.projectedEvents.forEach(e => { cS++; cP = (cS / m.total) * 100; [60, 70, 80, 90, 100].forEach(lvl => { if (!aD[lvl] && cP >= lvl) aD[lvl] = { status: "future", dateStr: formatExactDate(e.date) }; }); }); 
-            
-            let tr = document.createElement('tr'); 
-            if (k === 'Scope') tr.className = "ms-global-row"; 
-            
-            let baseCmaaPct = ((m.baseSat / m.total) * 100).toFixed(2);
-            let html = `<td style="text-align: left;">${m.name}</td>`; 
-            html += `<td><b>%${baseCmaaPct}</b><br><span style="font-size:10px; color:var(--muted);">(${m.baseSat}/${m.total})</span></td>`;
+        let dAreas = isG ? aAreas.filter(a => model.activeAreas.has(a) || model.areas[a].icaoClosed > 0) : aAreas;
+        dAreas.sort(sortAreas);
 
-            [60, 70, 80, 90, 100].forEach(lvl => { let v = aD[lvl]; if (!v) html += `<td class="ms-unreachable">Ulaşılamıyor</td>`; else if (v.status === "base" || v.status === "passed") html += `<td class="ms-passed">${v.dateStr}</td>`; else html += `<td class="ms-future">${v.dateStr}</td>`; }); 
-            tr.innerHTML = html; tbodyMS.appendChild(tr); 
+        let validationTasks = model.validationTasks || [];
+        renderMilestoneHeader(validationTasks);
+
+        const tbodyMS = document.getElementById('milestoneTableBody');
+        tbodyMS.innerHTML = "";
+        let ord = [{ key: 'Scope', bucket: model.scope }, ...dAreas.map(a => ({ key: a, bucket: model.areas[a] }))];
+        ord.forEach(item => {
+            let m = item.bucket;
+            if (!m || m.total === 0) return;
+            let tr = document.createElement('tr');
+            if (item.key === 'Scope') tr.className = "ms-global-row";
+
+            let currentSat = getBucketCurrentSat(m);
+            let basePct = ratioPct(m.baseSatOnly, m.total);
+            let currentPct = ratioPct(currentSat, m.total);
+            let maxPct = getBucketMaxPct(m);
+
+            let html = `<td style="text-align: left;">${m.name}</td>`;
+            html += `<td><b>${pctText(basePct)}</b><br><span style="font-size:10px; color:var(--muted);">(${m.baseSatOnly}/${m.total})</span></td>`;
+            if (validationTasks.length > 0) validationTasks.forEach((task, idx) => { html += validationMilestoneCellHtml(m, validationTasks, idx); });
+            else html += validationNoDataCellHtml(m);
+            html += `<td class="ms-passed"><b>${pctText(currentPct)}</b><br><span style="font-size:10px; color:var(--muted);">${currentSat}/${m.total} | maks. ${pctText(maxPct)}</span></td>`;
+            [60, 70, 80, 90, 100].forEach(lvl => { html += milestoneCellHtml(m, lvl, validationTasks); });
+            tr.innerHTML = html;
+            tbodyMS.appendChild(tr);
         });
 
-        // HEDEF SIMULATORU SELECT GUNCELLEMESI
-        let simSel = document.getElementById('simAreaSelect');
-        if(simSel) {
-            simSel.innerHTML = `<option value="GLOBAL">🌍 TÜRKİYE GENELİ</option>`;
-            Object.keys(baseEIData).sort(sortAreas).forEach(a => {
-                simSel.innerHTML += `<option value="${a}">${a} Alanı</option>`;
-            });
-        }
+        refreshSimulatorAreaSelects();
 
         window.currentAreaEIData = dAreas.map(a => {
-            let t = aStats[a].total;
-            let b = t > 0 ? (aStats[a].baseSat / t) * 100 : 0;
-            let i = t > 0 ? b + (aStats[a].icaoClosed / t) * 100 : 0;
-            let l = t > 0 ? i + (aStats[a].localCompleted / t) * 100 : 0;
-            let p = t > 0 ? l + (aStats[a].projected / t) * 100 : 0;
-            return { alan: a, base: b.toFixed(2), icao: i.toFixed(2), local: l.toFixed(2), proj: p.toFixed(2) };
+            let bkt = model.areas[a];
+            let base = ratioPct(bkt.baseSatOnly, bkt.total);
+            let icao = ratioPct(bkt.baseSatOnly + bkt.icaoClosed, bkt.total);
+            let local = ratioPct(getBucketCurrentSat(bkt), bkt.total);
+            let proj = ratioPct(getBucketProjectedSat(bkt), bkt.total);
+            return { alan: a, base: base.toFixed(2), icao: icao.toFixed(2), local: local.toFixed(2), proj: proj.toFixed(2), noCap: bkt.noCap, undatedProjected: bkt.undatedProjected };
         });
 
         const ctx = document.getElementById('eiChartCanvas').getContext('2d');
@@ -1074,10 +1576,10 @@
         charts.ei = new Chart(ctx, {
             type: 'bar',
             data: {
-                labels: window.currentAreaEIData.map(d => [ d.alan, `CMAA: %${d.base}`, `OSVA: %${d.icao}`, `Yerel Biten: %${d.local}` ]),
+                labels: window.currentAreaEIData.map(d => [ d.alan, `CMAA: %${d.base}`, `ICAO Val.: %${d.icao}`, `Mevcut: %${d.local}` ]),
                 datasets: [
                     { label: '1. CMAA EI (%)', data: window.currentAreaEIData.map(d => parseFloat(d.base)), backgroundColor: '#64748b' },
-                    { label: '2. OSVA EI (%)', data: window.currentAreaEIData.map(d => parseFloat(d.icao) - parseFloat(d.base)), backgroundColor: '#3b82f6' },
+                    { label: '2. ICAO Validasyonları EI (%)', data: window.currentAreaEIData.map(d => parseFloat(d.icao) - parseFloat(d.base)), backgroundColor: '#3b82f6' },
                     { label: '3. CAP Adımları Tamamlanmışlar Dahil EI (%)', data: window.currentAreaEIData.map(d => parseFloat(d.local) - parseFloat(d.icao)), backgroundColor: '#10b981' },
                     { label: '4. Tüm CAP\'ler Tamamlanmışlar Dahil EI (%)', data: window.currentAreaEIData.map(d => parseFloat(d.proj) - parseFloat(d.local)), backgroundColor: '#f59e0b' }
                 ]
@@ -1091,35 +1593,131 @@
 
     window.runSimulator = function() {
         let area = document.getElementById('simAreaSelect').value;
-        let target = parseInt(document.getElementById('simTargetSelect').value);
+        let target = parseInt(document.getElementById('simTargetSelect').value, 10);
         if(Object.keys(baseEIData).length === 0) { alert("EI Referans (Excel) verisi bulunamadı!"); return; }
 
-        let total = 0; let currentSat = 0;
-        if(area === 'GLOBAL') {
-            Object.keys(baseEIData).forEach(k => { total += baseEIData[k].total; currentSat += baseEIData[k].sat; });
-            Object.values(pqMasterData).forEach(m => { if(m.isIcaoClosed) currentSat++; });
-        } else {
-            total = baseEIData[area].total; currentSat = baseEIData[area].sat;
-            Object.values(pqMasterData).forEach(m => { if((m.alan||"").trim().toUpperCase() === area && m.isIcaoClosed) currentSat++; });
-        }
-
-        let reqSat = Math.ceil((target / 100) * total);
-        let needed = reqSat - currentSat;
+        let model = buildEIProjectionModel(rawData);
+        let bucket = getBucketForArea(model, area);
         let resEl = document.getElementById('simResult');
         resEl.style.display = 'block';
 
-        let currentPct = ((currentSat / total) * 100).toFixed(2);
-
-        if(needed <= 0) {
-            resEl.innerHTML = `✅ <b>${area === 'GLOBAL' ? 'TÜRKİYE GENELİ' : area}</b> için %${target} hedefine zaten ulaşılmış durumda. (Güncel: %${currentPct} - ${currentSat}/${total})`;
-            resEl.style.borderLeft = "4px solid var(--ok)";
-        } else if (reqSat > total) {
-            resEl.innerHTML = `❌ Matematiksel olarak ulaşılamaz. (Hesaplanan gereken: ${reqSat}, Toplam Uygulanabilir PQ: ${total})`;
+        if (!bucket || bucket.total === 0) {
+            resEl.innerHTML = `❌ Seçilen alan için EI referans verisi bulunamadı.`;
             resEl.style.borderLeft = "4px solid var(--danger)";
-        } else {
-            resEl.innerHTML = `🚀 <b>${area === 'GLOBAL' ? 'TÜRKİYE GENELİ' : area}</b> için %${target} hedefine ulaşmak adına <b>${needed} adet</b> daha PQ'nun başarıyla kapatılması gerekmektedir.<br><span style="font-size:12px; color:var(--muted); font-weight:normal; display:inline-block; margin-top:5px;">Mevcut Tamamlanan: %${currentPct} (${currentSat}/${total}) &nbsp;➔&nbsp; Ulaşılması Gereken: ${reqSat}/${total}</span>`;
-            resEl.style.borderLeft = "4px solid var(--primary)";
+            return;
         }
+
+        let reqSat = Math.ceil((target / 100) * bucket.total);
+        let currentSat = getBucketCurrentSat(bucket);
+        let maxSat = getBucketProjectedSat(bucket);
+        let needed = reqSat - currentSat;
+        let currentPct = ratioPct(currentSat, bucket.total);
+        let maxPct = ratioPct(maxSat, bucket.total);
+        let label = area === 'GLOBAL' ? 'TÜRKİYE GENELİ' : area;
+
+        if (needed <= 0) {
+            resEl.innerHTML = `✅ <b>${label}</b> için %${target} hedefine mevcut durumda ulaşılmıştır.<br><span style="font-size:12px; color:var(--muted); font-weight:normal;">Mevcut EI: ${pctText(currentPct)} (${currentSat}/${bucket.total})</span>`;
+            resEl.style.borderLeft = "4px solid var(--ok)";
+            return;
+        }
+
+        if (reqSat > maxSat) {
+            let gap = reqSat - maxSat;
+            resEl.innerHTML = `❌ <b>${label}</b> için %${target} hedefine mevcut CAP havuzuyla ulaşılamıyor.<br><span style="font-size:12px; color:var(--muted); font-weight:normal;">Mevcut EI: ${pctText(currentPct)} (${currentSat}/${bucket.total}) | Tüm mevcut CAP'ler kapanırsa: ${pctText(maxPct)} (${maxSat}/${bucket.total}) | İlave gereken PQ: ${gap}</span>`;
+            resEl.style.borderLeft = "4px solid var(--danger)";
+            return;
+        }
+
+        let resolution = resolveMilestone(bucket, target, model.validationTasks || []);
+        let datedInfo = resolution.status === 'future' ? resolution.html : (resolution.status === 'unknown' ? 'Tarih bilgisi eksik olan CAP adımları nedeniyle net tarih hesaplanamıyor.' : resolution.html);
+        let unknownNote = bucket.undatedProjected > 0 ? `<br><span style="font-size:12px; color:var(--muted); font-weight:normal;">Not: ${bucket.undatedProjected} açık PQ'da tarih eksik olduğu için bazı ileri hedeflerde kesin tarih üretilemeyebilir.</span>` : '';
+        resEl.innerHTML = `🚀 <b>${label}</b> için %${target} hedefine ulaşmak adına <b>${needed} PQ</b> daha kapanmalıdır.<br><span style="font-size:12px; color:var(--muted); font-weight:normal;">Mevcut: ${pctText(currentPct)} (${currentSat}/${bucket.total}) → Hedef için gereken: ${reqSat}/${bucket.total}. Mevcut CAP planına göre hedef zamanı: <b>${datedInfo}</b></span>${unknownNote}`;
+        resEl.style.borderLeft = "4px solid var(--primary)";
+    };
+
+    function computeDateSimulation(area, targetDate) {
+        let groups = groupRowsByPQ(rawData);
+        let model = buildEIProjectionModel(rawData);
+        let bucket = getBucketForArea(model, area);
+        if (!bucket || bucket.total === 0) return null;
+
+        let simSat = bucket.baseSatOnly + bucket.icaoClosed;
+        let currentSat = bucket.baseSatOnly + bucket.icaoClosed;
+        let assumedPqs = [];
+        let alreadyDonePqs = [];
+        let noDatePqs = [];
+        let afterDatePqs = [];
+        let targetTime = targetDate.getTime();
+        let today = todayMidnight().getTime();
+
+        Object.keys(groups).forEach(pq => {
+            let m = pqMasterData[pq] || {};
+            if (m.isIcaoClosed) return;
+            let pqArea = normalizeAreaKey(m.alan);
+            if (area !== 'GLOBAL' && pqArea !== area) return;
+            if (area === 'GLOBAL' && (!pqArea || !baseEIData[pqArea])) return;
+
+            let info = getPQClosureInfo(pq, groups[pq]);
+            if (!info.hasUsableCap) return;
+
+            if (info.allDone) {
+                currentSat++;
+                // For future/current projections, already completed PQs are counted even if completion date is absent.
+                if (!info.closureDate || info.closureDate.getTime() <= targetTime || targetTime >= today) {
+                    simSat++;
+                    alreadyDonePqs.push(pq);
+                } else {
+                    afterDatePqs.push({ pq, date: info.closureDate });
+                }
+                return;
+            }
+
+            if (info.closureDate && info.closureDate.getTime() <= targetTime) {
+                simSat++;
+                assumedPqs.push({ pq, date: info.closureDate });
+            } else if (!info.closureDate) {
+                noDatePqs.push(pq);
+            } else {
+                afterDatePqs.push({ pq, date: info.closureDate });
+            }
+        });
+
+        assumedPqs.sort((a,b) => a.date - b.date || sortPQs(a.pq, b.pq));
+        afterDatePqs.sort((a,b) => a.date - b.date || sortPQs(a.pq, b.pq));
+        return { bucket, currentSat, simSat, assumedPqs, alreadyDonePqs, noDatePqs, afterDatePqs };
+    }
+
+    window.runDateSimulator = function() {
+        let area = document.getElementById('dateSimAreaSelect').value;
+        let rawDate = document.getElementById('dateSimTargetDate').value;
+        let targetDate = parseUserDateInput(rawDate);
+        let resEl = document.getElementById('dateSimResult');
+        resEl.style.display = 'block';
+
+        if(Object.keys(baseEIData).length === 0) { alert("EI Referans (Excel) verisi bulunamadı!"); return; }
+        if(!targetDate) {
+            resEl.innerHTML = `❌ Tarih okunamadı. Lütfen <b>31.12.2026</b> veya <b>2026-12-31</b> formatında giriniz.`;
+            resEl.style.borderLeft = "4px solid var(--danger)";
+            return;
+        }
+
+        let sim = computeDateSimulation(area, targetDate);
+        if (!sim) {
+            resEl.innerHTML = `❌ Seçilen alan için EI referans verisi bulunamadı.`;
+            resEl.style.borderLeft = "4px solid var(--danger)";
+            return;
+        }
+
+        let label = area === 'GLOBAL' ? 'TÜRKİYE GENELİ' : area;
+        let currentPct = ratioPct(sim.currentSat, sim.bucket.total);
+        let simPct = ratioPct(sim.simSat, sim.bucket.total);
+        let delta = sim.simSat - sim.currentSat;
+        let pqPreview = sim.assumedPqs.slice(0, 12).map(x => `PQ ${x.pq}`).join(', ');
+        let more = sim.assumedPqs.length > 12 ? ` +${sim.assumedPqs.length - 12} PQ daha` : '';
+        let noDateNote = sim.noDatePqs.length > 0 ? `<br><span style="font-size:12px; color:var(--warn); font-weight:normal;">⚠️ ${sim.noDatePqs.length} açık PQ'nun tüm adımlarında tarih bilgisi tamam olmadığı için bu simülasyona dahil edilmedi.</span>` : '';
+
+        resEl.innerHTML = `📅 <b>${label}</b> için <b>${formatExactDate(targetDate)}</b> itibarıyla olumlu senaryo EI: <b>${pctText(simPct)}</b> (${sim.simSat}/${sim.bucket.total}).<br><span style="font-size:12px; color:var(--muted); font-weight:normal;">Mevcut EI: ${pctText(currentPct)} (${sim.currentSat}/${sim.bucket.total}) | Bu tarihe kadar ek kapanacağı varsayılan PQ: <b>${Math.max(0, delta)}</b>${pqPreview ? `<br>Varsayılan ek PQ'lar: ${pqPreview}${more}` : ''}</span>${noDateNote}`;
+        resEl.style.borderLeft = delta > 0 ? "4px solid var(--ok)" : "4px solid var(--primary)";
     };
 
     function formatExactDate(date) { if (!date) return "-"; const months = ["Oca", "Şub", "Mar", "Nis", "May", "Haz", "Tem", "Ağu", "Eyl", "Eki", "Kas", "Ara"]; let d = date.getDate().toString().padStart(2, '0'); return `${d} ${months[date.getMonth()]} ${date.getFullYear()}`; }
@@ -1192,145 +1790,326 @@
 
     function copyReportToClipboard() { const previewEl = document.getElementById('reportPreview'); const range = document.createRange(); range.selectNode(previewEl); window.getSelection().removeAllRanges(); window.getSelection().addRange(range); try { document.execCommand('copy'); alert("Rapor panoya kopyalandı!"); } catch(err) { alert("Kopyalama başarısız oldu."); } window.getSelection().removeAllRanges(); }
 
-    function exportExcel() { 
-        const activeTab = document.querySelector('.tab-content.active').id;
-        let exportData = [];
-        let summaryData = [];
-        let fileName = "ICAO_CAP_Liste.xlsx";
-        let baseList = [];
-
-        if (activeTab === 'tab-upcoming') {
-            const today = new Date(); today.setHours(0,0,0,0); const limit = new Date(); limit.setDate(today.getDate() + 30); limit.setHours(23,59,59,999);
-            baseList = getFilteredData().filter(d => { if(getStatus(d).type !== 'pending') return false; if(d.estDate === "Kapatıldı" || d.estDate === "Tarih Yok") return false; let dt = parseDateObj(d.estDate); if(!dt) return false; return dt >= today && dt <= limit; });
-            baseList.sort((a,b) => parseDateObj(a.estDate) - parseDateObj(b.estDate));
-            if(baseList.length === 0) return alert("Dışa aktarılacak yaklaşan görev bulunamadı.");
-            exportData = baseList.map(d => { let m = pqMasterData[d.pq] || {}; return { "PQ": d.pq, "ALAN": m.alan||"DİĞER", "ADIM": d.step, "EYLEM": d.action, "HEDEF TARİH": d.estDate, "KALAN GÜN": Math.ceil((parseDateObj(d.estDate) - today) / (1000 * 60 * 60 * 24)) }; });
-            fileName = "Yaklasan_Gorevler.xlsx";
-        } 
-        else if (activeTab === 'tab-empty-caps') {
-            baseList = rawData.filter(d => d.isEmptyCap === true);
-            if(baseList.length === 0) return alert("Eksik/Boş CAP bulunamadı.");
-            exportData = baseList.map(d => { let m = pqMasterData[d.pq] || {}; return { "PQ": d.pq, "ALAN": m.alan||"DİĞER", "DURUM": "OLF'de CAP Girilmemiş" }; });
-            fileName = "Eksik_Bos_CAPler.xlsx";
-        }
-        else if (activeTab === 'tab-icao-closed') {
-            Object.keys(pqMasterData).forEach(pq => { if(pqMasterData[pq] && pqMasterData[pq].isIcaoClosed) baseList.push({ pq: pq, ...pqMasterData[pq] }); });
-            baseList.sort((a,b) => sortAreas(a.alan, b.alan) || sortPQs(a.pq, b.pq));
-            if(baseList.length === 0) return alert("ICAO tarafından kapatılan PQ bulunamadı.");
-            exportData = baseList.map(m => { return { "PQ": m.pq, "ALAN": m.alan||"DİĞER", "BULGU": m.bulgu||"", "GÖREV": m.validasyonGorevi||"" }; });
-            fileName = "ICAO_Kapatilanlar.xlsx";
-        }
-        else {
-            baseList = getFilteredData(); if(baseList.length === 0) return alert("Dışa aktarılacak veri bulunamadı.");
-            baseList.sort((a, b) => { let areaA = (pqMasterData[a.pq] || {}).alan || "ZZZ"; let areaB = (pqMasterData[b.pq] || {}).alan || "ZZZ"; let diff = sortAreas(areaA, areaB); if (diff !== 0) return diff; return sortPQs(a.pq, b.pq); });
-            exportData = baseList.map(d => { let m = pqMasterData[d.pq] || {}; return { "PQ": d.pq, "ALAN": m.alan||"DİĞER", "CE": m.ce||"", "BULGU": m.bulgu||"", "ADIM": d.step, "EYLEM": d.action, "OFİS": d.office, "HEDEF TARİH": d.estDate, "DURUM": d.progress, "NOT": d.note||"" }; });
-            fileName = "ICAO_CAP_Filtrelenmis_Liste.xlsx";
-        }
-
-        // Özet İstatistik Hesaplama (Excel 2. Sayfa İçin)
-        let areaCounts = {};
-        exportData.forEach(d => { let a = d["ALAN"]; areaCounts[a] = (areaCounts[a] || 0) + 1; });
-        summaryData.push({"METRİK": "Toplam İndirilen Kayıt Sayısı", "SAYI": exportData.length});
-        Object.keys(areaCounts).sort(sortAreas).forEach(a => { summaryData.push({"METRİK": `${a} Alanı Kayıt Sayısı`, "SAYI": areaCounts[a]}); });
-
-        const wb = XLSX.utils.book_new(); 
-        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(exportData), "Liste"); 
-        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(summaryData), "Ozet_Istatistikler"); 
-        XLSX.writeFile(wb, fileName); 
+    function truncateTextForExport(value, maxLen = 500) {
+        let txt = (value === undefined || value === null ? '' : value.toString()).replace(/\s+/g, ' ').trim();
+        return txt.length > maxLen ? txt.substring(0, maxLen) + '...' : txt;
     }
-    
-    window.exportPDF = function() { 
+
+    function normalizeWorkbookSheetName(name) {
+        return (name || 'Sayfa').toString().replace(/[\\\/\?\*\[\]\:]/g, '_').substring(0, 31);
+    }
+
+    function autoFitSheet(ws, rows) {
+        if (!rows || rows.length === 0) return;
+        const headers = Object.keys(rows[0]);
+        ws['!cols'] = headers.map(h => {
+            let maxLen = Math.max(h.length, ...rows.map(r => (r[h] === undefined || r[h] === null ? '' : r[h].toString()).length));
+            return { wch: Math.min(Math.max(maxLen + 2, 10), 55) };
+        });
+        if (ws['!ref']) ws['!autofilter'] = { ref: ws['!ref'] };
+    }
+
+    function addJsonSheet(wb, name, rows) {
+        const safeRows = rows && rows.length ? rows : [{ 'Bilgi': 'Kayıt bulunamadı' }];
+        const ws = XLSX.utils.json_to_sheet(safeRows);
+        autoFitSheet(ws, safeRows);
+        XLSX.utils.book_append_sheet(wb, ws, normalizeWorkbookSheetName(name));
+        return ws;
+    }
+
+    function addAoaSheet(wb, name, rows) {
+        const ws = XLSX.utils.aoa_to_sheet(rows && rows.length ? rows : [['Bilgi'], ['Kayıt bulunamadı']]);
+        if (ws['!ref']) ws['!autofilter'] = { ref: ws['!ref'] };
+        ws['!cols'] = (rows[0] || []).map((_, idx) => {
+            let maxLen = Math.max(...rows.map(r => (r[idx] === undefined || r[idx] === null ? '' : r[idx].toString()).length));
+            return { wch: Math.min(Math.max(maxLen + 2, 10), 60) };
+        });
+        XLSX.utils.book_append_sheet(wb, ws, normalizeWorkbookSheetName(name));
+        return ws;
+    }
+
+    function buildActionExportRow(d, options = {}) {
+        let m = pqMasterData[d.pq] || {};
+        let stat = getStatus(d);
+        let dt = parseDateObj(d.estDate);
+        const today = new Date(); today.setHours(0,0,0,0);
+        let daysDiff = dt ? Math.ceil((dt - today) / (1000 * 60 * 60 * 24)) : '';
+        let row = {
+            'PQ': d.pq,
+            'Denetim Alanı': m.alan || 'DİĞER',
+            'CE': m.ce || '',
+            'Doğrulama Türü': m.tur || '',
+            'PQ Sorumlusu': m.sorumlu || '',
+            'ICAO Değerlendirmesi': m.degerlendirme || '',
+            'Adım': d.step,
+            'Eylem / CAP Adımı': truncateTextForExport(d.action, options.longText ? 1200 : 500),
+            'Eylem Ofisi': d.office || '',
+            'Hedef Tarih': d.estDate || '',
+            'Durum': stat.label,
+            'Progress': d.progress || '',
+            'Gün Farkı': daysDiff,
+            'Not': truncateTextForExport(d.note || '', 600),
+            'Bulgu': truncateTextForExport(m.bulgu || '', options.longText ? 1200 : 700)
+        };
+        if (options.mode === 'upcoming') row['Kalan Gün'] = daysDiff;
+        if (options.mode === 'past') row['Gecikme Günü'] = daysDiff === '' ? '' : Math.abs(daysDiff);
+        return row;
+    }
+
+    function buildExecutiveSummaryRows(scopeRows) {
+        let rows = scopeRows || getFilteredData();
+        let pqs = new Set(rows.map(d => d.pq));
+        let done = rows.filter(d => getStatus(d).type === 'done').length;
+        let pending = rows.filter(d => getStatus(d).type === 'pending').length;
+        let late = rows.filter(d => getStatus(d).type === 'late').length;
+        let model = Object.keys(baseEIData).length ? buildEIProjectionModel(rawData) : null;
+        let currentEI = model && model.scope.total ? pctText(ratioPct(getBucketCurrentSat(model.scope), model.scope.total)) : 'EI verisi yok';
+        let projectedEI = model && model.scope.total ? pctText(ratioPct(getBucketProjectedSat(model.scope), model.scope.total)) : 'EI verisi yok';
+        let reportDate = window_loadedReportDate ? window_loadedReportDate.toLocaleDateString('tr-TR') : new Date().toLocaleDateString('tr-TR');
+        return [
+            { 'Metrik': 'Rapor Tarihi', 'Değer': reportDate, 'Açıklama': 'Yüklenen Word export tarihi veya bugünün tarihi' },
+            { 'Metrik': 'Kapsanan PQ', 'Değer': pqs.size, 'Açıklama': 'Filtre / ekran kapsamındaki benzersiz PQ sayısı' },
+            { 'Metrik': 'Toplam CAP Adımı', 'Değer': rows.length, 'Açıklama': 'Filtre / ekran kapsamındaki eylem adımı sayısı' },
+            { 'Metrik': 'Tamamlanan Adım', 'Değer': done, 'Açıklama': 'Progress tamamlandı/100 kabul edilen adımlar' },
+            { 'Metrik': 'Devam Eden Adım', 'Değer': pending, 'Açıklama': 'Hedef tarihi geçmemiş açık adımlar' },
+            { 'Metrik': 'Gecikmiş Adım', 'Değer': late, 'Açıklama': 'Hedef tarihi geçmiş ve tamamlanmamış adımlar' },
+            { 'Metrik': 'Güncel Overall EI', 'Değer': currentEI, 'Açıklama': 'CMAA + ICAO validasyonları + tamamlanmış CAP PQ yansıması' },
+            { 'Metrik': 'Projeksiyon Overall EI', 'Değer': projectedEI, 'Açıklama': 'Mevcut tüm CAP havuzu tamamlanırsa oluşacak tahmini EI' }
+        ];
+    }
+
+    function buildAreaExportRows(scopeRows) {
+        let rows = scopeRows || getFilteredData();
+        let fullRows = expandFilteredRowsToFullPqGroups(rows);
+        if (fullRows.length === 0 && rows.length > 0) fullRows = rows;
+        let groups = groupRowsByPQ(fullRows);
+        let areaMap = {};
+        Object.keys(groups).forEach(pq => {
+            let m = pqMasterData[pq] || {};
+            let area = normalizeAreaKey(m.alan) || 'DİĞER';
+            if (!areaMap[area]) areaMap[area] = { area, pq: 0, donePq: 0, openPq: 0, actions: 0, done: 0, pending: 0, late: 0 };
+            let a = areaMap[area];
+            a.pq++;
+            let usable = groups[pq].filter(isUsableCapStep);
+            let isDone = usable.length > 0 && usable.every(x => getStatus(x).type === 'done');
+            if (isDone) a.donePq++; else a.openPq++;
+            groups[pq].forEach(d => {
+                let st = getStatus(d).type; a.actions++;
+                if (st === 'done') a.done++; else if (st === 'late') a.late++; else a.pending++;
+            });
+        });
+        return Object.values(areaMap).sort((a,b) => sortAreas(a.area,b.area)).map(a => ({
+            'Denetim Alanı': a.area,
+            'PQ Sayısı': a.pq,
+            'Tamamlanan PQ': a.donePq,
+            'Açık PQ': a.openPq,
+            'CAP Adımı': a.actions,
+            'Tamamlanan Adım': a.done,
+            'Devam Eden Adım': a.pending,
+            'Gecikmiş Adım': a.late,
+            'PQ İlerleme %': a.pq ? ((a.donePq / a.pq) * 100).toFixed(2) : '0.00'
+        }));
+    }
+
+    function buildPQExportRows(scopeRows) {
+        let rows = scopeRows || getFilteredData();
+        let fullRows = expandFilteredRowsToFullPqGroups(rows);
+        if (fullRows.length === 0 && rows.length > 0) fullRows = rows;
+        let groups = groupRowsByPQ(fullRows);
+        return Object.keys(groups).sort((a,b) => sortAreas((pqMasterData[a]||{}).alan||'', (pqMasterData[b]||{}).alan||'') || sortPQs(a,b)).map(pq => {
+            let m = pqMasterData[pq] || {};
+            let items = groups[pq];
+            let usable = items.filter(isUsableCapStep);
+            let done = usable.filter(x => getStatus(x).type === 'done').length;
+            let late = usable.filter(x => getStatus(x).type === 'late').length;
+            let nextDates = usable.map(x => parseDateObj(x.estDate)).filter(Boolean).sort((a,b) => a-b);
+            let closure = getPQClosureInfo(pq, items);
+            return {
+                'PQ': pq,
+                'Denetim Alanı': m.alan || 'DİĞER',
+                'CE': m.ce || '',
+                'Doğrulama Türü': m.tur || '',
+                'PQ Sorumlusu': m.sorumlu || '',
+                'ICAO Kapattı mı': m.isIcaoClosed ? 'EVET' : 'HAYIR',
+                'Validasyon Görevi': m.validasyonGorevi || '',
+                'CAP Adımı': usable.length,
+                'Tamamlanan Adım': done,
+                'Gecikmiş Adım': late,
+                'PQ İlerleme %': usable.length ? ((done / usable.length) * 100).toFixed(2) : '0.00',
+                'PQ Durumu': m.isIcaoClosed ? 'ICAO KAPATTI' : (usable.length > 0 && done === usable.length ? 'TAMAMLANDI' : 'AÇIK'),
+                'Öngörülen PQ Kapanış Tarihi': closure.closureDate ? formatExactDate(closure.closureDate) : '',
+                'İlk Hedef Tarih': nextDates[0] ? formatExactDate(nextDates[0]) : '',
+                'Son Hedef Tarih': nextDates[nextDates.length - 1] ? formatExactDate(nextDates[nextDates.length - 1]) : '',
+                'Bulgu': truncateTextForExport(m.bulgu || '', 900)
+            };
+        });
+    }
+
+    function getActiveExportContext() {
         const activeTab = document.querySelector('.tab-content.active').id;
-        let title = 'ICAO USOAP CMA CAP İzleme Raporu';
-        let bodyData = [];
-        let widths = [];
-        let areaCounts = {};
-        let totalCount = 0;
-        
+        let ctx = { activeTab, title: 'ICAO USOAP CMA CAP İzleme Raporu', fileName: 'ICAO_CAP_Raporu.xlsx', mode: 'default', rows: [] };
         if (activeTab === 'tab-upcoming') {
-            title = 'Yaklaşan Görevler Raporu (30 Gün)';
-            const today = new Date(); today.setHours(0,0,0,0); const limit = new Date(); limit.setDate(today.getDate() + 30); limit.setHours(23,59,59,999);
-            let upcoming = getFilteredData().filter(d => { if(getStatus(d).type !== 'pending') return false; if(d.estDate === "Kapatıldı" || d.estDate === "Tarih Yok") return false; let dt = parseDateObj(d.estDate); if(!dt) return false; return dt >= today && dt <= limit; });
-            if(upcoming.length === 0) return alert("Dışa aktarılacak yaklaşan görev bulunamadı.");
-            upcoming.sort((a,b) => parseDateObj(a.estDate) - parseDateObj(b.estDate));
-            widths = ['auto', 'auto', 'auto', '*', 'auto', 'auto'];
-            bodyData.push([{text: 'PQ', style: 'th'}, {text: 'Alan', style: 'th'}, {text: 'Adım', style: 'th'}, {text: 'Eylem (Action)', style: 'th'}, {text: 'Hedef', style: 'th'}, {text: 'Kalan', style: 'th'}]);
-            upcoming.forEach(d => {
-                let m = pqMasterData[d.pq] || {}; let a = m.alan || 'DİĞER'; areaCounts[a] = (areaCounts[a] || 0) + 1; totalCount++;
-                let daysLeft = Math.ceil((parseDateObj(d.estDate) - today) / (1000 * 60 * 60 * 24));
-                bodyData.push([ {text: d.pq, fontSize: 9}, {text: a, fontSize: 9}, {text: d.step, fontSize: 9}, {text: d.action.substring(0,300), fontSize: 8}, {text: d.estDate, fontSize: 9}, {text: daysLeft + ' gün', fontSize: 9, bold: true, color: '#ef4444'} ]);
-            });
+            ctx.title = 'Yaklaşan Görevler Raporu (30 Gün)'; ctx.fileName = 'Yaklasan_Gorevler_Detayli.xlsx'; ctx.mode = 'upcoming'; ctx.rows = getUpcomingTasks(getFilteredData());
+        } else if (activeTab === 'tab-past') {
+            let rangeVal = (document.getElementById('pastRangeSelect') || {}).value || 'all';
+            let rangeDays = rangeVal === 'all' ? null : parseInt(rangeVal, 10);
+            ctx.title = 'Geçmiş Görevler / Tarihi Geçmiş Açık Eylemler'; ctx.fileName = 'Gecmis_Gorevler_Detayli.xlsx'; ctx.mode = 'past'; ctx.rows = getPastTasks(getFilteredData(), rangeDays);
+        } else if (activeTab === 'tab-empty-caps') {
+            ctx.title = 'Eksik / Boş CAP Raporu'; ctx.fileName = 'Eksik_Bos_CAPler_Detayli.xlsx'; ctx.mode = 'empty'; ctx.rows = rawData.filter(d => d.isEmptyCap === true);
+        } else if (activeTab === 'tab-icao-closed') {
+            ctx.title = 'ICAO Tarafından Kapatılan PQ Raporu'; ctx.fileName = 'ICAO_Kapatilanlar_Detayli.xlsx'; ctx.mode = 'icao';
+            Object.keys(pqMasterData).forEach(pq => { if (pqMasterData[pq] && pqMasterData[pq].isIcaoClosed) ctx.rows.push({ pq, ...pqMasterData[pq] }); });
+            ctx.rows.sort((a,b) => sortAreas(a.alan,b.alan) || sortPQs(a.pq,b.pq));
+        } else if (activeTab === 'tab-trend') {
+            ctx.title = 'Trend ve Kıyaslama Raporu'; ctx.fileName = 'Trend_Kiyaslama.xlsx'; ctx.mode = 'trend'; ctx.rows = [];
+        } else {
+            ctx.rows = getFilteredData(); ctx.fileName = 'ICAO_CAP_Filtrelenmis_Detayli_Rapor.xlsx';
         }
-        else if (activeTab === 'tab-empty-caps') {
-            title = 'Eksik / Boş CAP\'ler Raporu';
-            let emptyCaps = rawData.filter(d => d.isEmptyCap === true);
-            if(emptyCaps.length === 0) return alert("Eksik/Boş CAP bulunamadı.");
-            widths = ['auto', 'auto', '*'];
-            bodyData.push([{text: 'PQ', style: 'th'}, {text: 'Alan', style: 'th'}, {text: 'Durum', style: 'th'}]);
-            emptyCaps.forEach(d => {
-                let m = pqMasterData[d.pq] || {}; let a = m.alan || 'DİĞER'; areaCounts[a] = (areaCounts[a] || 0) + 1; totalCount++;
-                bodyData.push([ {text: d.pq, fontSize: 10}, {text: a, fontSize: 10}, {text: "OLF'de CAP Adımı Girilmemiş", fontSize: 10, color: '#ef4444'} ]);
-            });
+        return ctx;
+    }
+
+    function exportExcel() {
+        const ctx = getActiveExportContext();
+        if (ctx.mode === 'trend') { exportTrendExcel(); return; }
+        if (!ctx.rows || ctx.rows.length === 0) return alert('Dışa aktarılacak veri bulunamadı.');
+
+        const wb = XLSX.utils.book_new();
+        wb.Props = { Title: ctx.title, Subject: 'USOAP CMA CAP İzleme', Author: 'ICAO CAP İzleme', CreatedDate: new Date() };
+
+        let detailRows = [];
+        if (ctx.mode === 'icao') {
+            detailRows = ctx.rows.map(m => ({
+                'PQ': m.pq,
+                'Denetim Alanı': m.alan || 'DİĞER',
+                'CE': m.ce || '',
+                'Doğrulama Türü': m.tur || '',
+                'PQ Sorumlusu': m.sorumlu || '',
+                'Validasyon Görevi': m.validasyonGorevi || '',
+                'ICAO Kapattı mı': 'EVET',
+                'Bulgu': truncateTextForExport(m.bulgu || '', 1200)
+            }));
+        } else if (ctx.mode === 'empty') {
+            detailRows = ctx.rows.map(d => { let m = pqMasterData[d.pq] || {}; return {
+                'PQ': d.pq, 'Denetim Alanı': m.alan || 'DİĞER', 'CE': m.ce || '', 'Durum': "OLF'de CAP adımı yok / boş", 'Bulgu': truncateTextForExport(m.bulgu || '', 1000)
+            }; });
+        } else {
+            detailRows = ctx.rows.map(d => buildActionExportRow(d, { mode: ctx.mode, longText: true }));
         }
-        else if (activeTab === 'tab-icao-closed') {
-            title = 'ICAO Tarafından Kapatılan PQ\'lar';
-            let closedPQs = []; Object.keys(pqMasterData).forEach(pq => { if(pqMasterData[pq] && pqMasterData[pq].isIcaoClosed) closedPQs.push({ pq: pq, ...pqMasterData[pq] }); });
-            if(closedPQs.length === 0) return alert("ICAO tarafından kapatılan PQ bulunamadı.");
-            closedPQs.sort((a,b) => sortAreas(a.alan, b.alan) || sortPQs(a.pq, b.pq));
+
+        addJsonSheet(wb, 'Yonetici_Ozeti', buildExecutiveSummaryRows(ctx.mode === 'icao' || ctx.mode === 'empty' ? getFilteredData() : ctx.rows));
+        addJsonSheet(wb, 'Liste', detailRows);
+        if (ctx.mode !== 'icao' && ctx.mode !== 'empty') {
+            addJsonSheet(wb, 'PQ_Ozeti', buildPQExportRows(ctx.rows));
+            addJsonSheet(wb, 'Alan_Ozeti', buildAreaExportRows(ctx.rows));
+        }
+        if (Object.keys(baseEIData).length > 0) {
+            let model = buildEIProjectionModel(rawData);
+            let eiRows = [{
+                'Kapsam': 'TÜRKİYE GENELİ',
+                'Toplam PQ': model.scope.total,
+                'CMAA Satisfactory': model.scope.baseSatOnly,
+                'ICAO Validasyon': model.scope.icaoClosed,
+                'CAP Tamamlanan PQ': model.scope.localCompleted,
+                'Açık CAP PQ': model.scope.projected,
+                'Güncel EI %': ratioPct(getBucketCurrentSat(model.scope), model.scope.total).toFixed(2),
+                'Projeksiyon EI %': ratioPct(getBucketProjectedSat(model.scope), model.scope.total).toFixed(2)
+            }];
+            Object.keys(model.areas).sort(sortAreas).forEach(a => {
+                let b = model.areas[a];
+                eiRows.push({
+                    'Kapsam': a,
+                    'Toplam PQ': b.total,
+                    'CMAA Satisfactory': b.baseSatOnly,
+                    'ICAO Validasyon': b.icaoClosed,
+                    'CAP Tamamlanan PQ': b.localCompleted,
+                    'Açık CAP PQ': b.projected,
+                    'Güncel EI %': ratioPct(getBucketCurrentSat(b), b.total).toFixed(2),
+                    'Projeksiyon EI %': ratioPct(getBucketProjectedSat(b), b.total).toFixed(2)
+                });
+            });
+            addJsonSheet(wb, 'EI_Ozeti', eiRows);
+        }
+        XLSX.writeFile(wb, ctx.fileName);
+    }
+
+    function buildPdfTableRowsForContext(ctx) {
+        let widths = [];
+        let bodyData = [];
+        if (ctx.mode === 'icao') {
             widths = ['auto', 'auto', 'auto', '*'];
             bodyData.push([{text: 'PQ', style: 'th'}, {text: 'Alan', style: 'th'}, {text: 'Görev', style: 'th'}, {text: 'Bulgu', style: 'th'}]);
-            closedPQs.forEach(m => {
-                let a = m.alan || 'DİĞER'; areaCounts[a] = (areaCounts[a] || 0) + 1; totalCount++;
-                bodyData.push([ {text: m.pq, fontSize: 9}, {text: a, fontSize: 9}, {text: m.validasyonGorevi||'-', fontSize: 9}, {text: (m.bulgu||'-').substring(0,300), fontSize: 8} ]);
-            });
-        }
-        else {
-            const filtered = getFilteredData(); 
-            if(filtered.length === 0) return alert("Dışa aktarılacak veri bulunamadı."); 
-            filtered.sort((a, b) => { let areaA = (pqMasterData[a.pq] || {}).alan || "ZZZ"; let areaB = (pqMasterData[b.pq] || {}).alan || "ZZZ"; let diff = sortAreas(areaA, areaB); if (diff !== 0) return diff; return sortPQs(a.pq, b.pq); });
+            ctx.rows.forEach(m => bodyData.push([{text:m.pq, fontSize:9}, {text:m.alan||'DİĞER', fontSize:9}, {text:m.validasyonGorevi||'-', fontSize:9}, {text:truncateTextForExport(m.bulgu||'-', 350), fontSize:8}]));
+        } else if (ctx.mode === 'empty') {
+            widths = ['auto', 'auto', '*'];
+            bodyData.push([{text: 'PQ', style: 'th'}, {text: 'Alan', style: 'th'}, {text: 'Durum', style: 'th'}]);
+            ctx.rows.forEach(d => { let m = pqMasterData[d.pq] || {}; bodyData.push([{text:d.pq, fontSize:9}, {text:m.alan||'DİĞER', fontSize:9}, {text:"OLF'de CAP adımı yok / boş", fontSize:9, color:'#ef4444'}]); });
+        } else {
             widths = ['auto', 'auto', 'auto', '*', 'auto', 'auto', 'auto'];
-            bodyData.push([ {text: 'PQ', style: 'th'}, {text: 'Alan', style: 'th'}, {text: 'Adım', style: 'th'}, {text: 'Eylem (Action)', style: 'th'}, {text: 'Sorumlu', style: 'th'}, {text: 'Hedef', style: 'th'}, {text: 'Durum', style: 'th'} ]);
-            filtered.forEach(d => {
-                let m = pqMasterData[d.pq] || {}; let stat = getStatus(d);
-                let a = m.alan || 'DİĞER'; areaCounts[a] = (areaCounts[a] || 0) + 1; totalCount++;
+            bodyData.push([{text:'PQ', style:'th'}, {text:'Alan', style:'th'}, {text:'Adım', style:'th'}, {text:'Eylem', style:'th'}, {text:'Sorumlu', style:'th'}, {text:'Hedef', style:'th'}, {text: ctx.mode === 'past' ? 'Gecikme' : 'Durum', style:'th'}]);
+            const today = new Date(); today.setHours(0,0,0,0);
+            ctx.rows.forEach(d => {
+                let m = pqMasterData[d.pq] || {}; let stat = getStatus(d); let delayCell = stat.label;
+                if (ctx.mode === 'past') { let dt = parseDateObj(d.estDate); delayCell = dt ? Math.ceil((today - dt) / (1000*60*60*24)) + ' gün' : '-'; }
+                if (ctx.mode === 'upcoming') { let dt = parseDateObj(d.estDate); delayCell = dt ? Math.ceil((dt - today) / (1000*60*60*24)) + ' gün' : '-'; }
                 bodyData.push([
-                    {text: d.pq, fontSize: 9}, {text: a, fontSize: 9}, {text: d.step, fontSize: 9},
-                    {text: d.action.substring(0, 300) + (d.action.length > 300 ? '...' : ''), fontSize: 8},
-                    {text: d.office || '-', fontSize: 9}, {text: d.estDate || '-', fontSize: 9},
-                    {text: stat.label, fontSize: 9, color: stat.type === 'done' ? '#10b981' : (stat.type === 'late' ? '#ef4444' : '#f59e0b')}
+                    {text:d.pq, fontSize:9}, {text:m.alan||'DİĞER', fontSize:9}, {text:d.step, fontSize:9},
+                    {text:truncateTextForExport(d.action, 320), fontSize:8}, {text:d.office||'-', fontSize:8}, {text:d.estDate||'-', fontSize:9},
+                    {text:delayCell, fontSize:9, bold: ctx.mode === 'past' || ctx.mode === 'upcoming', color: stat.type === 'done' ? '#10b981' : (stat.type === 'late' ? '#ef4444' : '#f59e0b')}
                 ]);
             });
         }
+        return { widths, bodyData };
+    }
 
-        let summaryText = `📊 Toplam Kayıt: ${totalCount}  |  Kapsanan Alanlar: ` + Object.keys(areaCounts).sort(sortAreas).map(a => `${a}: ${areaCounts[a]}`).join(' / ');
+    function buildPdfAreaSummaryTable(rows) {
+        let areaRows = buildAreaExportRows(rows).slice(0, 30);
+        if (!areaRows.length) return null;
+        let body = [[{text:'Alan', style:'th'}, {text:'PQ', style:'th'}, {text:'Tamamlanan PQ', style:'th'}, {text:'Açık PQ', style:'th'}, {text:'CAP Adımı', style:'th'}, {text:'Gecikmiş', style:'th'}, {text:'İlerleme %', style:'th'}]];
+        areaRows.forEach(r => body.push([r['Denetim Alanı'], r['PQ Sayısı'], r['Tamamlanan PQ'], r['Açık PQ'], r['CAP Adımı'], r['Gecikmiş Adım'], r['PQ İlerleme %']]));
+        return { table: { headerRows: 1, widths: ['*','auto','auto','auto','auto','auto','auto'], body }, layout: 'lightHorizontalLines', margin: [0,0,0,12] };
+    }
 
+    window.exportPDF = function() {
+        const ctx = getActiveExportContext();
+        if (ctx.mode === 'trend') { exportTrendPDF(); return; }
+        if (!ctx.rows || ctx.rows.length === 0) return alert('Dışa aktarılacak veri bulunamadı.');
+        const { widths, bodyData } = buildPdfTableRowsForContext(ctx);
+        let rowsForSummary = (ctx.mode === 'icao' || ctx.mode === 'empty') ? getFilteredData() : ctx.rows;
+        let summaryRows = buildExecutiveSummaryRows(rowsForSummary);
+        let kpiBody = [];
+        for (let i = 0; i < summaryRows.length; i += 4) {
+            kpiBody.push(summaryRows.slice(i, i+4).map(r => ({ text: [{text: r['Metrik'] + '\n', bold:true, fontSize:8, color:'#64748b'}, {text:String(r['Değer']), bold:true, fontSize:13, color:'#0f172a'}], fillColor:'#f8fafc', margin:[6,6,6,6] })));
+        }
+        let areaSummary = buildPdfAreaSummaryTable(rowsForSummary);
+        let managementNote = (document.getElementById('managementNotes') && document.getElementById('managementNotes').value.trim()) ? document.getElementById('managementNotes').value.trim() : '';
         showLoading();
         setTimeout(() => {
             try {
+                let content = [
+                    {text: ctx.title, style: 'header'},
+                    {text: 'Rapor tarihi: ' + new Date().toLocaleDateString('tr-TR') + ' | Kayıt sayısı: ' + ctx.rows.length, style: 'subheader'},
+                    {table: {widths: Array(kpiBody[0] ? kpiBody[0].length : 1).fill('*'), body: kpiBody}, layout: 'noBorders', margin:[0,0,0,12]}
+                ];
+                if (managementNote) content.push({text: 'Yönetici Notu', style:'sectionHeader'}, {text: managementNote, style:'noteBox'});
+                if (areaSummary) content.push({text: 'Alan Bazlı Özet', style:'sectionHeader'}, areaSummary);
+                content.push({text: 'Detay Liste', style:'sectionHeader'}, {table: {headerRows: 1, widths: widths, body: bodyData}, layout: 'lightHorizontalLines'});
                 let docDef = {
-                    pageOrientation: 'landscape', pageSize: 'A4',
-                    content: [
-                        {text: title, style: 'header'},
-                        {text: 'Tarih: ' + new Date().toLocaleDateString('tr-TR'), style: 'subheader'},
-                        {text: summaryText, style: 'summaryBlock'},
-                        {table: {headerRows: 1, widths: widths, body: bodyData}, layout: 'lightHorizontalLines'}
-                    ],
-                    styles: { 
-                        header: { fontSize: 16, bold: true, color: '#2563eb', margin: [0,0,0,5] }, 
-                        subheader: { fontSize: 10, color: '#64748b', margin: [0,0,0,5] }, 
-                        summaryBlock: { fontSize: 10, bold: true, color: '#0f172a', background: '#f8fafc', margin: [0,0,0,15] },
-                        th: { bold: true, fontSize: 10, fillColor: '#f1f5f9', margin: [0,5,0,5] } 
+                    pageOrientation: 'landscape', pageSize: 'A4', content,
+                    footer: function(currentPage, pageCount) { return { text: currentPage.toString() + ' / ' + pageCount, alignment: 'right', margin: [0,0,25,0], fontSize: 8, color: '#64748b' }; },
+                    styles: {
+                        header: { fontSize: 17, bold: true, color: '#2563eb', margin: [0,0,0,4] },
+                        subheader: { fontSize: 9, color: '#64748b', margin: [0,0,0,12] },
+                        sectionHeader: { fontSize: 12, bold: true, color:'#0f172a', margin:[0,8,0,6] },
+                        noteBox: { fontSize: 10, color:'#0f172a', fillColor:'#f8fafc', margin:[0,0,0,10] },
+                        th: { bold: true, fontSize: 9, fillColor: '#f1f5f9', margin: [0,4,0,4] }
                     },
-                    defaultStyle: { font: 'Roboto' }
+                    defaultStyle: { font: 'Roboto', fontSize: 9 }
                 };
-                pdfMake.createPdf(docDef).download(title.replace(/\s+/g, '_') + '.pdf');
-            } catch(e) { 
-                alert("PDF oluşturulurken hata oluştu: " + e.message); 
-            } finally { 
-                hideLoading(); 
-            }
+                pdfMake.createPdf(docDef).download(ctx.title.replace(/\s+/g, '_') + '.pdf');
+            } catch(e) { alert('PDF oluşturulurken hata oluştu: ' + e.message); }
+            finally { hideLoading(); }
         }, 100);
-    } 
+    };
 
     // ARŞİVLEME VE TREND
     window.archiveCurrentState = function() {
@@ -1344,7 +2123,7 @@
     window.restoreSelectedArchive = function(selectId = 'trendSelectA') {
         let sel = document.getElementById(selectId).value; if(!sel || sel === 'current') return alert("Geçerli bir arşiv seçin.");
         if(confirm("Mevcut çalışma verileriniz temizlenecek ve arşiv yüklenecektir. Devam edilsin mi?")) {
-            showLoading(); let arch = systemArchives[sel]; rawData = arch.rawData || []; baseEIData = arch.baseEIData || {}; pqMasterData = {}; if (arch.pqMasterData) { arch.pqMasterData.forEach(item => { pqMasterData[item.key] = item.data; }); } dailyReviewedPQs = new Set(arch.dailyReviewedPQs || []); dailyReviewedSet = new Set(); dailyPQNotes = {}; window.loadedWordAreas = new Set(); rawData.forEach(d => { let m = pqMasterData[d.pq]; if (m && m.alan) window.loadedWordAreas.add(m.alan.trim().toUpperCase()); });
+            showLoading(); let arch = systemArchives[sel]; rawData = arch.rawData || []; baseEIData = arch.baseEIData || {}; pqMasterData = reconstructPqMaster(arch.pqMasterData || {}); dailyReviewedPQs = new Set(arch.dailyReviewedPQs || []); dailyReviewedSet = new Set(); dailyPQNotes = {}; window.loadedWordAreas = new Set(); rawData.forEach(d => { let m = pqMasterData[d.pq]; if (m && m.alan) window.loadedWordAreas.add(m.alan.trim().toUpperCase()); });
             loadedFiles = new Set(["[Arşiv] " + (arch.reportDateStr || arch.note)]); loadedExcelFile = "[Arşivden Gelen Master Veri]"; saveToLocalStorage(); hideLoading(); alert("Arşiv başarıyla yüklendi!"); switchTab('dashboard'); updateDynamicSubtitle(); refreshAllFilters(); renderFileList(); render();
         }
     };
@@ -1356,25 +2135,413 @@
         keys.forEach(k => { let arch = systemArchives[k]; let label = `${arch.reportDateStr || arch.dateStr} - ${arch.note}`; selA.innerHTML += `<option value="${k}">${label}</option>`; selB.innerHTML += `<option value="${k}">${label}</option>`; selSide.innerHTML += `<option value="${k}">${label}</option>`; });
     }
     
-    function getStaticEIData(dataObj) { let bEI = dataObj.baseEIData || {}; let rData = dataObj.rawData || []; let dailySet = new Set(dataObj.dailyReviewedPQs || []); let pMaster = dataObj.pqMasterData || {}; if (Array.isArray(pMaster)) { let reconstructedObj = {}; pMaster.forEach(item => { reconstructedObj[item.key] = item.data; }); pMaster = reconstructedObj; } let globalTotal = 0; let globalSat = 0; let areaStats = {}; Object.keys(bEI).forEach(a => { globalTotal += bEI[a].total; globalSat += bEI[a].sat; areaStats[a] = { total: bEI[a].total, sat: bEI[a].sat, added: 0 }; }); let groups = {}; rData.forEach(d => { if(!groups[d.pq]) groups[d.pq]=[]; groups[d.pq].push(d); }); let globalAdded = 0; Object.keys(groups).forEach(pq => { let isFullyCompleted = groups[pq].every(x => x.progress.toLowerCase().includes('completed') || x.progress.toLowerCase().includes('tamamlandı') || x.progress.includes('100')); if(isFullyCompleted || dailySet.has(pq)) { globalAdded++; let m = pMaster[pq]; if(m && m.alan) { let area = m.alan.trim().toUpperCase(); if(areaStats[area]) areaStats[area].added++; } } }); let overallEI = globalTotal > 0 ? ((globalSat + globalAdded) / globalTotal) * 100 : 0; let areas = {}; Object.keys(areaStats).forEach(a => { areas[a] = areaStats[a].total > 0 ? ((areaStats[a].sat + areaStats[a].added) / areaStats[a].total) * 100 : 0; }); return { overall: overallEI, areas: areas }; }
-    function getStaticStats(rData, pMaster) { let stats = { closedPQs: { total:0, on:0, off:0 }, doneActions: { total:0, on:0, off:0 }, ongoingActions: { total:0, on:0, off:0 }, lateActions: { total:0, on:0, off:0 }, groups: {} }; rData.forEach(d => { if(!stats.groups[d.pq]) stats.groups[d.pq]=[]; stats.groups[d.pq].push(d); }); Object.keys(stats.groups).forEach(pq => { let isFullyCompleted = stats.groups[pq].every(x => x.progress.toLowerCase().includes('completed') || x.progress.toLowerCase().includes('tamamlandı') || x.progress.includes('100')); if(isFullyCompleted) { stats.closedPQs.total++; let m = pMaster[pq] || {}; let tur = (m.tur || '').toUpperCase(); if(tur.includes('ON-SITE')) stats.closedPQs.on++; else if(tur.includes('OFF-SITE')) stats.closedPQs.off++; } }); rData.forEach(d => { let m = pMaster[d.pq] || {}; let tur = (m.tur || '').toUpperCase(); let isOn = tur.includes('ON-SITE'); let isOff = tur.includes('OFF-SITE'); let isDone = d.progress.toLowerCase().includes('completed') || d.progress.toLowerCase().includes('tamamlandı') || d.progress.includes('100'); let isLate = false; if(!isDone && d.estDate && d.estDate !== "Kapatıldı") { let mDate = d.estDate.match(/(\d{1,2})[\.\/\-](\d{1,2})[\.\/\-](\d{2,4})/); if(mDate) { let dt = new Date(mDate[3].length===2 ? parseInt(mDate[3])+2000 : mDate[3], parseInt(mDate[2])-1, mDate[1]); if(dt < new Date()) isLate = true; } } if(isDone) { stats.doneActions.total++; if(isOn) stats.doneActions.on++; else if(isOff) stats.doneActions.off++; } else { stats.ongoingActions.total++; if(isOn) stats.ongoingActions.on++; else if(isOff) stats.ongoingActions.off++; if(isLate) { stats.lateActions.total++; if(isOn) stats.lateActions.on++; else if(isOff) stats.lateActions.off++; } } }); return stats; }
+    function reconstructPqMaster(input) {
+        if (!input) return {};
+        if (Array.isArray(input)) {
+            let obj = {};
+            input.forEach(item => { if (item && item.key) obj[item.key] = item.data || {}; });
+            return obj;
+        }
+        if (typeof input === 'object') return input;
+        return {};
+    }
+
+    function snapshotFromKey(key) {
+        if (key === 'current') return { rawData: rawData, baseEIData: baseEIData, dailyReviewedPQs: Array.from(dailyReviewedPQs), pqMasterData: pqMasterData, reportTimestamp: Date.now(), note: 'Güncel Durum', reportDateStr: new Date().toISOString().slice(0,10) };
+        return systemArchives[key] || null;
+    }
+
+    function trendLabelForKey(key) {
+        if (key === 'current') return 'Güncel Durum';
+        let arch = systemArchives[key] || {};
+        return `${arch.reportDateStr || arch.dateStr || 'Tarihsiz'} - ${arch.note || 'Arşiv'}`;
+    }
+
+    function isSnapshotStepDone(row) {
+        let p = (row && row.progress ? row.progress : '').toString().toLowerCase();
+        return p.includes('completed') || p.includes('tamamlandı') || p.includes('tamamlandi') || p.includes('100');
+    }
+
+    function isSnapshotUsableStep(row) {
+        if (!row || row.isEmptyCap || row.step === '-') return false;
+        let action = (row.action || '').toString().trim();
+        return !!action && !action.includes('OLF üzerinde CAP');
+    }
+
+    function snapshotStatusType(row, asOfDate) {
+        if (isSnapshotStepDone(row)) return 'done';
+        let dt = parseDateObj(row.estDate);
+        if (dt && asOfDate && dt < asOfDate) return 'late';
+        return 'pending';
+    }
+
+    function emptyTrendMetric() { return { total:0, on:0, off:0 }; }
+    function addTypeMetric(metric, master) {
+        metric.total++;
+        let tur = ((master || {}).tur || '').toString().toUpperCase();
+        if (tur.includes('ON-SITE')) metric.on++; else if (tur.includes('OFF-SITE')) metric.off++;
+    }
+
+    function getSnapshotAnalysis(dataObj) {
+        dataObj = dataObj || {};
+        let bEI = dataObj.baseEIData || {};
+        let pMaster = reconstructPqMaster(dataObj.pqMasterData || {});
+        let rData = dataObj.rawData || [];
+        let dailySet = new Set(dataObj.dailyReviewedPQs || []);
+        let asOf = new Date(dataObj.reportTimestamp || dataObj.timestamp || Date.now());
+        asOf.setHours(0,0,0,0);
+
+        let analysis = {
+            label: dataObj.note || dataObj.reportDateStr || '',
+            asOf,
+            totalEI: 0,
+            baseSat: 0,
+            icaoClosed: 0,
+            localCompleted: 0,
+            projected: 0,
+            ei: { overall: 0, projectedOverall: 0, areas: {}, projectedAreas: {} },
+            areaRows: {},
+            stats: {
+                closedPQs: emptyTrendMetric(),
+                doneActions: emptyTrendMetric(),
+                ongoingActions: emptyTrendMetric(),
+                lateActions: emptyTrendMetric(),
+                closedPqSet: new Set(),
+                closedPqItems: [],
+                areaStats: {}
+            }
+        };
+
+        Object.keys(bEI).forEach(areaRaw => {
+            let area = normalizeAreaKey(areaRaw);
+            let b = bEI[areaRaw] || {};
+            analysis.totalEI += b.total || 0;
+            analysis.baseSat += b.sat || 0;
+            analysis.areaRows[area] = {
+                area,
+                total: b.total || 0,
+                baseSat: b.sat || 0,
+                icaoClosed: 0,
+                localCompleted: 0,
+                projected: 0,
+                activePQs: new Set(),
+                closedPQs: 0,
+                doneActions: 0,
+                ongoingActions: 0,
+                lateActions: 0,
+                currentEI: 0,
+                projectedEI: 0
+            };
+            analysis.stats.areaStats[area] = { closedPQs:0, doneActions:0, ongoingActions:0, lateActions:0 };
+        });
+
+        function addClosedPQ(pq, master, source) {
+            if (analysis.stats.closedPqSet.has(pq)) return;
+            analysis.stats.closedPqSet.add(pq);
+            addTypeMetric(analysis.stats.closedPQs, master);
+            let area = normalizeAreaKey((master || {}).alan) || 'DİĞER';
+            if (analysis.stats.areaStats[area]) analysis.stats.areaStats[area].closedPQs++;
+            if (analysis.areaRows[area]) analysis.areaRows[area].closedPQs++;
+            analysis.stats.closedPqItems.push({
+                pq,
+                area,
+                ce: (master || {}).ce || '',
+                tur: (master || {}).tur || '',
+                source,
+                validationTask: (master || {}).validasyonGorevi || '',
+                bulgu: (master || {}).bulgu || ''
+            });
+        }
+
+        Object.keys(pMaster).forEach(pq => {
+            let m = pMaster[pq] || {};
+            let area = normalizeAreaKey(m.alan);
+            if (!area || !analysis.areaRows[area]) return;
+            if (m.isIcaoClosed) {
+                analysis.icaoClosed++;
+                analysis.areaRows[area].icaoClosed++;
+                addClosedPQ(pq, m, 'ICAO Validasyonu');
+            }
+        });
+
+        let groups = {};
+        rData.forEach(d => { if (!groups[d.pq]) groups[d.pq] = []; groups[d.pq].push(d); });
+
+        Object.keys(groups).forEach(pq => {
+            let m = pMaster[pq] || {};
+            if (m.isIcaoClosed) return;
+            let area = normalizeAreaKey(m.alan);
+            if (!area || !analysis.areaRows[area]) return;
+            analysis.areaRows[area].activePQs.add(pq);
+            let usable = groups[pq].filter(isSnapshotUsableStep);
+            let allDone = usable.length > 0 && usable.every(isSnapshotStepDone);
+            if (allDone || dailySet.has(pq)) {
+                analysis.localCompleted++;
+                analysis.areaRows[area].localCompleted++;
+                addClosedPQ(pq, m, dailySet.has(pq) && !allDone ? 'Günlük işaretleme' : 'CAP Tamamlandı');
+            } else if (usable.length > 0) {
+                analysis.projected++;
+                analysis.areaRows[area].projected++;
+            }
+
+            groups[pq].forEach(d => {
+                let type = snapshotStatusType(d, asOf);
+                if (type === 'done') { addTypeMetric(analysis.stats.doneActions, m); analysis.areaRows[area].doneActions++; analysis.stats.areaStats[area].doneActions++; }
+                else {
+                    addTypeMetric(analysis.stats.ongoingActions, m); analysis.areaRows[area].ongoingActions++; analysis.stats.areaStats[area].ongoingActions++;
+                    if (type === 'late') { addTypeMetric(analysis.stats.lateActions, m); analysis.areaRows[area].lateActions++; analysis.stats.areaStats[area].lateActions++; }
+                }
+            });
+        });
+
+        let currentSat = analysis.baseSat + analysis.icaoClosed + analysis.localCompleted;
+        let projectedSat = currentSat + analysis.projected;
+        analysis.ei.overall = ratioPct(currentSat, analysis.totalEI);
+        analysis.ei.projectedOverall = ratioPct(projectedSat, analysis.totalEI);
+        Object.keys(analysis.areaRows).forEach(area => {
+            let r = analysis.areaRows[area];
+            let cur = r.baseSat + r.icaoClosed + r.localCompleted;
+            let proj = cur + r.projected;
+            r.currentEI = ratioPct(cur, r.total);
+            r.projectedEI = ratioPct(proj, r.total);
+            r.activePQCount = r.activePQs.size;
+            delete r.activePQs;
+            analysis.ei.areas[area] = r.currentEI;
+            analysis.ei.projectedAreas[area] = r.projectedEI;
+        });
+        analysis.stats.closedPqItems.sort((a,b) => sortAreas(a.area,b.area) || sortPQs(a.pq,b.pq));
+        return analysis;
+    }
+
+    function getStaticEIData(dataObj) {
+        let a = getSnapshotAnalysis(dataObj);
+        return { overall: a.ei.overall, projectedOverall: a.ei.projectedOverall, areas: a.ei.areas, projectedAreas: a.ei.projectedAreas };
+    }
+
+    function getStaticStats(rData, pMaster, dataObj = {}) {
+        let a = getSnapshotAnalysis({ rawData: rData || [], pqMasterData: pMaster || {}, baseEIData: dataObj.baseEIData || baseEIData, dailyReviewedPQs: dataObj.dailyReviewedPQs || [], reportTimestamp: dataObj.reportTimestamp || Date.now() });
+        return { closedPQs: a.stats.closedPQs, doneActions: a.stats.doneActions, ongoingActions: a.stats.ongoingActions, lateActions: a.stats.lateActions, groups: {} };
+    }
+
+    function setDeltaCard(valueId, descId, delta, suffix, desc, invertGood = false) {
+        let el = document.getElementById(valueId);
+        let good = invertGood ? delta < 0 : delta > 0;
+        let bad = invertGood ? delta > 0 : delta < 0;
+        el.innerText = (delta > 0 ? '+' : '') + delta.toFixed(typeof delta === 'number' && Math.abs(delta) < 10 && suffix.includes('%') ? 2 : 0) + suffix;
+        el.className = 'delta-val ' + (good ? 'delta-pos' : (bad ? 'delta-neg' : 'delta-neu'));
+        document.getElementById(descId).innerText = desc;
+    }
+
+    function renderTrendAreaTable(areaRows) {
+        let el = document.getElementById('trendAreaComparisonTable');
+        if (!el) return;
+        if (!areaRows || areaRows.length === 0) { el.innerHTML = '<div style="padding:20px; color:var(--muted);">Alan bazlı kıyaslama verisi bulunamadı.</div>'; return; }
+        let html = `<table style="font-size:12px; min-width:900px;"><thead><tr><th>Alan</th><th>Eski EI</th><th>Yeni EI</th><th>Δ EI</th><th>Proj. Yeni EI</th><th>Kapanan PQ Δ</th><th>Tamamlanan Eylem Δ</th><th>Gecikmiş Eylem Δ</th></tr></thead><tbody>`;
+        areaRows.forEach(r => {
+            let cls = r.deltaEI > 0 ? 'delta-pos' : (r.deltaEI < 0 ? 'delta-neg' : 'delta-neu');
+            let lateCls = r.deltaLate < 0 ? 'delta-pos' : (r.deltaLate > 0 ? 'delta-neg' : 'delta-neu');
+            html += `<tr><td><b>${r.area}</b></td><td>%${r.oldEI.toFixed(2)}</td><td>%${r.newEI.toFixed(2)}</td><td class="${cls}" style="font-weight:bold;">${r.deltaEI>0?'+':''}${r.deltaEI.toFixed(2)}</td><td>%${r.newProjectedEI.toFixed(2)}</td><td>${r.deltaClosed>0?'+':''}${r.deltaClosed}</td><td>${r.deltaDone>0?'+':''}${r.deltaDone}</td><td class="${lateCls}" style="font-weight:bold;">${r.deltaLate>0?'+':''}${r.deltaLate}</td></tr>`;
+        });
+        html += '</tbody></table>';
+        el.innerHTML = html;
+    }
+
+    function renderTrendNewClosedList(items) {
+        let el = document.getElementById('trendNewClosedList');
+        if (!el) return;
+        if (!items || items.length === 0) { el.innerHTML = '<div style="padding:10px; color:var(--muted);">İki tarih arasında yeni kapanan PQ bulunmamaktadır.</div>'; return; }
+        let html = '<div class="warning-grid">';
+        items.slice(0, 80).forEach(item => {
+            let badgeColor = item.source === 'ICAO Validasyonu' ? '#ca8a04' : '#047857';
+            html += `<div class="warning-item" onclick="switchTab('list'); window.togglePQ('${item.pq.replace(/\./g, '-')}');" style="border-left-color:${badgeColor};"><div><span class="badge badge-extra" style="margin-bottom:6px;">${item.area || 'N/A'}</span><br><b>PQ ${item.pq}</b> <span style="font-size:10px; color:${badgeColor}; font-weight:bold; margin-left:4px;">${escapeHtml(item.source)}</span><br><span style="font-size:11px; color:var(--muted);">${escapeHtml(item.validationTask || item.ce || '-')}</span></div><div style="font-size:11px; color:var(--muted); text-align:right; max-width:160px;">${escapeHtml(truncateTextForExport(item.bulgu || '', 90))}</div></div>`;
+        });
+        html += '</div>';
+        if (items.length > 80) html += `<div style="font-size:12px; color:var(--muted); margin-top:8px;">İlk 80 kayıt gösterildi. Toplam yeni kapanan PQ: ${items.length}</div>`;
+        el.innerHTML = html;
+    }
+
+    function renderTrendCharts(trendData) {
+        let labels = trendData.areaRows.map(r => r.area);
+        const ctx1 = document.getElementById('trendComparisonChartCanvas').getContext('2d');
+        if (charts.trendComp) charts.trendComp.destroy();
+        charts.trendComp = new Chart(ctx1, {
+            type: 'bar',
+            data: { labels, datasets: [
+                { label: 'Eski EI (%)', data: trendData.areaRows.map(r => r.oldEI), backgroundColor: '#94a3b8' },
+                { label: 'Yeni EI (%)', data: trendData.areaRows.map(r => r.newEI), backgroundColor: '#2563eb' },
+                { label: 'Yeni Projeksiyon EI (%)', data: trendData.areaRows.map(r => r.newProjectedEI), backgroundColor: '#f59e0b' }
+            ] },
+            options: { responsive:true, maintainAspectRatio:false, scales:{ y:{ beginAtZero:true, max:100 } }, plugins:{ title:{ display:true, text:'Alan Bazında EI Kıyaslaması' } } }
+        });
+
+        const ctx2 = document.getElementById('trendActionChartCanvas').getContext('2d');
+        if (charts.trendAction) charts.trendAction.destroy();
+        charts.trendAction = new Chart(ctx2, {
+            type: 'bar',
+            data: { labels: ['Kapanan PQ', 'Tamamlanan Eylem', 'Devam Eden Eylem', 'Gecikmiş Eylem'], datasets: [
+                { label: trendData.labelA, data: [trendData.analysisA.stats.closedPQs.total, trendData.analysisA.stats.doneActions.total, trendData.analysisA.stats.ongoingActions.total, trendData.analysisA.stats.lateActions.total], backgroundColor: '#94a3b8' },
+                { label: trendData.labelB, data: [trendData.analysisB.stats.closedPQs.total, trendData.analysisB.stats.doneActions.total, trendData.analysisB.stats.ongoingActions.total, trendData.analysisB.stats.lateActions.total], backgroundColor: '#10b981' }
+            ] },
+            options: { responsive:true, maintainAspectRatio:false, plugins:{ title:{ display:true, text:'Aksiyon Metrikleri Kıyaslaması' } } }
+        });
+    }
 
     window.runTrendAnalysis = function() {
-        let valA = document.getElementById('trendSelectA').value; let valB = document.getElementById('trendSelectB').value;
-        if(!valA) return alert("Lütfen karşılaştırma için en az bir geçmiş arşiv seçin.");
-        if(valA === valB) return alert("Aynı iki tarihi kıyaslayamazsınız.");
-        let dataA = systemArchives[valA]; let dataB = valB === 'current' ? { rawData: rawData, baseEIData: baseEIData, dailyReviewedPQs: Array.from(dailyReviewedPQs), pqMasterData: pqMasterData } : systemArchives[valB];
-        let eiDataA = getStaticEIData(dataA); let eiDataB = getStaticEIData(dataB); let deltaEI = eiDataB.overall - eiDataA.overall;
-        document.getElementById('trendResultsArea').style.display = "block";
-        let elEI = document.getElementById('deltaEI'); elEI.innerText = (deltaEI > 0 ? "+" : "") + deltaEI.toFixed(2) + "%"; elEI.className = "delta-val " + (deltaEI > 0 ? "delta-pos" : (deltaEI < 0 ? "delta-neg" : "delta-neu")); document.getElementById('deltaEIDesc').innerText = `Eski EI: %${eiDataA.overall.toFixed(2)} ➔ Yeni EI: %${eiDataB.overall.toFixed(2)}`;
+        let valA = document.getElementById('trendSelectA').value;
+        let valB = document.getElementById('trendSelectB').value;
+        if (!valA) return alert('Lütfen karşılaştırma için en az bir geçmiş arşiv seçin.');
+        if (valA === valB) return alert('Aynı iki tarihi kıyaslayamazsınız.');
+        let dataA = snapshotFromKey(valA);
+        let dataB = snapshotFromKey(valB);
+        if (!dataA || !dataB) return alert('Seçilen arşiv verisi okunamadı.');
+
+        let analysisA = getSnapshotAnalysis(dataA);
+        let analysisB = getSnapshotAnalysis(dataB);
+        let labelA = trendLabelForKey(valA);
+        let labelB = trendLabelForKey(valB);
+        let deltaEI = analysisB.ei.overall - analysisA.ei.overall;
+        let deltaPQ = analysisB.stats.closedPQs.total - analysisA.stats.closedPQs.total;
+        let deltaDone = analysisB.stats.doneActions.total - analysisA.stats.doneActions.total;
+        let deltaOngoing = analysisB.stats.ongoingActions.total - analysisA.stats.ongoingActions.total;
+        let deltaLate = analysisB.stats.lateActions.total - analysisA.stats.lateActions.total;
+
+        document.getElementById('trendResultsArea').style.display = 'block';
+        setDeltaCard('deltaEI', 'deltaEIDesc', deltaEI, '%', `Eski EI: %${analysisA.ei.overall.toFixed(2)} ➔ Yeni EI: %${analysisB.ei.overall.toFixed(2)}`);
+        setDeltaCard('deltaPQ', 'deltaPQDesc', deltaPQ, '', `Eski: ${analysisA.stats.closedPQs.total} ➔ Yeni: ${analysisB.stats.closedPQs.total}`);
+        setDeltaCard('deltaDoneAct', 'deltaDoneActDesc', deltaDone, '', `Eski: ${analysisA.stats.doneActions.total} ➔ Yeni: ${analysisB.stats.doneActions.total}`);
+        setDeltaCard('deltaOngAct', 'deltaOngActDesc', deltaOngoing, '', `Eski: ${analysisA.stats.ongoingActions.total} ➔ Yeni: ${analysisB.stats.ongoingActions.total}`, true);
+        setDeltaCard('deltaLate', 'deltaLateDesc', deltaLate, '', `Eski: ${analysisA.stats.lateActions.total} ➔ Yeni: ${analysisB.stats.lateActions.total}`, true);
+
+        let allAreas = new Set([...Object.keys(analysisA.areaRows), ...Object.keys(analysisB.areaRows)]);
+        let areaRows = Array.from(allAreas).sort(sortAreas).map(area => {
+            let a = analysisA.areaRows[area] || { currentEI:0, projectedEI:0, closedPQs:0, doneActions:0, lateActions:0 };
+            let b = analysisB.areaRows[area] || { currentEI:0, projectedEI:0, closedPQs:0, doneActions:0, lateActions:0 };
+            return {
+                area,
+                oldEI: a.currentEI || 0,
+                newEI: b.currentEI || 0,
+                newProjectedEI: b.projectedEI || 0,
+                deltaEI: (b.currentEI || 0) - (a.currentEI || 0),
+                deltaClosed: (b.closedPQs || 0) - (a.closedPQs || 0),
+                deltaDone: (b.doneActions || 0) - (a.doneActions || 0),
+                deltaLate: (b.lateActions || 0) - (a.lateActions || 0)
+            };
+        });
+        let newClosed = analysisB.stats.closedPqItems.filter(item => !analysisA.stats.closedPqSet.has(item.pq));
+        let best = areaRows.slice().sort((x,y) => y.deltaEI - x.deltaEI)[0];
+        let worstLate = areaRows.slice().sort((x,y) => y.deltaLate - x.deltaLate)[0];
+        let insight = `Kıyaslama kapsamı: <b>${escapeHtml(labelA)}</b> ile <b>${escapeHtml(labelB)}</b>. Overall EI değişimi <b>${deltaEI >= 0 ? '+' : ''}${deltaEI.toFixed(2)} puan</b>. Yeni kapanan PQ sayısı <b>${newClosed.length}</b>.`;
+        if (best && Math.abs(best.deltaEI) > 0.001) insight += ` En yüksek EI katkısı <b>${best.area}</b> alanında (${best.deltaEI >= 0 ? '+' : ''}${best.deltaEI.toFixed(2)} puan).`;
+        if (worstLate && worstLate.deltaLate > 0) insight += ` Dikkat: gecikmiş eylem artışı en çok <b>${worstLate.area}</b> alanında (+${worstLate.deltaLate}) görünüyor.`;
+        document.getElementById('trendInsightBox').innerHTML = `<h4>🧭 Yönetici Yorumu</h4><p>${insight}</p><div class="mini-kpi-row"><div class="mini-kpi"><strong>%${analysisB.ei.projectedOverall.toFixed(2)}</strong><span>Yeni projeksiyon EI</span></div><div class="mini-kpi"><strong>${analysisB.stats.closedPQs.total}</strong><span>Toplam kapanan PQ</span></div><div class="mini-kpi"><strong>${analysisB.stats.lateActions.total}</strong><span>Yeni gecikmiş eylem</span></div><div class="mini-kpi"><strong>${analysisB.projected}</strong><span>Açık CAP havuzu PQ</span></div></div>`;
+
+        window.currentTrendData = { labelA, labelB, analysisA, analysisB, deltaEI, deltaPQ, deltaDone, deltaOngoing, deltaLate, areaRows, newClosed };
+        renderTrendCharts(window.currentTrendData);
+        renderTrendAreaTable(areaRows);
+        renderTrendNewClosedList(newClosed);
     };
+
     function renderHistoricalTrend() {
         let keys = Object.keys(systemArchives).sort((a,b) => { let tA = systemArchives[a].reportTimestamp || systemArchives[a].timestamp; let tB = systemArchives[b].reportTimestamp || systemArchives[b].timestamp; return tA - tB; });
-        if(keys.length === 0) return; let labels = []; let eiData = []; let doneData = [];
-        keys.forEach(k => { let arch = systemArchives[k]; labels.push(arch.reportDateStr || arch.dateStr || "Tarihsiz"); let ei = getStaticEIData(arch).overall; eiData.push(ei.toFixed(2)); let master = arch.pqMasterData || {}; if(Array.isArray(master)) { let rObj={}; master.forEach(x=>rObj[x.key]=x.data); master=rObj; } let stats = getStaticStats(arch.rawData, master); doneData.push(stats.doneActions.total); });
-        labels.push("Güncel Durum"); let currEI = getStaticEIData({rawData: rawData, baseEIData: baseEIData, pqMasterData: pqMasterData, dailyReviewedPQs: Array.from(dailyReviewedPQs)}).overall; eiData.push(currEI.toFixed(2)); let currStats = getStaticStats(rawData, pqMasterData); doneData.push(currStats.doneActions.total);
-        const ctx = document.getElementById('historicalTrendChartCanvas').getContext('2d'); if (charts.histTrend) charts.histTrend.destroy(); charts.histTrend = new Chart(ctx, { type: 'line', data: { labels: labels, datasets: [ { label: 'TÜRKİYE Overall EI (%)', data: eiData, borderColor: '#2563eb', backgroundColor: 'rgba(37, 99, 235, 0.1)', fill: true, tension: 0.3, yAxisID: 'y' }, { label: 'Tamamlanan Toplam Eylem Sayısı', data: doneData, borderColor: '#10b981', backgroundColor: 'transparent', borderDash: [5, 5], tension: 0.3, yAxisID: 'y1', pointRadius: 5 } ] }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { type: 'linear', display: true, position: 'left', min: 0, max: 100 }, y1: { type: 'linear', display: true, position: 'right', grid: {drawOnChartArea:false} } } } });
+        if (keys.length === 0 && rawData.length === 0) return;
+        let labels = [], currentEI = [], projectedEI = [], doneData = [];
+        keys.forEach(k => {
+            let arch = systemArchives[k];
+            let a = getSnapshotAnalysis(arch);
+            labels.push(arch.reportDateStr || arch.dateStr || 'Tarihsiz');
+            currentEI.push(a.ei.overall.toFixed(2));
+            projectedEI.push(a.ei.projectedOverall.toFixed(2));
+            doneData.push(a.stats.doneActions.total);
+        });
+        if (rawData.length > 0) {
+            let curr = getSnapshotAnalysis(snapshotFromKey('current'));
+            labels.push('Güncel Durum');
+            currentEI.push(curr.ei.overall.toFixed(2));
+            projectedEI.push(curr.ei.projectedOverall.toFixed(2));
+            doneData.push(curr.stats.doneActions.total);
+        }
+        const ctx = document.getElementById('historicalTrendChartCanvas').getContext('2d');
+        if (charts.histTrend) charts.histTrend.destroy();
+        charts.histTrend = new Chart(ctx, {
+            type: 'line',
+            data: { labels, datasets: [
+                { label: 'Güncel Overall EI (%)', data: currentEI, borderColor: '#2563eb', backgroundColor: 'rgba(37, 99, 235, 0.1)', fill: true, tension: 0.3, yAxisID: 'y' },
+                { label: 'Projeksiyon Overall EI (%)', data: projectedEI, borderColor: '#f59e0b', backgroundColor: 'transparent', borderDash: [4, 4], tension: 0.3, yAxisID: 'y' },
+                { label: 'Tamamlanan Toplam Eylem Sayısı', data: doneData, borderColor: '#10b981', backgroundColor: 'transparent', borderDash: [5, 5], tension: 0.3, yAxisID: 'y1', pointRadius: 5 }
+            ] },
+            options: { responsive: true, maintainAspectRatio: false, scales: { y: { type: 'linear', display: true, position: 'left', min: 0, max: 100 }, y1: { type: 'linear', display: true, position: 'right', grid: {drawOnChartArea:false} } } }
+        });
     }
+
+    window.exportTrendExcel = function() {
+        if (!window.currentTrendData) { runTrendAnalysis(); if (!window.currentTrendData) return; }
+        let td = window.currentTrendData;
+        const wb = XLSX.utils.book_new();
+        wb.Props = { Title: 'Trend ve Kıyaslama Raporu', Subject: 'USOAP CMA CAP Trend', Author: 'ICAO CAP İzleme', CreatedDate: new Date() };
+        addJsonSheet(wb, 'Trend_Ozet', [
+            { 'Metrik': 'Kıyaslama A', 'Değer': td.labelA },
+            { 'Metrik': 'Kıyaslama B', 'Değer': td.labelB },
+            { 'Metrik': 'Overall EI Değişimi', 'Değer': td.deltaEI.toFixed(2) + ' puan' },
+            { 'Metrik': 'Yeni Kapanan PQ', 'Değer': td.newClosed.length },
+            { 'Metrik': 'Tamamlanan Eylem Değişimi', 'Değer': td.deltaDone },
+            { 'Metrik': 'Gecikmiş Eylem Değişimi', 'Değer': td.deltaLate }
+        ]);
+        addJsonSheet(wb, 'Alan_Kiyaslama', td.areaRows.map(r => ({
+            'Alan': r.area,
+            'Eski EI %': r.oldEI.toFixed(2),
+            'Yeni EI %': r.newEI.toFixed(2),
+            'Delta EI': r.deltaEI.toFixed(2),
+            'Yeni Projeksiyon EI %': r.newProjectedEI.toFixed(2),
+            'Kapanan PQ Delta': r.deltaClosed,
+            'Tamamlanan Eylem Delta': r.deltaDone,
+            'Gecikmiş Eylem Delta': r.deltaLate
+        })));
+        addJsonSheet(wb, 'Yeni_Kapanan_PQ', td.newClosed.map(i => ({ 'PQ': i.pq, 'Alan': i.area, 'CE': i.ce, 'Kaynak': i.source, 'Validasyon Görevi': i.validationTask, 'Bulgu': truncateTextForExport(i.bulgu, 1000) })));
+        addJsonSheet(wb, 'Metrikler', [
+            { 'Metrik': 'Kapanan PQ', [td.labelA]: td.analysisA.stats.closedPQs.total, [td.labelB]: td.analysisB.stats.closedPQs.total, 'Delta': td.deltaPQ },
+            { 'Metrik': 'Tamamlanan Eylem', [td.labelA]: td.analysisA.stats.doneActions.total, [td.labelB]: td.analysisB.stats.doneActions.total, 'Delta': td.deltaDone },
+            { 'Metrik': 'Devam Eden Eylem', [td.labelA]: td.analysisA.stats.ongoingActions.total, [td.labelB]: td.analysisB.stats.ongoingActions.total, 'Delta': td.deltaOngoing },
+            { 'Metrik': 'Gecikmiş Eylem', [td.labelA]: td.analysisA.stats.lateActions.total, [td.labelB]: td.analysisB.stats.lateActions.total, 'Delta': td.deltaLate }
+        ]);
+        XLSX.writeFile(wb, 'Trend_Kiyaslama_Detayli.xlsx');
+    };
+
+    window.exportTrendPDF = function() {
+        if (!window.currentTrendData) { runTrendAnalysis(); if (!window.currentTrendData) return; }
+        let td = window.currentTrendData;
+        let areaBody = [[{text:'Alan', style:'th'}, {text:'Eski EI', style:'th'}, {text:'Yeni EI', style:'th'}, {text:'Δ EI', style:'th'}, {text:'Yeni Proj.', style:'th'}, {text:'Gecikmiş Δ', style:'th'}]];
+        td.areaRows.forEach(r => areaBody.push([r.area, '%' + r.oldEI.toFixed(2), '%' + r.newEI.toFixed(2), (r.deltaEI>0?'+':'') + r.deltaEI.toFixed(2), '%' + r.newProjectedEI.toFixed(2), (r.deltaLate>0?'+':'') + r.deltaLate]));
+        let closedBody = [[{text:'PQ', style:'th'}, {text:'Alan', style:'th'}, {text:'Kaynak', style:'th'}, {text:'Validasyon / CE', style:'th'}, {text:'Bulgu', style:'th'}]];
+        (td.newClosed.length ? td.newClosed.slice(0, 60) : [{pq:'-',area:'-',source:'-',validationTask:'-',ce:'-',bulgu:'Yeni kapanan PQ yok'}]).forEach(i => closedBody.push([i.pq, i.area, i.source, i.validationTask || i.ce || '-', truncateTextForExport(i.bulgu || '', 250)]));
+        showLoading();
+        setTimeout(() => {
+            try {
+                let docDef = {
+                    pageOrientation: 'landscape', pageSize: 'A4',
+                    content: [
+                        {text: 'Trend ve Kıyaslama Raporu', style:'header'},
+                        {text: `${td.labelA}  ➔  ${td.labelB}`, style:'subheader'},
+                        {table:{widths:['*','*','*','*','*'], body:[[ 
+                            {text:[{text:'Overall EI Δ\n', bold:true, fontSize:8, color:'#64748b'}, {text:(td.deltaEI>0?'+':'') + td.deltaEI.toFixed(2) + ' puan', bold:true, fontSize:14}]},
+                            {text:[{text:'Yeni Kapanan PQ\n', bold:true, fontSize:8, color:'#64748b'}, {text:String(td.newClosed.length), bold:true, fontSize:14}]},
+                            {text:[{text:'Tamamlanan Eylem Δ\n', bold:true, fontSize:8, color:'#64748b'}, {text:(td.deltaDone>0?'+':'') + td.deltaDone, bold:true, fontSize:14}]},
+                            {text:[{text:'Devam Eden Δ\n', bold:true, fontSize:8, color:'#64748b'}, {text:(td.deltaOngoing>0?'+':'') + td.deltaOngoing, bold:true, fontSize:14}]},
+                            {text:[{text:'Gecikmiş Δ\n', bold:true, fontSize:8, color:'#64748b'}, {text:(td.deltaLate>0?'+':'') + td.deltaLate, bold:true, fontSize:14}]}
+                        ]]}, layout:'lightHorizontalLines', margin:[0,0,0,12]},
+                        {text:'Alan Bazında Kıyaslama', style:'sectionHeader'},
+                        {table:{headerRows:1, widths:['*','auto','auto','auto','auto','auto'], body:areaBody}, layout:'lightHorizontalLines', margin:[0,0,0,12]},
+                        {text:'İki Tarih Arasında Yeni Kapanan PQlar', style:'sectionHeader'},
+                        {table:{headerRows:1, widths:['auto','auto','auto','auto','*'], body:closedBody}, layout:'lightHorizontalLines'}
+                    ],
+                    footer: function(currentPage, pageCount) { return { text: currentPage + ' / ' + pageCount, alignment:'right', margin:[0,0,25,0], fontSize:8, color:'#64748b' }; },
+                    styles: { header:{fontSize:17,bold:true,color:'#2563eb',margin:[0,0,0,4]}, subheader:{fontSize:9,color:'#64748b',margin:[0,0,0,12]}, sectionHeader:{fontSize:12,bold:true,margin:[0,8,0,6]}, th:{bold:true,fontSize:9,fillColor:'#f1f5f9',margin:[0,4,0,4]} },
+                    defaultStyle: { font:'Roboto', fontSize:9 }
+                };
+                pdfMake.createPdf(docDef).download('Trend_Kiyaslama_Raporu.pdf');
+            } catch(e) { alert('Trend PDF oluşturulurken hata oluştu: ' + e.message); }
+            finally { hideLoading(); }
+        }, 100);
+    };
 </script>
 </body>
 </html>
