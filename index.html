@@ -572,16 +572,20 @@
                     const zip = await JSZip.loadAsync(file); const xml = await zip.file("word/document.xml").async("string"); 
                     const xmlDoc = new DOMParser().parseFromString(xml, "text/xml"); 
                     
+                    /* DÜZELTME: currentPQ döngü dışına alındı, böylece PQ numarası tablodan tabloya miras kalır. */
+                    let currentPQ = "Bilinmeyen PQ"; 
+                    let pqsInFile = new Set();
+
                     const tables = xmlDoc.getElementsByTagName("w:tbl"); 
                     for (let i = 0; i < tables.length; i++) { 
                         let tableText = ""; 
                         const tNodes = tables[i].getElementsByTagName("w:t"); 
                         for(let t=0; t<tNodes.length; t++) tableText += tNodes[t].textContent + " "; 
                         
-                        let currentPQ = "Bilinmeyen PQ";
                         let pqMatch = tableText.match(/\b(\d{1,2}\.\d{3})\b/); 
                         if (pqMatch) {
                             currentPQ = normalizePQ(pqMatch[1]); 
+                            pqsInFile.add(currentPQ);
                         }
 
                         let tempSteps = [];
@@ -609,7 +613,7 @@
                         let filledSteps = tempSteps.filter(s => !s.isPlaceholder);
 
                         if (filledSteps.length > 0) {
-                            // En az bir geçerli adım varsa, sadece DOLU olanları listeye ekle, boş satırları yok say.
+                            // En az bir geçerli adım varsa listeye ekle
                             filledSteps.forEach(s => {
                                 let mapKey = `${currentPQ}|${s.step}|${s.action}`;
                                 if (!existingDataMap.has(mapKey)) { 
@@ -617,21 +621,25 @@
                                     existingDataMap.add(mapKey);
                                 } 
                             });
-                        } else {
-                            // Sadece tablonun tamamı boş ise (veya adım yoksa) "Eksik CAP" olarak işaretle.
-                            if (tempSteps.length > 0 || tableText.includes("PROTOCOL FINDING") || tableText.includes("CAP Action Items")) {
-                                if (currentPQ !== "Bilinmeyen PQ") {
-                                    let exists = rawData.some(d => d.pq === currentPQ); 
-                                    if (!exists) { 
-                                        rawData.push({ 
-                                            pq: currentPQ, step: "-", action: "⚠️ OLF üzerinde CAP (Eylem Planı) adımları hiç girilmemiştir veya tamamı boştur.", 
-                                            office: "Belirtilmedi", estDate: "Tarih Yok", progress: "0%", sourceFile: file.name, note: "", isEmptyCap: true
-                                        }); 
-                                    }
+                        }
+                    } 
+                    
+                    // POST-PROCESSING: Dosyada bulduğumuz tüm PQ'ları kontrol edip, HİÇ geçerli adımı olmayanları "Eksik CAP" olarak ekliyoruz.
+                    pqsInFile.forEach(pq => {
+                        if (pq !== "Bilinmeyen PQ") {
+                            let hasValidSteps = rawData.some(d => d.pq === pq && !d.isEmptyCap);
+                            if (!hasValidSteps) {
+                                let hasEmptyCap = rawData.some(d => d.pq === pq && d.isEmptyCap);
+                                if (!hasEmptyCap) {
+                                    rawData.push({ 
+                                        pq: pq, step: "-", action: "⚠️ OLF üzerinde CAP (Eylem Planı) adımları hiç girilmemiştir veya tamamı boştur.", 
+                                        office: "Belirtilmedi", estDate: "Tarih Yok", progress: "0%", sourceFile: file.name, note: "", isEmptyCap: true
+                                    }); 
                                 }
                             }
                         }
-                    } 
+                    });
+
                     loadedFiles.add(file.name); 
                 } catch (err) { console.error("Zip parse error:", err); } 
             } 
