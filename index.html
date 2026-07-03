@@ -2286,6 +2286,73 @@
         return (value === undefined || value === null ? '' : value.toString()).replace(/\r\n/g, '\n').replace(/\r/g, '\n').trim();
     }
 
+
+    function pdfCellSafe(cell) {
+        if (cell === undefined || cell === null) return '';
+        if (typeof cell === 'number' || typeof cell === 'boolean') return String(cell);
+        if (typeof cell === 'string') return cell;
+        if (Array.isArray(cell)) return cell.map(pdfCellSafe);
+        if (typeof cell === 'object') {
+            const out = Object.assign({}, cell);
+            if ('text' in out && (out.text === undefined || out.text === null)) out.text = '';
+            if (Array.isArray(out.text)) out.text = out.text.map(pdfCellSafe);
+            if (out.ul && Array.isArray(out.ul)) out.ul = out.ul.map(pdfCellSafe);
+            if (out.ol && Array.isArray(out.ol)) out.ol = out.ol.map(pdfCellSafe);
+            if (out.stack && Array.isArray(out.stack)) out.stack = out.stack.map(pdfCellSafe);
+            if (out.columns && Array.isArray(out.columns)) out.columns = out.columns.map(pdfCellSafe);
+            if (out.table && out.table.body) out.table = normalizePdfTable(out.table);
+            return out;
+        }
+        return String(cell);
+    }
+
+    function normalizePdfTable(table) {
+        const out = Object.assign({}, table || {});
+        let body = Array.isArray(out.body) ? out.body : [];
+        body = body.map(row => Array.isArray(row) ? row.slice() : [row]);
+        const currentWidthCount = Array.isArray(out.widths) ? out.widths.length : 0;
+        const maxCols = Math.max(currentWidthCount, ...body.map(row => row.length), 1);
+        if (Array.isArray(out.widths)) {
+            out.widths = out.widths.slice();
+            while (out.widths.length < maxCols) out.widths.push('*');
+        } else {
+            out.widths = Array(maxCols).fill('*');
+        }
+        out.body = body.map(row => {
+            const fixed = row.map(pdfCellSafe);
+            while (fixed.length < maxCols) fixed.push('');
+            return fixed;
+        });
+        return out;
+    }
+
+    function normalizePdfNode(node) {
+        if (node === undefined || node === null) return '';
+        if (typeof node === 'string' || typeof node === 'number' || typeof node === 'boolean') return String(node);
+        if (Array.isArray(node)) return node.map(normalizePdfNode);
+        if (typeof node === 'object') {
+            const out = Object.assign({}, node);
+            if ('text' in out && (out.text === undefined || out.text === null)) out.text = '';
+            if (Array.isArray(out.text)) out.text = out.text.map(pdfCellSafe);
+            if (out.content) out.content = normalizePdfNode(out.content);
+            if (out.stack) out.stack = normalizePdfNode(out.stack);
+            if (out.columns) out.columns = normalizePdfNode(out.columns);
+            if (out.ul) out.ul = normalizePdfNode(out.ul);
+            if (out.ol) out.ol = normalizePdfNode(out.ol);
+            if (out.table && out.table.body) out.table = normalizePdfTable(out.table);
+            return out;
+        }
+        return String(node);
+    }
+
+    function safeDownloadPdf(docDef, fileName) {
+        if (typeof pdfMake === 'undefined' || !pdfMake || typeof pdfMake.createPdf !== 'function') {
+            throw new Error('PDF kütüphanesi yüklenemedi. İnternet/CDN erişimini, tarayıcı eklentilerini veya GitHub Pages üzerinden açıldığını kontrol edin.');
+        }
+        const safeDocDef = normalizePdfNode(docDef);
+        pdfMake.createPdf(safeDocDef).download(fileName || 'Rapor.pdf');
+    }
+
     function normalizeWorkbookSheetName(name) {
         return (name || 'Sayfa').toString().replace(/[\\\/\?\*\[\]\:]/g, '_').substring(0, 31);
     }
@@ -2666,30 +2733,38 @@
 
     function exportManagerPDF() {
         if (!rawData || rawData.length === 0) return alert('Dışa aktarılacak veri bulunamadı.');
-        const bundle = buildManagerReportBundle();
-        const a = bundle.analysis;
-        const support = bundle.support;
-        const phases = getManagerEiPhaseRows(bundle);
-        const expectedClosureTotal = phases[2] ? (phases[2].expectedClosureCount || 0) : 0;
-        const note = (document.getElementById('managementNotes') || {}).value || '';
         showLoading();
         setTimeout(() => {
             try {
-                let kpis = buildManagerReportExcelRows(bundle).slice(0, 6).map(r => ({ text: [{text: r['Başlık'] + '\n', bold:true, fontSize:8, color:'#64748b'}, {text:String(r['Değer']), bold:true, fontSize:13, color:'#0f172a'}], fillColor:'#f8fafc', margin:[6,6,6,6] }));
+                const bundle = buildManagerReportBundle();
+                const a = bundle.analysis || {};
+                const support = bundle.support || { criticalPath: [], topImpact: [], officeRows: [] };
+                const phases = getManagerEiPhaseRows(bundle);
+                const officialEI = phases[1] ? phases[1].ei : ((a.ei && a.ei.overall) || 0);
+                const expectedEI = phases[2] ? phases[2].ei : ((a.ei && a.ei.overall) || 0);
+                const projectedEI = phases[3] ? phases[3].ei : ((a.ei && a.ei.projectedOverall) || 0);
+                const expectedClosureTotal = phases[2] ? (phases[2].expectedClosureCount || 0) : 0;
+                const note = (document.getElementById('managementNotes') || {}).value || '';
+                let kpis = buildManagerReportExcelRows(bundle).slice(0, 6).map(r => ({ text: [{text: (r['Başlık'] || '-') + '\n', bold:true, fontSize:8, color:'#64748b'}, {text:String(r['Değer'] === undefined ? '-' : r['Değer']), bold:true, fontSize:13, color:'#0f172a'}], fillColor:'#f8fafc', margin:[6,6,6,6] }));
+                if (!kpis.length) kpis = [{ text:'Özet üretilemedi', fillColor:'#f8fafc', margin:[6,6,6,6] }];
                 let kpiBody = [];
-                for (let i = 0; i < kpis.length; i += 3) kpiBody.push(kpis.slice(i, i+3));
+                for (let i = 0; i < kpis.length; i += 3) {
+                    const row = kpis.slice(i, i+3);
+                    while (row.length < 3) row.push({text:'', fillColor:'#ffffff'});
+                    kpiBody.push(row);
+                }
                 let content = [
                     {text:'Yönetici Brifing Raporu', style:'header'},
-                    {text:'Rapor tarihi: ' + new Date().toLocaleDateString('tr-TR') + ' | Resmî EI: %' + ((a.ei.officialOverall || 0).toFixed(2)) + ' | Kapatılması beklenen bulgu: ' + expectedClosureTotal + ' | Beklenen EI: %' + ((a.ei.overall || 0).toFixed(2)) + ' | Tüm CAP potansiyeli: %' + ((a.ei.projectedOverall || 0).toFixed(2)), style:'subheader'},
-                    {table:{widths:Array(kpiBody[0] ? kpiBody[0].length : 1).fill('*'), body:kpiBody}, layout:'noBorders', margin:[0,0,0,12]}
+                    {text:'Rapor tarihi: ' + new Date().toLocaleDateString('tr-TR') + ' | Resmî EI: %' + officialEI.toFixed(2) + ' | Kapatılması beklenen bulgu: ' + expectedClosureTotal + ' | Beklenen EI: %' + expectedEI.toFixed(2) + ' | Tüm CAP potansiyeli: %' + projectedEI.toFixed(2), style:'subheader'},
+                    {table:{widths:['*','*','*'], body:kpiBody}, layout:'noBorders', margin:[0,0,0,12]}
                 ];
                 if (note.trim()) content.push({text:'Yönetici Notu', style:'sectionHeader'}, {text:fullTextForPdf(note.trim()), style:'noteBox'});
                 const expectedTable = buildManagerExpectedClosurePdfTable(bundle);
                 if (expectedTable) content.push({text:'Kapatılması Beklenen Bulgu - Alan Kırılımı', style:'sectionHeader'}, expectedTable);
-                content.push({text:'Kritik Yol İlk 8', style:'sectionHeader'}, {ul:(support.criticalPath.length ? support.criticalPath.slice(0,8).map(i => `PQ ${i.pq} - ${i.area} - ${formatTrendDate(i.latestDate)} - kalan ${i.remainingSteps} adım`) : ['Kritik yol adayı bulunamadı.'])});
-                content.push({text:'Hızlı EI Kazanımı İlk 8', style:'sectionHeader'}, {ul:(support.topImpact.length ? support.topImpact.slice(0,8).map(i => `PQ ${i.pq} - ${i.area} - Alan EI katkısı %${trendSafePct(i.areaContributionPct)} - kalan ${i.remainingSteps} adım`) : ['Hızlı kazanım adayı bulunamadı.'])});
-                content.push({text:'Sorumlu Birim Darboğazları', style:'sectionHeader'}, {ul:(support.officeRows.length ? support.officeRows.slice(0,8).map(o => `${o.office}: ${o.lateActions} gecikmiş / ${o.totalActions} toplam eylem / tamamlanma %${trendSafePct(o.completionRate)}`) : ['Sorumlu ofis verisi bulunamadı.'])});
-                if (bundle.selectedPQs.length) {
+                content.push({text:'Kritik Yol İlk 8', style:'sectionHeader'}, {ul:((support.criticalPath || []).length ? support.criticalPath.slice(0,8).map(i => `PQ ${i.pq} - ${i.area} - ${formatTrendDate(i.latestDate)} - kalan ${i.remainingSteps} adım`) : ['Kritik yol adayı bulunamadı.'])});
+                content.push({text:'Hızlı EI Kazanımı İlk 8', style:'sectionHeader'}, {ul:((support.topImpact || []).length ? support.topImpact.slice(0,8).map(i => `PQ ${i.pq} - ${i.area} - Alan EI katkısı %${trendSafePct(i.areaContributionPct)} - kalan ${i.remainingSteps} adım`) : ['Hızlı kazanım adayı bulunamadı.'])});
+                content.push({text:'Sorumlu Birim Darboğazları', style:'sectionHeader'}, {ul:((support.officeRows || []).length ? support.officeRows.slice(0,8).map(o => `${o.office}: ${o.lateActions} gecikmiş / ${o.totalActions} toplam eylem / tamamlanma %${trendSafePct(o.completionRate)}`) : ['Sorumlu ofis verisi bulunamadı.'])});
+                if (bundle.selectedPQs && bundle.selectedPQs.length) {
                     content.push({text:'Seçili PQ Detayları', style:'sectionHeader'});
                     bundle.selectedPQs.forEach(pq => {
                         const m = pqMasterData[pq] || {};
@@ -2706,57 +2781,68 @@
                     });
                 }
                 let docDef = { pageOrientation:'landscape', pageSize:'A4', content, footer:(currentPage,pageCount)=>({text:currentPage+' / '+pageCount, alignment:'right', margin:[0,0,25,0], fontSize:8, color:'#64748b'}), styles:{header:{fontSize:17,bold:true,color:'#2563eb',margin:[0,0,0,4]}, subheader:{fontSize:9,color:'#64748b',margin:[0,0,0,12]}, sectionHeader:{fontSize:12,bold:true,color:'#0f172a',margin:[0,8,0,6]}, noteBox:{fontSize:10,color:'#0f172a',fillColor:'#f8fafc',margin:[0,0,0,10]}, th:{bold:true,fontSize:9,fillColor:'#f1f5f9',margin:[0,4,0,4]}}, defaultStyle:{font:'Roboto',fontSize:9} };
-                pdfMake.createPdf(docDef).download('Yonetici_Brifing_Raporu.pdf');
-            } catch(e) { alert('PDF oluşturulurken hata oluştu: ' + e.message); }
+                safeDownloadPdf(docDef, 'Yonetici_Brifing_Raporu.pdf');
+            } catch(e) { console.error(e); alert('PDF oluşturulurken hata oluştu: ' + (e && e.message ? e.message : e)); }
             finally { hideLoading(); }
         }, 100);
     }
 
     function exportKanbanPDF() {
-        const rows = getFilteredData();
-        if (!rows.length) return alert('Dışa aktarılacak veri bulunamadı.');
-        const mode = (document.getElementById('kanbanViewMode') || {}).value || 'step';
-        const exportRows = buildKanbanExportRows(rows, mode);
-        const body = [[{text:'PQ', style:'th'}, {text:'Kolon', style:'th'}, {text:'Alan', style:'th'}, {text:'CE', style:'th'}, {text: mode === 'pq' ? 'Özet' : 'Adım/Eylem', style:'th'}, {text:'Sorumlu', style:'th'}, {text:'Hedef/Risk', style:'th'}]];
-        exportRows.forEach(r => body.push([
-            {text:r['PQ'] || '', fontSize:9}, {text:r['Kolon'] || '', fontSize:9}, {text:r['Denetim Alanı'] || '', fontSize:9}, {text:r['CE'] || '', fontSize:9},
-            {text:fullTextForPdf(r['Eylem'] || (`${r['Toplam Adım'] || 0} adım / ${r['Gecikmiş Adım'] || 0} gecikmiş / ${r['Tarih Eksik Adım'] || 0} tarih eksik${r['Bulgu'] ? '\nBulgu: ' + r['Bulgu'] : ''}`)), fontSize:8},
-            {text:r['Eylem Ofisi'] || r['Sorumlu'] || r['PQ Sorumlusu'] || '', fontSize:8}, {text:r['Gün Bilgisi'] || r['İlk Açık / Kilit Tarih'] || '', fontSize:9}
-        ]));
         showLoading();
         setTimeout(() => {
             try {
+                const rows = getFilteredData();
+                if (!rows.length) { hideLoading(); alert('Dışa aktarılacak veri bulunamadı.'); return; }
+                const mode = (document.getElementById('kanbanViewMode') || {}).value || 'step';
+                const exportRows = buildKanbanExportRows(rows, mode);
+                const body = [[{text:'PQ', style:'th'}, {text:'Kolon', style:'th'}, {text:'Alan', style:'th'}, {text:'CE', style:'th'}, {text: mode === 'pq' ? 'Özet' : 'Adım/Eylem', style:'th'}, {text:'Sorumlu', style:'th'}, {text:'Hedef/Risk', style:'th'}]];
+                exportRows.forEach(r => body.push([
+                    {text:r['PQ'] || '', fontSize:9}, {text:r['Kolon'] || '', fontSize:9}, {text:r['Denetim Alanı'] || '', fontSize:9}, {text:r['CE'] || '', fontSize:9},
+                    {text:fullTextForPdf(r['Eylem'] || (`${r['Toplam Adım'] || 0} adım / ${r['Gecikmiş Adım'] || 0} gecikmiş / ${r['Tarih Eksik Adım'] || 0} tarih eksik${r['Bulgu'] ? '\nBulgu: ' + r['Bulgu'] : ''}`)), fontSize:8},
+                    {text:r['Eylem Ofisi'] || r['Sorumlu'] || r['PQ Sorumlusu'] || '', fontSize:8}, {text:r['Gün Bilgisi'] || r['İlk Açık / Kilit Tarih'] || '', fontSize:9}
+                ]));
                 let docDef = { pageOrientation:'landscape', pageSize:'A4', content:[{text:'EI Odaklı Kanban Öncelik Raporu', style:'header'}, {text:'Rapor tarihi: ' + new Date().toLocaleDateString('tr-TR') + ' | Görünüm: ' + (mode === 'pq' ? 'PQ Bazlı' : 'CAP Adımı Bazlı'), style:'subheader'}, {table:{headerRows:1, widths:['auto','auto','auto','auto','*','auto','auto'], body}, layout:'lightHorizontalLines'}], footer:(currentPage,pageCount)=>({text:currentPage+' / '+pageCount, alignment:'right', margin:[0,0,25,0], fontSize:8, color:'#64748b'}), styles:{header:{fontSize:17,bold:true,color:'#2563eb',margin:[0,0,0,4]}, subheader:{fontSize:9,color:'#64748b',margin:[0,0,0,12]}, th:{bold:true,fontSize:9,fillColor:'#f1f5f9',margin:[0,4,0,4]}}, defaultStyle:{font:'Roboto',fontSize:9} };
-                pdfMake.createPdf(docDef).download('Kanban_Oncelik_Raporu.pdf');
-            } catch(e) { alert('PDF oluşturulurken hata oluştu: ' + e.message); }
+                safeDownloadPdf(docDef, 'Kanban_Oncelik_Raporu.pdf');
+            } catch(e) { console.error(e); alert('PDF oluşturulurken hata oluştu: ' + (e && e.message ? e.message : e)); }
             finally { hideLoading(); }
         }, 100);
     }
 
     window.exportPDF = function() {
-        const ctx = getActiveExportContext();
-        if (ctx.mode === 'trend') { exportTrendPDF(); return; }
-        if (ctx.mode === 'manager') { exportManagerPDF(); return; }
-        if (ctx.mode === 'kanban') { exportKanbanPDF(); return; }
-        if (!ctx.rows || ctx.rows.length === 0) return alert('Dışa aktarılacak veri bulunamadı.');
-        const { widths, bodyData } = buildPdfTableRowsForContext(ctx);
-        let rowsForSummary = (ctx.mode === 'icao' || ctx.mode === 'empty') ? getFilteredData() : ctx.rows;
-        let summaryRows = buildExecutiveSummaryRows(rowsForSummary);
-        let kpiBody = [];
-        for (let i = 0; i < summaryRows.length; i += 4) {
-            kpiBody.push(summaryRows.slice(i, i+4).map(r => ({ text: [{text: r['Metrik'] + '\n', bold:true, fontSize:8, color:'#64748b'}, {text:String(r['Değer']), bold:true, fontSize:13, color:'#0f172a'}], fillColor:'#f8fafc', margin:[6,6,6,6] })));
+        let ctx;
+        try {
+            ctx = getActiveExportContext();
+            if (ctx.mode === 'trend') { exportTrendPDF(); return; }
+            if (ctx.mode === 'manager') { exportManagerPDF(); return; }
+            if (ctx.mode === 'kanban') { exportKanbanPDF(); return; }
+            if (!ctx.rows || ctx.rows.length === 0) return alert('Dışa aktarılacak veri bulunamadı.');
+        } catch(e) {
+            console.error(e);
+            alert('PDF hazırlığı sırasında hata oluştu: ' + (e && e.message ? e.message : e));
+            return;
         }
-        let areaSummary = buildPdfAreaSummaryTable(rowsForSummary);
-        let managementNote = (document.getElementById('managementNotes') && document.getElementById('managementNotes').value.trim()) ? document.getElementById('managementNotes').value.trim() : '';
+
         showLoading();
         setTimeout(() => {
             try {
+                const { widths, bodyData } = buildPdfTableRowsForContext(ctx);
+                let rowsForSummary = (ctx.mode === 'icao' || ctx.mode === 'empty') ? getFilteredData() : ctx.rows;
+                let summaryRows = buildExecutiveSummaryRows(rowsForSummary);
+                let kpiBody = [];
+                for (let i = 0; i < summaryRows.length; i += 4) {
+                    const row = summaryRows.slice(i, i+4).map(r => ({ text: [{text: (r['Metrik'] || '-') + '\n', bold:true, fontSize:8, color:'#64748b'}, {text:String(r['Değer'] === undefined ? '-' : r['Değer']), bold:true, fontSize:13, color:'#0f172a'}], fillColor:'#f8fafc', margin:[6,6,6,6] }));
+                    while (row.length < 4) row.push({text:'', fillColor:'#ffffff'});
+                    kpiBody.push(row);
+                }
+                if (!kpiBody.length) kpiBody.push([{text:'Özet üretilemedi'}, '', '', '']);
+                let areaSummary = buildPdfAreaSummaryTable(rowsForSummary);
+                let managementNote = (document.getElementById('managementNotes') && document.getElementById('managementNotes').value.trim()) ? document.getElementById('managementNotes').value.trim() : '';
                 let content = [
                     {text: ctx.title, style: 'header'},
                     {text: 'Rapor tarihi: ' + new Date().toLocaleDateString('tr-TR') + ' | Kayıt sayısı: ' + ctx.rows.length, style: 'subheader'},
-                    {table: {widths: Array(kpiBody[0] ? kpiBody[0].length : 1).fill('*'), body: kpiBody}, layout: 'noBorders', margin:[0,0,0,12]}
+                    {table: {widths: ['*','*','*','*'], body: kpiBody}, layout: 'noBorders', margin:[0,0,0,12]}
                 ];
-                if (managementNote) content.push({text: 'Yönetici Notu', style:'sectionHeader'}, {text: managementNote, style:'noteBox'});
+                if (managementNote) content.push({text: 'Yönetici Notu', style:'sectionHeader'}, {text: fullTextForPdf(managementNote), style:'noteBox'});
                 if (areaSummary) content.push({text: 'Alan Bazlı Özet', style:'sectionHeader'}, areaSummary);
                 content.push({text: 'Detay Liste', style:'sectionHeader'}, {table: {headerRows: 1, widths: widths, body: bodyData}, layout: 'lightHorizontalLines'});
                 let docDef = {
@@ -2771,8 +2857,8 @@
                     },
                     defaultStyle: { font: 'Roboto', fontSize: 9 }
                 };
-                pdfMake.createPdf(docDef).download(ctx.title.replace(/\s+/g, '_') + '.pdf');
-            } catch(e) { alert('PDF oluşturulurken hata oluştu: ' + e.message); }
+                safeDownloadPdf(docDef, ctx.title.replace(/\s+/g, '_') + '.pdf');
+            } catch(e) { console.error(e); alert('PDF oluşturulurken hata oluştu: ' + (e && e.message ? e.message : e)); }
             finally { hideLoading(); }
         }, 100);
     };
@@ -3428,7 +3514,7 @@
                     styles: { header:{fontSize:17,bold:true,color:'#2563eb',margin:[0,0,0,4]}, subheader:{fontSize:9,color:'#64748b',margin:[0,0,0,12]}, sectionHeader:{fontSize:12,bold:true,margin:[0,8,0,6]}, th:{bold:true,fontSize:9,fillColor:'#f1f5f9',margin:[0,4,0,4]} },
                     defaultStyle: { font:'Roboto', fontSize:9 }
                 };
-                pdfMake.createPdf(docDef).download('Trend_Kiyaslama_Raporu.pdf');
+                safeDownloadPdf(docDef, 'Trend_Kiyaslama_Raporu.pdf');
             } catch(e) { alert('Trend PDF oluşturulurken hata oluştu: ' + e.message); }
             finally { hideLoading(); }
         }, 100);
