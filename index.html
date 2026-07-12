@@ -579,8 +579,42 @@
     const db = firebase.database();
 
     // TEMEL FONKSİYONLAR
-    function showLoading() { document.getElementById('loadingOverlay').style.display = 'flex'; }
-    function hideLoading() { document.getElementById('loadingOverlay').style.display = 'none'; }
+    function ensureLoadingDetailEl() {
+        const overlay = document.getElementById('loadingOverlay');
+        if (!overlay) return null;
+        let detail = document.getElementById('loadingDetailText');
+        if (!detail) {
+            detail = document.createElement('div');
+            detail.id = 'loadingDetailText';
+            detail.style.cssText = 'margin-top:6px; max-width:520px; text-align:center; color:var(--muted); font-size:12px; line-height:1.45; padding:0 20px;';
+            overlay.appendChild(detail);
+        }
+        return detail;
+    }
+    function setLoadingMessage(message, detail) {
+        const overlay = document.getElementById('loadingOverlay');
+        if (!overlay) return;
+        const title = overlay.querySelector('h3');
+        if (title && message) title.innerText = message;
+        const detailEl = ensureLoadingDetailEl();
+        if (detailEl) detailEl.innerText = detail || '';
+    }
+    function showLoading(message, detail) {
+        const overlay = document.getElementById('loadingOverlay');
+        if (!overlay) return;
+        overlay.style.display = 'flex';
+        setLoadingMessage(message || 'Veriler İşleniyor... Lütfen Bekleyin.', detail || '');
+    }
+    function hideLoading() {
+        const overlay = document.getElementById('loadingOverlay');
+        if (overlay) overlay.style.display = 'none';
+    }
+    function yieldToBrowser() {
+        return new Promise(resolve => {
+            if (typeof requestAnimationFrame === 'function') requestAnimationFrame(() => setTimeout(resolve, 0));
+            else setTimeout(resolve, 0);
+        });
+    }
     function switchTab(tabId) { 
         document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active')); document.querySelectorAll('.tab-btn').forEach(t => { t.classList.remove('active'); t.style.color = "var(--muted)"; }); 
         document.getElementById('tab-' + tabId).classList.add('active'); let btn = document.getElementById('btn-tab-' + tabId); btn.classList.add('active'); 
@@ -616,7 +650,7 @@
 
     function loadFromLocalStorage() {
         showLoading();
-        db.ref('icao_system').once('value').then((snapshot) => {
+        db.ref('icao_system').once('value').then(async (snapshot) => {
             const data = snapshot.val();
             if (data) {
                 rawData = data.rawData || []; baseEIData = data.baseEIData || {};
@@ -627,7 +661,7 @@
                 window_loadedReportDate = data.reportDate ? new Date(data.reportDate) : null;
                 updateDynamicSubtitle();
                 if (Object.keys(baseEIData).length > 0) { document.getElementById('eiOverallProgressPanel').style.display = "grid"; document.getElementById('eiChartPanel').style.display = "block"; } else { document.getElementById('eiOverallProgressPanel').style.display = "none"; document.getElementById('eiChartPanel').style.display = "none"; }
-                renderFileList(); refreshAllFilters(); render();
+                setLoadingMessage('Kayıtlı veri yükleniyor...', 'Filtreler ve ekran bileşenleri hazırlanıyor.'); renderFileList(); await yieldToBrowser(); refreshAllFilters(); await yieldToBrowser(); render();
             } else { window_loadedReportDate = null; updateDynamicSubtitle(); renderFileList(); }
         }).catch(e => console.error(e)).finally(() => { hideLoading(); });
 
@@ -662,13 +696,24 @@
     function sortPQs(a, b) { let pa = a.split('.').map(Number); let pb = b.split('.').map(Number); let numA1 = isNaN(pa[0]) ? 999 : pa[0]; let numB1 = isNaN(pb[0]) ? 999 : pb[0]; if (numA1 !== numB1) return numA1 - numB1; let numA2 = isNaN(pa[1]) ? 999 : pa[1]; let numB2 = isNaN(pb[1]) ? 999 : pb[1]; return numA2 - numB2; }
 
     function renderFileList() {
-        const wContainer = document.getElementById('wordFileList'); wContainer.innerHTML = "";
-        if (loadedFiles.size === 0) wContainer.innerHTML = `<div style="font-size: 10px; color: var(--muted); padding: 5px 0;">Yüklenmedi.</div>`;
-        else Array.from(loadedFiles).forEach(f => { wContainer.innerHTML += `<div class="file-badge"><span class="truncate" style="max-width: 150px;" title="${f}">📝 ${f}</span><span class="file-remove-btn" onclick="removeWordFile('${f}')">✕</span></div>`; });
+        const wContainer = document.getElementById('wordFileList');
+        const wordFiles = Array.from(loadedFiles);
+        if (wordFiles.length === 0) {
+            wContainer.innerHTML = `<div style="font-size: 10px; color: var(--muted); padding: 5px 0;">Yüklenmedi.</div>`;
+        } else {
+            wContainer.innerHTML = wordFiles.map(f => `<div class="file-badge"><span class="truncate" style="max-width: 150px;" title="${escapeHtml(f)}">📝 ${escapeHtml(f)}</span><span class="file-remove-btn" onclick="removeWordFile('${String(f).replace(/'/g, "\\'")}')">✕</span></div>`).join('');
+        }
         
-        const eContainer = document.getElementById('excelFileList'); eContainer.innerHTML = ""; const eiStatusTxt = document.getElementById('eiStatusTxt');
-        if (!loadedExcelFile) { eContainer.innerHTML = `<div style="font-size: 10px; color: var(--warn); padding: 5px 0;">Yüklenmedi.</div>`; eiStatusTxt.style.display = "none"; } 
-        else { eContainer.innerHTML = `<div class="file-badge" style="border-color: var(--ok); background: rgba(16, 185, 129, 0.05);"><span class="truncate" style="max-width: 150px;" title="${loadedExcelFile}">📊 ${loadedExcelFile}</span><span class="file-remove-btn" onclick="removeExcelFile()">✕</span></div>`; eiStatusTxt.innerHTML = `<span style="color:var(--primary); font-weight:600;">${Object.keys(pqMasterData).length} PQ eşleşti.</span><span style="color:var(--ok); font-weight:600;">${Object.keys(baseEIData).length > 0 ? " | 🚀 EI Aktif" : ""}</span>`; eiStatusTxt.style.display = "block"; }
+        const eContainer = document.getElementById('excelFileList');
+        const eiStatusTxt = document.getElementById('eiStatusTxt');
+        if (!loadedExcelFile) {
+            eContainer.innerHTML = `<div style="font-size: 10px; color: var(--warn); padding: 5px 0;">Yüklenmedi.</div>`;
+            eiStatusTxt.style.display = "none";
+        } else {
+            eContainer.innerHTML = `<div class="file-badge" style="border-color: var(--ok); background: rgba(16, 185, 129, 0.05);"><span class="truncate" style="max-width: 150px;" title="${escapeHtml(loadedExcelFile)}">📊 ${escapeHtml(loadedExcelFile)}</span><span class="file-remove-btn" onclick="removeExcelFile()">✕</span></div>`;
+            eiStatusTxt.innerHTML = `<span style="color:var(--primary); font-weight:600;">${Object.keys(pqMasterData).length} PQ eşleşti.</span><span style="color:var(--ok); font-weight:600;">${Object.keys(baseEIData).length > 0 ? " | 🚀 EI Aktif" : ""}</span>`;
+            eiStatusTxt.style.display = "block";
+        }
     }
     
     function removeWordFile(fileName) { loadedFiles.delete(fileName); rawData = rawData.filter(d => d.sourceFile !== fileName); recalculateGlobalStateFromFiles(); refreshAllFilters(); saveToLocalStorage(); renderFileList(); render(); }
@@ -682,7 +727,23 @@
     window.toggleSmartTag = function(keyword, event) { if(event) event.stopPropagation(); if(window.activeSmartTags.has(keyword)) { window.activeSmartTags.delete(keyword); } else { window.activeSmartTags.add(keyword); } render(); };
     function updateActiveTagsUI() { let container = document.getElementById('activeTagsContainer'); let group = document.getElementById('activeTagsGroup'); if(!container) return; if(window.activeSmartTags && window.activeSmartTags.size > 0) { group.style.display = 'block'; container.innerHTML = Array.from(window.activeSmartTags).map(tag => { return `<span class="smart-tag" style="background:var(--primary); color:white; border-radius:4px; padding:4px 8px; font-size:11px;" onclick="window.toggleSmartTag('${tag}')">${tag.toUpperCase()} ✖</span>`; }).join(''); } else { group.style.display = 'none'; container.innerHTML = ''; } }
 
-    function populateCheckboxes(set, id, isArea = false) { let container = document.getElementById(id); let currentlyChecked = getCheckedValues(id); container.innerHTML = ""; if(set.size > 0) { let arr = Array.from(set); if (isArea) arr.sort(sortAreas); else arr.sort(); arr.forEach(i => { let isChecked = currentlyChecked.includes(i) ? "checked" : ""; container.innerHTML += `<label><input type="checkbox" value="${i}" onchange="render()" ${isChecked}> ${i}</label>`; }); document.getElementById(id + 'Group').style.display = "block"; } }
+    function populateCheckboxes(set, id, isArea = false) {
+        let container = document.getElementById(id);
+        if (!container) return;
+        let currentlyChecked = getCheckedValues(id);
+        if(set.size > 0) {
+            let arr = Array.from(set);
+            if (isArea) arr.sort(sortAreas); else arr.sort();
+            container.innerHTML = arr.map(i => {
+                let isChecked = currentlyChecked.includes(i) ? "checked" : "";
+                return `<label><input type="checkbox" value="${escapeHtml(i)}" onchange="render()" ${isChecked}> ${escapeHtml(i)}</label>`;
+            }).join('');
+            const group = document.getElementById(id + 'Group');
+            if (group) group.style.display = "block";
+        } else {
+            container.innerHTML = "";
+        }
+    }
     
     function refreshAllFilters() { 
         let offices = new Set(), persons = new Set(), siteTypes = new Set(), areas = new Set(), ces = new Set(), icaos = new Set(); let activeAreas = window.loadedWordAreas || new Set(); 
@@ -718,19 +779,19 @@
         return "";
     }
 
-    function parseCapStepFromRow(rCells) {
-        if (!rCells || rCells.length < 7) return null;
-        let step = getCellText(rCells[0]).trim();
+    function parseCapStepFromCellTexts(cellTexts) {
+        if (!cellTexts || cellTexts.length < 7) return null;
+        let step = (cellTexts[0] || "").trim();
         if (!/^\d+$/.test(step)) return null;
 
-        let action = cleanDocxCellText(getCellText(rCells[1]) || "");
-        let office = cleanDocxCellText(getCellText(rCells[2]) || "");
-        let progress = cleanDocxCellText(getCellText(rCells[rCells.length - 1]) || "");
-        let isCompleted = progress.toLowerCase().includes('completed') || progress.toLowerCase().includes('tamamlandı') || progress.includes('100');
+        let action = cleanDocxCellText(cellTexts[1] || "");
+        let office = cleanDocxCellText(cellTexts[2] || "");
+        let progress = cleanDocxCellText(cellTexts[cellTexts.length - 1] || "");
+        let isCompleted = progress.toLowerCase().includes('completed') || progress.toLowerCase().includes('tamamlandı') || progress.toLowerCase().includes('tamamlandi') || progress.includes('100');
 
-        let estDateRaw = extractValidDateStr(getCellText(rCells[4]));
-        let revDateRaw = extractValidDateStr(getCellText(rCells[5]));
-        let compDateRaw = extractValidDateStr(getCellText(rCells[6]));
+        let estDateRaw = extractValidDateStr(cellTexts[4]);
+        let revDateRaw = extractValidDateStr(cellTexts[5]);
+        let compDateRaw = extractValidDateStr(cellTexts[6]);
         let finalDate = estDateRaw;
         if (/^\d/.test(revDateRaw)) finalDate = revDateRaw;
         if (isCompleted && /^\d/.test(compDateRaw)) finalDate = compDateRaw;
@@ -739,22 +800,40 @@
         return { step, action, office, estDate: finalDate || "Tarih Yok", progress: progress || "0%", isPlaceholder };
     }
 
-    function pushParsedCapSection(section, fileName) {
+    function parseCapStepFromRow(rCells) {
+        if (!rCells || rCells.length < 7) return null;
+        return parseCapStepFromCellTexts(rCells.map(c => getCellText(c)));
+    }
+
+    function makeActionKey(pq, step, action) {
+        return `${pq}||${step}||${(action || '').slice(0, 500)}`;
+    }
+
+    function makeCapDuplicateIndexes() {
+        return {
+            actionKeys: new Set(rawData.map(d => makeActionKey(d.pq, d.step, d.action))),
+            pqKeys: new Set(rawData.map(d => d.pq))
+        };
+    }
+
+    function pushParsedCapSection(section, fileName, duplicateIndex) {
         let result = { addedActions: 0, addedEmptyCaps: 0 };
         if (!section || !section.pq || section.pq === "Bilinmeyen PQ") return result;
 
+        const indexes = duplicateIndex || makeCapDuplicateIndexes();
         let filledSteps = section.tempSteps.filter(s => !s.isPlaceholder);
         if (filledSteps.length > 0) {
             filledSteps.forEach(s => {
-                let exists = rawData.some(d => d.pq === section.pq && d.step === s.step && d.action === s.action);
-                if (!exists) {
+                const key = makeActionKey(section.pq, s.step, s.action);
+                if (!indexes.actionKeys.has(key)) {
                     rawData.push({ pq: section.pq, step: s.step, action: s.action, office: s.office, estDate: s.estDate, progress: s.progress, sourceFile: fileName, note: "", isEmptyCap: false });
+                    indexes.actionKeys.add(key);
+                    indexes.pqKeys.add(section.pq);
                     result.addedActions++;
                 }
             });
         } else if (section.tempSteps.length > 0 || section.hasCapMarker || section.hasProtocolMarker) {
-            let exists = rawData.some(d => d.pq === section.pq);
-            if (!exists) {
+            if (!indexes.pqKeys.has(section.pq)) {
                 rawData.push({
                     pq: section.pq,
                     step: "-",
@@ -766,28 +845,35 @@
                     note: "",
                     isEmptyCap: true
                 });
+                indexes.pqKeys.add(section.pq);
+                indexes.actionKeys.add(makeActionKey(section.pq, "-", "EMPTY_CAP"));
                 result.addedEmptyCaps++;
             }
         }
         return result;
     }
 
-    function parseDocxCapTables(xmlDoc, fileName) {
+    async function parseDocxCapTables(xmlDoc, fileName, options = {}) {
         const tables = Array.from(xmlDoc.getElementsByTagName("w:tbl"));
-        let stats = { tables: tables.length, pqSections: 0, addedActions: 0, addedEmptyCaps: 0 };
+        const duplicateIndex = options.duplicateIndex || makeCapDuplicateIndexes();
+        let stats = { tables: tables.length, pqSections: 0, addedActions: 0, addedEmptyCaps: 0, rows: 0 };
+        let processedRows = 0;
+        let lastYieldAt = (typeof performance !== 'undefined' ? performance.now() : Date.now());
 
-        tables.forEach((table) => {
+        for (let ti = 0; ti < tables.length; ti++) {
             let currentSection = null;
+            const table = tables[ti];
             const rows = Array.from(table.getElementsByTagName("w:tr"));
 
             const finalizeCurrentSection = () => {
-                let added = pushParsedCapSection(currentSection, fileName);
+                let added = pushParsedCapSection(currentSection, fileName, duplicateIndex);
                 stats.addedActions += added.addedActions;
                 stats.addedEmptyCaps += added.addedEmptyCaps;
                 currentSection = null;
             };
 
-            rows.forEach((row) => {
+            for (let ri = 0; ri < rows.length; ri++) {
+                const row = rows[ri];
                 const rCells = getRowCells(row);
                 const cellTexts = rCells.map(c => getCellText(c));
                 const rowText = cellTexts.join(" ");
@@ -797,20 +883,29 @@
                     finalizeCurrentSection();
                     currentSection = { pq: detectedPQ, tempSteps: [], hasCapMarker: false, hasProtocolMarker: true };
                     stats.pqSections++;
-                    return;
+                } else if (currentSection) {
+                    if (rowText.includes("CAP Action Items")) currentSection.hasCapMarker = true;
+                    if (rowText.includes("PROTOCOL FINDING")) currentSection.hasProtocolMarker = true;
+                    let parsedStep = parseCapStepFromCellTexts(cellTexts);
+                    if (parsedStep) currentSection.tempSteps.push(parsedStep);
                 }
 
-                if (!currentSection) return;
-
-                if (rowText.includes("CAP Action Items")) currentSection.hasCapMarker = true;
-                if (rowText.includes("PROTOCOL FINDING")) currentSection.hasProtocolMarker = true;
-
-                let parsedStep = parseCapStepFromRow(rCells);
-                if (parsedStep) currentSection.tempSteps.push(parsedStep);
-            });
+                processedRows++;
+                stats.rows = processedRows;
+                const now = (typeof performance !== 'undefined' ? performance.now() : Date.now());
+                if (processedRows % 25 === 0 || now - lastYieldAt > 120) {
+                    setLoadingMessage(`Word işleniyor: ${fileName}`, `${processedRows} satır tarandı · ${stats.pqSections} PQ bölümü bulundu · ${stats.addedActions} eylem alındı`);
+                    lastYieldAt = now;
+                    await yieldToBrowser();
+                }
+            }
 
             finalizeCurrentSection();
-        });
+            if (tables.length > 1 && (ti + 1) % 5 === 0) {
+                setLoadingMessage(`Word işleniyor: ${fileName}`, `${ti + 1}/${tables.length} tablo işlendi · ${stats.pqSections} PQ bölümü bulundu`);
+                await yieldToBrowser();
+            }
+        }
 
         if (stats.pqSections === 0) {
             console.warn(`DOCX içinde PQ başlığı bulunamadı: ${fileName}`);
@@ -821,102 +916,180 @@
     }
 
     document.getElementById('docxInput').addEventListener('change', async (e) => {
-        const files = e.target.files; if (!files.length) return;
-        showLoading();
+        const files = Array.from(e.target.files || []);
+        if (!files.length) return;
+        showLoading('Word dosyaları hazırlanıyor...', `${files.length} dosya seçildi.`);
+        await yieldToBrowser();
         try {
-            for (let file of files) {
-                if (loadedFiles.has(file.name)) continue;
+            const duplicateIndex = makeCapDuplicateIndexes();
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                if (loadedFiles.has(file.name)) {
+                    setLoadingMessage('Word dosyası zaten yüklü.', `${file.name} atlandı (${i + 1}/${files.length}).`);
+                    await yieldToBrowser();
+                    continue;
+                }
                 try {
+                    setLoadingMessage(`Word dosyası açılıyor (${i + 1}/${files.length})`, file.name);
+                    await yieldToBrowser();
                     const zip = await JSZip.loadAsync(file);
+                    await yieldToBrowser();
                     const documentFile = zip.file("word/document.xml");
                     if (!documentFile) throw new Error("word/document.xml bulunamadı. Dosya geçerli bir DOCX olmayabilir.");
 
+                    setLoadingMessage(`Word içeriği okunuyor (${i + 1}/${files.length})`, file.name);
                     const xml = await documentFile.async("string");
+                    await yieldToBrowser();
+
+                    setLoadingMessage(`Word XML ayrıştırılıyor (${i + 1}/${files.length})`, file.name);
                     const xmlDoc = new DOMParser().parseFromString(xml, "text/xml");
-                    parseDocxCapTables(xmlDoc, file.name);
+                    await yieldToBrowser();
+
+                    const stats = await parseDocxCapTables(xmlDoc, file.name, { duplicateIndex });
                     loadedFiles.add(file.name);
+                    setLoadingMessage(`Word dosyası işlendi (${i + 1}/${files.length})`, `${file.name}: ${stats.pqSections} PQ · ${stats.addedActions} eylem · ${stats.addedEmptyCaps} boş CAP`);
+                    await yieldToBrowser();
                 } catch (err) {
                     console.error("DOCX parse error:", err);
                     alert(`${file.name} okunurken hata oluştu: ${err.message || err}`);
                 }
             }
+            setLoadingMessage('Veriler hazırlanıyor...', 'Dosya listesi, filtreler ve gösterge panelleri güncelleniyor.');
             recalculateGlobalStateFromFiles();
-            renderFileList(); refreshAllFilters(); saveToLocalStorage(); render();
+            renderFileList();
+            await yieldToBrowser();
+            refreshAllFilters();
+            await yieldToBrowser();
+            saveToLocalStorage();
+            await yieldToBrowser();
+            render();
         } catch(e) {
+            console.error(e);
             alert("Word dosyasını okurken bir hata oluştu: " + e.message);
         } finally {
-            hideLoading(); e.target.value = "";
+            hideLoading();
+            e.target.value = "";
         }
     });
     
     // EXCEL OKUMASI 
     document.getElementById('excelInput').addEventListener('change', async (e) => { 
-        const file = e.target.files[0]; if(!file) return; 
-        showLoading(); 
-        try { 
-            const data = await file.arrayBuffer(); const wb = XLSX.read(data); const wsMaster = wb.Sheets[wb.SheetNames[0]]; const jsonData = XLSX.utils.sheet_to_json(wsMaster); 
-            let isBackupFile = jsonData.length > 0 && jsonData[0]['GÜNLÜK RAPORA EKLE'] !== undefined && jsonData[0]['BULGU'] === undefined; 
-            if(!isBackupFile) pqMasterData = {}; 
+        const file = e.target.files[0];
+        if(!file) return;
+        showLoading('Excel dosyası okunuyor...', file.name);
+        await yieldToBrowser();
+        try {
+            const data = await file.arrayBuffer();
+            await yieldToBrowser();
+            setLoadingMessage('Excel çalışma kitabı ayrıştırılıyor...', file.name);
+            const wb = XLSX.read(data);
+            await yieldToBrowser();
+            const wsMaster = wb.Sheets[wb.SheetNames[0]];
+            const jsonData = XLSX.utils.sheet_to_json(wsMaster);
+            await yieldToBrowser();
+            let isBackupFile = jsonData.length > 0 && jsonData[0]['GÜNLÜK RAPORA EKLE'] !== undefined && jsonData[0]['BULGU'] === undefined;
+            if(!isBackupFile) pqMasterData = {};
             
-            jsonData.forEach(row => { 
-                let pqKey = findPQColumn(row); 
-                if(pqKey && row[pqKey]) { 
-                    let pqStr = normalizePQ(row[pqKey]); 
-                    if(pqStr) { 
+            for (let i = 0; i < jsonData.length; i++) {
+                const row = jsonData[i];
+                let pqKey = findPQColumn(row);
+                if(pqKey && row[pqKey]) {
+                    let pqStr = normalizePQ(row[pqKey]);
+                    if(pqStr) {
                         let icaoKapanis = getCol(row, ['ICAO KAPATTI MI', 'ICAO ONAYI', 'KAPANDI', 'KAPATILDI', 'ICAO CLOSED']);
                         let validasyonGorevi = getCol(row, ['VALIDASYON GÖREVİ', 'VALIDASYON', 'GÖREV', 'MISSION', 'EVENT', 'DENETİM']);
                         let isIcaoClosed = (icaoKapanis && icaoKapanis.toString().toUpperCase().trim() === 'EVET');
 
-                        if(!isBackupFile) { 
+                        if(!isBackupFile) {
                             let alan = getCol(row, ['ALAN', 'AREA', 'DENETİM ALANI']) || "DİĞER";
-                            pqMasterData[pqStr] = { 
-                                alan: alan, ce: getCol(row, ['CE', 'KRİTİK', 'CRITICAL']), soru: getCol(row, ['SORU', 'QUESTION']), bulgu: getCol(row, ['BULGU', 'DESCRIPTION', 'FINDING', 'AÇIKLAMA']), tur: getCol(row, ['TÜR', 'TYPE', 'DOĞRULAMA']), degerlendirme: getCol(row, ['DEĞERLENDİRME', 'STATUS', 'ICAO', 'DURUM']), sorumlu: getCol(row, ['SORUMLU', 'PERSONEL']),
-                                isIcaoClosed: isIcaoClosed, validasyonGorevi: validasyonGorevi || "Belirtilmedi"
-                            }; 
-                        } 
+                            pqMasterData[pqStr] = {
+                                alan: alan,
+                                ce: getCol(row, ['CE', 'KRİTİK', 'CRITICAL']),
+                                soru: getCol(row, ['SORU', 'QUESTION']),
+                                bulgu: getCol(row, ['BULGU', 'DESCRIPTION', 'FINDING', 'AÇIKLAMA']),
+                                tur: getCol(row, ['TÜR', 'TYPE', 'DOĞRULAMA']),
+                                degerlendirme: getCol(row, ['DEĞERLENDİRME', 'STATUS', 'ICAO', 'DURUM']),
+                                sorumlu: getCol(row, ['SORUMLU', 'PERSONEL']),
+                                isIcaoClosed: isIcaoClosed,
+                                validasyonGorevi: validasyonGorevi || "Belirtilmedi"
+                            };
+                        }
 
-                        let rapEkle = getCol(row, ['GÜNLÜK RAPORA EKLE', 'RAPORA EKLE', 'REPORT']); if (rapEkle !== undefined && rapEkle !== null) { let val = String(rapEkle).trim().toUpperCase(); if (val === 'EVET' || val === 'X' || val === '1' || val === 'YES' || val === 'TRUE') dailyReviewedPQs.add(pqStr); else if (val === 'HAYIR' || val === 'NO' || val === '0' || val === 'FALSE') dailyReviewedPQs.delete(pqStr); } 
-                        let rapNotu = getCol(row, ['RAPOR NOTU', 'PQ NOTU', 'GÜNLÜK AÇIKLAMA']); if (rapNotu !== undefined && rapNotu !== null && String(rapNotu).trim() !== "") dailyPQNotes[pqStr] = String(rapNotu); 
-                    } 
-                } 
-            }); 
+                        let rapEkle = getCol(row, ['GÜNLÜK RAPORA EKLE', 'RAPORA EKLE', 'REPORT']);
+                        if (rapEkle !== undefined && rapEkle !== null) {
+                            let val = String(rapEkle).trim().toUpperCase();
+                            if (val === 'EVET' || val === 'X' || val === '1' || val === 'YES' || val === 'TRUE') dailyReviewedPQs.add(pqStr);
+                            else if (val === 'HAYIR' || val === 'NO' || val === '0' || val === 'FALSE') dailyReviewedPQs.delete(pqStr);
+                        }
+                        let rapNotu = getCol(row, ['RAPOR NOTU', 'PQ NOTU', 'GÜNLÜK AÇIKLAMA']);
+                        if (rapNotu !== undefined && rapNotu !== null && String(rapNotu).trim() !== "") dailyPQNotes[pqStr] = String(rapNotu);
+                    }
+                }
+                if (i % 100 === 0) {
+                    setLoadingMessage('Excel master verisi işleniyor...', `${i + 1}/${jsonData.length} satır kontrol edildi.`);
+                    await yieldToBrowser();
+                }
+            }
             
             loadedExcelFile = file.name;
 
-            let eiSheetName = wb.SheetNames.find(n => n.toUpperCase().includes('EI')); 
-            if (eiSheetName) { 
-                const wsEI = wb.Sheets[eiSheetName]; const jsonEI = XLSX.utils.sheet_to_json(wsEI); baseEIData = {}; 
-                jsonEI.forEach(row => { 
-                    let alan = row['DENETİM ALANI'] || row['ALAN'] || row['AREA']; 
-                    let total = parseInt(row['UYGULANABİLİR TOPLAM PQ'] || row['TOPLAM PQ'] || row['TOTAL PQ']); 
-                    let sat = parseInt(row['MEVCUT SATISFACTORY'] || row['SATISFACTORY'] || row['MEVCUT']); 
+            let eiSheetName = wb.SheetNames.find(n => n.toUpperCase().includes('EI'));
+            if (eiSheetName) {
+                setLoadingMessage('EI referans sayfası okunuyor...', eiSheetName);
+                await yieldToBrowser();
+                const wsEI = wb.Sheets[eiSheetName];
+                const jsonEI = XLSX.utils.sheet_to_json(wsEI);
+                baseEIData = {};
+                for (let i = 0; i < jsonEI.length; i++) {
+                    const row = jsonEI[i];
+                    let alan = row['DENETİM ALANI'] || row['ALAN'] || row['AREA'];
+                    let total = parseInt(row['UYGULANABİLİR TOPLAM PQ'] || row['TOPLAM PQ'] || row['TOTAL PQ']);
+                    let sat = parseInt(row['MEVCUT SATISFACTORY'] || row['SATISFACTORY'] || row['MEVCUT']);
                     let afterRaw = getCol(row, ['AFTER VALIDASYON', 'AFTER VALIDATION', 'VALIDASYON SONRASI', 'SONRASI SATISFACTORY', 'POST VALIDATION']);
                     let afterSat = parseInt(afterRaw);
-                    if(alan && !isNaN(total) && !isNaN(sat)) { 
-                        baseEIData[alan.toString().trim().toUpperCase()] = { total, sat, afterSat: !isNaN(afterSat) ? afterSat : null }; 
-                    } 
-                }); 
+                    if(alan && !isNaN(total) && !isNaN(sat)) {
+                        baseEIData[alan.toString().trim().toUpperCase()] = { total, sat, afterSat: !isNaN(afterSat) ? afterSat : null };
+                    }
+                    if (i % 50 === 0) await yieldToBrowser();
+                }
 
-                if (Object.keys(baseEIData).length > 0) { document.getElementById('eiOverallProgressPanel').style.display = "grid"; document.getElementById('eiChartPanel').style.display = "block"; } else { document.getElementById('eiOverallProgressPanel').style.display = "none"; document.getElementById('eiChartPanel').style.display = "none"; } 
-            } else if(!isBackupFile) { 
-                document.getElementById('eiOverallProgressPanel').style.display = "none"; document.getElementById('eiChartPanel').style.display = "none"; 
-            } 
+                if (Object.keys(baseEIData).length > 0) {
+                    document.getElementById('eiOverallProgressPanel').style.display = "grid";
+                    document.getElementById('eiChartPanel').style.display = "block";
+                } else {
+                    document.getElementById('eiOverallProgressPanel').style.display = "none";
+                    document.getElementById('eiChartPanel').style.display = "none";
+                }
+            } else if(!isBackupFile) {
+                document.getElementById('eiOverallProgressPanel').style.display = "none";
+                document.getElementById('eiChartPanel').style.display = "none";
+            }
             
             // Excel'de "EVET" olanları istatistikleri bozmaması için ana tablodan filtreliyoruz
-            Object.keys(pqMasterData).forEach(pqStr => {
+            setLoadingMessage('ICAO kapalı PQ kayıtları ayrıştırılıyor...', 'Ana iş yükü listesinden resmen kapanan PQ kayıtları ayrılıyor.');
+            const pqKeys = Object.keys(pqMasterData);
+            for (let i = 0; i < pqKeys.length; i++) {
+                let pqStr = pqKeys[i];
                 let m = pqMasterData[pqStr];
-                if (m.isIcaoClosed) {
-                    rawData = rawData.filter(d => d.pq !== pqStr);
-                }
-            });
+                if (m.isIcaoClosed) rawData = rawData.filter(d => d.pq !== pqStr);
+                if (i % 100 === 0) await yieldToBrowser();
+            }
 
-            renderFileList(); refreshAllFilters(); saveToLocalStorage(); render(); 
-        } catch (err) { 
+            setLoadingMessage('Ekran hazırlanıyor...', 'Filtreler, grafikler ve rapor panelleri güncelleniyor.');
+            renderFileList();
+            await yieldToBrowser();
+            refreshAllFilters();
+            await yieldToBrowser();
+            saveToLocalStorage();
+            await yieldToBrowser();
+            render();
+        } catch (err) {
             console.error(err);
-            alert("Excel okunurken hata oluştu: " + err.message); 
-        } finally { 
-            hideLoading(); e.target.value = ""; 
-        } 
+            alert("Excel okunurken hata oluştu: " + err.message);
+        } finally {
+            hideLoading();
+            e.target.value = "";
+        }
     });
 
     // EKRAN 2: ICAO KAPATTI MI = EVET OLANLARIN LİSTELENMESİ
@@ -1072,9 +1245,10 @@
     window.updatePQNote = function(pq, val) { dailyPQNotes[pq] = val; saveToLocalStorage(); if(document.getElementById('tab-report').classList.contains('active')) updateReportPreview(); }
 
     function renderTable(filteredData, groups) {
-        const tbody = document.getElementById('tableBody'); tbody.innerHTML = "";
+        const tbody = document.getElementById('tableBody');
         if (filteredData.length === 0) { tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding: 50px; color: var(--muted);">Veri bulunamadı.</td></tr>`; return; }
         
+        let tableHtml = "";
         let sortedPQs = Object.keys(groups).sort(sortPQs);
         sortedPQs.forEach(pq => {
             const items = groups[pq]; const excel = pqMasterData[pq] || {}; const safeId = pq.replace(/\./g, '-');
@@ -1100,8 +1274,9 @@
                 detailHtml += `<tr><td><b>${item.step}</b></td><td><div style="margin-bottom:8px;">${item.action}</div><div style="margin-bottom:8px;">${tagsHtml}</div><textarea class="note-input" placeholder="Kişisel not ekle..." onchange="updateNote('${pq}', '${item.step}', this.value)">${item.note || ''}</textarea></td><td><b>${item.office}</b></td><td style="white-space:nowrap;">${item.estDate}</td><td style="color:var(--${s.color}); font-weight:bold; white-space:nowrap;">${s.label}</td></tr>`;
             });
             detailHtml += `</tbody></table></div></td></tr>`;
-            tbody.innerHTML += html + detailHtml;
+            tableHtml += html + detailHtml;
         });
+        tbody.innerHTML = tableHtml;
     }
 
     function updateAreaSummary(filteredData) {
