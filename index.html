@@ -1742,7 +1742,7 @@
     function addTaskExportSheets(wb, ctx, detailRows) {
         const baseName = ctx.mode === 'past' ? 'Gecmis_Gorevler' : 'Yaklasan_Gorevler';
         const modeLabel = ctx.viewMode === 'group' ? 'Alana göre gruplu' : 'Tarihe göre liste';
-        addJsonSheet(wb, 'Rapor_Baglamı', [{
+        addJsonSheet(wb, 'Gorev_Rapor_Baglamı', [{
             'Rapor': ctx.title,
             'Ekran Görünümü': modeLabel,
             'Zaman Kapsamı': ctx.rangeLabel || (ctx.mode === 'upcoming' ? 'Önümüzdeki 30 gün' : ''),
@@ -2961,14 +2961,437 @@
         });
     }
 
+
+    // GELISMIS MENU BAZLI RAPOR MOTORU - Yardimci fonksiyonlar
+    function stripHtmlForReport(value) {
+        return (value === undefined || value === null ? '' : value.toString())
+            .replace(/<br\s*\/?>/gi, ' | ')
+            .replace(/<[^>]*>/g, '')
+            .replace(/&nbsp;/g, ' ')
+            .replace(/&amp;/g, '&')
+            .replace(/&lt;/g, '<')
+            .replace(/&gt;/g, '>')
+            .replace(/&quot;/g, '"')
+            .replace(/&#39;/g, "'")
+            .replace(/\s+/g, ' ')
+            .trim();
+    }
+
+    function fullTextForExcel(value) {
+        let txt = (value === undefined || value === null ? '' : value.toString()).replace(/\r\n/g, '\n').replace(/\r/g, '\n').trim();
+        return txt.length > 32000 ? txt.substring(0, 32000) + '\n...[Excel hucre siniri nedeniyle metin kisaltilmistir]' : txt;
+    }
+
+    function buildActionExportRowFull(d, options = {}) {
+        let row = buildActionExportRow(d, options);
+        let m = pqMasterData[d.pq] || {};
+        row['Eylem / CAP Adımı'] = fullTextForExcel(d.action || '');
+        row['Bulgu'] = fullTextForExcel(m.bulgu || '');
+        row['Not'] = fullTextForExcel(d.note || '');
+        return row;
+    }
+
+    function getReportDateText() {
+        return formatLongTurkishDate(window_loadedReportDate || new Date());
+    }
+
+    function buildFilterContextRows(ctx) {
+        const activeTabTitle = (document.querySelector('.tab-btn.active') || {}).innerText || ctx.title || '';
+        return [
+            { 'Başlık': 'Rapor', 'Değer': ctx.title || '' },
+            { 'Başlık': 'Aktif Menü', 'Değer': activeTabTitle.replace(/\s+/g, ' ').trim() },
+            { 'Başlık': 'Veri Tarihi', 'Değer': getReportDateText() },
+            { 'Başlık': 'Ekran Kayıt Sayısı', 'Değer': (ctx.rows || []).length },
+            { 'Başlık': 'Benzersiz PQ', 'Değer': new Set((ctx.rows || []).map(d => d.pq).filter(Boolean)).size },
+            { 'Başlık': 'Görünüm', 'Değer': ctx.viewLabel || ctx.mode || '-' },
+            { 'Başlık': 'Kapsam', 'Değer': ctx.rangeLabel || 'Aktif ekran filtreleri' }
+        ];
+    }
+
+    function getRowsForPqSet(pqs) {
+        const set = pqs instanceof Set ? pqs : new Set(pqs || []);
+        return rawData.filter(d => set.has(d.pq));
+    }
+
+    function getDateRiskRows(rows) {
+        return (rows || []).filter(d => {
+            if (getStatus(d).type === 'done') return false;
+            if (d.isEmptyCap) return false;
+            if (!d.estDate || d.estDate === 'Tarih Yok' || d.estDate === 'Kapatıldı') return true;
+            return !parseDateObj(d.estDate);
+        }).sort((a,b) => sortAreas((pqMasterData[a.pq]||{}).alan||'', (pqMasterData[b.pq]||{}).alan||'') || sortPQs(a.pq,b.pq));
+    }
+
+    function taskDayValue(d, mode) {
+        const today = new Date(); today.setHours(0,0,0,0);
+        const dt = parseDateObj(d.estDate);
+        if (!dt) return null;
+        const raw = Math.ceil((dt - today) / (1000 * 60 * 60 * 24));
+        return mode === 'past' ? Math.abs(raw) : raw;
+    }
+
+    function getTopDelayedRows(rows, limit = 30) {
+        return (rows || []).filter(d => getStatus(d).type === 'late').sort((a,b) => {
+            const da = taskDayValue(a, 'past') || 0;
+            const db = taskDayValue(b, 'past') || 0;
+            if (db !== da) return db - da;
+            return sortAreas((pqMasterData[a.pq]||{}).alan||'', (pqMasterData[b.pq]||{}).alan||'') || sortPQs(a.pq,b.pq);
+        }).slice(0, limit);
+    }
+
+    function getTopUpcomingRows(rows, limit = 30) {
+        const tasks = getUpcomingTasks(rows || getFilteredData());
+        return tasks.slice(0, limit);
+    }
+
+    function buildDelayBucketRows(tasks, mode = 'past') {
+        const buckets = mode === 'past' ? [
+            { key:'1-30', label:'1-30 gün gecikmiş', min:1, max:30 },
+            { key:'31-90', label:'31-90 gün gecikmiş', min:31, max:90 },
+            { key:'91-180', label:'91-180 gün gecikmiş', min:91, max:180 },
+            { key:'180+', label:'180+ gün gecikmiş', min:181, max:Infinity }
+        ] : [
+            { key:'0-7', label:'0-7 gün kaldı', min:0, max:7 },
+            { key:'8-15', label:'8-15 gün kaldı', min:8, max:15 },
+            { key:'16-30', label:'16-30 gün kaldı', min:16, max:30 }
+        ];
+        return buckets.map(b => {
+            const rows = (tasks || []).filter(d => {
+                const val = taskDayValue(d, mode);
+                return val !== null && val >= b.min && val <= b.max;
+            });
+            return { 'Dilim': b.label, 'Eylem Sayısı': rows.length, 'Etkilenen PQ': new Set(rows.map(d => d.pq)).size, 'Alan Sayısı': new Set(rows.map(d => (pqMasterData[d.pq]||{}).alan || 'DİĞER')).size };
+        });
+    }
+
+    function buildTaskOfficeSummaryRows(tasks, mode = 'past') {
+        const map = {};
+        (tasks || []).forEach(d => {
+            const office = (d.office || 'Belirtilmedi').trim() || 'Belirtilmedi';
+            if (!map[office]) map[office] = { office, total:0, pqs:new Set(), maxDays:0, sumDays:0, dayCount:0 };
+            const rec = map[office];
+            rec.total++;
+            rec.pqs.add(d.pq);
+            const val = taskDayValue(d, mode);
+            if (val !== null) { rec.maxDays = Math.max(rec.maxDays, val); rec.sumDays += val; rec.dayCount++; }
+        });
+        return Object.values(map).sort((a,b) => b.total - a.total || b.maxDays - a.maxDays || a.office.localeCompare(b.office, 'tr')).map(r => ({
+            'Sorumlu Ofis': r.office,
+            'Eylem Sayısı': r.total,
+            'Etkilenen PQ': r.pqs.size,
+            [mode === 'past' ? 'En Yüksek Gecikme' : 'En Yakın/Kritik Gün']: r.maxDays,
+            [mode === 'past' ? 'Ortalama Gecikme' : 'Ortalama Kalan Gün']: r.dayCount ? Math.round(r.sumDays / r.dayCount) : ''
+        }));
+    }
+
+    function buildEIOverviewRows(sourceRows) {
+        if (!Object.keys(baseEIData).length) return [];
+        const model = buildEIProjectionModel(sourceRows || rawData);
+        const rows = [];
+        const pushBucket = (key, bucket) => {
+            if (!bucket || !bucket.total) return;
+            rows.push({
+                'Kapsam': key,
+                'Toplam Uygulanabilir PQ': bucket.total,
+                'CMAA Satisfactory': bucket.baseSatOnly,
+                'CMAA EI': pctText(ratioPct(bucket.baseSatOnly, bucket.total)),
+                'ICAO Validasyon Satisfactory': getBucketAfterValidationSat(bucket),
+                'ICAO Validasyon EI': pctText(ratioPct(getBucketAfterValidationSat(bucket), bucket.total)),
+                'Resmî Açık Bulgu': getBucketOfficialFindings(bucket),
+                'Kapatılması Beklenen Bulgu': bucket.localCompleted || 0,
+                'CAP Tamamlanmışlar Dahil EI': pctText(ratioPct(getBucketCurrentSat(bucket), bucket.total)),
+                'Açık CAP Potansiyeli': bucket.projected || 0,
+                'Tüm CAP Potansiyel EI': pctText(ratioPct(getBucketProjectedSat(bucket), bucket.total)),
+                'CAP Yok / Boş': bucket.noCap || 0,
+                'Tarih Eksik Potansiyel': bucket.undatedProjected || 0
+            });
+        };
+        pushBucket('TÜRKİYE GENELİ', model.scope);
+        Object.keys(model.areas).sort(sortAreas).forEach(a => pushBucket(a, model.areas[a]));
+        return rows;
+    }
+
+    function buildDashboardKpiRows(rows) {
+        const scopeRows = rows || getFilteredData();
+        const pqs = new Set(scopeRows.map(d => d.pq));
+        const done = scopeRows.filter(d => getStatus(d).type === 'done').length;
+        const pending = scopeRows.filter(d => getStatus(d).type === 'pending').length;
+        const late = scopeRows.filter(d => getStatus(d).type === 'late').length;
+        const missing = getDateRiskRows(scopeRows).length;
+        const ei = buildEIOverviewRows(rawData)[0] || {};
+        return [
+            { 'Metrik': 'Veri Tarihi', 'Değer': getReportDateText(), 'Yorum': 'Word export tarihi esas alınır.' },
+            { 'Metrik': 'Ekrandaki PQ', 'Değer': pqs.size, 'Yorum': 'Aktif filtre kapsamındaki benzersiz PQ.' },
+            { 'Metrik': 'CAP Adımı', 'Değer': scopeRows.length, 'Yorum': 'Aktif filtre kapsamındaki toplam eylem.' },
+            { 'Metrik': 'Tamamlanan / Devam Eden / Gecikmiş', 'Değer': `${done} / ${pending} / ${late}`, 'Yorum': 'Eylem adımı statüsü.' },
+            { 'Metrik': 'Tarih Riski', 'Değer': missing, 'Yorum': 'Hedef tarihi eksik/geçersiz açık CAP adımı.' },
+            { 'Metrik': 'CMAA EI', 'Değer': ei['CMAA EI'] || 'EI verisi yok', 'Yorum': 'Resmî başlangıç oranı.' },
+            { 'Metrik': 'ICAO Validasyon EI', 'Değer': ei['ICAO Validasyon EI'] || 'EI verisi yok', 'Yorum': 'Resmî validasyonlar sonrası oran.' },
+            { 'Metrik': 'CAP Tamamlanmışlar Dahil EI', 'Değer': ei['CAP Tamamlanmışlar Dahil EI'] || 'EI verisi yok', 'Yorum': 'Henüz ICAO validasyonu bekleyen kapatılması beklenen bulgular dahil.' },
+            { 'Metrik': 'Tüm CAP Potansiyel EI', 'Değer': ei['Tüm CAP Potansiyel EI'] || 'EI verisi yok', 'Yorum': 'Tüm açık CAP adımları olumlu tamamlanırsa.' }
+        ];
+    }
+
+    function milestoneStatusText(bucket, target, validationTasks) {
+        const r = resolveMilestone(bucket, target, validationTasks || []);
+        return stripHtmlForReport(r.html || '') || r.status;
+    }
+
+    function buildMilestoneMatrixRows(sourceRows) {
+        if (!Object.keys(baseEIData).length) return [];
+        const projectionRows = expandFilteredRowsToFullPqGroups(sourceRows || getFilteredData());
+        const model = buildEIProjectionModel(projectionRows.length ? projectionRows : rawData);
+        const tasks = model.validationTasks || [];
+        const rows = [];
+        const pushBucket = (scopeName, bucket) => {
+            if (!bucket || !bucket.total) return;
+            const row = {
+                'Denetim Alanı / Kapsam': scopeName,
+                'Toplam PQ': bucket.total,
+                'CMAA EI': pctText(ratioPct(bucket.baseSatOnly, bucket.total)),
+                'CMAA Satisfactory': `${bucket.baseSatOnly}/${bucket.total}`,
+                'Mevcut EI': pctText(ratioPct(getBucketCurrentSat(bucket), bucket.total)),
+                'Mevcut Satisfactory': `${getBucketCurrentSat(bucket)}/${bucket.total}`,
+                'Maksimum Potansiyel EI': pctText(ratioPct(getBucketProjectedSat(bucket), bucket.total)),
+                'CAP Yok / Boş': bucket.noCap || 0,
+                'Tarih Eksik Potansiyel': bucket.undatedProjected || 0
+            };
+            if (tasks.length) {
+                tasks.forEach((task, idx) => {
+                    const sat = getBucketSatAfterValidation(bucket, tasks, idx);
+                    row[`ICAO Validasyonu - ${task}`] = `${pctText(ratioPct(sat, bucket.total))} | +${getBucketValidationCount(bucket, task)} PQ | ${sat}/${bucket.total}`;
+                });
+            } else {
+                row['ICAO Validasyonu'] = `${pctText(ratioPct(getBucketAfterValidationSat(bucket), bucket.total))} | +${getBucketValidationDelta(bucket)} PQ`;
+            }
+            [60,70,80,90,100].forEach(t => { row[`%${t} Hedefi`] = milestoneStatusText(bucket, t, tasks); });
+            rows.push(row);
+        };
+        pushBucket('TÜRKİYE GENELİ', model.scope);
+        Object.keys(model.areas).sort(sortAreas).forEach(a => pushBucket(a, model.areas[a]));
+        return rows;
+    }
+
+    function buildMilestoneGapRows(sourceRows) {
+        if (!Object.keys(baseEIData).length) return [];
+        const projectionRows = expandFilteredRowsToFullPqGroups(sourceRows || getFilteredData());
+        const model = buildEIProjectionModel(projectionRows.length ? projectionRows : rawData);
+        const tasks = model.validationTasks || [];
+        const out = [];
+        const scan = (scopeName, bucket) => {
+            if (!bucket || !bucket.total) return;
+            [60,70,80,90,100].forEach(target => {
+                const reqSat = Math.ceil((target / 100) * bucket.total);
+                const maxSat = getBucketProjectedSat(bucket);
+                const r = resolveMilestone(bucket, target, tasks);
+                if (r.status === 'unreachable' || r.status === 'unknown') {
+                    out.push({
+                        'Kapsam': scopeName,
+                        'Hedef': `%${target}`,
+                        'Durum': r.status === 'unreachable' ? 'Mevcut CAP havuzuyla ulaşılamıyor' : 'Tarih bilgisi eksik olduğu için tarih belirsiz',
+                        'Gereken Satisfactory': reqSat,
+                        'Maksimum Satisfactory': maxSat,
+                        'Eksik PQ': Math.max(0, reqSat - maxSat),
+                        'CAP Yok / Boş': bucket.noCap || 0,
+                        'Tarih Eksik Potansiyel': bucket.undatedProjected || 0,
+                        'Açıklama': milestoneStatusText(bucket, target, tasks)
+                    });
+                }
+            });
+        };
+        scan('TÜRKİYE GENELİ', model.scope);
+        Object.keys(model.areas).sort(sortAreas).forEach(a => scan(a, model.areas[a]));
+        return out;
+    }
+
+    function buildMilestoneContributionRows(sourceRows) {
+        if (!Object.keys(baseEIData).length) return [];
+        const projectionRows = expandFilteredRowsToFullPqGroups(sourceRows || getFilteredData());
+        const model = buildEIProjectionModel(projectionRows.length ? projectionRows : rawData);
+        const rows = [];
+        Object.keys(model.areas).sort(sortAreas).forEach(area => {
+            const bucket = model.areas[area];
+            const areaTotal = bucket.total || 0;
+            (bucket.realizedEvents || []).forEach(e => {
+                const m = pqMasterData[e.pq] || {};
+                rows.push({ 'Kaynak': 'CAP Adımları Tamamlandı', 'Denetim Alanı': area, 'PQ': e.pq, 'Tarih': formatExactDate(e.date), 'Alan EI Katkısı': pctText(ratioPct(1, areaTotal)), 'CE': m.ce || '', 'Sorumlu': m.sorumlu || '', 'Bulgu': fullTextForExcel(m.bulgu || '') });
+            });
+            (bucket.projectedEvents || []).forEach(e => {
+                const m = pqMasterData[e.pq] || {};
+                rows.push({ 'Kaynak': 'Açık CAP Potansiyeli', 'Denetim Alanı': area, 'PQ': e.pq, 'Tarih': formatExactDate(e.date), 'Alan EI Katkısı': pctText(ratioPct(1, areaTotal)), 'CE': m.ce || '', 'Sorumlu': m.sorumlu || '', 'Bulgu': fullTextForExcel(m.bulgu || '') });
+            });
+        });
+        return rows.sort((a,b) => sortAreas(a['Denetim Alanı'], b['Denetim Alanı']) || String(a['Tarih']).localeCompare(String(b['Tarih']), 'tr') || sortPQs(a.PQ,b.PQ));
+    }
+
+    function buildDateSimulationRowsFromUi() {
+        const dateEl = document.getElementById('dateSimTargetDate');
+        if (!dateEl || !dateEl.value) return [];
+        const area = (document.getElementById('dateSimAreaSelect') || {}).value || 'GLOBAL';
+        const targetDate = parseUserDateInput(dateEl.value);
+        const sim = targetDate ? computeDateSimulation(area, targetDate) : null;
+        if (!sim) return [];
+        const label = area === 'GLOBAL' ? 'TÜRKİYE GENELİ' : area;
+        const rows = [{
+            'Kapsam': label,
+            'Simülasyon Tarihi': formatLongTurkishDate(targetDate),
+            'Mevcut Satisfactory': sim.currentSat,
+            'Simülasyon Satisfactory': sim.simSat,
+            'Mevcut EI': pctText(ratioPct(sim.currentSat, sim.bucket.total)),
+            'Simülasyon EI': pctText(ratioPct(sim.simSat, sim.bucket.total)),
+            'Ek Kapanacağı Varsayılan PQ': Math.max(0, sim.simSat - sim.currentSat),
+            'Tarih Eksik PQ': sim.noDatePqs.length
+        }];
+        sim.assumedPqs.forEach(x => rows.push({ 'Kapsam': label, 'Simülasyon Tarihi': formatLongTurkishDate(targetDate), 'PQ': x.pq, 'Varsayılan Kapanış Tarihi': formatExactDate(x.date), 'Not': 'Bu tarihe kadar tüm adımların olumlu tamamlanacağı varsayılmıştır.' }));
+        return rows;
+    }
+
+    function buildAreaScorecardRows(rows) {
+        const base = buildAreaExportRows(rows || getFilteredData());
+        const eiRows = buildEIOverviewRows(rawData).filter(r => r['Kapsam'] !== 'TÜRKİYE GENELİ');
+        const eiMap = {}; eiRows.forEach(r => eiMap[normalizeAreaKey(r['Kapsam'])] = r);
+        return base.map(r => {
+            const ei = eiMap[normalizeAreaKey(r['Denetim Alanı'])] || {};
+            return Object.assign({}, r, {
+                'CMAA EI': ei['CMAA EI'] || '',
+                'Resmî EI': ei['ICAO Validasyon EI'] || '',
+                'Beklenen EI': ei['CAP Tamamlanmışlar Dahil EI'] || '',
+                'Potansiyel EI': ei['Tüm CAP Potansiyel EI'] || '',
+                'Kapatılması Beklenen Bulgu': ei['Kapatılması Beklenen Bulgu'] || 0,
+                'Tarih Riski': ei['Tarih Eksik Potansiyel'] || 0
+            });
+        });
+    }
+
+    function buildEmptyCapSummaryRows(emptyRows) {
+        const map = {};
+        (emptyRows || []).forEach(d => {
+            const m = pqMasterData[d.pq] || {};
+            const area = normalizeAreaKey(m.alan) || 'DİĞER';
+            const ce = m.ce || 'CE Yok';
+            const key = area + '|' + ce;
+            if (!map[key]) map[key] = { area, ce, pqs:new Set(), count:0 };
+            map[key].pqs.add(d.pq); map[key].count++;
+        });
+        return Object.values(map).sort((a,b) => sortAreas(a.area,b.area) || a.ce.localeCompare(b.ce,'tr')).map(r => ({
+            'Denetim Alanı': r.area,
+            'CE': r.ce,
+            'Etkilenen PQ': r.pqs.size,
+            'Eksik/Boş CAP Kaydı': r.count,
+            'PQ Listesi': Array.from(r.pqs).sort(sortPQs).join(', ')
+        }));
+    }
+
+    function buildIcaoValidationSummaryRows(rows) {
+        const map = {};
+        (rows || []).forEach(m => {
+            const area = normalizeAreaKey(m.alan) || 'DİĞER';
+            const task = normalizeValidationTaskName(m.validasyonGorevi, true);
+            const key = task + '|' + area;
+            if (!map[key]) map[key] = { task, area, pqs:new Set(), ceSet:new Set() };
+            map[key].pqs.add(m.pq); if (m.ce) map[key].ceSet.add(m.ce);
+        });
+        return Object.values(map).sort((a,b) => a.task.localeCompare(b.task,'tr') || sortAreas(a.area,b.area)).map(r => ({
+            'Validasyon Görevi': r.task,
+            'Denetim Alanı': r.area,
+            'Kapatılan PQ': r.pqs.size,
+            'CE Kırılımı': Array.from(r.ceSet).sort().join(', '),
+            'PQ Listesi': Array.from(r.pqs).sort(sortPQs).join(', ')
+        }));
+    }
+
+    function makePdfTableFromObjects(rows, columns, widths, options = {}) {
+        const maxRows = options.maxRows === undefined ? 40 : options.maxRows;
+        const useRows = maxRows ? (rows || []).slice(0, maxRows) : (rows || []);
+        const body = [[...columns.map(c => ({ text: c.title || c.key, style:'th' }))]];
+        useRows.forEach(r => {
+            body.push(columns.map(c => ({ text: fullTextForPdf(r[c.key] === undefined ? '' : r[c.key]), fontSize: c.fontSize || 8, bold: !!c.bold })));
+        });
+        if (!useRows.length) body.push(columns.map((c, idx) => idx === 0 ? { text:'Kayıt bulunamadı.', italics:true, color:'#64748b', fontSize:8 } : ''));
+        const tbl = { table:{ headerRows:1, widths: widths || columns.map(c => c.width || '*'), body }, layout:'lightHorizontalLines', margin: options.margin || [0,0,0,10] };
+        const hidden = (rows || []).length - useRows.length;
+        if (hidden > 0) return [tbl, { text:`Not: PDF okunabilirliği için ilk ${useRows.length} kayıt gösterildi. Tüm kayıtlar Excel raporunda yer almaktadır.`, fontSize:8, color:'#64748b', margin:[0,-6,0,8] }];
+        return [tbl];
+    }
+
+    function buildSpecialPdfSections(ctx, rowsForSummary) {
+        const sections = [];
+        let skipDefaultDetail = false;
+        if (ctx.mode === 'dashboard') {
+            skipDefaultDetail = true;
+            sections.push({text:'EI Safhaları', style:'sectionHeader'});
+            sections.push(...makePdfTableFromObjects(buildEIOverviewRows(rawData).slice(0, 12), [
+                {key:'Kapsam', title:'Kapsam'}, {key:'CMAA EI', title:'CMAA'}, {key:'ICAO Validasyon EI', title:'Resmî EI'}, {key:'CAP Tamamlanmışlar Dahil EI', title:'Beklenen EI'}, {key:'Tüm CAP Potansiyel EI', title:'Potansiyel EI'}, {key:'Resmî Açık Bulgu', title:'Resmî Açık'}, {key:'Kapatılması Beklenen Bulgu', title:'Beklenen Kapanış'}
+            ], ['*','auto','auto','auto','auto','auto','auto'], { maxRows: 12 }));
+            sections.push({text:'Öncelikli Gecikmeler', style:'sectionHeader'});
+            sections.push(...makePdfTableFromObjects(getTopDelayedRows(ctx.rows, 15).map(d => buildActionExportRowFull(d, { mode:'past' })), [
+                {key:'PQ', title:'PQ'}, {key:'Denetim Alanı', title:'Alan'}, {key:'Adım', title:'Adım'}, {key:'Eylem / CAP Adımı', title:'Eylem'}, {key:'Eylem Ofisi', title:'Sorumlu'}, {key:'Hedef Tarih', title:'Hedef'}, {key:'Gecikme Günü', title:'Gecikme'}
+            ], ['auto','auto','auto','*','auto','auto','auto'], { maxRows: 15 }));
+            sections.push({text:'Yaklaşan Kritik Görevler', style:'sectionHeader'});
+            sections.push(...makePdfTableFromObjects(getTopUpcomingRows(ctx.rows, 15).map(d => buildActionExportRowFull(d, { mode:'upcoming' })), [
+                {key:'PQ', title:'PQ'}, {key:'Denetim Alanı', title:'Alan'}, {key:'Adım', title:'Adım'}, {key:'Eylem / CAP Adımı', title:'Eylem'}, {key:'Eylem Ofisi', title:'Sorumlu'}, {key:'Hedef Tarih', title:'Hedef'}, {key:'Kalan Gün', title:'Kalan'}
+            ], ['auto','auto','auto','*','auto','auto','auto'], { maxRows: 15 }));
+            sections.push({text:'Tarih Riski', style:'sectionHeader'});
+            sections.push(...makePdfTableFromObjects(getDateRiskRows(ctx.rows).slice(0,15).map(d => buildActionExportRowFull(d)), [
+                {key:'PQ', title:'PQ'}, {key:'Denetim Alanı', title:'Alan'}, {key:'Adım', title:'Adım'}, {key:'Eylem / CAP Adımı', title:'Eylem'}, {key:'Eylem Ofisi', title:'Sorumlu'}
+            ], ['auto','auto','auto','*','auto'], { maxRows: 15 }));
+        } else if (ctx.mode === 'milestones') {
+            skipDefaultDetail = true;
+            sections.push({text:'Hedef Matrisi', style:'sectionHeader'});
+            sections.push(...makePdfTableFromObjects(buildMilestoneMatrixRows(ctx.rows), [
+                {key:'Denetim Alanı / Kapsam', title:'Kapsam'}, {key:'CMAA EI', title:'CMAA'}, {key:'Mevcut EI', title:'Mevcut'}, {key:'Maksimum Potansiyel EI', title:'Potansiyel'}, {key:'%60 Hedefi', title:'%60'}, {key:'%70 Hedefi', title:'%70'}, {key:'%80 Hedefi', title:'%80'}, {key:'%90 Hedefi', title:'%90'}, {key:'%100 Hedefi', title:'%100'}
+            ], ['*','auto','auto','auto','auto','auto','auto','auto','auto'], { maxRows: 25 }));
+            const gaps = buildMilestoneGapRows(ctx.rows);
+            sections.push({text:'Ulaşılamayan / Tarihi Belirsiz Hedefler', style:'sectionHeader'});
+            sections.push(...makePdfTableFromObjects(gaps, [
+                {key:'Kapsam', title:'Kapsam'}, {key:'Hedef', title:'Hedef'}, {key:'Durum', title:'Durum'}, {key:'Eksik PQ', title:'Eksik PQ'}, {key:'CAP Yok / Boş', title:'Boş CAP'}, {key:'Tarih Eksik Potansiyel', title:'Tarih Riski'}
+            ], ['*','auto','*','auto','auto','auto'], { maxRows: 30 }));
+        } else if (ctx.mode === 'summary') {
+            skipDefaultDetail = true;
+            sections.push({text:'Alan Performans Karnesi', style:'sectionHeader'});
+            sections.push(...makePdfTableFromObjects(buildAreaScorecardRows(ctx.rows), [
+                {key:'Denetim Alanı', title:'Alan'}, {key:'PQ Sayısı', title:'PQ'}, {key:'Tamamlanan PQ', title:'Tamamlanan'}, {key:'Açık PQ', title:'Açık'}, {key:'Gecikmiş Adım', title:'Gecikmiş'}, {key:'Resmî EI', title:'Resmî EI'}, {key:'Beklenen EI', title:'Beklenen EI'}, {key:'Potansiyel EI', title:'Potansiyel'}
+            ], ['*','auto','auto','auto','auto','auto','auto','auto'], { maxRows: 30 }));
+            sections.push({text:'Alan Bazında En Kritik Gecikmeler', style:'sectionHeader'});
+            sections.push(...makePdfTableFromObjects(getTopDelayedRows(ctx.rows, 25).map(d => buildActionExportRowFull(d, { mode:'past' })), [
+                {key:'PQ', title:'PQ'}, {key:'Denetim Alanı', title:'Alan'}, {key:'Adım', title:'Adım'}, {key:'Eylem / CAP Adımı', title:'Eylem'}, {key:'Gecikme Günü', title:'Gecikme'}
+            ], ['auto','auto','auto','*','auto'], { maxRows: 25 }));
+        } else if (ctx.mode === 'empty') {
+            sections.push({text:'Eksik/Boş CAP Özet Kırılımı', style:'sectionHeader'});
+            sections.push(...makePdfTableFromObjects(buildEmptyCapSummaryRows(ctx.rows), [
+                {key:'Denetim Alanı', title:'Alan'}, {key:'CE', title:'CE'}, {key:'Etkilenen PQ', title:'PQ'}, {key:'Eksik/Boş CAP Kaydı', title:'Kayıt'}, {key:'PQ Listesi', title:'PQ Listesi'}
+            ], ['auto','auto','auto','auto','*'], { maxRows: 30 }));
+        } else if (ctx.mode === 'icao') {
+            sections.push({text:'Validasyon Görevi Bazında Kapanış Özeti', style:'sectionHeader'});
+            sections.push(...makePdfTableFromObjects(buildIcaoValidationSummaryRows(ctx.rows), [
+                {key:'Validasyon Görevi', title:'Validasyon'}, {key:'Denetim Alanı', title:'Alan'}, {key:'Kapatılan PQ', title:'PQ'}, {key:'CE Kırılımı', title:'CE'}, {key:'PQ Listesi', title:'PQ Listesi'}
+            ], ['*','auto','auto','auto','*'], { maxRows: 40 }));
+        } else if (ctx.mode === 'list') {
+            sections.push({text:'PQ ve Alan Özeti', style:'sectionHeader'});
+            sections.push(...makePdfTableFromObjects(buildPQExportRows(ctx.rows).slice(0, 25), [
+                {key:'PQ', title:'PQ'}, {key:'Denetim Alanı', title:'Alan'}, {key:'CE', title:'CE'}, {key:'PQ Durumu', title:'Durum'}, {key:'CAP Adımı', title:'Adım'}, {key:'Tamamlanan Adım', title:'Tamamlanan'}, {key:'Gecikmiş Adım', title:'Gecikmiş'}, {key:'PQ İlerleme %', title:'İlerleme'}
+            ], ['auto','auto','auto','auto','auto','auto','auto','auto'], { maxRows: 25 }));
+        }
+        return { sections, skipDefaultDetail };
+    }
+
     function getActiveExportContext() {
-        const activeTab = document.querySelector('.tab-content.active').id;
+        const activeTabEl = document.querySelector('.tab-content.active');
+        const activeTab = activeTabEl ? activeTabEl.id : 'tab-dashboard';
         let ctx = { activeTab, title: 'ICAO USOAP CMA CAP İzleme Raporu', fileName: 'ICAO_CAP_Raporu.xlsx', mode: 'default', rows: [] };
-        if (activeTab === 'tab-upcoming') {
+        if (activeTab === 'tab-dashboard') {
+            ctx.title = 'Dashboard Genel Yönetim Raporu'; ctx.fileName = 'Dashboard_Genel_Raporu.xlsx'; ctx.mode = 'dashboard'; ctx.rows = getFilteredData();
+        } else if (activeTab === 'tab-milestones') {
+            ctx.title = 'Hedef Tabloları ve EI Projeksiyon Raporu'; ctx.fileName = 'Hedef_Tablolari_EI_Projeksiyon.xlsx'; ctx.mode = 'milestones'; ctx.rows = getFilteredData();
+        } else if (activeTab === 'tab-summary') {
+            ctx.title = 'Alan Özetleri Performans Karnesi'; ctx.fileName = 'Alan_Ozetleri_Performans_Karnesi.xlsx'; ctx.mode = 'summary'; ctx.rows = getFilteredData();
+        } else if (activeTab === 'tab-upcoming') {
             ctx.title = 'Yaklaşan Görevler Raporu (30 Gün)'; ctx.fileName = 'Yaklasan_Gorevler_Detayli.xlsx'; ctx.mode = 'upcoming'; ctx.rows = getUpcomingTasks(getFilteredData()); ctx.viewMode = getTaskViewMode('upcoming'); ctx.viewLabel = getTaskViewLabel('upcoming', ctx.viewMode); ctx.rangeLabel = 'Önümüzdeki 30 gün';
         } else if (activeTab === 'tab-past') {
             let rangeDays = getPastRangeDaysFromSelect();
             ctx.title = 'Geçmiş Görevler / Tarihi Geçmiş Açık Eylemler'; ctx.fileName = 'Gecmis_Gorevler_Detayli.xlsx'; ctx.mode = 'past'; ctx.rows = getPastTasks(getFilteredData(), rangeDays); ctx.viewMode = getTaskViewMode('past'); ctx.viewLabel = getTaskViewLabel('past', ctx.viewMode); ctx.rangeLabel = getPastRangeLabel();
+        } else if (activeTab === 'tab-list') {
+            ctx.title = 'Detaylı CAP Listesi Raporu'; ctx.fileName = 'Detayli_CAP_Listesi_Raporu.xlsx'; ctx.mode = 'list'; ctx.rows = getFilteredData();
         } else if (activeTab === 'tab-empty-caps') {
             ctx.title = 'Eksik / Boş CAP Raporu'; ctx.fileName = 'Eksik_Bos_CAPler_Detayli.xlsx'; ctx.mode = 'empty'; ctx.rows = rawData.filter(d => d.isEmptyCap === true);
         } else if (activeTab === 'tab-icao-closed') {
@@ -2987,13 +3410,17 @@
         return ctx;
     }
 
+
     function exportExcel() {
         const ctx = getActiveExportContext();
         if (ctx.mode === 'trend') { exportTrendExcel(); return; }
-        if (!ctx.rows || ctx.rows.length === 0) return alert('Dışa aktarılacak veri bulunamadı.');
+        if (!ctx.rows || ctx.rows.length === 0) {
+            if (!(ctx.mode === 'milestones' && Object.keys(baseEIData).length > 0)) return alert('Dışa aktarılacak veri bulunamadı.');
+        }
 
         const wb = XLSX.utils.book_new();
         wb.Props = { Title: ctx.title, Subject: 'USOAP CMA CAP İzleme', Author: 'ICAO CAP İzleme', CreatedDate: new Date() };
+        addJsonSheet(wb, 'Rapor_Baglamı', buildFilterContextRows(ctx));
 
         if (ctx.mode === 'manager') {
             const bundle = buildManagerReportBundle();
@@ -3001,20 +3428,64 @@
             addJsonSheet(wb, 'Yonetici_Brifingi', buildManagerReportExcelRows(bundle));
             addJsonSheet(wb, 'Kapatilmasi_Beklenen', buildManagerExpectedClosureExcelRows(bundle));
             addJsonSheet(wb, 'Kapatilmasi_Beklenen_PQ', buildManagerExpectedClosurePQExcelRows(bundle));
-            addJsonSheet(wb, 'Kritik_Yol', support.criticalPath.map(i => ({ 'PQ': i.pq, 'Alan': i.area, 'CE': i.ce, 'Sorumlu': i.owner, 'Kilit Tarih': formatTrendDate(i.latestDate), 'Kalan Adım': i.remainingSteps, 'Gecikmiş Adım': i.lateSteps, 'Tarih Eksik': i.missingDates, 'İlerleme %': trendSafePct(i.progressPct), 'Alan EI Katkısı %': trendSafePct(i.areaContributionPct), 'Bulgu': truncateTextForExport(i.bulgu, 1000) })));
-            addJsonSheet(wb, 'Hizli_EI_Kazanim', support.topImpact.map(i => ({ 'PQ': i.pq, 'Alan': i.area, 'CE': i.ce, 'Sorumlu': i.owner, 'Kalan Adım': i.remainingSteps, 'İlerleme %': trendSafePct(i.progressPct), 'Alan EI Katkısı %': trendSafePct(i.areaContributionPct), 'Kilit Tarih': formatTrendDate(i.latestDate), 'Bulgu': truncateTextForExport(i.bulgu, 1000) })));
+            addJsonSheet(wb, 'Kritik_Yol', support.criticalPath.map(i => ({ 'PQ': i.pq, 'Alan': i.area, 'CE': i.ce, 'Sorumlu': i.owner, 'Kilit Tarih': formatTrendDate(i.latestDate), 'Kalan Adım': i.remainingSteps, 'Gecikmiş Adım': i.lateSteps, 'Tarih Eksik': i.missingDates, 'İlerleme %': trendSafePct(i.progressPct), 'Alan EI Katkısı %': trendSafePct(i.areaContributionPct), 'Bulgu': fullTextForExcel(i.bulgu) })));
+            addJsonSheet(wb, 'Hizli_EI_Kazanim', support.topImpact.map(i => ({ 'PQ': i.pq, 'Alan': i.area, 'CE': i.ce, 'Sorumlu': i.owner, 'Kalan Adım': i.remainingSteps, 'İlerleme %': trendSafePct(i.progressPct), 'Alan EI Katkısı %': trendSafePct(i.areaContributionPct), 'Kilit Tarih': formatTrendDate(i.latestDate), 'Bulgu': fullTextForExcel(i.bulgu) })));
             addJsonSheet(wb, 'Sorumlu_Karnesi', support.officeRows.map(o => ({ 'Ofis': o.office, 'Toplam Eylem': o.totalActions, 'Tamamlanan': o.doneActions, 'Devam Eden': o.ongoingActions, 'Gecikmiş': o.lateActions, 'PQ Sayısı': o.pqCount, 'Tamamlanma %': trendSafePct(o.completionRate), 'Gecikme %': trendSafePct(o.delayRate) })));
-            addJsonSheet(wb, 'Yaklasan_Gorevler', (bundle.allUpcoming || bundle.upcoming).map(d => buildActionExportRow(d, { mode: 'upcoming', longText: true })));
-            addJsonSheet(wb, 'Gecmis_Gorevler', (bundle.allPast || bundle.past).map(d => buildActionExportRow(d, { mode: 'past', longText: true })));
-            addJsonSheet(wb, 'Tarih_Riski', (bundle.allMissingDateRows || bundle.missingDateRows).map(d => buildActionExportRow(d, { longText: true })));
+            addJsonSheet(wb, 'Yaklasan_Gorevler', (bundle.allUpcoming || bundle.upcoming).map(d => buildActionExportRowFull(d, { mode: 'upcoming' })));
+            addJsonSheet(wb, 'Gecmis_Gorevler', (bundle.allPast || bundle.past).map(d => buildActionExportRowFull(d, { mode: 'past' })));
+            addJsonSheet(wb, 'Tarih_Riski', (bundle.allMissingDateRows || bundle.missingDateRows).map(d => buildActionExportRowFull(d)));
             addJsonSheet(wb, 'Secili_PQlar', buildPQExportRows(rawData.filter(d => bundle.selectedPQs.includes(d.pq))));
             XLSX.writeFile(wb, ctx.fileName); return;
         }
         if (ctx.mode === 'kanban') {
             const mode = (document.getElementById('kanbanViewMode') || {}).value || 'step';
             addJsonSheet(wb, 'Kanban_Kartlari', buildKanbanExportRows(ctx.rows, mode));
-            addJsonSheet(wb, 'PQ_Ozeti', buildKanbanExportRows(ctx.rows, 'pq'));
+            addJsonSheet(wb, 'Kanban_PQ_Ozeti', buildKanbanExportRows(ctx.rows, 'pq'));
             addJsonSheet(wb, 'Yonetici_Ozeti', buildExecutiveSummaryRows(ctx.rows));
+            addJsonSheet(wb, 'Alan_Ozeti', buildAreaScorecardRows(ctx.rows));
+            addJsonSheet(wb, 'Tarih_Riski', getDateRiskRows(ctx.rows).map(d => buildActionExportRowFull(d)));
+            XLSX.writeFile(wb, ctx.fileName); return;
+        }
+
+        if (ctx.mode === 'dashboard') {
+            addJsonSheet(wb, 'Dashboard_KPI', buildDashboardKpiRows(ctx.rows));
+            addJsonSheet(wb, 'EI_Safhalari', buildEIOverviewRows(rawData));
+            addJsonSheet(wb, 'Alan_Karnesi', buildAreaScorecardRows(ctx.rows));
+            addJsonSheet(wb, 'PQ_Ozeti', buildPQExportRows(ctx.rows));
+            addJsonSheet(wb, 'Gecikmis_Oncelik', getTopDelayedRows(ctx.rows, 100).map(d => buildActionExportRowFull(d, { mode:'past' })));
+            addJsonSheet(wb, 'Yaklasan_Oncelik', getTopUpcomingRows(ctx.rows, 100).map(d => buildActionExportRowFull(d, { mode:'upcoming' })));
+            addJsonSheet(wb, 'Tarih_Riski', getDateRiskRows(ctx.rows).map(d => buildActionExportRowFull(d)));
+            addJsonSheet(wb, 'CAP_Detay_Tam_Metin', ctx.rows.map(d => buildActionExportRowFull(d)));
+            XLSX.writeFile(wb, ctx.fileName); return;
+        }
+
+        if (ctx.mode === 'milestones') {
+            addJsonSheet(wb, 'Hedef_Matrisi', buildMilestoneMatrixRows(ctx.rows));
+            addJsonSheet(wb, 'Ulasilamayan_Hedefler', buildMilestoneGapRows(ctx.rows));
+            addJsonSheet(wb, 'Hedefe_Katki_PQ', buildMilestoneContributionRows(ctx.rows));
+            addJsonSheet(wb, 'Tarih_Simulasyonu', buildDateSimulationRowsFromUi());
+            addJsonSheet(wb, 'EI_Safhalari', buildEIOverviewRows(rawData));
+            addJsonSheet(wb, 'CAP_Detay_Tam_Metin', ctx.rows.map(d => buildActionExportRowFull(d)));
+            XLSX.writeFile(wb, ctx.fileName); return;
+        }
+
+        if (ctx.mode === 'summary') {
+            addJsonSheet(wb, 'Alan_Karnesi', buildAreaScorecardRows(ctx.rows));
+            addJsonSheet(wb, 'Alan_EI', buildEIOverviewRows(rawData).filter(r => r['Kapsam'] !== 'TÜRKİYE GENELİ'));
+            addJsonSheet(wb, 'Alan_Gecikme_Ozeti', buildTaskAreaSummaryRows(getTopDelayedRows(ctx.rows, 100000), 'past'));
+            addJsonSheet(wb, 'Alan_PQ_Detay', buildPQExportRows(ctx.rows));
+            addJsonSheet(wb, 'Alan_CAP_Detay', ctx.rows.map(d => buildActionExportRowFull(d)));
+            XLSX.writeFile(wb, ctx.fileName); return;
+        }
+
+        if (ctx.mode === 'list') {
+            addJsonSheet(wb, 'Yonetici_Ozeti', buildExecutiveSummaryRows(ctx.rows));
+            addJsonSheet(wb, 'Alan_Ozeti', buildAreaScorecardRows(ctx.rows));
+            addJsonSheet(wb, 'PQ_Ozeti', buildPQExportRows(ctx.rows));
+            addJsonSheet(wb, 'CAP_Detay_Tam_Metin', ctx.rows.map(d => buildActionExportRowFull(d)));
+            addJsonSheet(wb, 'Gecikmis_Eylemler', getTopDelayedRows(ctx.rows, 100000).map(d => buildActionExportRowFull(d, { mode:'past' })));
+            addJsonSheet(wb, 'Tarih_Riski', getDateRiskRows(ctx.rows).map(d => buildActionExportRowFull(d)));
+            addJsonSheet(wb, 'EI_Ozeti', buildEIOverviewRows(rawData));
             XLSX.writeFile(wb, ctx.fileName); return;
         }
 
@@ -3028,59 +3499,41 @@
                 'PQ Sorumlusu': m.sorumlu || '',
                 'Validasyon Görevi': m.validasyonGorevi || '',
                 'ICAO Kapattı mı': 'EVET',
-                'Bulgu': truncateTextForExport(m.bulgu || '', 1200)
+                'Bulgu': fullTextForExcel(m.bulgu || '')
             }));
+            addJsonSheet(wb, 'Yonetici_Ozeti', buildExecutiveSummaryRows(getFilteredData()));
+            addJsonSheet(wb, 'Validasyon_Ozeti', buildIcaoValidationSummaryRows(ctx.rows));
+            addJsonSheet(wb, 'Kapatilan_PQ_Detay', detailRows);
+            addJsonSheet(wb, 'EI_Etkisi', buildEIOverviewRows(rawData));
+            XLSX.writeFile(wb, ctx.fileName); return;
         } else if (ctx.mode === 'empty') {
             detailRows = ctx.rows.map(d => { let m = pqMasterData[d.pq] || {}; return {
-                'PQ': d.pq, 'Denetim Alanı': m.alan || 'DİĞER', 'CE': m.ce || '', 'Durum': "OLF'de CAP adımı yok / boş", 'Bulgu': truncateTextForExport(m.bulgu || '', 1000)
+                'PQ': d.pq, 'Denetim Alanı': m.alan || 'DİĞER', 'CE': m.ce || '', 'Durum': "OLF'de CAP adımı yok / boş", 'Bulgu': fullTextForExcel(m.bulgu || '')
             }; });
+            addJsonSheet(wb, 'Yonetici_Ozeti', buildExecutiveSummaryRows(getFilteredData()));
+            addJsonSheet(wb, 'Eksik_CAP_Ozeti', buildEmptyCapSummaryRows(ctx.rows));
+            addJsonSheet(wb, 'Eksik_CAP_Detay', detailRows);
+            addJsonSheet(wb, 'EI_Safhalari', buildEIOverviewRows(rawData));
+            XLSX.writeFile(wb, ctx.fileName); return;
         } else {
-            detailRows = ctx.rows.map(d => buildActionExportRow(d, { mode: ctx.mode, longText: true }));
+            detailRows = ctx.rows.map(d => buildActionExportRowFull(d, { mode: ctx.mode }));
         }
 
-        addJsonSheet(wb, 'Yonetici_Ozeti', buildExecutiveSummaryRows(ctx.mode === 'icao' || ctx.mode === 'empty' ? getFilteredData() : ctx.rows));
+        addJsonSheet(wb, 'Yonetici_Ozeti', buildExecutiveSummaryRows(ctx.rows));
         if (ctx.mode === 'past' || ctx.mode === 'upcoming') {
             addTaskExportSheets(wb, ctx, detailRows);
+            addJsonSheet(wb, ctx.mode === 'past' ? 'Gecikme_Bucket' : 'Kalan_Sure_Bucket', buildDelayBucketRows(ctx.rows, ctx.mode));
+            addJsonSheet(wb, 'Sorumlu_Ofis_Ozeti', buildTaskOfficeSummaryRows(ctx.rows, ctx.mode));
+            addJsonSheet(wb, 'PQ_Ozeti', buildPQExportRows(ctx.rows));
         } else {
             addJsonSheet(wb, 'Liste', detailRows);
-        }
-        if (ctx.mode !== 'icao' && ctx.mode !== 'empty') {
             addJsonSheet(wb, 'PQ_Ozeti', buildPQExportRows(ctx.rows));
-            addJsonSheet(wb, 'Alan_Ozeti', buildAreaExportRows(ctx.rows));
+            addJsonSheet(wb, 'Alan_Ozeti', buildAreaScorecardRows(ctx.rows));
         }
-        if (Object.keys(baseEIData).length > 0) {
-            let model = buildEIProjectionModel(rawData);
-            let eiRows = [{
-                'Kapsam': 'TÜRKİYE GENELİ',
-                'Toplam PQ': model.scope.total,
-                'CMAA Satisfactory': model.scope.baseSatOnly,
-                'ICAO Validasyon Satisfactory': getBucketAfterValidationSat(model.scope),
-                'ICAO Validasyon Kapanan PQ': getBucketValidationDelta(model.scope),
-                'Resmi Açık Bulgu': getBucketOfficialFindings(model.scope),
-                'CAP Tamamlanan PQ': model.scope.localCompleted,
-                'Açık CAP PQ': model.scope.projected,
-                'Güncel EI %': ratioPct(getBucketCurrentSat(model.scope), model.scope.total).toFixed(2),
-                'Projeksiyon EI %': ratioPct(getBucketProjectedSat(model.scope), model.scope.total).toFixed(2)
-            }];
-            Object.keys(model.areas).sort(sortAreas).forEach(a => {
-                let b = model.areas[a];
-                eiRows.push({
-                    'Kapsam': a,
-                    'Toplam PQ': b.total,
-                    'CMAA Satisfactory': b.baseSatOnly,
-                    'ICAO Validasyon Satisfactory': getBucketAfterValidationSat(b),
-                    'ICAO Validasyon Kapanan PQ': getBucketValidationDelta(b),
-                    'Resmi Açık Bulgu': getBucketOfficialFindings(b),
-                    'CAP Tamamlanan PQ': b.localCompleted,
-                    'Açık CAP PQ': b.projected,
-                    'Güncel EI %': ratioPct(getBucketCurrentSat(b), b.total).toFixed(2),
-                    'Projeksiyon EI %': ratioPct(getBucketProjectedSat(b), b.total).toFixed(2)
-                });
-            });
-            addJsonSheet(wb, 'EI_Ozeti', eiRows);
-        }
+        addJsonSheet(wb, 'EI_Ozeti', buildEIOverviewRows(rawData));
         XLSX.writeFile(wb, ctx.fileName);
     }
+
 
     function buildPdfTableRowsForContext(ctx) {
         let widths = [];
@@ -3203,7 +3656,7 @@
             if (ctx.mode === 'trend') { exportTrendPDF(); return; }
             if (ctx.mode === 'manager') { exportManagerPDF(); return; }
             if (ctx.mode === 'kanban') { exportKanbanPDF(); return; }
-            if (!ctx.rows || ctx.rows.length === 0) return alert('Dışa aktarılacak veri bulunamadı.');
+            if ((!ctx.rows || ctx.rows.length === 0) && !(ctx.mode === 'milestones' && Object.keys(baseEIData).length > 0)) return alert('Dışa aktarılacak veri bulunamadı.');
         } catch(e) {
             console.error(e);
             alert('PDF hazırlığı sırasında hata oluştu: ' + (e && e.message ? e.message : e));
@@ -3214,11 +3667,15 @@
         setTimeout(() => {
             try {
                 const { widths, bodyData } = buildPdfTableRowsForContext(ctx);
-                let rowsForSummary = (ctx.mode === 'icao' || ctx.mode === 'empty') ? getFilteredData() : ctx.rows;
-                let summaryRows = buildExecutiveSummaryRows(rowsForSummary);
+                let rowsForSummary = (ctx.mode === 'icao' || ctx.mode === 'empty' || ctx.mode === 'milestones') ? getFilteredData() : ctx.rows;
+                let summaryRows = (ctx.mode === 'dashboard') ? buildDashboardKpiRows(ctx.rows) : buildExecutiveSummaryRows(rowsForSummary);
                 let kpiBody = [];
                 for (let i = 0; i < summaryRows.length; i += 4) {
-                    const row = summaryRows.slice(i, i+4).map(r => ({ text: [{text: (r['Metrik'] || '-') + '\n', bold:true, fontSize:8, color:'#64748b'}, {text:String(r['Değer'] === undefined ? '-' : r['Değer']), bold:true, fontSize:13, color:'#0f172a'}], fillColor:'#f8fafc', margin:[6,6,6,6] }));
+                    const row = summaryRows.slice(i, i+4).map(r => {
+                        const metric = r['Metrik'] || r['Başlık'] || '-';
+                        const value = r['Değer'] === undefined ? '-' : r['Değer'];
+                        return { text: [{text: metric + '\n', bold:true, fontSize:8, color:'#64748b'}, {text:String(value), bold:true, fontSize:13, color:'#0f172a'}], fillColor:'#f8fafc', margin:[6,6,6,6] };
+                    });
                     while (row.length < 4) row.push({text:'', fillColor:'#ffffff'});
                     kpiBody.push(row);
                 }
@@ -3227,16 +3684,22 @@
                 let managementNote = (document.getElementById('managementNotes') && document.getElementById('managementNotes').value.trim()) ? document.getElementById('managementNotes').value.trim() : '';
                 let content = [
                     {text: ctx.title, style: 'header'},
-                    {text: 'Rapor tarihi: ' + new Date().toLocaleDateString('tr-TR') + ' | Kayıt sayısı: ' + ctx.rows.length + ((ctx.mode === 'past' || ctx.mode === 'upcoming') ? (' | Görünüm: ' + (ctx.viewLabel || '-') + (ctx.rangeLabel ? ' | Kapsam: ' + ctx.rangeLabel : '')) : ''), style: 'subheader'},
+                    {text: 'Rapor tarihi: ' + formatLongTurkishDate(new Date()) + ' | Veri tarihi: ' + getReportDateText() + ' | Kayıt sayısı: ' + ((ctx.rows || []).length) + ((ctx.mode === 'past' || ctx.mode === 'upcoming') ? (' | Görünüm: ' + (ctx.viewLabel || '-') + (ctx.rangeLabel ? ' | Kapsam: ' + ctx.rangeLabel : '')) : ''), style: 'subheader'},
                     {table: {widths: ['*','*','*','*'], body: kpiBody}, layout: 'noBorders', margin:[0,0,0,12]}
                 ];
-                if (managementNote) content.push({text: 'Yönetici Notu', style:'sectionHeader'}, {text: fullTextForPdf(managementNote), style:'noteBox'});
-                if (areaSummary) content.push({text: 'Alan Bazlı Özet', style:'sectionHeader'}, areaSummary);
-                if ((ctx.mode === 'past' || ctx.mode === 'upcoming') && ctx.viewMode === 'group') {
-                    content.push({text: 'Detay Liste - Alana Göre Gruplu', style:'sectionHeader'});
-                    content.push(...buildPdfGroupedTaskContent(ctx));
-                } else {
-                    content.push({text: 'Detay Liste', style:'sectionHeader'}, {table: {headerRows: 1, widths: widths, body: bodyData}, layout: 'lightHorizontalLines'});
+                if (managementNote && ctx.mode !== 'dashboard') content.push({text: 'Yönetici Notu', style:'sectionHeader'}, {text: fullTextForPdf(managementNote), style:'noteBox'});
+
+                const special = buildSpecialPdfSections(ctx, rowsForSummary);
+                if (areaSummary && !['milestones', 'summary'].includes(ctx.mode)) content.push({text: 'Alan Bazlı Özet', style:'sectionHeader'}, areaSummary);
+                if (special && special.sections && special.sections.length) content.push(...special.sections);
+
+                if (!(special && special.skipDefaultDetail)) {
+                    if ((ctx.mode === 'past' || ctx.mode === 'upcoming') && ctx.viewMode === 'group') {
+                        content.push({text: 'Detay Liste - Alana Göre Gruplu', style:'sectionHeader'});
+                        content.push(...buildPdfGroupedTaskContent(ctx));
+                    } else {
+                        content.push({text: 'Detay Liste', style:'sectionHeader'}, {table: {headerRows: 1, widths: widths, body: bodyData}, layout: 'lightHorizontalLines'});
+                    }
                 }
                 let docDef = {
                     pageOrientation: 'landscape', pageSize: 'A4', content,
@@ -3255,6 +3718,7 @@
             finally { hideLoading(); }
         }, 100);
     };
+
 
     // ARŞİVLEME VE TREND
     window.archiveCurrentState = function() {
