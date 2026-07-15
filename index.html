@@ -24,6 +24,8 @@
 
     
         .manager-phase-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px;margin:12px 0 14px 0}.manager-phase-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px;border-left:5px solid var(--muted);box-shadow:0 2px 4px rgba(0,0,0,.03)}.manager-phase-card.cmaa{border-left-color:#64748b}.manager-phase-card.official{border-left-color:var(--icao-blue)}.manager-phase-card.local{border-left-color:var(--ok)}.manager-phase-card.projected{border-left-color:var(--warn)}.manager-phase-card .phase-title{display:block;font-size:11px;font-weight:900;color:var(--muted);text-transform:uppercase;line-height:1.25}.manager-phase-card .phase-ei{display:block;font-size:24px;font-weight:900;color:var(--text);margin:6px 0 2px 0}.manager-phase-card .phase-finding{display:block;font-size:13px;font-weight:800;color:var(--text)}.manager-phase-card .phase-meta{display:block;font-size:10px;color:var(--muted);line-height:1.35;margin-top:5px}.manager-phase-note{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px;margin-top:10px}.manager-phase-note div{background:var(--kanban-bg);border:1px solid var(--border);border-radius:8px;padding:9px;font-size:11px;color:var(--text)}.manager-phase-note b{display:block;color:var(--primary);font-size:15px;margin-bottom:2px}
+
+
 </style>
 
     <style>
@@ -37,6 +39,52 @@
         .manager-section{margin-bottom:18px;padding-bottom:16px;border-bottom:1px dashed var(--border)}.manager-section h2{margin:0 0 10px 0;color:var(--text);font-size:18px}.manager-section h3{margin:0 0 10px 0;color:var(--primary);font-size:15px}.manager-kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin:10px 0}.manager-kpi{background:var(--kanban-bg);border:1px solid var(--border);border-radius:9px;padding:10px;text-align:center}.manager-kpi b{display:block;font-size:20px;color:var(--text);line-height:1.15}.manager-kpi span{font-size:10px;color:var(--muted);font-weight:800;text-transform:uppercase}.manager-insight{background:linear-gradient(135deg,rgba(37,99,235,.08),rgba(16,185,129,.07));border:1px solid rgba(37,99,235,.20);border-radius:10px;padding:12px 14px;font-size:13px;line-height:1.55;color:var(--text)}.manager-list{display:grid;gap:8px}.manager-mini-row{border:1px solid var(--border);border-left:4px solid var(--primary);border-radius:8px;background:var(--card);padding:10px;cursor:pointer}.manager-mini-row:hover{background:var(--kanban-bg)}.manager-mini-row.warn{border-left-color:var(--warn)}.manager-mini-row.danger{border-left-color:var(--danger)}.manager-mini-row.ok{border-left-color:var(--ok)}.manager-mini-title{display:flex;justify-content:space-between;gap:8px;font-size:13px;font-weight:800;color:var(--text)}.manager-mini-meta{font-size:11px;color:var(--muted);margin-top:4px;line-height:1.45}.manager-empty{color:var(--muted);font-size:12px;background:var(--kanban-bg);border:1px dashed var(--border);border-radius:8px;padding:12px;text-align:center}
     
         .manager-phase-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px;margin:12px 0 14px 0}.manager-phase-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px;border-left:5px solid var(--muted);box-shadow:0 2px 4px rgba(0,0,0,.03)}.manager-phase-card.cmaa{border-left-color:#64748b}.manager-phase-card.official{border-left-color:var(--icao-blue)}.manager-phase-card.local{border-left-color:var(--ok)}.manager-phase-card.projected{border-left-color:var(--warn)}.manager-phase-card .phase-title{display:block;font-size:11px;font-weight:900;color:var(--muted);text-transform:uppercase;line-height:1.25}.manager-phase-card .phase-ei{display:block;font-size:24px;font-weight:900;color:var(--text);margin:6px 0 2px 0}.manager-phase-card .phase-finding{display:block;font-size:13px;font-weight:800;color:var(--text)}.manager-phase-card .phase-meta{display:block;font-size:10px;color:var(--muted);line-height:1.35;margin-top:5px}.manager-phase-note{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px;margin-top:10px}.manager-phase-note div{background:var(--kanban-bg);border:1px solid var(--border);border-radius:8px;padding:9px;font-size:11px;color:var(--text)}.manager-phase-note b{display:block;color:var(--primary);font-size:15px;margin-bottom:2px}
+/* Mobil uyumluluk katmani: masaustu islevlerini bozmadan kucuk ekranlarda okunabilirlik saglar. */
+@media (max-width: 768px) {
+    body{overflow:auto;font-size:14px;}
+    #mainAppContainer{flex-direction:column;height:auto;min-height:100dvh;overflow:visible;}
+    .sidebar{width:100%;height:auto;max-height:none;border-right:none;border-bottom:1px solid var(--border);padding-top:14px;}
+    .sidebar > div:first-child{padding:0 14px!important;}
+    .tabs-container{flex-direction:row;overflow-x:auto;gap:6px;padding:0 10px 10px 10px;margin:12px 0 10px 0;scroll-snap-type:x proximity;}
+    .tab-btn{flex:0 0 auto;white-space:nowrap;padding:10px 12px;border-radius:999px;font-size:12px;scroll-snap-align:start;}
+    .tab-btn.active{border-left:none;border-bottom:3px solid var(--primary);border-radius:999px;color:var(--primary);}
+    .main-content{padding:0 12px 18px 12px;overflow:visible;}
+    .header{position:sticky;top:0;z-index:200;flex-direction:column;align-items:stretch;gap:8px;padding:10px 0;background:var(--bg);}
+    .header > div:last-child{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px!important;justify-content:stretch!important;}
+    .header button{width:100%;justify-content:center;min-height:38px;font-size:12px;padding:8px;white-space:normal;}
+    .header div[style*="width: 1px"]{display:none!important;}
+    .stats-grid,.visual-area,.report-layout,.ei-panel,#tab-dashboard > div:first-child{grid-template-columns:1fr!important;}
+    .stat-card{padding:12px;}
+    .stat-card h3{font-size:24px;}
+    #totalPqCount{font-size:44px!important;}
+    .ei-panel{gap:14px;padding:14px!important;}
+    .ei-bar-wrapper{height:30px;}
+    .ei-stats-text{font-size:12px;}
+    .table-wrapper{overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:10px;}
+    table{min-width:760px;}
+    .milestone-table{min-width:920px;}
+    .warning-grid{grid-template-columns:1fr!important;}
+    .warning-item{align-items:flex-start;gap:10px;}
+    .kanban-board{overflow-x:auto;-webkit-overflow-scrolling:touch;align-items:stretch;padding-bottom:12px;}
+    .kanban-column{min-width:86vw;max-height:none;}
+    .kanban-summary,.kanban-summary-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;}
+    .right-panel{width:100%;right:-100%;padding:16px;}
+    .right-panel.open{right:0;}
+    .modal-content{width:calc(100% - 24px);margin:12px auto;padding:16px;max-height:calc(100dvh - 24px);}
+    .controls,.report-stat-row{flex-direction:column!important;align-items:stretch!important;}
+    .report-stat-row{display:grid;grid-template-columns:1fr;}
+    canvas{max-height:240px;}
+    input[type="text"],input[type="date"],select,textarea{font-size:16px;}
+}
+
+@media (max-width: 480px) {
+    .header > div:last-child{grid-template-columns:1fr;}
+    .kanban-summary,.kanban-summary-grid{grid-template-columns:1fr!important;}
+    .file-badge{max-width:100%;overflow:hidden;text-overflow:ellipsis;}
+    .ei-stats-text div{align-items:flex-start;gap:6px;flex-direction:column;}
+}
+
+
 </style>
 </head>
 <body>
@@ -688,6 +736,14 @@
     let getCellText = (cellNode) => { let text = ""; let paras = cellNode.getElementsByTagName("w:p"); for (let p = 0; p < paras.length; p++) { let ts = paras[p].getElementsByTagName("w:t"); for (let t = 0; t < ts.length; t++) text += ts[t].textContent; text += "\n"; } return cleanDocxCellText(text); };
     function extractValidDateStr(txt) { if (!txt) return ""; let cleaned = txt.replace(/click here( to enter a date\.?)?/ig, '').replace(/(\d{1,2}[\.\/\-]\d{1,2}[\.\/\-]\d{2})\s+(\d{2})/g, '$1$2').replace(/\s+/g, ' ').trim(); let m = cleaned.match(/\d{1,2}[\.\/\-]\d{1,2}[\.\/\-]\d{2,4}/); return m ? m[0] : cleaned; }
     function parseDateObj(txt) { if (!txt) return null; let raw = txt.toString().trim(); let iso = raw.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/); let day, month, year; if (iso) { year = parseInt(iso[1], 10); month = parseInt(iso[2], 10) - 1; day = parseInt(iso[3], 10); } else { let m = raw.match(/(\d{1,2})[\.\/\-](\d{1,2})[\.\/\-](\d{2,4})/); if (!m) return null; day = parseInt(m[1], 10); month = parseInt(m[2], 10) - 1; year = parseInt(m[3], 10); if (year < 100) year += 2000; } let dt = new Date(year, month, day); if (dt.getFullYear() !== year || dt.getMonth() !== month || dt.getDate() !== day) return null; dt.setHours(0,0,0,0); return dt; }
+    function formatLongTurkishDate(date) {
+        if (!date) return "-";
+        const dt = (date instanceof Date) ? date : parseDateObj(date);
+        if (!dt) return "-";
+        const months = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"];
+        return `${dt.getDate()} ${months[dt.getMonth()]} ${dt.getFullYear()}`;
+    }
+
     function getStatus(d) { let p = (d.progress || "").toLowerCase(); if (p.includes('completed') || p.includes('tamamlandı') || p.includes('tamamlandi') || p.includes('100') || p.trim() === '100') return { label: 'Tamamlandı', color: 'ok', type: 'done' }; if (d.estDate && d.estDate !== "Kapatıldı" && d.estDate !== "Tarih Yok") { let dt = parseDateObj(d.estDate); let today = todayMidnight(); if (dt && dt < today) return { label: 'Gecikmiş', color: 'danger', type: 'late' }; } return { label: 'Bekliyor', color: 'warn', type: 'pending' }; }
     function getCheckedValues(id) { const c = document.getElementById(id); if (!c) return ['all']; const cb = Array.from(c.querySelectorAll('input[type="checkbox"]:checked')); if (cb.length === 0) return ['all']; return cb.map(b => b.value); }
     
@@ -719,7 +775,25 @@
     function removeWordFile(fileName) { loadedFiles.delete(fileName); rawData = rawData.filter(d => d.sourceFile !== fileName); recalculateGlobalStateFromFiles(); refreshAllFilters(); saveToLocalStorage(); renderFileList(); render(); }
     function removeExcelFile() { loadedExcelFile = null; pqMasterData = {}; baseEIData = {}; document.getElementById('eiOverallProgressPanel').style.display = "none"; document.getElementById('eiChartPanel').style.display = "none"; rawData = rawData.filter(d => d.sourceFile !== "Excel Kapanış Arşivi" && d.sourceFile !== "Excel Master"); refreshAllFilters(); saveToLocalStorage(); renderFileList(); render(); }
     function clearAllData() { if(confirm("Tüm bulut verileri silinecek. Emin misiniz?")) { db.ref('icao_system').remove().then(() => { location.reload(); }); } }
-    function updateDynamicSubtitle() { const subEl = document.getElementById('mainSubtitle'); if (window_loadedReportDate) { let d = String(window_loadedReportDate.getDate()).padStart(2, '0'); let m = window_loadedReportDate.getMonth(); let y = window_loadedReportDate.getFullYear(); let dateStr = `${y}-${String(m+1).padStart(2,'0')}-${d}`; let isArchive = Array.from(loadedFiles).some(f => f.includes('[Arşiv]')); if (isArchive) { subEl.innerText = `📦 [ARŞİV] Bu veriler, ${dateStr} tarihli arşiv kayıtlarından geri yüklenmiştir.`; } else { subEl.innerText = `Bu veriler, ${dateStr} tarihinde ICAO USOAP OLF'den alınan raporlardan temin edilmiştir.`; } subEl.style.color = "var(--primary)"; subEl.style.fontWeight = "600"; } else { subEl.innerText = "Analiz için lütfen Word (.docx) belgelerini yükleyiniz."; subEl.style.color = "var(--muted)"; subEl.style.fontWeight = "normal"; } }
+    function updateDynamicSubtitle() {
+        const subEl = document.getElementById('mainSubtitle');
+        if (!subEl) return;
+        if (window_loadedReportDate) {
+            let dateStr = formatLongTurkishDate(window_loadedReportDate);
+            let isArchive = Array.from(loadedFiles).some(f => f.includes('[Arşiv]'));
+            if (isArchive) {
+                subEl.innerText = `📦 [ARŞİV] Bu veriler, ${dateStr} tarihli arşiv kayıtlarından geri yüklenmiştir.`;
+            } else {
+                subEl.innerText = `Bu veriler, ${dateStr} tarihinde ICAO USOAP OLF'den alınan raporlardan temin edilmiştir.`;
+            }
+            subEl.style.color = "var(--primary)";
+            subEl.style.fontWeight = "600";
+        } else {
+            subEl.innerText = "Analiz için lütfen Word (.docx) belgelerini yükleyiniz.";
+            subEl.style.color = "var(--muted)";
+            subEl.style.fontWeight = "normal";
+        }
+    }
     function recalculateGlobalStateFromFiles() { window.loadedWordAreas.clear(); window_loadedReportDate = null; loadedFiles.forEach(fileName => { let upperName = fileName.toUpperCase(); ICAO_GLOBAL_ORDER.forEach(a => { if (upperName.includes(a)) window.loadedWordAreas.add(a); }); let dateMatch = fileName.match(/(\d{4})(\d{2})(\d{2})/); if(dateMatch && !window_loadedReportDate) window_loadedReportDate = new Date(dateMatch[1], parseInt(dateMatch[2], 10) - 1, parseInt(dateMatch[3], 10)); }); updateDynamicSubtitle(); }
 
     window.filterCheckboxes = function(inputId, listId) { let filterText = document.getElementById(inputId).value.toLowerCase(); let labels = document.getElementById(listId).getElementsByTagName('label'); for (let i = 0; i < labels.length; i++) { let txtValue = labels[i].textContent || labels[i].innerText; labels[i].style.display = txtValue.toLowerCase().indexOf(filterText) > -1 ? "flex" : "none"; } };
@@ -1570,6 +1644,142 @@
             html += `<div style="margin-bottom:15px; background:var(--card); padding:15px; border-radius:8px; border:1px solid var(--border);"><h5 style="margin:0 0 10px 0; color:var(--text); border-bottom:1px dashed var(--border); padding-bottom:8px; font-size:14px;">📋 ${area} Denetim Alanı <span style="color:var(--muted); font-weight:normal; font-size:12px;">(${grouped[area].length} Eylem)</span></h5><div class="warning-grid">` + grouped[area].map(d => taskCardHtml(d, mode)).join('') + `</div></div>`;
         });
         return html;
+    }
+
+
+    function getSelectedRadioValue(name, fallback = 'list') {
+        const el = document.querySelector(`input[name="${name}"]:checked`);
+        return el ? el.value : fallback;
+    }
+
+    function getTaskViewMode(mode) {
+        if (mode === 'past') return getSelectedRadioValue('pastView', 'list');
+        if (mode === 'upcoming') return getSelectedRadioValue('warnView', 'list');
+        return 'list';
+    }
+
+    function getPastRangeDaysFromSelect() {
+        let rangeVal = (document.getElementById('pastRangeSelect') || {}).value || 'all';
+        return rangeVal === 'all' ? null : parseInt(rangeVal, 10);
+    }
+
+    function getPastRangeLabel() {
+        let rangeVal = (document.getElementById('pastRangeSelect') || {}).value || 'all';
+        if (rangeVal === '30') return 'Son 30 gün';
+        if (rangeVal === '90') return 'Son 90 gün';
+        if (rangeVal === '180') return 'Son 180 gün';
+        return 'Tüm geçmiş dönem';
+    }
+
+    function getTaskViewLabel(mode, viewMode) {
+        let base = mode === 'past' ? 'Geçmiş Görevler' : 'Yaklaşan Görevler';
+        let view = viewMode === 'group' ? 'Alana göre gruplu görünüm' : 'Tarihe göre liste görünümü';
+        return `${base} - ${view}`;
+    }
+
+    function groupTasksByArea(tasks) {
+        let grouped = {};
+        (tasks || []).forEach(d => {
+            let area = (pqMasterData[d.pq] || {}).alan ? pqMasterData[d.pq].alan.trim().toUpperCase() : 'N/A';
+            if (!grouped[area]) grouped[area] = [];
+            grouped[area].push(d);
+        });
+        Object.keys(grouped).forEach(area => grouped[area].sort((a,b) => {
+            let dtA = parseDateObj(a.estDate), dtB = parseDateObj(b.estDate);
+            if (dtA && dtB && dtA.getTime() !== dtB.getTime()) return dtA - dtB;
+            return sortPQs(a.pq, b.pq) || String(a.step || '').localeCompare(String(b.step || ''), 'tr');
+        }));
+        return grouped;
+    }
+
+    function taskDayDeltaText(d, mode) {
+        const today = new Date(); today.setHours(0,0,0,0);
+        const dt = parseDateObj(d.estDate);
+        if (!dt) return '-';
+        const diff = Math.ceil((dt - today) / (1000 * 60 * 60 * 24));
+        if (mode === 'past') return `${Math.abs(diff)} gün gecikmiş`;
+        if (mode === 'upcoming') return `${diff} gün kaldı`;
+        return `${diff} gün`;
+    }
+
+    function buildTaskAreaSummaryRows(tasks, mode) {
+        const grouped = groupTasksByArea(tasks);
+        const today = new Date(); today.setHours(0,0,0,0);
+        return Object.keys(grouped).sort(sortAreas).map(area => {
+            const rows = grouped[area];
+            const pqs = new Set(rows.map(d => d.pq));
+            const dayVals = rows.map(d => {
+                const dt = parseDateObj(d.estDate);
+                if (!dt) return null;
+                return mode === 'past' ? Math.ceil((today - dt) / (1000 * 60 * 60 * 24)) : Math.ceil((dt - today) / (1000 * 60 * 60 * 24));
+            }).filter(v => v !== null && isFinite(v));
+            return {
+                'Denetim Alanı': area,
+                'Eylem Sayısı': rows.length,
+                'Etkilenen PQ': pqs.size,
+                [mode === 'past' ? 'En Yüksek Gecikme Günü' : 'En Yakın Kalan Gün']: dayVals.length ? (mode === 'past' ? Math.max(...dayVals) : Math.min(...dayVals)) : '',
+                [mode === 'past' ? 'Ortalama Gecikme Günü' : 'Ortalama Kalan Gün']: dayVals.length ? Math.round(dayVals.reduce((a,b) => a + b, 0) / dayVals.length) : '',
+                'İlk Hedef Tarih': rows[0] ? rows[0].estDate : ''
+            };
+        });
+    }
+
+    function buildTaskGroupedExportRows(tasks, mode) {
+        const grouped = groupTasksByArea(tasks);
+        let out = [];
+        Object.keys(grouped).sort(sortAreas).forEach(area => {
+            grouped[area].forEach((d, idx) => {
+                out.push(Object.assign({
+                    'Alan Grubu': area,
+                    'Alan İçindeki Sıra': idx + 1,
+                    'Görünüm': 'Alana göre gruplu'
+                }, buildActionExportRow(d, { mode, longText: true })));
+            });
+        });
+        return out;
+    }
+
+    function addTaskExportSheets(wb, ctx, detailRows) {
+        const baseName = ctx.mode === 'past' ? 'Gecmis_Gorevler' : 'Yaklasan_Gorevler';
+        const modeLabel = ctx.viewMode === 'group' ? 'Alana göre gruplu' : 'Tarihe göre liste';
+        addJsonSheet(wb, 'Rapor_Baglamı', [{
+            'Rapor': ctx.title,
+            'Ekran Görünümü': modeLabel,
+            'Zaman Kapsamı': ctx.rangeLabel || (ctx.mode === 'upcoming' ? 'Önümüzdeki 30 gün' : ''),
+            'Kayıt Sayısı': (ctx.rows || []).length,
+            'Rapor Tarihi': formatLongTurkishDate(new Date())
+        }]);
+        if (ctx.viewMode === 'group') {
+            addJsonSheet(wb, `${baseName}_Alana_Gore`, buildTaskGroupedExportRows(ctx.rows, ctx.mode));
+            addJsonSheet(wb, `${baseName}_Liste`, detailRows);
+        } else {
+            addJsonSheet(wb, 'Liste', detailRows);
+            addJsonSheet(wb, `${baseName}_Alana_Gore`, buildTaskGroupedExportRows(ctx.rows, ctx.mode));
+        }
+        addJsonSheet(wb, `${baseName}_Alan_Ozeti`, buildTaskAreaSummaryRows(ctx.rows, ctx.mode));
+    }
+
+    function buildPdfGroupedTaskContent(ctx) {
+        const grouped = groupTasksByArea(ctx.rows || []);
+        const blocks = [];
+        Object.keys(grouped).sort(sortAreas).forEach(area => {
+            const rows = grouped[area];
+            const body = [[
+                {text:'PQ', style:'th'}, {text:'Adım', style:'th'}, {text:'Eylem', style:'th'},
+                {text:'Sorumlu', style:'th'}, {text:'Hedef', style:'th'}, {text:ctx.mode === 'past' ? 'Gecikme' : 'Kalan', style:'th'}
+            ]];
+            rows.forEach(d => body.push([
+                {text:d.pq || '', fontSize:9},
+                {text:String(d.step || ''), fontSize:9},
+                {text:fullTextForPdf(d.action || '-'), fontSize:8},
+                {text:d.office || '-', fontSize:8},
+                {text:d.estDate || '-', fontSize:9},
+                {text:taskDayDeltaText(d, ctx.mode), fontSize:9, bold:true, color:ctx.mode === 'past' ? '#ef4444' : '#f59e0b'}
+            ]));
+            blocks.push({text:`${area} Denetim Alanı (${rows.length} eylem / ${new Set(rows.map(d => d.pq)).size} PQ)`, fontSize:11, bold:true, color:'#0f172a', margin:[0,8,0,4]});
+            blocks.push({table:{headerRows:1, widths:['auto','auto','*','auto','auto','auto'], body}, layout:'lightHorizontalLines', margin:[0,0,0,8]});
+        });
+        return blocks.length ? blocks : [{text:'Kayıt bulunamadı.', italics:true, color:'#64748b'}];
     }
 
     function updatePastTasks(filteredData) {
@@ -2755,11 +2965,10 @@
         const activeTab = document.querySelector('.tab-content.active').id;
         let ctx = { activeTab, title: 'ICAO USOAP CMA CAP İzleme Raporu', fileName: 'ICAO_CAP_Raporu.xlsx', mode: 'default', rows: [] };
         if (activeTab === 'tab-upcoming') {
-            ctx.title = 'Yaklaşan Görevler Raporu (30 Gün)'; ctx.fileName = 'Yaklasan_Gorevler_Detayli.xlsx'; ctx.mode = 'upcoming'; ctx.rows = getUpcomingTasks(getFilteredData());
+            ctx.title = 'Yaklaşan Görevler Raporu (30 Gün)'; ctx.fileName = 'Yaklasan_Gorevler_Detayli.xlsx'; ctx.mode = 'upcoming'; ctx.rows = getUpcomingTasks(getFilteredData()); ctx.viewMode = getTaskViewMode('upcoming'); ctx.viewLabel = getTaskViewLabel('upcoming', ctx.viewMode); ctx.rangeLabel = 'Önümüzdeki 30 gün';
         } else if (activeTab === 'tab-past') {
-            let rangeVal = (document.getElementById('pastRangeSelect') || {}).value || 'all';
-            let rangeDays = rangeVal === 'all' ? null : parseInt(rangeVal, 10);
-            ctx.title = 'Geçmiş Görevler / Tarihi Geçmiş Açık Eylemler'; ctx.fileName = 'Gecmis_Gorevler_Detayli.xlsx'; ctx.mode = 'past'; ctx.rows = getPastTasks(getFilteredData(), rangeDays);
+            let rangeDays = getPastRangeDaysFromSelect();
+            ctx.title = 'Geçmiş Görevler / Tarihi Geçmiş Açık Eylemler'; ctx.fileName = 'Gecmis_Gorevler_Detayli.xlsx'; ctx.mode = 'past'; ctx.rows = getPastTasks(getFilteredData(), rangeDays); ctx.viewMode = getTaskViewMode('past'); ctx.viewLabel = getTaskViewLabel('past', ctx.viewMode); ctx.rangeLabel = getPastRangeLabel();
         } else if (activeTab === 'tab-empty-caps') {
             ctx.title = 'Eksik / Boş CAP Raporu'; ctx.fileName = 'Eksik_Bos_CAPler_Detayli.xlsx'; ctx.mode = 'empty'; ctx.rows = rawData.filter(d => d.isEmptyCap === true);
         } else if (activeTab === 'tab-icao-closed') {
@@ -2830,7 +3039,11 @@
         }
 
         addJsonSheet(wb, 'Yonetici_Ozeti', buildExecutiveSummaryRows(ctx.mode === 'icao' || ctx.mode === 'empty' ? getFilteredData() : ctx.rows));
-        addJsonSheet(wb, 'Liste', detailRows);
+        if (ctx.mode === 'past' || ctx.mode === 'upcoming') {
+            addTaskExportSheets(wb, ctx, detailRows);
+        } else {
+            addJsonSheet(wb, 'Liste', detailRows);
+        }
         if (ctx.mode !== 'icao' && ctx.mode !== 'empty') {
             addJsonSheet(wb, 'PQ_Ozeti', buildPQExportRows(ctx.rows));
             addJsonSheet(wb, 'Alan_Ozeti', buildAreaExportRows(ctx.rows));
@@ -3014,12 +3227,17 @@
                 let managementNote = (document.getElementById('managementNotes') && document.getElementById('managementNotes').value.trim()) ? document.getElementById('managementNotes').value.trim() : '';
                 let content = [
                     {text: ctx.title, style: 'header'},
-                    {text: 'Rapor tarihi: ' + new Date().toLocaleDateString('tr-TR') + ' | Kayıt sayısı: ' + ctx.rows.length, style: 'subheader'},
+                    {text: 'Rapor tarihi: ' + new Date().toLocaleDateString('tr-TR') + ' | Kayıt sayısı: ' + ctx.rows.length + ((ctx.mode === 'past' || ctx.mode === 'upcoming') ? (' | Görünüm: ' + (ctx.viewLabel || '-') + (ctx.rangeLabel ? ' | Kapsam: ' + ctx.rangeLabel : '')) : ''), style: 'subheader'},
                     {table: {widths: ['*','*','*','*'], body: kpiBody}, layout: 'noBorders', margin:[0,0,0,12]}
                 ];
                 if (managementNote) content.push({text: 'Yönetici Notu', style:'sectionHeader'}, {text: fullTextForPdf(managementNote), style:'noteBox'});
                 if (areaSummary) content.push({text: 'Alan Bazlı Özet', style:'sectionHeader'}, areaSummary);
-                content.push({text: 'Detay Liste', style:'sectionHeader'}, {table: {headerRows: 1, widths: widths, body: bodyData}, layout: 'lightHorizontalLines'});
+                if ((ctx.mode === 'past' || ctx.mode === 'upcoming') && ctx.viewMode === 'group') {
+                    content.push({text: 'Detay Liste - Alana Göre Gruplu', style:'sectionHeader'});
+                    content.push(...buildPdfGroupedTaskContent(ctx));
+                } else {
+                    content.push({text: 'Detay Liste', style:'sectionHeader'}, {table: {headerRows: 1, widths: widths, body: bodyData}, layout: 'lightHorizontalLines'});
+                }
                 let docDef = {
                     pageOrientation: 'landscape', pageSize: 'A4', content,
                     footer: function(currentPage, pageCount) { return { text: currentPage.toString() + ' / ' + pageCount, alignment: 'right', margin: [0,0,25,0], fontSize: 8, color: '#64748b' }; },
