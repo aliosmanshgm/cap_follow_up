@@ -123,6 +123,7 @@
             <button class="tab-btn" onclick="switchTab('list')" id="btn-tab-list">📋 Detaylı CAP Listesi</button>
             <button class="tab-btn" onclick="switchTab('kanban')" id="btn-tab-kanban">🗂️ Kanban Board</button>
             <button class="tab-btn" onclick="switchTab('report')" id="btn-tab-report">📝 Yönetici Raporu</button>
+            <button class="tab-btn" onclick="switchTab('strategic')" id="btn-tab-strategic" style="color: var(--primary);">📑 Filtre Bazlı Rapor</button>
             <button class="tab-btn" onclick="switchTab('trend')" id="btn-tab-trend" style="color: var(--primary);">🚀 Trend & Kıyaslama</button>
             
             <button class="tab-btn" onclick="switchTab('empty-caps')" id="btn-tab-empty-caps" style="color: var(--danger);">🈳 Eksik/Boş CAP'ler</button>
@@ -486,6 +487,40 @@
             </div>
         </div>
 
+        <div id="tab-strategic" class="tab-content">
+            <div class="table-wrapper" style="padding:20px; margin-bottom:20px;">
+                <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:15px; flex-wrap:wrap;">
+                    <div>
+                        <h3 style="margin:0 0 6px 0; color:var(--primary); font-size:16px;">📑 Filtre Bazlı Stratejik Rapor</h3>
+                        <p style="font-size:12px; color:var(--muted); margin:0;">Aktif filtreleri dikkate alarak Türkiye geneli ve/veya alan özelinde PQ, CAP adımı, seçili tarih projeksiyonu, EI etkisi ve gecikme detaylarını üretir.</p>
+                    </div>
+                    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                        <button onclick="exportStrategicReportPDF()" style="background:#dc2626;">📄 Özel PDF</button>
+                        <button onclick="exportStrategicReportExcel()" style="background:#059669;">📊 Özel Excel</button>
+                    </div>
+                </div>
+                <div style="display:grid; grid-template-columns: 1fr 1fr 1.2fr; gap:14px; margin-top:18px;">
+                    <div>
+                        <label style="font-size:11px; font-weight:bold; color:var(--muted);">Kapsam / Alan Seçimi <span style="font-weight:normal;">(çoklu seçim)</span></label>
+                        <div id="strategicScopeCheckboxList" class="checkbox-list" style="min-height:92px; max-height:150px;"></div>
+                    </div>
+                    <div>
+                        <label style="font-size:11px; font-weight:bold; color:var(--muted);">Projeksiyon Tarihi</label>
+                        <input type="date" id="strategicTargetDate" onchange="renderStrategicReportPreview()">
+                    </div>
+                    <div>
+                        <label style="font-size:11px; font-weight:bold; color:var(--muted);">Rapor Notu</label>
+                        <input type="text" id="strategicReportNote" placeholder="Örn: ICVM öncesi filtre bazlı durum" oninput="renderStrategicReportPreview()">
+                    </div>
+                </div>
+                <div style="margin-top:12px; padding:10px 12px; background:rgba(37,99,235,0.05); border:1px dashed var(--primary); border-radius:8px; font-size:12px; color:var(--muted);">
+                    <b>Not:</b> Bu rapor sağ üstteki gelişmiş filtreleri kullanır. Filtreye takılan PQ’lar için kapanış hesabı yapılırken ilgili PQ’nun tüm CAP adımları dikkate alınır; böylece sadece görünen adımlar üzerinden yanlış kapanış hesabı yapılmaz.
+                </div>
+            </div>
+
+            <div id="strategicReportPreview" class="report-preview-box" style="max-height:none;"></div>
+        </div>
+
         <div id="tab-trend" class="tab-content">
             <div class="table-wrapper" style="margin-bottom: 25px; padding: 20px;">
                 <h3 style="margin-top:0; color:var(--primary); font-size: 15px;">🧭 EI Yol Haritası (Arşiv Bazlı Katmanlı Görünüm)</h3>
@@ -666,10 +701,12 @@
     function switchTab(tabId) { 
         document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active')); document.querySelectorAll('.tab-btn').forEach(t => { t.classList.remove('active'); t.style.color = "var(--muted)"; }); 
         document.getElementById('tab-' + tabId).classList.add('active'); let btn = document.getElementById('btn-tab-' + tabId); btn.classList.add('active'); 
-        if(tabId === 'report' || tabId === 'trend' || tabId === 'kanban') { btn.style.color = "var(--primary)"; }
+        if(tabId === 'report' || tabId === 'trend' || tabId === 'kanban' || tabId === 'strategic') { btn.style.color = "var(--primary)"; }
         if(tabId === 'past' || tabId === 'empty-caps') { btn.style.color = "var(--danger)"; }
         if(tabId === 'icao-closed') { btn.style.color = "#ca8a04"; }
-        if(tabId === 'report') updateReportPreview(); document.getElementById('rightFiltersPanel').classList.remove('open');
+        if(tabId === 'report') updateReportPreview();
+        if(tabId === 'strategic') renderStrategicReportPreview();
+        document.getElementById('rightFiltersPanel').classList.remove('open');
         if(tabId === 'dashboard') { if(charts.s) charts.s.resize(); if(charts.d) charts.d.resize(); if(charts.o) charts.o.resize(); if(charts.ei) charts.ei.resize(); } 
         if(tabId === 'trend') { if(charts.histTrend) charts.histTrend.resize(); }
     }
@@ -1310,6 +1347,7 @@
 
         renderTable(filteredData, groups); updateCharts(filteredData); updateAreaSummary(filteredData); updateWarnings(filteredData); updatePastTasks(filteredData); updateEIProjections(filteredData); renderKanban(filteredData);
         if(document.getElementById('tab-report').classList.contains('active')) updateReportPreview();
+        if(document.getElementById('tab-strategic') && document.getElementById('tab-strategic').classList.contains('active')) renderStrategicReportPreview();
     }
 
     window.togglePQ = function(id) { let dRow = document.getElementById('detail-'+id); let hRow = document.getElementById('head-'+id); if(dRow.classList.contains('active')) { dRow.classList.remove('active'); hRow.classList.remove('active'); } else { dRow.classList.add('active'); hRow.classList.add('active'); } };
@@ -3375,6 +3413,520 @@
         return { sections, skipDefaultDetail };
     }
 
+
+    // FILTRE BAZLI STRATEJIK RAPOR
+    function getStrategicDefaultDateValue() {
+        const base = window_loadedReportDate || new Date();
+        const y = base.getFullYear();
+        return `${y}-12-31`;
+    }
+
+    function ensureStrategicReportControls() {
+        const dateEl = document.getElementById('strategicTargetDate');
+        if (dateEl && !dateEl.value) dateEl.value = getStrategicDefaultDateValue();
+
+        const box = document.getElementById('strategicScopeCheckboxList');
+        if (!box) return;
+        const previous = new Set(Array.from(box.querySelectorAll('input[type="checkbox"]:checked')).map(x => x.value));
+        const areas = Object.keys(baseEIData || {}).map(normalizeAreaKey).filter(Boolean).sort(sortAreas);
+        const wanted = [
+            { value:'ALL', text:'Türkiye Geneli + Tüm Alan Kırılımları' },
+            { value:'GLOBAL', text:'Sadece Türkiye Geneli' },
+            ...areas.map(a => ({ value:a, text:`${a} Alanı` }))
+        ];
+        const signature = wanted.map(x => x.value).join('|');
+        if (box.dataset.signature !== signature) {
+            box.innerHTML = wanted.map((o, i) => {
+                const checked = previous.size ? previous.has(o.value) : o.value === 'ALL';
+                return `<label><input type="checkbox" value="${escapeHtml(o.value)}" ${checked ? 'checked' : ''} onchange="handleStrategicScopeChange(this)"><span>${escapeHtml(o.text)}</span></label>`;
+            }).join('');
+            box.dataset.signature = signature;
+        }
+    }
+
+    function handleStrategicScopeChange(changed) {
+        const box = document.getElementById('strategicScopeCheckboxList');
+        if (!box) return;
+        const checks = Array.from(box.querySelectorAll('input[type="checkbox"]'));
+        if (changed.checked && (changed.value === 'ALL' || changed.value === 'GLOBAL')) {
+            checks.forEach(x => { if (x !== changed) x.checked = false; });
+        } else if (changed.checked) {
+            checks.forEach(x => { if (x.value === 'ALL' || x.value === 'GLOBAL') x.checked = false; });
+        }
+        if (!checks.some(x => x.checked)) {
+            const all = checks.find(x => x.value === 'ALL');
+            if (all) all.checked = true;
+        }
+        renderStrategicReportPreview();
+    }
+
+    function getStrategicScopeValues() {
+        ensureStrategicReportControls();
+        const box = document.getElementById('strategicScopeCheckboxList');
+        if (!box) return ['ALL'];
+        const values = Array.from(box.querySelectorAll('input[type="checkbox"]:checked')).map(x => x.value);
+        return values.length ? values : ['ALL'];
+    }
+
+    function getStrategicScopeLabel(scopes) {
+        scopes = Array.isArray(scopes) ? scopes : [scopes];
+        if (scopes.includes('ALL')) return 'Türkiye Geneli + Tüm Alan Kırılımları';
+        if (scopes.includes('GLOBAL')) return 'Sadece Türkiye Geneli';
+        return scopes.length === 1 ? `${scopes[0]} Alanı` : `Seçili Alanlar: ${scopes.join(', ')}`;
+    }
+
+    function getStrategicTargetDate() {
+        ensureStrategicReportControls();
+        const raw = (document.getElementById('strategicTargetDate') || {}).value || getStrategicDefaultDateValue();
+        return parseDateObj(raw) || todayMidnight();
+    }
+
+    function getStrategicScopeAreas(scopes) {
+        const areas = Object.keys(baseEIData || {}).map(normalizeAreaKey).filter(Boolean).sort(sortAreas);
+        scopes = Array.isArray(scopes) ? scopes : [scopes];
+        if (scopes.includes('ALL') || scopes.includes('GLOBAL')) return areas;
+        return areas.filter(a => scopes.includes(a));
+    }
+
+    function strategicStepInAreas(d, areas) {
+        if (!areas || areas.length === 0) return false;
+        const area = normalizeAreaKey((pqMasterData[d.pq] || {}).alan);
+        return areas.includes(area);
+    }
+
+    function strategicMasterInAreas(m, areas) {
+        if (!areas || areas.length === 0) return false;
+        const area = normalizeAreaKey((m || {}).alan);
+        return areas.includes(area);
+    }
+
+    function strategicEmptyAreaStat(area) {
+        const b = baseEIData[area] || {};
+        const after = getBaseAfterValidationSat(b);
+        const officialSat = after !== null ? after : (b.sat || 0);
+        return {
+            area,
+            totalApplicable: b.total || 0,
+            baseSat: b.sat || 0,
+            officialSat,
+            officialClosedPq: Math.max(0, officialSat - (b.sat || 0)),
+            activeFilterPq: 0,
+            localClosedPq: 0,
+            targetAdditionalPq: 0,
+            targetClosableTotalPq: 0,
+            potentialAdditionalPq: 0,
+            openPq: 0,
+            noCapPq: 0,
+            dateRiskPq: 0,
+            totalSteps: 0,
+            doneSteps: 0,
+            openSteps: 0,
+            targetDueOpenSteps: 0,
+            lateSteps: 0,
+            missingDateOpenSteps: 0,
+            maxDelayDays: 0,
+            sumDelayDays: 0,
+            delayCount: 0
+        };
+    }
+
+    function strategicPct(sat, total) {
+        return pctText(ratioPct(sat || 0, total || 0));
+    }
+
+    function buildStrategicFilterReportData() {
+        ensureStrategicReportControls();
+        const scopes = getStrategicScopeValues();
+        const targetDate = getStrategicTargetDate();
+        const targetLabel = formatLongTurkishDate(targetDate);
+        const note = ((document.getElementById('strategicReportNote') || {}).value || '').trim();
+        const areas = getStrategicScopeAreas(scopes);
+
+        const filteredRows = getFilteredData();
+        const scopedFilteredRows = filteredRows.filter(d => strategicStepInAreas(d, areas));
+        const selectedPqs = new Set(scopedFilteredRows.map(d => d.pq).filter(Boolean));
+        const expandedRows = rawData.filter(d => selectedPqs.has(d.pq) && strategicStepInAreas(d, areas));
+        const groups = groupRowsByPQ(expandedRows);
+        const today = todayMidnight();
+
+        const areaStats = {};
+        areas.forEach(a => areaStats[a] = strategicEmptyAreaStat(a));
+
+        const pqRows = [];
+        const targetPqRows = [];
+        const delayedRows = [];
+        const targetStepRows = [];
+        const dateRiskRows = [];
+
+        Object.keys(groups).sort(sortPQs).forEach(pq => {
+            const m = pqMasterData[pq] || {};
+            const area = normalizeAreaKey(m.alan);
+            const s = areaStats[area];
+            if (!s || m.isIcaoClosed) return;
+
+            const allItems = groups[pq] || [];
+            const usable = allItems.filter(isUsableCapStep);
+            const info = getPQClosureInfo(pq, allItems);
+            const doneSteps = usable.filter(x => getStatus(x).type === 'done').length;
+            const openSteps = Math.max(0, usable.length - doneSteps);
+            const allDone = info.hasUsableCap && info.allDone;
+            const canCloseByTarget = info.hasUsableCap && !allDone && info.closureDate && info.closureDate.getTime() <= targetDate.getTime();
+            const missingDate = info.hasUsableCap && !allDone && info.missingDates > 0;
+            const statusText = allDone ? 'Tüm CAP adımları tamamlandı'
+                : canCloseByTarget ? `Seçili tarihe kadar kapanabilir (${targetLabel})`
+                : missingDate ? 'Açık - tarih riski var'
+                : info.hasUsableCap ? 'Açık - seçili tarihten sonra / devam ediyor'
+                : 'CAP yok / boş';
+
+            s.activeFilterPq++;
+            if (!info.hasUsableCap) s.noCapPq++;
+            else if (allDone) s.localClosedPq++;
+            else {
+                s.openPq++;
+                s.potentialAdditionalPq++;
+                if (canCloseByTarget) s.targetAdditionalPq++;
+                if (missingDate) s.dateRiskPq++;
+            }
+
+            usable.forEach(step => {
+                const st = getStatus(step).type;
+                const dt = parseDateObj(step.estDate);
+                s.totalSteps++;
+                if (st === 'done') s.doneSteps++;
+                else {
+                    s.openSteps++;
+                    if (!dt) {
+                        s.missingDateOpenSteps++;
+                        dateRiskRows.push(buildActionExportRowFull(step));
+                    } else {
+                        if (dt.getTime() <= targetDate.getTime()) {
+                            s.targetDueOpenSteps++;
+                            targetStepRows.push(buildActionExportRowFull(step, { mode:'upcoming' }));
+                        }
+                        if (dt < today) {
+                            const delay = Math.max(0, dateDiffDays(today, dt));
+                            s.lateSteps++;
+                            s.delayCount++;
+                            s.sumDelayDays += delay;
+                            s.maxDelayDays = Math.max(s.maxDelayDays, delay);
+                            const row = buildActionExportRowFull(step, { mode:'past' });
+                            row['Gecikme Günü'] = delay;
+                            delayedRows.push(row);
+                        }
+                    }
+                }
+            });
+
+            const pqRow = {
+                'PQ': pq,
+                'Denetim Alanı': area || 'DİĞER',
+                'CE': m.ce || '',
+                'Doğrulama Türü': m.tur || '',
+                'PQ Sorumlusu': m.sorumlu || '',
+                'PQ Durumu': statusText,
+                'CAP Adımı': usable.length,
+                'Tamamlanan Adım': doneSteps,
+                'Açık Adım': openSteps,
+                'Gecikmiş Adım': usable.filter(x => getStatus(x).type === 'late').length,
+                'Tarih Eksik Adım': info.missingDates || 0,
+                'PQ Kapanış / Projeksiyon Tarihi': info.closureDate ? formatExactDate(info.closureDate) : (info.latestKnownDate ? `${formatExactDate(info.latestKnownDate)} (eksik tarih var)` : ''),
+                'Seçili Tarihe Kadar Kapanır mı': allDone ? 'Zaten tamamlandı' : (canCloseByTarget ? 'EVET' : 'HAYIR'),
+                'Bulgu': fullTextForExcel(m.bulgu || '')
+            };
+            pqRows.push(pqRow);
+            if (allDone || canCloseByTarget) targetPqRows.push(pqRow);
+        });
+
+        // Officially closed PQ rows are shown separately for transparency. Their count is primarily based on EI_Referans AFTER VALIDASYON values.
+        const officialClosedRows = Object.keys(pqMasterData || {}).filter(pq => {
+            const m = pqMasterData[pq] || {};
+            return m.isIcaoClosed && strategicMasterInAreas(m, areas);
+        }).sort(sortPQs).map(pq => {
+            const m = pqMasterData[pq] || {};
+            return {
+                'PQ': pq,
+                'Denetim Alanı': normalizeAreaKey(m.alan) || 'DİĞER',
+                'CE': m.ce || '',
+                'Doğrulama Türü': m.tur || '',
+                'PQ Sorumlusu': m.sorumlu || '',
+                'Validasyon Görevi': m.validasyonGorevi || '',
+                'PQ Durumu': 'Resmî olarak ICAO tarafından kapatıldı',
+                'Bulgu': fullTextForExcel(m.bulgu || '')
+            };
+        });
+
+        Object.values(areaStats).forEach(s => {
+            s.targetClosableTotalPq = s.localClosedPq + s.targetAdditionalPq;
+            s.avgDelayDays = s.delayCount ? Math.round(s.sumDelayDays / s.delayCount) : 0;
+            s.officialOpenFindings = Math.max(0, s.totalApplicable - s.officialSat);
+            s.localSat = Math.min(s.totalApplicable, s.officialSat + s.localClosedPq);
+            s.targetSat = Math.min(s.totalApplicable, s.officialSat + s.targetClosableTotalPq);
+            s.potentialSat = Math.min(s.totalApplicable, s.officialSat + s.localClosedPq + s.potentialAdditionalPq);
+            s.baseEI = ratioPct(s.baseSat, s.totalApplicable);
+            s.officialEI = ratioPct(s.officialSat, s.totalApplicable);
+            s.localEI = ratioPct(s.localSat, s.totalApplicable);
+            s.targetEI = ratioPct(s.targetSat, s.totalApplicable);
+            s.potentialEI = ratioPct(s.potentialSat, s.totalApplicable);
+        });
+
+        const isAllScope = scopes.includes('ALL');
+        const isGlobalScope = scopes.includes('GLOBAL');
+        const sumLabel = (!isAllScope && !isGlobalScope) ? 'SEÇİLİ ALANLAR TOPLAMI' : 'TÜRKİYE GENELİ';
+        const sum = strategicEmptyAreaStat(sumLabel);
+        Object.values(areaStats).forEach(s => {
+            ['totalApplicable','baseSat','officialSat','officialClosedPq','activeFilterPq','localClosedPq','targetAdditionalPq','targetClosableTotalPq','potentialAdditionalPq','openPq','noCapPq','dateRiskPq','totalSteps','doneSteps','openSteps','targetDueOpenSteps','lateSteps','missingDateOpenSteps','sumDelayDays','delayCount'].forEach(k => sum[k] += s[k] || 0);
+            sum.maxDelayDays = Math.max(sum.maxDelayDays || 0, s.maxDelayDays || 0);
+        });
+        sum.avgDelayDays = sum.delayCount ? Math.round(sum.sumDelayDays / sum.delayCount) : 0;
+        sum.officialOpenFindings = Math.max(0, sum.totalApplicable - sum.officialSat);
+        sum.localSat = Math.min(sum.totalApplicable, sum.officialSat + sum.localClosedPq);
+        sum.targetSat = Math.min(sum.totalApplicable, sum.officialSat + sum.targetClosableTotalPq);
+        sum.potentialSat = Math.min(sum.totalApplicable, sum.officialSat + sum.localClosedPq + sum.potentialAdditionalPq);
+        sum.baseEI = ratioPct(sum.baseSat, sum.totalApplicable);
+        sum.officialEI = ratioPct(sum.officialSat, sum.totalApplicable);
+        sum.localEI = ratioPct(sum.localSat, sum.totalApplicable);
+        sum.targetEI = ratioPct(sum.targetSat, sum.totalApplicable);
+        sum.potentialEI = ratioPct(sum.potentialSat, sum.totalApplicable);
+
+        const areaRows = Object.values(areaStats).sort((a,b) => sortAreas(a.area, b.area)).map(strategicAreaStatToRow);
+        const summaryRows = isAllScope
+            ? [strategicAreaStatToRow(sum)].concat(areaRows)
+            : (isGlobalScope ? [strategicAreaStatToRow(sum)] : [strategicAreaStatToRow(sum)].concat(areaRows));
+        delayedRows.sort((a,b) => (Number(b['Gecikme Günü']) || 0) - (Number(a['Gecikme Günü']) || 0) || sortAreas(a['Denetim Alanı'], b['Denetim Alanı']) || sortPQs(a['PQ'], b['PQ']));
+        targetStepRows.sort((a,b) => {
+            const da = parseDateObj(a['Hedef Tarih']), db = parseDateObj(b['Hedef Tarih']);
+            if (da && db && da.getTime() !== db.getTime()) return da - db;
+            return sortAreas(a['Denetim Alanı'], b['Denetim Alanı']) || sortPQs(a['PQ'], b['PQ']);
+        });
+        pqRows.sort((a,b) => sortAreas(a['Denetim Alanı'], b['Denetim Alanı']) || sortPQs(a['PQ'], b['PQ']));
+        targetPqRows.sort((a,b) => sortAreas(a['Denetim Alanı'], b['Denetim Alanı']) || sortPQs(a['PQ'], b['PQ']));
+
+        return {
+            scope: scopes,
+            scopeLabel: getStrategicScopeLabel(scopes),
+            targetDate,
+            targetLabel,
+            note,
+            rows: expandedRows,
+            activeFilterRows: scopedFilteredRows,
+            summary: sum,
+            areaStats,
+            summaryRows,
+            areaRows,
+            pqRows,
+            targetPqRows,
+            officialClosedRows,
+            delayedRows,
+            targetStepRows,
+            dateRiskRows
+        };
+    }
+
+    function strategicAreaStatToRow(s) {
+        return {
+            'Kapsam': s.area,
+            'Uygulanabilir Toplam PQ': s.totalApplicable,
+            'Aktif Filtrede PQ': s.activeFilterPq,
+            'CMAA Satisfactory': s.baseSat,
+            'CMAA EI': strategicPct(s.baseSat, s.totalApplicable),
+            'Resmî Kapalı PQ': s.officialClosedPq,
+            'ICAO Validasyon Satisfactory': s.officialSat,
+            'Resmî EI': strategicPct(s.officialSat, s.totalApplicable),
+            'Resmî Açık Bulgu': s.officialOpenFindings,
+            'Tüm Adımları Tamamlanan CAP/PQ': s.localClosedPq,
+            'Seçili Tarihe Kadar Ek Kapanabilecek PQ': s.targetAdditionalPq,
+            'Seçili Tarihe Kadar Toplam Kapanış Beklentisi': s.targetClosableTotalPq,
+            'Seçili Tarih EI': strategicPct(s.targetSat, s.totalApplicable),
+            'Tüm CAP Potansiyel EI': strategicPct(s.potentialSat, s.totalApplicable),
+            'Aktif Filtrede Açık PQ': s.openPq,
+            'CAP Yok / Boş PQ': s.noCapPq,
+            'Tarih Riskli PQ': s.dateRiskPq,
+            'Toplam CAP Adımı': s.totalSteps,
+            'Tamamlanan Adım': s.doneSteps,
+            'Açık Adım': s.openSteps,
+            'Seçili Tarihe Kadar Vadesi Gelen Açık Adım': s.targetDueOpenSteps,
+            'Gecikmiş Adım': s.lateSteps,
+            'Tarih Eksik Açık Adım': s.missingDateOpenSteps,
+            'En Yüksek Gecikme Günü': s.maxDelayDays || 0,
+            'Ortalama Gecikme Günü': s.avgDelayDays || 0
+        };
+    }
+
+    function getStrategicKpiRows(data) {
+        const s = data.summary || {};
+        return [
+            { 'Metrik': 'Kapsam', 'Değer': data.scopeLabel, 'Açıklama': 'Seçilen rapor kapsamı' },
+            { 'Metrik': 'Projeksiyon Tarihi', 'Değer': data.targetLabel, 'Açıklama': 'Bu tarihe kadar tamamlanacağı varsayılan açık CAP adımları hesaba alınır' },
+            { 'Metrik': 'Aktif Filtrede PQ', 'Değer': s.activeFilterPq || 0, 'Açıklama': 'Mevcut filtrelerin yakaladığı benzersiz PQ sayısı' },
+            { 'Metrik': 'Resmî Kapalı PQ', 'Değer': s.officialClosedPq || 0, 'Açıklama': 'ICAO validasyonları sonrası resmî kapanış etkisi' },
+            { 'Metrik': 'Tüm Adımları Tamamlanan CAP/PQ', 'Değer': s.localClosedPq || 0, 'Açıklama': 'Henüz ICAO validasyonu bekleyen kapanış beklentisi' },
+            { 'Metrik': 'Seçili Tarihe Kadar Kapanabilecek PQ', 'Değer': s.targetClosableTotalPq || 0, 'Açıklama': 'Tamamlanmış + seçili tarihe kadar tüm adımları bitebilecek PQ' },
+            { 'Metrik': 'Resmî EI', 'Değer': strategicPct(s.officialSat, s.totalApplicable), 'Açıklama': 'CMAA + ICAO validasyonları' },
+            { 'Metrik': 'Seçili Tarih EI', 'Değer': strategicPct(s.targetSat, s.totalApplicable), 'Açıklama': 'Resmî EI + seçili tarih kapanış beklentisi' },
+            { 'Metrik': 'Toplam / Açık CAP Adımı', 'Değer': `${s.totalSteps || 0} / ${s.openSteps || 0}`, 'Açıklama': 'Aktif filtre kapsamındaki adımlar' },
+            { 'Metrik': 'Gecikmiş Adım', 'Değer': s.lateSteps || 0, 'Açıklama': `En yüksek gecikme: ${s.maxDelayDays || 0} gün; ortalama: ${s.avgDelayDays || 0} gün` }
+        ];
+    }
+
+    function renderStrategicReportPreview() {
+        const el = document.getElementById('strategicReportPreview');
+        if (!el) return;
+        ensureStrategicReportControls();
+        if (!rawData || rawData.length === 0) {
+            el.innerHTML = '<div style="color:var(--muted); text-align:center; padding:30px;">Rapor için önce Word ve Excel verilerini yükleyin.</div>';
+            return;
+        }
+        const data = buildStrategicFilterReportData();
+        const kpis = getStrategicKpiRows(data);
+        const cards = kpis.slice(2, 10).map(k => `<div class="report-stat-mini"><h4>${escapeHtml(String(k['Değer']))}</h4><p>${escapeHtml(k['Metrik'])}</p></div>`).join('');
+        const areaRows = data.summaryRows.map(r => `<tr>
+            <td><b>${escapeHtml(r['Kapsam'])}</b></td>
+            <td style="text-align:center;">${r['Uygulanabilir Toplam PQ']}</td>
+            <td style="text-align:center;">${r['Aktif Filtrede PQ']}</td>
+            <td style="text-align:center;">${r['Resmî Kapalı PQ']}</td>
+            <td style="text-align:center;">${r['Tüm Adımları Tamamlanan CAP/PQ']}</td>
+            <td style="text-align:center;">${r['Seçili Tarihe Kadar Toplam Kapanış Beklentisi']}</td>
+            <td style="text-align:center;"><b>${r['Seçili Tarih EI']}</b></td>
+            <td style="text-align:center; color:var(--danger); font-weight:bold;">${r['Gecikmiş Adım']}</td>
+        </tr>`).join('');
+        const delayedPreview = data.delayedRows.slice(0, 10).map(r => `<div class="review-card">
+            <div class="review-card-header"><span>PQ ${escapeHtml(r['PQ'])} / ${escapeHtml(r['Denetim Alanı'])} / Adım ${escapeHtml(String(r['Adım']))}</span><span style="color:var(--danger);">${escapeHtml(String(r['Gecikme Günü']))} gün</span></div>
+            <div style="font-size:12px; color:var(--muted); margin-bottom:6px;">${escapeHtml(r['Eylem Ofisi'] || '-')} | Hedef: ${escapeHtml(r['Hedef Tarih'] || '-')}</div>
+            <div style="font-size:13px;">${escapeHtml(truncateTextForExport(r['Eylem / CAP Adımı'] || '', 350))}</div>
+        </div>`).join('') || '<div style="color:var(--muted);">Gecikmiş adım bulunmadı.</div>';
+        el.innerHTML = `
+            <h3 style="margin-top:0; color:var(--primary);">Filtre Bazlı Stratejik Rapor Önizleme</h3>
+            <p style="color:var(--muted); font-size:12px;">Kapsam: <b>${escapeHtml(data.scopeLabel)}</b> | Projeksiyon tarihi: <b>${escapeHtml(data.targetLabel)}</b> | Aktif filtre satırı: <b>${data.activeFilterRows.length}</b></p>
+            ${data.note ? `<div class="noteBox" style="background:var(--kanban-bg); padding:10px; border-radius:8px; margin-bottom:12px;"><b>Rapor notu:</b> ${escapeHtml(data.note)}</div>` : ''}
+            <div class="report-stat-row" style="flex-wrap:wrap;">${cards}</div>
+            <h4 style="margin:18px 0 8px 0;">Genel / Alan Bazlı Özet</h4>
+            <div style="overflow-x:auto;"><table><thead><tr><th>Kapsam</th><th>Toplam PQ</th><th>Filtre PQ</th><th>Resmî Kapalı</th><th>CAP Tamam</th><th>Tarih Kapanış</th><th>Seçili Tarih EI</th><th>Gecikmiş Adım</th></tr></thead><tbody>${areaRows}</tbody></table></div>
+            <h4 style="margin:18px 0 8px 0;">En Çok Geciken İlk 10 Adım</h4>
+            ${delayedPreview}
+        `;
+    }
+
+    function exportStrategicReportExcel() {
+        const data = buildStrategicFilterReportData();
+        if (!data.rows || data.rows.length === 0) {
+            return alert('Aktif filtre/kapsam için raporlanacak CAP verisi bulunamadı.');
+        }
+        const wb = XLSX.utils.book_new();
+        wb.Props = { Title: 'Filtre Bazlı Stratejik Rapor', Subject: 'USOAP CMA CAP İzleme', Author: 'ICAO CAP İzleme', CreatedDate: new Date() };
+        addJsonSheet(wb, 'Rapor_Baglamı', buildFilterContextRows({ title:'Filtre Bazlı Stratejik Rapor', mode:'strategic', rows:data.rows, viewLabel:data.scopeLabel, rangeLabel:`Projeksiyon: ${data.targetLabel}` }).concat([
+            { 'Başlık': 'Projeksiyon Tarihi', 'Değer': data.targetLabel },
+            { 'Başlık': 'Rapor Notu', 'Değer': data.note || '-' }
+        ]));
+        addJsonSheet(wb, 'Yonetici_KPI', getStrategicKpiRows(data));
+        addJsonSheet(wb, 'Genel_Alan_Ozeti', data.summaryRows);
+        addJsonSheet(wb, 'PQ_Kapanis_Projeksiyon', data.pqRows);
+        addJsonSheet(wb, 'Tarihe_Kadar_Kapanacak_PQ', data.targetPqRows);
+        addJsonSheet(wb, 'Resmi_Kapatilan_PQ', data.officialClosedRows);
+        addJsonSheet(wb, 'Adim_Vade_Ozeti', data.summaryRows.map(r => ({
+            'Kapsam': r['Kapsam'],
+            'Toplam CAP Adımı': r['Toplam CAP Adımı'],
+            'Tamamlanan Adım': r['Tamamlanan Adım'],
+            'Açık Adım': r['Açık Adım'],
+            'Seçili Tarihe Kadar Vadesi Gelen Açık Adım': r['Seçili Tarihe Kadar Vadesi Gelen Açık Adım'],
+            'Gecikmiş Adım': r['Gecikmiş Adım'],
+            'Tarih Eksik Açık Adım': r['Tarih Eksik Açık Adım'],
+            'En Yüksek Gecikme Günü': r['En Yüksek Gecikme Günü'],
+            'Ortalama Gecikme Günü': r['Ortalama Gecikme Günü']
+        })));
+        addJsonSheet(wb, 'Tarihe_Kadar_Adimlar', data.targetStepRows);
+        addJsonSheet(wb, 'Geciken_Adim_Detay', data.delayedRows);
+        addJsonSheet(wb, 'Tarih_Riski_Adimlar', data.dateRiskRows);
+        addJsonSheet(wb, 'CAP_Detay_Tam_Metin', data.rows.map(d => buildActionExportRowFull(d)));
+        XLSX.writeFile(wb, 'Filtre_Bazli_Stratejik_Rapor.xlsx');
+    }
+
+    function exportStrategicReportPDF() {
+        const data = buildStrategicFilterReportData();
+        if (!data.rows || data.rows.length === 0) {
+            return alert('Aktif filtre/kapsam için raporlanacak CAP verisi bulunamadı.');
+        }
+        showLoading();
+        setTimeout(() => {
+            try {
+                const kpis = getStrategicKpiRows(data);
+                const kpiBody = [];
+                for (let i = 0; i < kpis.length; i += 4) {
+                    const row = kpis.slice(i, i+4).map(r => ({
+                        text: [{text: (r['Metrik'] || '-') + '\n', bold:true, fontSize:8, color:'#64748b'}, {text:String(r['Değer'] === undefined ? '-' : r['Değer']), bold:true, fontSize:13, color:'#0f172a'}],
+                        fillColor:'#f8fafc',
+                        margin:[6,6,6,6]
+                    }));
+                    while (row.length < 4) row.push({text:'', fillColor:'#ffffff'});
+                    kpiBody.push(row);
+                }
+
+                const content = [
+                    { text:'Filtre Bazlı Stratejik Rapor', style:'header' },
+                    { text:`Rapor tarihi: ${formatLongTurkishDate(new Date())} | Veri tarihi: ${getReportDateText()} | Kapsam: ${data.scopeLabel} | Projeksiyon tarihi: ${data.targetLabel}`, style:'subheader' },
+                    { table:{ widths:['*','*','*','*'], body:kpiBody }, layout:'noBorders', margin:[0,0,0,12] }
+                ];
+                if (data.note) content.push({ text:'Rapor Notu', style:'sectionHeader' }, { text:fullTextForPdf(data.note), style:'noteBox' });
+
+                content.push({ text:'Genel ve Alan Bazlı PQ / EI Özeti', style:'sectionHeader' });
+                content.push(...makePdfTableFromObjects(data.summaryRows, [
+                    {key:'Kapsam', title:'Kapsam'}, {key:'Uygulanabilir Toplam PQ', title:'Toplam PQ'}, {key:'Aktif Filtrede PQ', title:'Filtre PQ'}, {key:'Resmî Kapalı PQ', title:'Resmî Kapalı'}, {key:'Tüm Adımları Tamamlanan CAP/PQ', title:'CAP Tamam'}, {key:'Seçili Tarihe Kadar Toplam Kapanış Beklentisi', title:'Tarih Kapanış'}, {key:'Resmî EI', title:'Resmî EI'}, {key:'Seçili Tarih EI', title:'Tarih EI'}, {key:'Tüm CAP Potansiyel EI', title:'Potansiyel EI'}
+                ], ['*','auto','auto','auto','auto','auto','auto','auto','auto'], { maxRows:0 }));
+
+                content.push({ text:'Adım Bazlı Özet', style:'sectionHeader' });
+                content.push(...makePdfTableFromObjects(data.summaryRows.map(r => ({
+                    'Kapsam': r['Kapsam'],
+                    'Toplam': r['Toplam CAP Adımı'],
+                    'Tamamlanan': r['Tamamlanan Adım'],
+                    'Açık': r['Açık Adım'],
+                    'Seçili Tarihe Kadar Vadesi Gelen': r['Seçili Tarihe Kadar Vadesi Gelen Açık Adım'],
+                    'Gecikmiş': r['Gecikmiş Adım'],
+                    'Tarih Eksik': r['Tarih Eksik Açık Adım'],
+                    'Azami Gecikme': r['En Yüksek Gecikme Günü'],
+                    'Ortalama Gecikme': r['Ortalama Gecikme Günü']
+                })), [
+                    {key:'Kapsam', title:'Kapsam'}, {key:'Toplam', title:'Toplam'}, {key:'Tamamlanan', title:'Tamamlanan'}, {key:'Açık', title:'Açık'}, {key:'Seçili Tarihe Kadar Vadesi Gelen', title:'Tarihe Kadar'}, {key:'Gecikmiş', title:'Gecikmiş'}, {key:'Tarih Eksik', title:'Tarih Eksik'}, {key:'Azami Gecikme', title:'Azami'}, {key:'Ortalama Gecikme', title:'Ortalama'}
+                ], ['*','auto','auto','auto','auto','auto','auto','auto','auto'], { maxRows:0 }));
+
+                content.push({ text:`Seçili Tarihe Kadar Kapanabilecek PQ'lar (${data.targetLabel})`, style:'sectionHeader' });
+                content.push(...makePdfTableFromObjects(data.targetPqRows, [
+                    {key:'PQ', title:'PQ'}, {key:'Denetim Alanı', title:'Alan'}, {key:'CE', title:'CE'}, {key:'PQ Durumu', title:'Durum'}, {key:'CAP Adımı', title:'Adım'}, {key:'Tamamlanan Adım', title:'Tamam'}, {key:'PQ Kapanış / Projeksiyon Tarihi', title:'Kapanış Tarihi'}, {key:'Bulgu', title:'Bulgu', fontSize:7}
+                ], ['auto','auto','auto','*','auto','auto','auto','*'], { maxRows:0 }));
+
+                content.push({ text:'Geciken Adımlar - Ayrıntılı İçerik', style:'sectionHeader' });
+                content.push(...makePdfTableFromObjects(data.delayedRows, [
+                    {key:'PQ', title:'PQ'}, {key:'Denetim Alanı', title:'Alan'}, {key:'Adım', title:'Adım'}, {key:'Eylem / CAP Adımı', title:'Eylem', fontSize:7}, {key:'Eylem Ofisi', title:'Sorumlu'}, {key:'Hedef Tarih', title:'Hedef'}, {key:'Gecikme Günü', title:'Gün'}
+                ], ['auto','auto','auto','*','auto','auto','auto'], { maxRows:0 }));
+
+                content.push({ text:`Seçili Tarihe Kadar Vadesi Gelen Açık Adımlar (${data.targetLabel})`, style:'sectionHeader' });
+                content.push(...makePdfTableFromObjects(data.targetStepRows, [
+                    {key:'PQ', title:'PQ'}, {key:'Denetim Alanı', title:'Alan'}, {key:'Adım', title:'Adım'}, {key:'Eylem / CAP Adımı', title:'Eylem', fontSize:7}, {key:'Eylem Ofisi', title:'Sorumlu'}, {key:'Hedef Tarih', title:'Hedef'}, {key:'Durum', title:'Durum'}
+                ], ['auto','auto','auto','*','auto','auto','auto'], { maxRows:0 }));
+
+                const docDef = {
+                    pageOrientation:'landscape',
+                    pageSize:'A4',
+                    content,
+                    footer: (currentPage, pageCount) => ({ text: currentPage + ' / ' + pageCount, alignment:'right', margin:[0,0,25,0], fontSize:8, color:'#64748b' }),
+                    styles: {
+                        header:{ fontSize:17, bold:true, color:'#2563eb', margin:[0,0,0,4] },
+                        subheader:{ fontSize:9, color:'#64748b', margin:[0,0,0,12] },
+                        sectionHeader:{ fontSize:12, bold:true, color:'#0f172a', margin:[0,9,0,6] },
+                        noteBox:{ fontSize:10, color:'#0f172a', fillColor:'#f8fafc', margin:[0,0,0,10] },
+                        th:{ bold:true, fontSize:8, fillColor:'#f1f5f9', margin:[0,3,0,3] }
+                    },
+                    defaultStyle:{ font:'Roboto', fontSize:8 }
+                };
+                safeDownloadPdf(docDef, 'Filtre_Bazli_Stratejik_Rapor.pdf');
+            } catch(e) {
+                console.error(e);
+                alert('Stratejik PDF oluşturulurken hata oluştu: ' + (e && e.message ? e.message : e));
+            } finally {
+                hideLoading();
+            }
+        }, 100);
+    }
+
+
     function getActiveExportContext() {
         const activeTabEl = document.querySelector('.tab-content.active');
         const activeTab = activeTabEl ? activeTabEl.id : 'tab-dashboard';
@@ -3398,6 +3950,8 @@
             ctx.title = 'ICAO Tarafından Kapatılan PQ Raporu'; ctx.fileName = 'ICAO_Kapatilanlar_Detayli.xlsx'; ctx.mode = 'icao';
             Object.keys(pqMasterData).forEach(pq => { if (pqMasterData[pq] && pqMasterData[pq].isIcaoClosed) ctx.rows.push({ pq, ...pqMasterData[pq] }); });
             ctx.rows.sort((a,b) => sortAreas(a.alan,b.alan) || sortPQs(a.pq,b.pq));
+        } else if (activeTab === 'tab-strategic') {
+            ctx.title = 'Filtre Bazlı Stratejik Rapor'; ctx.fileName = 'Filtre_Bazli_Stratejik_Rapor.xlsx'; ctx.mode = 'strategic'; ctx.rows = getFilteredData();
         } else if (activeTab === 'tab-trend') {
             ctx.title = 'Trend ve Kıyaslama Raporu'; ctx.fileName = 'Trend_Kiyaslama.xlsx'; ctx.mode = 'trend'; ctx.rows = [];
         } else if (activeTab === 'tab-report') {
@@ -3414,6 +3968,7 @@
     function exportExcel() {
         const ctx = getActiveExportContext();
         if (ctx.mode === 'trend') { exportTrendExcel(); return; }
+        if (ctx.mode === 'strategic') { exportStrategicReportExcel(); return; }
         if (!ctx.rows || ctx.rows.length === 0) {
             if (!(ctx.mode === 'milestones' && Object.keys(baseEIData).length > 0)) return alert('Dışa aktarılacak veri bulunamadı.');
         }
@@ -3654,6 +4209,7 @@
         try {
             ctx = getActiveExportContext();
             if (ctx.mode === 'trend') { exportTrendPDF(); return; }
+            if (ctx.mode === 'strategic') { exportStrategicReportPDF(); return; }
             if (ctx.mode === 'manager') { exportManagerPDF(); return; }
             if (ctx.mode === 'kanban') { exportKanbanPDF(); return; }
             if ((!ctx.rows || ctx.rows.length === 0) && !(ctx.mode === 'milestones' && Object.keys(baseEIData).length > 0)) return alert('Dışa aktarılacak veri bulunamadı.');
