@@ -57,8 +57,43 @@
 .data-action-row{display:flex;gap:8px;flex-wrap:wrap;}
 .danger-zone-card{border-color:rgba(239,68,68,.35);}
 .danger-zone-card p{font-size:12px;color:var(--muted);}
+
+/* SOL MENÜ KAYDIRMA DÜZELTMESİ */
+.sidebar{
+  min-height:0;
+  overflow:hidden;
+}
+.grouped-nav{
+  flex:1 1 auto;
+  min-height:0;
+  overflow-y:auto;
+  overflow-x:hidden;
+  overscroll-behavior:contain;
+  scrollbar-gutter:stable;
+  padding-bottom:16px;
+  -webkit-overflow-scrolling:touch;
+}
+.grouped-nav::-webkit-scrollbar{width:8px;}
+.grouped-nav::-webkit-scrollbar-track{background:transparent;}
+.grouped-nav::-webkit-scrollbar-thumb{background:var(--border);border-radius:999px;border:2px solid var(--card);}
+.grouped-nav::-webkit-scrollbar-thumb:hover{background:var(--muted);}
+.grouped-nav{scrollbar-width:thin;scrollbar-color:var(--border) transparent;}
+.sidebar-footer-action{
+  flex:0 0 auto;
+  margin-top:0;
+  position:relative;
+  z-index:2;
+}
+.grouped-nav{height:0;max-height:calc(100vh - 132px);touch-action:pan-y;}
+.sidebar-scroll-hint{display:none;font-size:9px;color:var(--muted);padding:0 16px 5px;text-align:center;}
+.visit-unit-toolbar{display:grid;grid-template-columns:1fr auto;gap:7px;margin-bottom:7px;}
+.visit-unit-toolbar input{min-width:0;}
+.visit-unit-grid{max-height:210px;grid-template-columns:repeat(2,minmax(0,1fr));}
+.visit-unit-summary{font-size:10px;color:var(--muted);margin-top:6px;padding:6px 8px;background:var(--kanban-bg);border:1px solid var(--border);border-radius:6px;}
+.visit-unit-unmatched{color:var(--warn);}
 @media (max-width:768px){
-  .grouped-nav{display:flex;flex-direction:row;overflow-x:auto;padding:0 12px 10px;gap:8px;}
+  .sidebar{overflow:visible;min-height:auto;}
+  .grouped-nav{display:flex;flex:0 0 auto;min-height:auto;height:auto;max-height:none;flex-direction:row;overflow-x:auto;overflow-y:hidden;overscroll-behavior-x:contain;scrollbar-gutter:auto;padding:0 12px 10px;gap:8px;}
   .nav-group{min-width:220px;flex:0 0 auto;}
   .nav-group-title{font-size:11px;}
   .nav-group-items{display:flex !important;}
@@ -187,6 +222,12 @@
 @media(max-width:1100px){.dq-kpi-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.dq-analysis-grid{grid-template-columns:1fr}.dq-toolbar{grid-template-columns:1fr 1fr}}
 @media(max-width:700px){.dq-header{flex-direction:column}.dq-header-actions{width:100%}.dq-header-actions button{flex:1;justify-content:center}.dq-kpi-grid{grid-template-columns:1fr 1fr}.dq-toolbar{grid-template-columns:1fr}.dq-category-grid{grid-template-columns:1fr 1fr}}
 
+
+/* Ziyaret ve İç Denetim - Paket 1 */
+.visit-shell{display:grid;gap:14px}.visit-header{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:18px}.visit-header h3{margin:0;color:var(--primary);font-size:18px}.visit-header p{margin:5px 0 0;color:var(--muted);font-size:12px;max-width:900px}.visit-header-actions{display:flex;gap:8px;flex-wrap:wrap}.visit-kpi-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}.visit-kpi{background:var(--card);border:1px solid var(--border);border-top:4px solid var(--primary);border-radius:10px;padding:12px}.visit-kpi strong{display:block;font-size:24px;line-height:1.1;color:var(--text)}.visit-kpi span{display:block;margin-top:5px;color:var(--muted);font-size:10px;font-weight:800;text-transform:uppercase}.visit-kpi.warn{border-top-color:var(--warn)}.visit-kpi.danger{border-top-color:var(--danger)}.visit-kpi.ok{border-top-color:var(--ok)}.visit-kpi.info{border-top-color:var(--icao-blue)}.visit-toolbar{display:grid;grid-template-columns:220px 220px minmax(240px,1fr) auto;gap:9px;align-items:end;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px}.visit-toolbar label,.visit-field label{display:block;font-size:10px;font-weight:800;color:var(--muted);margin-bottom:4px}.visit-table-wrap{background:var(--card);border:1px solid var(--border);border-radius:10px;overflow:auto}.visit-table{min-width:1180px;table-layout:auto}.visit-table th,.visit-table td{padding:10px;font-size:11px;vertical-align:top}.visit-table tbody tr:hover{background:var(--kanban-bg)}.visit-status{display:inline-flex;align-items:center;padding:3px 7px;border-radius:999px;font-size:9px;font-weight:900;border:1px solid var(--border);white-space:nowrap}.visit-status.draft{color:#475569;background:#f1f5f9}.visit-status.planned{color:#1d4ed8;background:#eff6ff;border-color:#bfdbfe}.visit-status.preparation{color:#7c3aed;background:#f5f3ff;border-color:#ddd6fe}.visit-status.in_progress{color:#b45309;background:#fffbeb;border-color:#fde68a}.visit-status.evaluation{color:#c2410c;background:#fff7ed;border-color:#fed7aa}.visit-status.follow_up{color:#b91c1c;background:#fff1f2;border-color:#fecdd3}.visit-status.completed{color:#047857;background:#ecfdf5;border-color:#a7f3d0}.visit-status.cancelled{color:#64748b;background:#f8fafc}.visit-area-chip{display:inline-flex;padding:2px 6px;border-radius:999px;background:var(--kanban-bg);border:1px solid var(--border);font-size:9px;font-weight:800;margin:0 3px 3px 0}.visit-actions{display:flex;gap:5px;flex-wrap:wrap}.visit-actions button{font-size:10px;padding:5px 7px}.visit-empty{padding:40px;text-align:center;color:var(--muted);font-size:12px}.visit-form-content{max-width:1050px}.visit-form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.visit-field.full{grid-column:1/-1}.visit-field textarea{width:100%;box-sizing:border-box;border:1px solid var(--border);border-radius:6px;background:var(--card);color:var(--text);padding:9px;font:inherit;min-height:82px;resize:vertical}.visit-check-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;border:1px solid var(--border);border-radius:8px;padding:9px;background:var(--bg);max-height:180px;overflow:auto}.visit-check-grid label{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:600;color:var(--text);cursor:pointer;padding:5px 6px;border-radius:5px;margin:0}.visit-check-grid label:hover{background:var(--kanban-bg)}.visit-check-grid input{width:auto}.visit-form-note{font-size:10px;color:var(--muted);margin-top:4px}.visit-form-footer{display:flex;justify-content:flex-end;gap:8px;margin-top:16px;padding-top:12px;border-top:1px solid var(--border)}.visit-detail-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.visit-detail-item{background:var(--kanban-bg);border:1px solid var(--border);border-radius:8px;padding:10px}.visit-detail-item.full{grid-column:1/-1}.visit-detail-item b{display:block;font-size:10px;color:var(--muted);text-transform:uppercase;margin-bottom:4px}.visit-detail-item div{font-size:12px;color:var(--text);white-space:pre-wrap;word-break:break-word}.visit-sync-note{font-size:10px;color:var(--muted);background:var(--kanban-bg);border:1px solid var(--border);border-radius:7px;padding:7px 9px}.visit-required{color:var(--danger)}
+@media(max-width:1100px){.visit-kpi-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.visit-toolbar{grid-template-columns:1fr 1fr}.visit-check-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:700px){.visit-header{flex-direction:column}.visit-header-actions{width:100%}.visit-header-actions button{flex:1;justify-content:center}.visit-kpi-grid{grid-template-columns:1fr 1fr}.visit-toolbar,.visit-form-grid,.visit-detail-grid{grid-template-columns:1fr}.visit-field.full,.visit-detail-item.full{grid-column:auto}.visit-check-grid{grid-template-columns:1fr}}
+
 </style>
 </head>
 <body>
@@ -240,6 +281,13 @@
                     <button class="tab-btn" onclick="switchTab('kanban')" id="btn-tab-kanban">Kanban</button>
                 </div>
             </div>
+
+            <div class="nav-group open" data-nav-group="visits">
+                <button class="nav-group-title" type="button" onclick="toggleNavGroup(this)"><span>🧭 Ziyaret ve İç Denetim</span><span class="nav-chevron">⌄</span></button>
+                <div class="nav-group-items">
+                    <button class="tab-btn" onclick="switchTab('visits')" id="btn-tab-visits">Ziyaret Planı</button>
+                </div>
+            </div>
             <div class="nav-group open" data-nav-group="records">
                 <button class="nav-group-title" type="button" onclick="toggleNavGroup(this)"><span>📋 PQ ve CAP Kayıtları</span><span class="nav-chevron">⌄</span></button>
                 <div class="nav-group-items">
@@ -269,7 +317,7 @@
             <div></div>
             <div class="header-actions">
                 <button onclick="toggleFiltersPanel()" class="btn-outline header-primary-action">🔎 Filtreler</button>
-                <button onclick="exportPDF()" style="background:#dc2626;">📄 PDF</button>
+                <button type="button" onclick="exportPDF()" style="background:#dc2626;">📄 PDF</button>
                 <button onclick="exportExcel()" style="background:#059669;">📊 Excel</button>
                 <div class="more-actions-wrap">
                     <button class="btn-outline" onclick="toggleMoreActions(event)">⚙️ Diğer <span style="font-size:10px;">▼</span></button>
@@ -712,7 +760,7 @@
                         <p style="font-size:12px; color:var(--muted); margin:0;">Aktif filtreleri dikkate alarak Türkiye geneli ve/veya alan özelinde PQ, CAP adımı, seçili tarih projeksiyonu, EI etkisi ve gecikme detaylarını üretir.</p>
                     </div>
                     <div style="display:flex; gap:8px; flex-wrap:wrap;">
-                        <button onclick="exportStrategicReportPDF()" style="background:#dc2626;">📄 Özel PDF</button>
+                        <button type="button" onclick="exportStrategicReportPDF()" style="background:#dc2626;">📄 Özel PDF</button>
                         <button onclick="exportStrategicReportExcel()" style="background:#059669;">📊 Özel Excel</button>
                     </div>
                 </div>
@@ -771,7 +819,7 @@
                     <h3 style="margin:0; color:var(--text); font-size: 16px;">📊 Fark Analizi (Delta) Özeti</h3>
                     <div style="display:flex; gap:8px; flex-wrap:wrap;">
                         <button onclick="exportTrendExcel()" style="background:#059669; color:white;">📊 Kıyaslama Excel</button>
-                        <button onclick="exportTrendPDF()" style="background: #dc2626; color:white;">📄 Kıyaslama Raporu (PDF)</button>
+                        <button type="button" onclick="exportTrendPDF()" style="background: #dc2626; color:white;">📄 Kıyaslama Raporu (PDF)</button>
                     </div>
                 </div>
                 
@@ -828,6 +876,93 @@
         </div>
 
 
+
+        <!-- ZİYARET VE İÇ DENETİM - PAKET 1 -->
+        <div id="tab-visits" class="tab-content">
+            <div class="visit-shell">
+                <div class="visit-header">
+                    <div>
+                        <h3>🧭 Ziyaret ve İç Denetim</h3>
+                        <p>Denetim alanı özelindeki birim ziyaretlerini planlayın, ziyaret üst bilgilerini yönetin ve kayıtları Firebase üzerinde tarihçeli kullanıcı bilgileriyle saklayın. PQ/CAP kapsam seçimi ve saha notları sonraki paketlerde bu ziyaret kaydına bağlanacaktır.</p>
+                    </div>
+                    <div class="visit-header-actions">
+                        <button class="btn-outline" onclick="refreshVisitModule()">🔄 Yenile</button>
+                        <button type="button" class="btn-outline" onclick="exportVisitsPDF()">📄 PDF</button>
+                        <button type="button" class="btn-outline" onclick="exportVisitsExcel()">📊 Excel</button>
+                        <button onclick="openVisitForm()">➕ Yeni Ziyaret</button>
+                    </div>
+                </div>
+                <div id="visitSyncNote" class="visit-sync-note">Firebase ziyaret kayıtları yükleniyor...</div>
+                <div class="visit-kpi-grid">
+                    <div class="visit-kpi info"><strong id="visitKpiTotal">0</strong><span>Toplam ziyaret</span></div>
+                    <div class="visit-kpi"><strong id="visitKpiPlanned">0</strong><span>Planlanan / hazırlık</span></div>
+                    <div class="visit-kpi warn"><strong id="visitKpiActive">0</strong><span>Devam eden</span></div>
+                    <div class="visit-kpi danger"><strong id="visitKpiFollowUp">0</strong><span>Takipte</span></div>
+                    <div class="visit-kpi ok"><strong id="visitKpiCompleted">0</strong><span>Tamamlanan</span></div>
+                </div>
+                <div class="visit-toolbar">
+                    <div><label>Durum</label><select id="visitStatusFilter" onchange="renderVisitModule()"><option value="all">Tüm durumlar</option></select></div>
+                    <div><label>Denetim alanı</label><select id="visitAreaFilter" onchange="renderVisitModule()"><option value="all">Tüm alanlar</option></select></div>
+                    <div><label>Arama</label><input id="visitSearchInput" type="text" placeholder="Ziyaret adı, birim, yer, katılımcı veya amaç ara..." oninput="renderVisitModule()"></div>
+                    <button class="btn-outline" onclick="clearVisitFilters()">✖ Filtreleri temizle</button>
+                </div>
+                <div class="visit-table-wrap">
+                    <table class="visit-table">
+                        <thead><tr><th>Ziyaret / Durum</th><th>Alan</th><th>Birim / Yer</th><th>Planlanan Tarih</th><th>Katılımcılar / Muhataplar</th><th>Amaç / Yöntem</th><th>Güncelleme</th><th>İşlemler</th></tr></thead>
+                        <tbody id="visitTableBody"><tr><td colspan="8" class="visit-empty">Ziyaret kayıtları yükleniyor...</td></tr></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div id="visitFormModal" class="modal" onclick="if(event.target===this) closeVisitForm()">
+            <div class="modal-content visit-form-content">
+                <div class="modal-header">
+                    <div><h3 id="visitFormTitle" style="margin:0;color:var(--primary);">➕ Yeni Ziyaret</h3><div style="font-size:11px;color:var(--muted);margin-top:4px;">Ziyaret üst bilgileri ve planlama kaydı</div></div>
+                    <button class="btn-outline" type="button" onclick="closeVisitForm()">✖</button>
+                </div>
+                <form id="visitForm" onsubmit="saveVisitForm(event)">
+                    <input type="hidden" id="visitRecordId">
+                    <div class="visit-form-grid">
+                        <div class="visit-field full"><label>Ziyaret adı <span class="visit-required">*</span></label><input id="visitName" type="text" maxlength="180" required placeholder="Örn. ANS CAP İlerleme ve Kanıt Doğrulama Ziyareti"></div>
+                        <div class="visit-field full"><label>Denetim alanı veya alanları <span class="visit-required">*</span></label><div id="visitAreaCheckboxes" class="visit-check-grid"></div><div class="visit-form-note">En az bir denetim alanı seçilmelidir.</div></div>
+                        <div class="visit-field full"><label>Ziyaret edilecek birim veya birimler <span class="visit-required">*</span></label>
+                            <div class="visit-unit-toolbar"><input id="visitUnitSearch" type="text" placeholder="Birim listesinde ara..." oninput="filterVisitUnitOptions()"><button type="button" class="btn-outline" onclick="selectAllVisibleVisitUnits()">Görünenleri seç</button></div>
+                            <div style="display:flex;gap:8px;flex-wrap:wrap;margin:8px 0;">
+                                <button type="button" class="btn-outline" onclick="exportVisitUnitMappingTemplate()">⬇️ Birim Eşleştirme Şablonu</button>
+                                <button type="button" class="btn-outline" onclick="document.getElementById('visitUnitMappingInput').click()">⬆️ Eşleştirme Dosyası İçe Aktar</button>
+                                <input id="visitUnitMappingInput" type="file" accept=".xlsx,.xls" style="display:none" onchange="importVisitUnitMappingFile(event)">
+                            </div>
+                            <div id="visitUnitMappingStatus" class="visit-unit-summary">Kurumsal birim eşleştirmesi yüklenmedi.</div>
+                            <div id="visitUnitCheckboxes" class="visit-check-grid visit-unit-grid"></div>
+                            <div id="visitUnitSelectionSummary" class="visit-unit-summary">Henüz birim seçilmedi.</div>
+                            <div class="visit-form-note">Şablonu indirip “Kaynak Birim Adı” değerlerini kurumsal “Ana Birim Adı” ile eşleştirin; ardından aynı dosyayı içe aktarın. Eşleştirme Firebase üzerinde tüm yetkili kullanıcılar için saklanır.</div>
+                        </div>
+                        <div class="visit-field"><label>Ziyaret yeri</label><input id="visitLocation" type="text" maxlength="180" placeholder="Merkez, havalimanı, çevrim içi vb."></div>
+                        <div class="visit-field"><label>Planlanan başlangıç <span class="visit-required">*</span></label><input id="visitPlannedStart" type="date" required></div>
+                        <div class="visit-field"><label>Planlanan bitiş <span class="visit-required">*</span></label><input id="visitPlannedEnd" type="date" required></div>
+                        <div class="visit-field"><label>Gerçekleşen başlangıç</label><input id="visitActualStart" type="date"></div>
+                        <div class="visit-field"><label>Gerçekleşen bitiş</label><input id="visitActualEnd" type="date"></div>
+                        <div class="visit-field"><label>Ziyaret durumu <span class="visit-required">*</span></label><select id="visitStatus" required></select></div>
+                        <div class="visit-field"><label>Ziyaret yürüten/katılan personel</label><textarea id="visitParticipants" placeholder="Ad, unvan veya ekip bilgileri; her satıra bir kişi yazılabilir."></textarea></div>
+                        <div class="visit-field"><label>Birim tarafındaki muhataplar</label><textarea id="visitCounterparts" placeholder="Ad, unvan ve iletişim/rol bilgileri"></textarea></div>
+                        <div class="visit-field full"><label>Ziyaretin amacı <span class="visit-required">*</span></label><textarea id="visitObjective" required placeholder="Ziyaretin amacı, beklenen çıktı ve kontrol edilecek ana hususlar"></textarea></div>
+                        <div class="visit-field full"><label>Ziyaret yöntemi</label><div id="visitMethodCheckboxes" class="visit-check-grid"></div></div>
+                        <div class="visit-field full"><label>Genel açıklama / planlama notu</label><textarea id="visitGeneralNotes" placeholder="Program, koordinasyon, lojistik veya ziyaret geneline ilişkin diğer notlar"></textarea></div>
+                    </div>
+                    <div id="visitFormAuditInfo" class="visit-form-note" style="margin-top:10px;"></div>
+                    <div class="visit-form-footer"><button type="button" class="btn-outline" onclick="closeVisitForm()">Vazgeç</button><button type="submit" id="visitSaveButton">💾 Ziyareti Kaydet</button></div>
+                </form>
+            </div>
+        </div>
+
+        <div id="visitDetailModal" class="modal" onclick="if(event.target===this) closeVisitDetail()">
+            <div class="modal-content visit-form-content">
+                <div class="modal-header"><h3 style="margin:0;color:var(--primary);">🧭 Ziyaret Ayrıntısı</h3><button class="btn-outline" onclick="closeVisitDetail()">✖</button></div>
+                <div id="visitDetailBody"></div>
+            </div>
+        </div>
+
         <!-- VERİ KALİTESİ MERKEZİ -->
         <div id="tab-quality" class="tab-content">
             <div class="dq-shell">
@@ -839,7 +974,7 @@
                     <div class="dq-header-actions">
                         <button class="btn-outline" onclick="switchTab('empty-caps')">📭 CAP Eksiklikleri</button>
                         <button class="btn-outline" onclick="switchTab('list')">📋 Tüm PQ ve CAP'ler</button>
-                        <button onclick="exportPDF()" style="background:#dc2626;">📄 Kalite PDF</button>
+                        <button type="button" onclick="exportPDF()" style="background:#dc2626;">📄 Kalite PDF</button>
                         <button onclick="exportExcel()" style="background:#059669;">📊 Kalite Excel</button>
                     </div>
                 </div>
@@ -965,6 +1100,8 @@
     let loadedExcelFile = null; let savedManagementNotes = ""; window.currentActiveAreas = []; window.currentFilteredGroups = {}; window.currentAreaSummaryRaw = []; window.loadedWordAreas = new Set(); window.currentAreaEIData = [];
     let dailyReviewedSet = new Set(); let dailyReviewedPQs = new Set(); let dailyPQNotes = {}; let kanbanWorkflowStages = {}; 
     let systemArchives = {}; window.currentTrendData = null; 
+    let icaoVisits = {}; let visitFirebaseRef = null; let visitFirebaseCallback = null; let activeVisitRecordId = null;
+    let visitUnitSettingsRef = null; let visitUnitSettingsCallback = null; let visitUnitMappings = []; let visitUnitCanonicalUnits = [];
 
     // FIREBASE YAPILANDIRMASI
     const firebaseConfig = { apiKey: "AIzaSyBIey2A-LIZxq3pI2L1HAPUKM1Y46gERwg", authDomain: "icao-cap-takip.firebaseapp.com", databaseURL: "https://icao-cap-takip-default-rtdb.europe-west1.firebasedatabase.app", projectId: "icao-cap-takip", storageBucket: "icao-cap-takip.firebasestorage.app", messagingSenderId: "501420214187", appId: "1:501420214187:web:068e444ebd20c060a274ee" };
@@ -1013,6 +1150,22 @@
         const group = button && button.closest ? button.closest('.nav-group') : null;
         if (group) group.classList.toggle('open');
     }
+    function initSidebarWheelScroll() {
+        const sidebar = document.querySelector('.sidebar');
+        const nav = document.querySelector('.grouped-nav');
+        if (!sidebar || !nav || sidebar.dataset.wheelScrollBound === '1') return;
+        sidebar.dataset.wheelScrollBound = '1';
+        sidebar.addEventListener('wheel', function(event) {
+            if (window.innerWidth <= 768) return;
+            const nestedScroller = event.target && event.target.closest ? event.target.closest('.file-list-container,.checkbox-list,.visit-check-grid,.kanban-cards,.right-panel,.modal-content') : null;
+            if (nestedScroller && nestedScroller !== nav) return;
+            const maxScroll = nav.scrollHeight - nav.clientHeight;
+            if (maxScroll <= 0) return;
+            const before = nav.scrollTop;
+            nav.scrollTop += event.deltaY;
+            if (nav.scrollTop !== before) event.preventDefault();
+        }, { passive:false });
+    }
     function openDataManagement() {
         const modal = document.getElementById('dataManagementModal');
         if (modal) modal.style.display = 'block';
@@ -1038,13 +1191,14 @@
     function switchTab(tabId) { 
         document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active')); document.querySelectorAll('.tab-btn').forEach(t => { t.classList.remove('active'); t.style.color = "var(--muted)"; }); 
         document.getElementById('tab-' + tabId).classList.add('active'); let btn = document.getElementById('btn-tab-' + tabId); btn.classList.add('active'); const parentGroup = btn.closest('.nav-group'); if(parentGroup) parentGroup.classList.add('open'); 
-        if(tabId === 'report' || tabId === 'trend' || tabId === 'kanban' || tabId === 'strategic' || tabId === 'smart' || tabId === 'quality') { btn.style.color = "var(--primary)"; }
+        if(tabId === 'report' || tabId === 'trend' || tabId === 'kanban' || tabId === 'strategic' || tabId === 'smart' || tabId === 'quality' || tabId === 'visits') { btn.style.color = "var(--primary)"; }
         if(tabId === 'past' || tabId === 'empty-caps') { btn.style.color = "var(--danger)"; }
         if(tabId === 'icao-closed') { btn.style.color = "#ca8a04"; }
         if(tabId === 'report') updateReportPreview();
         if(tabId === 'strategic') renderStrategicReportPreview();
         if(tabId === 'smart') updateSmartManagementPanel(getFilteredData(), window.currentAnalyticsModel || null);
         if(tabId === 'quality') updateDataQualityCenter(getFilteredData());
+        if(tabId === 'visits') renderVisitModule();
         document.getElementById('rightFiltersPanel').classList.remove('open');
         if(tabId === 'dashboard') { if(charts.s) charts.s.resize(); if(charts.d) charts.d.resize(); if(charts.o) charts.o.resize(); if(charts.ei) charts.ei.resize(); } 
         if(tabId === 'trend') { if(charts.histTrend) charts.histTrend.resize(); }
@@ -1053,13 +1207,14 @@
     // GİRİŞ & YÜKLEME
     window.onload = function() {
         applyLanguage();
+        initSidebarWheelScroll();
         firebase.auth().onAuthStateChanged((user) => {
-            if (user) { document.getElementById('loginOverlay').style.display = 'none'; document.getElementById('mainAppContainer').style.display = 'flex'; loadFromLocalStorage(); } 
-            else { document.getElementById('loadingOverlay').style.display = 'none'; document.getElementById('mainAppContainer').style.display = 'none'; document.getElementById('loginOverlay').style.display = 'flex'; }
+            if (user) { document.getElementById('loginOverlay').style.display = 'none'; document.getElementById('mainAppContainer').style.display = 'flex'; loadFromLocalStorage(); startVisitFirebaseListener(); startVisitUnitSettingsListener(); } 
+            else { stopVisitFirebaseListener(); stopVisitUnitSettingsListener(); document.getElementById('loadingOverlay').style.display = 'none'; document.getElementById('mainAppContainer').style.display = 'none'; document.getElementById('loginOverlay').style.display = 'flex'; }
         });
     };
     
-    window.bypassLogin = function() { document.getElementById('loginOverlay').style.display = 'none'; document.getElementById('mainAppContainer').style.display = 'flex'; renderFileList(); render(); };
+    window.bypassLogin = function() { initSidebarWheelScroll(); document.getElementById('loginOverlay').style.display = 'none'; document.getElementById('mainAppContainer').style.display = 'flex'; renderFileList(); render(); };
     window.loginUser = function() { let email = document.getElementById('loginEmail').value.trim(); let pass = document.getElementById('loginPass').value; let errEl = document.getElementById('loginError'); if(!email || !pass) { errEl.innerText = "Lütfen e-posta ve şifrenizi giriniz."; errEl.style.display = "block"; return; } errEl.style.display = "none"; document.getElementById('loginOverlay').style.opacity = '0.5'; firebase.auth().signInWithEmailAndPassword(email, pass).then(() => { document.getElementById('loginOverlay').style.opacity = '1'; }).catch(() => { document.getElementById('loginOverlay').style.opacity = '1'; errEl.innerText = "Giriş başarısız."; errEl.style.display = "block"; }); };
 
     function saveToLocalStorage() {
@@ -3177,6 +3332,579 @@
         console.table(result); return result;
     };
 
+
+    // ZİYARET VE İÇ DENETİM - PAKET 1
+    const VISIT_STATUSES = {
+        draft:{label:'Taslak', css:'draft'}, planned:{label:'Planlandı', css:'planned'}, preparation:{label:'Hazırlık yapılıyor', css:'preparation'},
+        in_progress:{label:'Ziyaret devam ediyor', css:'in_progress'}, evaluation:{label:'Değerlendirme aşamasında', css:'evaluation'},
+        follow_up:{label:'Takipte', css:'follow_up'}, completed:{label:'Tamamlandı', css:'completed'}, cancelled:{label:'İptal edildi', css:'cancelled'}
+    };
+    const VISIT_METHODS = ['Doküman incelemesi','Görüşme','Yerinde gözlem','Kanıt doğrulama','Çevrim içi toplantı','Karma'];
+    const DEFAULT_VISIT_AREAS = ['LEG','ORG','PEL','OPS','AIR','AIG','ANS','AGA','SSP'];
+
+    function getCurrentVisitUser() {
+        const user = firebase.auth().currentUser;
+        return user ? { uid:user.uid || '', email:user.email || '', displayName:user.displayName || user.email || 'Yetkili kullanıcı' } : { uid:'', email:'', displayName:'Oturum açılmamış kullanıcı' };
+    }
+    function visitSafeDate(value) {
+        if (!value) return null;
+        const d = new Date(String(value).length === 10 ? value + 'T12:00:00' : value);
+        return isNaN(d.getTime()) ? null : d;
+    }
+    function formatVisitDate(value) {
+        const d = visitSafeDate(value);
+        return d ? formatLongTurkishDate(d) : '-';
+    }
+    function formatVisitDateRange(start, end) {
+        if (!start && !end) return '-';
+        if (start && end && start === end) return formatVisitDate(start);
+        return `${formatVisitDate(start)}${end ? ' – ' + formatVisitDate(end) : ''}`;
+    }
+    function getVisitAreaOptions() {
+        const values = new Set(DEFAULT_VISIT_AREAS);
+        Object.values(pqMasterData || {}).forEach(m => { if (m && m.alan) values.add(String(m.alan).trim().toUpperCase()); });
+        (rawData || []).forEach(r => { const m = pqMasterData[r.pq] || {}; if (m.alan) values.add(String(m.alan).trim().toUpperCase()); });
+        return Array.from(values).filter(Boolean).sort(sortAreas);
+    }
+    // Kurumsal ana birim listesi sağlandığında bu dizi doldurulabilir.
+    // Kaynak verideki farklı yazımlar VISIT_UNIT_ALIAS_MAP üzerinden ana ada eşleştirilebilir.
+    let VISIT_UNIT_CANONICAL_LIST = [];
+    let VISIT_UNIT_ALIAS_MAP = {};
+    function normalizeVisitUnitKey(value) {
+        return String(value || '').trim().toLocaleUpperCase('tr-TR')
+            .replace(/[\u2018\u2019'"`]/g, '')
+            .replace(/[^A-ZÇĞİÖŞÜ0-9]+/g, ' ')
+            .replace(/\s+/g, ' ').trim();
+    }
+    function canonicalizeVisitUnit(value) {
+        const label = String(value || '').trim().replace(/\s+/g, ' ');
+        if (!label) return '';
+        const key = normalizeVisitUnitKey(label);
+        const alias = VISIT_UNIT_ALIAS_MAP[key] || VISIT_UNIT_ALIAS_MAP[label];
+        if (alias) return alias;
+        if (VISIT_UNIT_CANONICAL_LIST.length) {
+            const exact = VISIT_UNIT_CANONICAL_LIST.find(item => normalizeVisitUnitKey(item) === key);
+            if (exact) return exact;
+        }
+        return label;
+    }
+    function getVisitUnitOptions() {
+        const source = [];
+        const visitSource = [];
+        (rawData || []).forEach(r => { if (r.office && String(r.office).trim()) source.push(String(r.office).trim()); });
+        Object.values(pqMasterData || {}).forEach(m => { if (m && m.sorumlu && String(m.sorumlu).trim()) source.push(String(m.sorumlu).trim()); });
+        getVisitRecords().forEach(v => getVisitUnits(v).forEach(unit => { source.push(unit); visitSource.push(unit); }));
+        // Kurumsal ana liste içe aktarılmışsa seçim ekranında yalnızca ana liste ve eski ziyaretlerde kullanılan değerler gösterilir.
+        // Böylece kaynak Word/Excel'deki kişi adları ve farklı yazımlar tekrar tekrar listeye düşmez.
+        const labels = VISIT_UNIT_CANONICAL_LIST.length ? VISIT_UNIT_CANONICAL_LIST.concat(visitSource.map(canonicalizeVisitUnit)) : source.map(canonicalizeVisitUnit);
+        const byKey = new Map();
+        labels.filter(Boolean).forEach(label => {
+            const key = normalizeVisitUnitKey(label);
+            if (!byKey.has(key)) byKey.set(key, label);
+        });
+        return Array.from(byKey.values()).sort((a,b) => a.localeCompare(b,'tr'));
+    }
+    function getVisitUnits(record) {
+        if (!record) return [];
+        if (Array.isArray(record.units)) return record.units.map(canonicalizeVisitUnit).filter(Boolean);
+        if (record.unit) return [canonicalizeVisitUnit(record.unit)].filter(Boolean);
+        return [];
+    }
+    function renderVisitUnitCheckboxes(selectedUnits = []) {
+        const container = document.getElementById('visitUnitCheckboxes');
+        if (!container) return;
+        const selectedKeys = new Set((selectedUnits || []).map(normalizeVisitUnitKey));
+        const options = getVisitUnitOptions();
+        container.innerHTML = options.length ? options.map(unit => `<label data-unit-label="${escapeHtml(normalizeVisitUnitKey(unit))}"><input type="checkbox" name="visitUnitChoice" value="${escapeHtml(unit)}" ${selectedKeys.has(normalizeVisitUnitKey(unit)) ? 'checked' : ''} onchange="updateVisitUnitSelectionSummary()"> ${escapeHtml(unit)}</label>`).join('') : '<div class="visit-form-note">Birim listesi oluşturulamadı. Önce Word/Excel verilerini yükleyin veya kurumsal ana listeyi tanımlayın.</div>';
+        filterVisitUnitOptions();
+        updateVisitUnitSelectionSummary();
+    }
+    function filterVisitUnitOptions() {
+        const q = ((document.getElementById('visitUnitSearch') || {}).value || '').trim().toLocaleUpperCase('tr-TR');
+        document.querySelectorAll('#visitUnitCheckboxes label[data-unit-label]').forEach(label => {
+            label.style.display = !q || label.dataset.unitLabel.includes(normalizeVisitUnitKey(q)) ? '' : 'none';
+        });
+    }
+    function selectAllVisibleVisitUnits() {
+        document.querySelectorAll('#visitUnitCheckboxes label[data-unit-label]').forEach(label => {
+            if (label.style.display !== 'none') { const input = label.querySelector('input'); if (input) input.checked = true; }
+        });
+        updateVisitUnitSelectionSummary();
+    }
+    function updateVisitUnitSelectionSummary() {
+        const selected = Array.from(document.querySelectorAll('input[name="visitUnitChoice"]:checked')).map(i => i.value);
+        const el = document.getElementById('visitUnitSelectionSummary');
+        if (el) el.textContent = selected.length ? `${selected.length} birim seçildi: ${selected.join(' · ')}` : 'Henüz birim seçilmedi.';
+    }
+    function cleanVisitUnitLabel(value) {
+        return String(value || '').trim().replace(/\s+/g, ' ');
+    }
+    function getVisitUnitSourceInventory() {
+        const inventory = new Map();
+        const add = (value, sourceType) => {
+            const label = cleanVisitUnitLabel(value);
+            if (!label) return;
+            const key = normalizeVisitUnitKey(label);
+            if (!inventory.has(key)) inventory.set(key, { source:label, count:0, sourceTypes:new Set() });
+            const item = inventory.get(key); item.count += 1; item.sourceTypes.add(sourceType);
+        };
+        (rawData || []).forEach(r => add(r && r.office, 'CAP Eylem Ofisi'));
+        Object.values(pqMasterData || {}).forEach(m => add(m && m.sorumlu, 'Excel Sorumlu'));
+        getVisitRecords(true).forEach(v => getVisitUnits(v).forEach(unit => add(unit, 'Ziyaret Kaydı')));
+        (visitUnitMappings || []).forEach(row => add(row && row.source, 'Mevcut Eşleştirme'));
+        return Array.from(inventory.values()).map(item => ({
+            source:item.source,
+            count:item.count,
+            sourceTypes:Array.from(item.sourceTypes).sort((a,b)=>a.localeCompare(b,'tr')).join(', '),
+            canonical:canonicalizeVisitUnit(item.source)
+        })).sort((a,b)=>a.source.localeCompare(b.source,'tr'));
+    }
+    function rebuildVisitUnitMappingCache() {
+        const canonical = new Map();
+        (visitUnitCanonicalUnits || []).forEach(value => {
+            const label = cleanVisitUnitLabel(value);
+            if (label) canonical.set(normalizeVisitUnitKey(label), label);
+        });
+        const aliases = {};
+        (visitUnitMappings || []).forEach(row => {
+            if (!row || row.active === false) return;
+            const source = cleanVisitUnitLabel(row.source);
+            const target = cleanVisitUnitLabel(row.canonical);
+            if (!source || !target) return;
+            canonical.set(normalizeVisitUnitKey(target), target);
+            aliases[normalizeVisitUnitKey(source)] = target;
+        });
+        VISIT_UNIT_CANONICAL_LIST = Array.from(canonical.values()).sort((a,b)=>a.localeCompare(b,'tr'));
+        VISIT_UNIT_ALIAS_MAP = aliases;
+        updateVisitUnitMappingStatus();
+    }
+    function updateVisitUnitMappingStatus() {
+        const el = document.getElementById('visitUnitMappingStatus');
+        if (!el) return;
+        const activeMappings = (visitUnitMappings || []).filter(r => r && r.active !== false && cleanVisitUnitLabel(r.source) && cleanVisitUnitLabel(r.canonical)).length;
+        el.textContent = activeMappings || VISIT_UNIT_CANONICAL_LIST.length
+            ? `${VISIT_UNIT_CANONICAL_LIST.length} ana birim · ${activeMappings} kaynak eşleştirmesi Firebase'den kullanılıyor.`
+            : 'Kurumsal birim eşleştirmesi yüklenmedi; kaynak değerler tekilleştirilerek gösteriliyor.';
+    }
+    function startVisitUnitSettingsListener() {
+        stopVisitUnitSettingsListener();
+        if (!firebase.auth().currentUser) return;
+        visitUnitSettingsRef = db.ref('icao_visit_settings/unit_mapping');
+        visitUnitSettingsCallback = snapshot => {
+            const data = snapshot.val() || {};
+            visitUnitMappings = Array.isArray(data.rows) ? data.rows : Object.values(data.rows || {});
+            visitUnitCanonicalUnits = Array.isArray(data.canonicalUnits) ? data.canonicalUnits : Object.values(data.canonicalUnits || {});
+            const selected = Array.from(document.querySelectorAll('input[name="visitUnitChoice"]:checked')).map(i => i.value);
+            rebuildVisitUnitMappingCache();
+            if (document.getElementById('visitFormModal') && document.getElementById('visitFormModal').style.display === 'block') renderVisitUnitCheckboxes(selected);
+        };
+        visitUnitSettingsRef.on('value', visitUnitSettingsCallback, error => {
+            console.error('Birim eşleştirme ayarları yüklenemedi:', error);
+            const el = document.getElementById('visitUnitMappingStatus');
+            if (el) el.textContent = 'Birim eşleştirme ayarlarına erişilemedi: ' + (error.message || error);
+        });
+    }
+    function stopVisitUnitSettingsListener() {
+        if (visitUnitSettingsRef && visitUnitSettingsCallback) visitUnitSettingsRef.off('value', visitUnitSettingsCallback);
+        visitUnitSettingsRef = null; visitUnitSettingsCallback = null;
+    }
+    function getMappingCell(row, names) {
+        const normalizedNames = names.map(normalizeVisitUnitKey);
+        const key = Object.keys(row || {}).find(k => normalizedNames.includes(normalizeVisitUnitKey(k)));
+        return key ? row[key] : '';
+    }
+    function isMappingRowActive(value) {
+        const text = normalizeVisitUnitKey(value || 'EVET');
+        return !['HAYIR','NO','FALSE','0','PASIF','PASİF'].includes(text);
+    }
+    function exportVisitUnitMappingTemplate() {
+        try {
+            const inventory = getVisitUnitSourceInventory();
+            const mappingBySource = new Map((visitUnitMappings || []).map(r => [normalizeVisitUnitKey(r.source), r]));
+            const mappingRows = inventory.length ? inventory.map(item => {
+                const existing = mappingBySource.get(normalizeVisitUnitKey(item.source));
+                return {
+                    'Kaynak Birim Adı':item.source,
+                    'Ana Birim Adı':existing ? existing.canonical || '' : (item.canonical !== item.source ? item.canonical : ''),
+                    'Aktif (EVET/HAYIR)':existing && existing.active === false ? 'HAYIR' : 'EVET',
+                    'Kaynak Türü':item.sourceTypes,
+                    'Kullanım Sayısı':item.count,
+                    'Not':existing ? existing.note || '' : ''
+                };
+            }) : [{'Kaynak Birim Adı':'','Ana Birim Adı':'','Aktif (EVET/HAYIR)':'EVET','Kaynak Türü':'','Kullanım Sayısı':'','Not':''}];
+            const canonicalRows = (VISIT_UNIT_CANONICAL_LIST.length ? VISIT_UNIT_CANONICAL_LIST : ['']).map(unit => ({'Ana Birim Adı':unit,'Aktif (EVET/HAYIR)':'EVET','Not':''}));
+            const instructions = [
+                {'Adım':'1','Açıklama':'Birim_Eslestirme sayfasındaki Kaynak Birim Adı sütununu değiştirmeyin.'},
+                {'Adım':'2','Açıklama':'Her kaynak değer için kullanılmasını istediğiniz kurumsal adı Ana Birim Adı sütununa yazın.'},
+                {'Adım':'3','Açıklama':'Aynı kurumsal birime ait farklı kaynak yazımlarına aynı Ana Birim Adını verin.'},
+                {'Adım':'4','Açıklama':'Kullanılmayacak satırları Aktif sütununda HAYIR olarak işaretleyin.'},
+                {'Adım':'5','Açıklama':'İsterseniz Ana_Birim_Listesi sayfasında kurumun kesin birim listesini ayrıca tanımlayın.'},
+                {'Adım':'6','Açıklama':'Dosyayı kaydedip Ziyaret formundaki Eşleştirme Dosyası İçe Aktar düğmesiyle yükleyin.'}
+            ];
+            const wb = createReportWorkbook({title:'Ziyaret Birim Eşleştirme Şablonu',subject:'Kurumsal ana birim listesi ve kaynak eşleştirmeleri'});
+            appendWorkbookSheets(wb,[createSheetDefinition('Birim_Eslestirme',mappingRows),createSheetDefinition('Ana_Birim_Listesi',canonicalRows),createSheetDefinition('Kullanim_Talimati',instructions)]);
+            downloadReportWorkbook(wb,'Ziyaret_Birim_Eslestirme_Sablonu.xlsx');
+        } catch (error) {
+            console.error('Birim eşleştirme şablonu oluşturulamadı:', error);
+            alert('Birim eşleştirme şablonu oluşturulamadı: ' + (error.message || error));
+        }
+    }
+    async function importVisitUnitMappingFile(event) {
+        const input = event && event.target;
+        const file = input && input.files && input.files[0];
+        if (!file) return;
+        if (!firebase.auth().currentUser) { input.value=''; return alert('Birim eşleştirmesini kaydetmek için yetkili giriş yapılmalıdır.'); }
+        showLoading('Birim eşleştirmesi içe aktarılıyor...');
+        try {
+            const buffer = await file.arrayBuffer();
+            const wb = XLSX.read(buffer,{type:'array',cellDates:false});
+            const mappingSheetName = wb.SheetNames.find(n => normalizeVisitUnitKey(n).includes('BIRIM ESLESTIRME')) || wb.SheetNames[0];
+            const mappingData = XLSX.utils.sheet_to_json(wb.Sheets[mappingSheetName],{defval:''});
+            const rows = [];
+            mappingData.forEach(row => {
+                const source = cleanVisitUnitLabel(getMappingCell(row,['Kaynak Birim Adı','Kaynak Birim','Source Unit']));
+                const canonical = cleanVisitUnitLabel(getMappingCell(row,['Ana Birim Adı','Ana Birim','Canonical Unit']));
+                if (!source || !canonical) return;
+                rows.push({source,canonical,active:isMappingRowActive(getMappingCell(row,['Aktif (EVET/HAYIR)','Aktif','Active'])),note:cleanVisitUnitLabel(getMappingCell(row,['Not','Açıklama','Note']))});
+            });
+            let canonicalUnits = [];
+            const canonicalSheetName = wb.SheetNames.find(n => normalizeVisitUnitKey(n).includes('ANA BIRIM LISTESI'));
+            if (canonicalSheetName) {
+                const canonicalData = XLSX.utils.sheet_to_json(wb.Sheets[canonicalSheetName],{defval:''});
+                canonicalUnits = canonicalData.filter(row => isMappingRowActive(getMappingCell(row,['Aktif (EVET/HAYIR)','Aktif','Active']))).map(row => cleanVisitUnitLabel(getMappingCell(row,['Ana Birim Adı','Ana Birim','Canonical Unit']))).filter(Boolean);
+            }
+            canonicalUnits.push(...rows.filter(r=>r.active!==false).map(r=>r.canonical));
+            const byCanonical = new Map(); canonicalUnits.forEach(u=>byCanonical.set(normalizeVisitUnitKey(u),u));
+            canonicalUnits = Array.from(byCanonical.values()).sort((a,b)=>a.localeCompare(b,'tr'));
+            if (!rows.length && !canonicalUnits.length) throw new Error('Dosyada geçerli bir eşleştirme veya ana birim kaydı bulunamadı.');
+            const user = getCurrentVisitUser();
+            await db.ref('icao_visit_settings/unit_mapping').set({rows,canonicalUnits,sourceFile:file.name,updatedAt:new Date().toISOString(),updatedBy:user});
+            alert(`${canonicalUnits.length} ana birim ve ${rows.length} kaynak eşleştirmesi Firebase'e kaydedildi.`);
+        } catch (error) {
+            console.error('Birim eşleştirme dosyası içe aktarılamadı:', error);
+            alert('Birim eşleştirme dosyası içe aktarılamadı: ' + (error.message || error));
+        } finally {
+            if (input) input.value='';
+            hideLoading();
+        }
+    }
+
+    function startVisitFirebaseListener() {
+        stopVisitFirebaseListener();
+        if (!firebase.auth().currentUser) return;
+        visitFirebaseRef = db.ref('icao_visits');
+        visitFirebaseCallback = snapshot => {
+            icaoVisits = snapshot.val() || {};
+            renderVisitModule();
+        };
+        visitFirebaseRef.on('value', visitFirebaseCallback, error => {
+            console.error('Ziyaret kayıtları yüklenemedi:', error);
+            const note = document.getElementById('visitSyncNote');
+            if (note) note.textContent = 'Ziyaret kayıtlarına erişilemedi: ' + (error.message || error);
+        });
+    }
+    function stopVisitFirebaseListener() {
+        if (visitFirebaseRef && visitFirebaseCallback) visitFirebaseRef.off('value', visitFirebaseCallback);
+        visitFirebaseRef = null; visitFirebaseCallback = null;
+    }
+    function refreshVisitModule() {
+        if (!firebase.auth().currentUser) return alert('Ziyaret kayıtlarına erişmek için yetkili giriş yapılmalıdır.');
+        startVisitFirebaseListener();
+        startVisitUnitSettingsListener();
+    }
+    function populateVisitStaticControls() {
+        const statusSelects = [document.getElementById('visitStatusFilter'), document.getElementById('visitStatus')].filter(Boolean);
+        statusSelects.forEach((select, idx) => {
+            const current = select.value;
+            select.innerHTML = (idx === 0 ? '<option value="all">Tüm durumlar</option>' : '') + Object.entries(VISIT_STATUSES).map(([key,s]) => `<option value="${key}">${s.label}</option>`).join('');
+            if (current && Array.from(select.options).some(o => o.value === current)) select.value = current;
+        });
+        const areaFilter = document.getElementById('visitAreaFilter');
+        if (areaFilter) {
+            const current = areaFilter.value;
+            areaFilter.innerHTML = '<option value="all">Tüm alanlar</option>' + getVisitAreaOptions().map(a => `<option value="${escapeHtml(a)}">${escapeHtml(a)}</option>`).join('');
+            if (current && Array.from(areaFilter.options).some(o => o.value === current)) areaFilter.value = current;
+        }
+    }
+    function renderVisitAreaCheckboxes(selectedAreas = []) {
+        const container = document.getElementById('visitAreaCheckboxes');
+        if (!container) return;
+        const selected = new Set((selectedAreas || []).map(v => String(v).toUpperCase()));
+        container.innerHTML = getVisitAreaOptions().map(area => `<label><input type="checkbox" name="visitAreaChoice" value="${escapeHtml(area)}" ${selected.has(area) ? 'checked' : ''}> ${escapeHtml(area)}</label>`).join('');
+    }
+    function renderVisitMethodCheckboxes(selectedMethods = []) {
+        const container = document.getElementById('visitMethodCheckboxes');
+        if (!container) return;
+        const selected = new Set(selectedMethods || []);
+        container.innerHTML = VISIT_METHODS.map(method => `<label><input type="checkbox" name="visitMethodChoice" value="${escapeHtml(method)}" ${selected.has(method) ? 'checked' : ''}> ${escapeHtml(method)}</label>`).join('');
+    }
+    function getVisitRecords(includeDeleted = false) {
+        return Object.entries(icaoVisits || {}).map(([id, value]) => ({ id, ...(value || {}) })).filter(v => includeDeleted || !v.isDeleted);
+    }
+    function getVisibleVisits() {
+        const status = (document.getElementById('visitStatusFilter') || {}).value || 'all';
+        const area = (document.getElementById('visitAreaFilter') || {}).value || 'all';
+        const q = ((document.getElementById('visitSearchInput') || {}).value || '').trim().toLocaleLowerCase('tr');
+        return getVisitRecords().filter(v => {
+            if (status !== 'all' && v.status !== status) return false;
+            if (area !== 'all' && !(v.areas || []).includes(area)) return false;
+            if (q) {
+                const haystack = [v.visitName,getVisitUnits(v).join(' '),v.location,v.participants,v.counterparts,v.objective,v.generalNotes,(v.areas||[]).join(' '),(v.methods||[]).join(' ')].join(' ').toLocaleLowerCase('tr');
+                if (!haystack.includes(q)) return false;
+            }
+            return true;
+        }).sort((a,b) => {
+            const ad = visitSafeDate(a.plannedStart), bd = visitSafeDate(b.plannedStart);
+            if (ad && bd) return ad - bd;
+            if (ad) return -1; if (bd) return 1;
+            return String(a.visitName || '').localeCompare(String(b.visitName || ''),'tr');
+        });
+    }
+    function renderVisitModule() {
+        populateVisitStaticControls();
+        const table = document.getElementById('visitTableBody');
+        if (!table) return;
+        const records = getVisitRecords();
+        const visible = getVisibleVisits();
+        const user = firebase.auth().currentUser;
+        const sync = document.getElementById('visitSyncNote');
+        if (sync) sync.textContent = user ? `Firebase bağlantısı aktif. Ziyaret kayıtları ayrı “icao_visits” veri kümesinde saklanır. Oturum: ${user.email || user.uid}` : 'Ziyaret kayıtlarını görüntülemek ve kaydetmek için yetkili giriş yapılmalıdır.';
+        const counts = {
+            total:records.length,
+            planned:records.filter(v => ['draft','planned','preparation'].includes(v.status)).length,
+            active:records.filter(v => ['in_progress','evaluation'].includes(v.status)).length,
+            follow:records.filter(v => v.status === 'follow_up').length,
+            completed:records.filter(v => v.status === 'completed').length
+        };
+        [['visitKpiTotal',counts.total],['visitKpiPlanned',counts.planned],['visitKpiActive',counts.active],['visitKpiFollowUp',counts.follow],['visitKpiCompleted',counts.completed]].forEach(([id,val]) => { const el=document.getElementById(id); if(el) el.textContent=val; });
+        if (!visible.length) {
+            table.innerHTML = `<tr><td colspan="8" class="visit-empty">${records.length ? 'Seçili filtrelere uygun ziyaret kaydı bulunamadı.' : 'Henüz ziyaret kaydı oluşturulmadı. “Yeni Ziyaret” düğmesiyle ilk planı oluşturabilirsiniz.'}</td></tr>`;
+            return;
+        }
+        table.innerHTML = visible.map(v => {
+            const status = VISIT_STATUSES[v.status] || VISIT_STATUSES.draft;
+            const areas = (v.areas || []).map(a => `<span class="visit-area-chip">${escapeHtml(a)}</span>`).join('') || '-';
+            const methods = (v.methods || []).join(', ') || '-';
+            const updatedBy = (v.updatedBy && (v.updatedBy.displayName || v.updatedBy.email)) || (v.createdBy && (v.createdBy.displayName || v.createdBy.email)) || '-';
+            const updatedAt = v.updatedAt ? formatVisitDate(v.updatedAt) : '-';
+            return `<tr>
+                <td><b>${escapeHtml(v.visitName || 'Adsız ziyaret')}</b><br><span class="visit-status ${status.css}">${status.label}</span></td>
+                <td>${areas}</td>
+                <td><b>${escapeHtml(getVisitUnits(v).join(' · ') || '-')}</b><br><span style="color:var(--muted)">${escapeHtml(v.location || '-')}</span></td>
+                <td>${formatVisitDateRange(v.plannedStart,v.plannedEnd)}${v.actualStart || v.actualEnd ? `<br><small style="color:var(--ok)">Gerçekleşen: ${formatVisitDateRange(v.actualStart,v.actualEnd)}</small>` : ''}</td>
+                <td><b>Katılımcı:</b> ${escapeHtml(shortenVisitText(v.participants,90))}<br><b>Muhatap:</b> ${escapeHtml(shortenVisitText(v.counterparts,90))}</td>
+                <td><b>${escapeHtml(shortenVisitText(v.objective,130))}</b><br><span style="color:var(--muted)">${escapeHtml(methods)}</span></td>
+                <td>${escapeHtml(updatedBy)}<br><span style="color:var(--muted)">${updatedAt}</span></td>
+                <td><div class="visit-actions"><button class="btn-outline" onclick="viewVisitDetail('${v.id}')">👁️ Gör</button><button class="btn-outline" onclick="openVisitForm('${v.id}')">✏️ Düzenle</button><button style="background:var(--danger)" onclick="deleteVisitRecord('${v.id}')">🗑️</button></div></td>
+            </tr>`;
+        }).join('');
+    }
+    function shortenVisitText(value, max) {
+        const text = String(value || '').replace(/\s+/g,' ').trim();
+        return !text ? '-' : (text.length > max ? text.slice(0,max-1) + '…' : text);
+    }
+    function clearVisitFilters() {
+        const s=document.getElementById('visitStatusFilter'), a=document.getElementById('visitAreaFilter'), q=document.getElementById('visitSearchInput');
+        if(s)s.value='all'; if(a)a.value='all'; if(q)q.value=''; renderVisitModule();
+    }
+    function openVisitForm(id = null) {
+        if (!firebase.auth().currentUser) return alert('Ziyaret kaydı oluşturmak veya düzenlemek için yetkili giriş yapılmalıdır.');
+        activeVisitRecordId = id || null;
+        const record = id ? (icaoVisits[id] || null) : null;
+        document.getElementById('visitForm').reset();
+        document.getElementById('visitRecordId').value = id || '';
+        document.getElementById('visitFormTitle').textContent = record ? '✏️ Ziyareti Düzenle' : '➕ Yeni Ziyaret';
+        populateVisitStaticControls();
+        renderVisitAreaCheckboxes(record ? record.areas : []);
+        renderVisitUnitCheckboxes(record ? getVisitUnits(record) : []);
+        renderVisitMethodCheckboxes(record ? record.methods : ['Doküman incelemesi','Görüşme','Kanıt doğrulama']);
+        const set = (field,val) => { const el=document.getElementById(field); if(el) el.value=val || ''; };
+        set('visitName',record && record.visitName); set('visitLocation',record && record.location);
+        set('visitPlannedStart',record && record.plannedStart); set('visitPlannedEnd',record && record.plannedEnd); set('visitActualStart',record && record.actualStart); set('visitActualEnd',record && record.actualEnd);
+        set('visitStatus',(record && record.status) || 'draft'); set('visitParticipants',record && record.participants); set('visitCounterparts',record && record.counterparts);
+        set('visitObjective',record && record.objective); set('visitGeneralNotes',record && record.generalNotes);
+        const audit = document.getElementById('visitFormAuditInfo');
+        if (audit) audit.textContent = record ? `Oluşturan: ${((record.createdBy||{}).displayName || (record.createdBy||{}).email || '-')} | Oluşturma: ${formatVisitDate(record.createdAt)} | Son güncelleme: ${formatVisitDate(record.updatedAt)}` : `Yeni kayıt, kaydeden kullanıcının kimliği ve zaman damgasıyla Firebase'e yazılacaktır.`;
+        document.getElementById('visitFormModal').style.display='block';
+    }
+    function closeVisitForm() { const m=document.getElementById('visitFormModal'); if(m)m.style.display='none'; activeVisitRecordId=null; }
+    async function saveVisitForm(event) {
+        if (event) event.preventDefault();
+        const user = firebase.auth().currentUser;
+        if (!user) return alert('Kayıt için yetkili giriş gereklidir.');
+        const areas = Array.from(document.querySelectorAll('input[name="visitAreaChoice"]:checked')).map(i => i.value);
+        const methods = Array.from(document.querySelectorAll('input[name="visitMethodChoice"]:checked')).map(i => i.value);
+        const units = Array.from(document.querySelectorAll('input[name="visitUnitChoice"]:checked')).map(i => canonicalizeVisitUnit(i.value)).filter(Boolean);
+        if (!areas.length) return alert('En az bir denetim alanı seçiniz.');
+        if (!units.length) return alert('En az bir ziyaret edilecek birim seçiniz.');
+        const start = document.getElementById('visitPlannedStart').value, end = document.getElementById('visitPlannedEnd').value;
+        if (start && end && end < start) return alert('Planlanan bitiş tarihi başlangıç tarihinden önce olamaz.');
+        const actualStart = document.getElementById('visitActualStart').value, actualEnd = document.getElementById('visitActualEnd').value;
+        if (actualStart && actualEnd && actualEnd < actualStart) return alert('Gerçekleşen bitiş tarihi başlangıç tarihinden önce olamaz.');
+        const id = activeVisitRecordId || db.ref('icao_visits').push().key;
+        const existing = activeVisitRecordId ? (icaoVisits[activeVisitRecordId] || {}) : {};
+        const actor = getCurrentVisitUser();
+        const now = new Date().toISOString();
+        const record = {
+            visitName:document.getElementById('visitName').value.trim(), areas, units, unit:units.join(' | '), location:document.getElementById('visitLocation').value.trim(),
+            plannedStart:start, plannedEnd:end, actualStart, actualEnd, status:document.getElementById('visitStatus').value,
+            participants:document.getElementById('visitParticipants').value.trim(), counterparts:document.getElementById('visitCounterparts').value.trim(), objective:document.getElementById('visitObjective').value.trim(), methods,
+            generalNotes:document.getElementById('visitGeneralNotes').value.trim(), isDeleted:false,
+            createdAt:existing.createdAt || now, createdBy:existing.createdBy || actor, updatedAt:now, updatedBy:actor,
+            moduleVersion:'visit-package-1.1'
+        };
+        const button=document.getElementById('visitSaveButton'); if(button){button.disabled=true;button.textContent='Kaydediliyor...';}
+        try {
+            await db.ref('icao_visits/' + id).set(record);
+            closeVisitForm();
+            alert('Ziyaret kaydı Firebase üzerinde kaydedildi.');
+        } catch(error) {
+            console.error(error); alert('Ziyaret kaydedilemedi: ' + (error.message || error));
+        } finally { if(button){button.disabled=false;button.textContent='💾 Ziyareti Kaydet';} }
+    }
+    async function deleteVisitRecord(id) {
+        const record = icaoVisits[id]; if(!record) return;
+        if (!firebase.auth().currentUser) return alert('Bu işlem için yetkili giriş gereklidir.');
+        if (!confirm(`“${record.visitName || 'Ziyaret'}” kaydını kaldırmak istediğinize emin misiniz? Kayıt fiziksel olarak silinmeyecek, silindi olarak işaretlenecektir.`)) return;
+        const actor=getCurrentVisitUser(), now=new Date().toISOString();
+        try { await db.ref('icao_visits/' + id).update({isDeleted:true,deletedAt:now,deletedBy:actor,updatedAt:now,updatedBy:actor}); }
+        catch(error){console.error(error);alert('Ziyaret kaydı kaldırılamadı: '+(error.message||error));}
+    }
+    function viewVisitDetail(id) {
+        const v=icaoVisits[id]; if(!v)return;
+        const status=VISIT_STATUSES[v.status]||VISIT_STATUSES.draft;
+        const item=(label,value,full=false)=>`<div class="visit-detail-item ${full?'full':''}"><b>${label}</b><div>${escapeHtml(value || '-')}</div></div>`;
+        document.getElementById('visitDetailBody').innerHTML = `<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:12px"><div><h3 style="margin:0;color:var(--text)">${escapeHtml(v.visitName||'Adsız ziyaret')}</h3><div style="margin-top:5px"><span class="visit-status ${status.css}">${status.label}</span></div></div><button onclick="closeVisitDetail();openVisitForm('${id}')">✏️ Düzenle</button></div><div class="visit-detail-grid">${item('Denetim alanları',(v.areas||[]).join(', '))}${item('Birimler',getVisitUnits(v).join('\n'))}${item('Ziyaret yeri',v.location)}${item('Planlanan tarihler',formatVisitDateRange(v.plannedStart,v.plannedEnd))}${item('Gerçekleşen tarihler',formatVisitDateRange(v.actualStart,v.actualEnd))}${item('Ziyaret yöntemi',(v.methods||[]).join(', '))}${item('Katılan personel',v.participants,true)}${item('Birim muhatapları',v.counterparts,true)}${item('Ziyaretin amacı',v.objective,true)}${item('Genel açıklama / planlama notu',v.generalNotes,true)}${item('Oluşturan',((v.createdBy||{}).displayName||(v.createdBy||{}).email||'-')+' | '+formatVisitDate(v.createdAt),true)}${item('Son güncelleyen',((v.updatedBy||{}).displayName||(v.updatedBy||{}).email||'-')+' | '+formatVisitDate(v.updatedAt),true)}</div><div class="visit-sync-note" style="margin-top:12px">PQ/CAP kapsamı, hazırlık soruları ve saha notları sonraki paketlerde bu ziyaret kimliğine bağlanacaktır.</div>`;
+        document.getElementById('visitDetailModal').style.display='block';
+    }
+    function closeVisitDetail(){const m=document.getElementById('visitDetailModal');if(m)m.style.display='none';}
+    function buildVisitExportRows(records) {
+        return (records || []).map(v => ({
+            'Ziyaret Adı':v.visitName||'', 'Durum':(VISIT_STATUSES[v.status]||{}).label||v.status||'', 'Denetim Alanları':(v.areas||[]).join(', '), 'Ziyaret Edilecek Birim(ler)':getVisitUnits(v).join(' | '), 'Ziyaret Yeri':v.location||'',
+            'Planlanan Başlangıç':v.plannedStart||'', 'Planlanan Bitiş':v.plannedEnd||'', 'Gerçekleşen Başlangıç':v.actualStart||'', 'Gerçekleşen Bitiş':v.actualEnd||'',
+            'Katılan Personel':fullTextForExcel(v.participants||''), 'Birim Muhatapları':fullTextForExcel(v.counterparts||''), 'Ziyaretin Amacı':fullTextForExcel(v.objective||''), 'Yöntem':(v.methods||[]).join(', '), 'Genel Not':fullTextForExcel(v.generalNotes||''),
+            'Oluşturan':(v.createdBy||{}).displayName||(v.createdBy||{}).email||'', 'Oluşturma Tarihi':v.createdAt||'', 'Son Güncelleyen':(v.updatedBy||{}).displayName||(v.updatedBy||{}).email||'', 'Son Güncelleme':v.updatedAt||''
+        }));
+    }
+    function exportVisitsExcel(ctx) {
+        const rows=buildVisitExportRows((ctx&&ctx.rows)||getVisibleVisits()); if(!rows.length)return alert('Dışa aktarılacak ziyaret kaydı bulunamadı.');
+        const wb=createReportWorkbook({title:'Ziyaret ve İç Denetim Planı',subject:'USOAP CMA birim ziyaretleri'}); addJsonSheet(wb,'Ziyaret_Plani',rows); downloadReportWorkbook(wb,'Ziyaret_ve_Ic_Denetim_Plani.xlsx');
+    }
+    function visitArrayValue(value) {
+        if (Array.isArray(value)) return value.filter(v => v !== undefined && v !== null && String(v).trim() !== '');
+        if (value && typeof value === 'object') return Object.values(value).filter(v => v !== undefined && v !== null && String(v).trim() !== '');
+        if (value === undefined || value === null || String(value).trim() === '') return [];
+        return [value];
+    }
+    function normalizeVisitForExport(record) {
+        const v = record || {};
+        return {
+            ...v,
+            areas: visitArrayValue(v.areas).map(String),
+            methods: visitArrayValue(v.methods).map(String),
+            units: getVisitUnits(v).length ? getVisitUnits(v) : visitArrayValue(v.units || v.unit).map(String)
+        };
+    }
+    function buildVisitPdfDefinition(records) {
+        const safeRecords = (records || []).map(normalizeVisitForExport);
+        const content = [
+            {text:'Ziyaret ve İç Denetim Planı',style:'header'},
+            {text:`Rapor tarihi: ${formatLongTurkishDate(new Date())} | Ziyaret sayısı: ${safeRecords.length}`,style:'subheader'}
+        ];
+        safeRecords.forEach((v,index) => {
+            const status = (VISIT_STATUSES[v.status] || {}).label || v.status || '-';
+            const rows = [
+                [{text:'Durum',bold:true,fillColor:'#f1f5f9'}, fullTextForPdf(status) || '-'],
+                [{text:'Denetim alanları',bold:true,fillColor:'#f1f5f9'}, fullTextForPdf(v.areas.join(', ')) || '-'],
+                [{text:'Ziyaret edilecek birim(ler)',bold:true,fillColor:'#f1f5f9'}, fullTextForPdf(v.units.join('\n')) || '-'],
+                [{text:'Ziyaret yeri',bold:true,fillColor:'#f1f5f9'}, fullTextForPdf(v.location) || '-'],
+                [{text:'Planlanan tarihler',bold:true,fillColor:'#f1f5f9'}, fullTextForPdf(formatVisitDateRange(v.plannedStart,v.plannedEnd)) || '-'],
+                [{text:'Gerçekleşen tarihler',bold:true,fillColor:'#f1f5f9'}, fullTextForPdf(formatVisitDateRange(v.actualStart,v.actualEnd)) || '-'],
+                [{text:'Katılan personel',bold:true,fillColor:'#f1f5f9'}, fullTextForPdf(v.participants) || '-'],
+                [{text:'Birim muhatapları',bold:true,fillColor:'#f1f5f9'}, fullTextForPdf(v.counterparts) || '-'],
+                [{text:'Ziyaretin amacı',bold:true,fillColor:'#f1f5f9'}, fullTextForPdf(v.objective) || '-'],
+                [{text:'Ziyaret yöntemi',bold:true,fillColor:'#f1f5f9'}, fullTextForPdf(v.methods.join(', ')) || '-'],
+                [{text:'Genel açıklama / planlama notu',bold:true,fillColor:'#f1f5f9'}, fullTextForPdf(v.generalNotes) || '-']
+            ];
+            content.push({text:`${index+1}. ${v.visitName || 'Adsız ziyaret'}`,style:'visitTitle',pageBreak:index>0 && index%3===0?'before':undefined});
+            content.push({table:{headerRows:0,widths:[135,'*'],body:rows},layout:'lightHorizontalLines',margin:[0,0,0,12]});
+        });
+        return createStandardPdfDefinition(content,{
+            pageOrientation:'portrait',pageSize:'A4',
+            styles:{visitTitle:{fontSize:12,bold:true,color:'#1d4ed8',margin:[0,8,0,5]}},
+            defaultStyle:{font:'Roboto',fontSize:8.5}
+        });
+    }
+    function visitPrintEscape(value) {
+        return escapeHtml(value === undefined || value === null || String(value).trim() === '' ? '-' : String(value)).replace(/\n/g,'<br>');
+    }
+    function buildVisitPrintHtml(records) {
+        const safeRecords = (records || []).map(normalizeVisitForExport);
+        const cards = safeRecords.map((v,index) => {
+            const status = (VISIT_STATUSES[v.status] || {}).label || v.status || '-';
+            const row = (label,value) => `<tr><th>${visitPrintEscape(label)}</th><td>${visitPrintEscape(value)}</td></tr>`;
+            return `<section class="visit-print-card">
+                <h2>${index+1}. ${visitPrintEscape(v.visitName || 'Adsız ziyaret')}</h2>
+                <table>
+                    ${row('Durum',status)}
+                    ${row('Denetim alanları',v.areas.join(', '))}
+                    ${row('Ziyaret edilecek birim(ler)',v.units.join('\n'))}
+                    ${row('Ziyaret yeri',v.location)}
+                    ${row('Planlanan tarihler',formatVisitDateRange(v.plannedStart,v.plannedEnd))}
+                    ${row('Gerçekleşen tarihler',formatVisitDateRange(v.actualStart,v.actualEnd))}
+                    ${row('Katılan personel',v.participants)}
+                    ${row('Birim muhatapları',v.counterparts)}
+                    ${row('Ziyaretin amacı',v.objective)}
+                    ${row('Ziyaret yöntemi',v.methods.join(', '))}
+                    ${row('Genel açıklama / planlama notu',v.generalNotes)}
+                </table>
+            </section>`;
+        }).join('');
+        return `<!DOCTYPE html><html lang="tr"><head><meta charset="UTF-8"><title>Ziyaret ve İç Denetim Planı</title>
+        <style>
+            @page{size:A4 portrait;margin:14mm} body{font-family:Arial,Helvetica,sans-serif;color:#0f172a;margin:0;font-size:10pt}
+            h1{font-size:18pt;color:#1d4ed8;margin:0 0 4px} .meta{color:#64748b;margin:0 0 16px}
+            .visit-print-card{page-break-inside:avoid;margin:0 0 14px}.visit-print-card h2{font-size:12pt;color:#1d4ed8;margin:0 0 6px}
+            table{width:100%;border-collapse:collapse;table-layout:fixed}th,td{border-bottom:1px solid #e2e8f0;padding:6px 7px;vertical-align:top;word-wrap:break-word;white-space:normal}
+            th{width:31%;background:#f1f5f9;text-align:left}@media print{button{display:none!important}}
+        </style></head><body>
+        <h1>Ziyaret ve İç Denetim Planı</h1><p class="meta">Rapor tarihi: ${visitPrintEscape(formatLongTurkishDate(new Date()))} | Ziyaret sayısı: ${safeRecords.length}</p>
+        ${cards}<script>window.addEventListener('load',()=>setTimeout(()=>window.print(),250));<\/script></body></html>`;
+    }
+    function openVisitPrintFallback(records, reason) {
+        const html = buildVisitPrintHtml(records);
+        const popup = window.open('', '_blank');
+        if (popup) {
+            popup.document.open(); popup.document.write(html); popup.document.close();
+        } else {
+            const frame = document.createElement('iframe');
+            frame.style.position='fixed'; frame.style.right='0'; frame.style.bottom='0'; frame.style.width='1px'; frame.style.height='1px'; frame.style.border='0';
+            document.body.appendChild(frame);
+            frame.onload=()=>{ try { frame.contentWindow.focus(); frame.contentWindow.print(); } catch(e) { console.error(e); } setTimeout(()=>frame.remove(),2000); };
+            frame.srcdoc=html;
+        }
+        if (reason) console.warn('Ziyaret PDF indirme yedeği kullanıldı:', reason);
+    }
+    function exportVisitsPDF(ctx) {
+        const records = ((ctx && Array.isArray(ctx.rows)) ? ctx.rows : getVisibleVisits()).map(normalizeVisitForExport);
+        if (!records.length) return alert('Dışa aktarılacak ziyaret kaydı bulunamadı. Filtreleri kontrol edin veya önce bir ziyaret kaydı oluşturun.');
+        try {
+            if (typeof pdfMake === 'undefined' || !pdfMake || typeof pdfMake.createPdf !== 'function') {
+                openVisitPrintFallback(records, 'PDFMake kütüphanesi yüklenemedi.');
+                alert('PDF kütüphanesine erişilemediği için tarayıcının yazdırma ekranı açıldı. Hedef olarak “PDF olarak kaydet” seçeneğini kullanabilirsiniz.');
+                return;
+            }
+            const docDef = buildVisitPdfDefinition(records);
+            safeDownloadPdf(docDef,'Ziyaret_ve_Ic_Denetim_Plani.pdf');
+        } catch(error) {
+            console.error('Ziyaret PDF hatası:',error);
+            openVisitPrintFallback(records,error);
+            alert('Doğrudan PDF indirme tamamlanamadı. Tarayıcının yazdırma ekranı açıldı; “PDF olarak kaydet” seçeneğini kullanabilirsiniz. Hata: ' + (error && error.message ? error.message : error));
+        }
+    }
+    window.filterVisitUnitOptions=filterVisitUnitOptions; window.selectAllVisibleVisitUnits=selectAllVisibleVisitUnits; window.updateVisitUnitSelectionSummary=updateVisitUnitSelectionSummary; window.exportVisitUnitMappingTemplate=exportVisitUnitMappingTemplate; window.importVisitUnitMappingFile=importVisitUnitMappingFile; window.exportVisitsPDF=exportVisitsPDF; window.exportVisitsExcel=exportVisitsExcel; window.openVisitForm=openVisitForm; window.closeVisitForm=closeVisitForm; window.saveVisitForm=saveVisitForm; window.deleteVisitRecord=deleteVisitRecord; window.viewVisitDetail=viewVisitDetail; window.closeVisitDetail=closeVisitDetail; window.renderVisitModule=renderVisitModule; window.refreshVisitModule=refreshVisitModule; window.clearVisitFilters=clearVisitFilters;
+    window.runVisitModuleSelfCheck=function(){const records=getVisitRecords();const result={passed:!!document.getElementById('tab-visits')&&!!document.getElementById('btn-tab-visits')&&typeof saveVisitForm==='function'&&typeof startVisitFirebaseListener==='function',records:records.length,active:records.filter(v=>!['completed','cancelled'].includes(v.status)).length,firebasePath:'icao_visits',unitMultiSelect:!!document.getElementById('visitUnitCheckboxes'),pdfExport:typeof exportVisitsPDF==='function',sidebarWheelBound:document.querySelector('.sidebar')?.dataset.wheelScrollBound==='1'};console.table(result);return result;};
+
     function render() {
         resetCommonActionClassificationCache();
         const filteredData = getFilteredData(); updateActiveTagsUI(); updateReadyFiltersUI();
@@ -3196,6 +3924,7 @@
         renderTable(filteredData, groups); updateCharts(filteredData, analytics); updateAreaSummary(filteredData, analytics); updateWarnings(filteredData, analytics); updatePastTasks(filteredData, analytics); updateEIProjections(filteredData); updateSmartManagementPanel(filteredData, analytics); updateDataQualityCenter(filteredData); renderKanban(filteredData, analytics);
         if(document.getElementById('tab-report').classList.contains('active')) updateReportPreview();
         if(document.getElementById('tab-strategic') && document.getElementById('tab-strategic').classList.contains('active')) renderStrategicReportPreview();
+        if(document.getElementById('tab-visits') && document.getElementById('tab-visits').classList.contains('active')) renderVisitModule();
     }
 
     window.togglePQ = function(id) { let dRow = document.getElementById('detail-'+id); let hRow = document.getElementById('head-'+id); if(dRow.classList.contains('active')) { dRow.classList.remove('active'); hRow.classList.remove('active'); } else { dRow.classList.add('active'); hRow.classList.add('active'); } };
@@ -4657,12 +5386,127 @@
         return String(node);
     }
 
-    function safeDownloadPdf(docDef, fileName) {
-        if (typeof pdfMake === 'undefined' || !pdfMake || typeof pdfMake.createPdf !== 'function') {
-            throw new Error('PDF kütüphanesi yüklenemedi. İnternet/CDN erişimini, tarayıcı eklentilerini veya GitHub Pages üzerinden açıldığını kontrol edin.');
+    function pdfExportToast(message, isError = false) {
+        let toast = document.getElementById('pdfExportToast');
+        if (!toast) {
+            toast = document.createElement('div');
+            toast.id = 'pdfExportToast';
+            toast.style.cssText = 'position:fixed;right:18px;bottom:18px;z-index:20050;max-width:420px;padding:12px 15px;border-radius:9px;color:#fff;font:600 13px Arial,sans-serif;box-shadow:0 10px 28px rgba(15,23,42,.28);transition:opacity .2s;';
+            document.body.appendChild(toast);
         }
-        const safeDocDef = normalizePdfNode(docDef);
-        pdfMake.createPdf(safeDocDef).download(fileName || 'Rapor.pdf');
+        toast.style.background = isError ? '#b91c1c' : '#1d4ed8';
+        toast.textContent = message;
+        toast.style.opacity = '1';
+        clearTimeout(toast._hideTimer);
+        toast._hideTimer = setTimeout(() => { toast.style.opacity = '0'; }, isError ? 7000 : 3500);
+    }
+
+    function printablePdfText(value) {
+        return escapeHtml(fullTextForPdf(value) || '-').replace(/\n/g, '<br>');
+    }
+
+    function pdfNodeToPrintHtml(node) {
+        if (node === undefined || node === null) return '';
+        if (typeof node === 'string' || typeof node === 'number' || typeof node === 'boolean') return `<p>${printablePdfText(node)}</p>`;
+        if (Array.isArray(node)) return node.map(pdfNodeToPrintHtml).join('');
+        if (typeof node !== 'object') return '';
+        if (node.table && Array.isArray(node.table.body)) {
+            const rows = node.table.body.map((row, rowIndex) => {
+                const cells = (Array.isArray(row) ? row : [row]).map(cell => {
+                    const raw = cell && typeof cell === 'object' && 'text' in cell ? cell.text : cell;
+                    const tag = rowIndex === 0 ? 'th' : 'td';
+                    const colspan = cell && typeof cell === 'object' && cell.colSpan ? ` colspan="${cell.colSpan}"` : '';
+                    return `<${tag}${colspan}>${printablePdfText(Array.isArray(raw) ? raw.map(x => x && x.text !== undefined ? x.text : x).join(' ') : raw)}</${tag}>`;
+                }).join('');
+                return `<tr>${cells}</tr>`;
+            }).join('');
+            return `<table>${rows}</table>`;
+        }
+        if (node.stack) return `<section>${pdfNodeToPrintHtml(node.stack)}</section>`;
+        if (node.content) return pdfNodeToPrintHtml(node.content);
+        if (node.columns) return `<div class="columns">${node.columns.map(c => `<div>${pdfNodeToPrintHtml(c)}</div>`).join('')}</div>`;
+        if (node.ul) return `<ul>${node.ul.map(x => `<li>${pdfNodeToPrintHtml(x)}</li>`).join('')}</ul>`;
+        if (node.ol) return `<ol>${node.ol.map(x => `<li>${pdfNodeToPrintHtml(x)}</li>`).join('')}</ol>`;
+        if ('text' in node) {
+            const text = Array.isArray(node.text) ? node.text.map(x => x && x.text !== undefined ? x.text : x).join(' ') : node.text;
+            const className = node.style === 'header' ? 'report-title' : (node.style === 'sectionHeader' ? 'section-title' : 'text-node');
+            return `<div class="${className}">${printablePdfText(text)}</div>`;
+        }
+        return '';
+    }
+
+    function openGenericPdfPrintFallback(docDef, fileName, reason) {
+        const title = (fileName || 'Rapor.pdf').replace(/\.pdf$/i, '').replace(/_/g, ' ');
+        const contentHtml = pdfNodeToPrintHtml((docDef || {}).content || []);
+        const html = `<!DOCTYPE html><html lang="tr"><head><meta charset="UTF-8"><title>${escapeHtml(title)}</title><style>
+            @page{size:A4 landscape;margin:12mm}body{font-family:Arial,Helvetica,sans-serif;color:#0f172a;font-size:9pt;margin:0}.report-title{font-size:18pt;font-weight:700;color:#1d4ed8;margin:0 0 5px}.section-title{font-size:12pt;font-weight:700;margin:14px 0 6px;color:#0f172a}.text-node,p{margin:3px 0 7px;line-height:1.35}table{width:100%;border-collapse:collapse;table-layout:fixed;margin:4px 0 12px;page-break-inside:auto}tr{page-break-inside:avoid}th,td{border:1px solid #cbd5e1;padding:5px;vertical-align:top;word-break:break-word;white-space:normal}th{background:#e2e8f0;font-weight:700}.columns{display:flex;gap:8px}.columns>div{flex:1}section{page-break-inside:avoid}@media print{.no-print{display:none!important}}
+        </style></head><body><div class="no-print" style="background:#fff7ed;border:1px solid #fdba74;padding:10px;margin-bottom:12px"><b>PDF yedek görünümü:</b> Yazdırma penceresinde hedef olarak “PDF olarak kaydet” seçeneğini kullanın.${reason ? '<br>'+escapeHtml(String(reason.message || reason)) : ''}</div>${contentHtml}<script>window.addEventListener('load',()=>setTimeout(()=>{window.focus();window.print();},350));<\/script></body></html>`;
+        const frame = document.createElement('iframe');
+        frame.setAttribute('aria-hidden','true');
+        frame.style.cssText = 'position:fixed;left:-10000px;top:0;width:1200px;height:900px;border:0;';
+        document.body.appendChild(frame);
+        frame.onload = () => setTimeout(() => frame.remove(), 120000);
+        frame.srcdoc = html;
+        pdfExportToast('Doğrudan PDF indirilemedi. Tarayıcının “PDF olarak kaydet” ekranı açılıyor.', true);
+    }
+
+    function triggerPdfBlobDownload(blob, fileName) {
+        if (!(blob instanceof Blob) || blob.size === 0) throw new Error('PDF dosyası oluşturulamadı veya boş döndü.');
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = fileName || 'Rapor.pdf';
+        link.style.display = 'none';
+        document.body.appendChild(link);
+        link.click();
+        setTimeout(() => { URL.revokeObjectURL(url); link.remove(); }, 1500);
+    }
+
+    function safeDownloadPdf(docDef, fileName) {
+        const targetName = fileName || 'Rapor.pdf';
+        const safeDocDef = normalizePdfNode(docDef || {});
+        pdfExportToast('PDF hazırlanıyor...');
+        if (typeof pdfMake === 'undefined' || !pdfMake || typeof pdfMake.createPdf !== 'function') {
+            openGenericPdfPrintFallback(safeDocDef, targetName, new Error('PDF kütüphanesi yüklenemedi.'));
+            return Promise.resolve(false);
+        }
+        return new Promise(resolve => {
+            let settled = false;
+            const finishSuccess = blob => {
+                if (settled) return;
+                settled = true;
+                clearTimeout(timeoutId);
+                try {
+                    triggerPdfBlobDownload(blob, targetName);
+                    pdfExportToast('PDF indirildi: ' + targetName);
+                    resolve(true);
+                } catch (error) {
+                    console.error('PDF blob indirme hatası:', error);
+                    openGenericPdfPrintFallback(safeDocDef, targetName, error);
+                    resolve(false);
+                }
+            };
+            const finishFailure = error => {
+                if (settled) return;
+                settled = true;
+                clearTimeout(timeoutId);
+                console.error('PDF oluşturma hatası:', error);
+                openGenericPdfPrintFallback(safeDocDef, targetName, error);
+                resolve(false);
+            };
+            const timeoutId = setTimeout(() => finishFailure(new Error('PDF oluşturma işlemi 30 saniye içinde tamamlanamadı.')), 30000);
+            try {
+                const pdfDoc = pdfMake.createPdf(safeDocDef);
+                if (!pdfDoc || typeof pdfDoc.getBlob !== 'function') {
+                    finishFailure(new Error('PDF blob oluşturma işlevine erişilemedi.'));
+                    return;
+                }
+                const maybePromise = pdfDoc.getBlob(finishSuccess);
+                if (maybePromise && typeof maybePromise.then === 'function') maybePromise.then(finishSuccess).catch(finishFailure);
+            } catch (error) {
+                finishFailure(error);
+            }
+        });
     }
 
     function normalizeWorkbookSheetName(name) {
@@ -5932,6 +6776,8 @@
         } else if (activeTab === 'tab-past') {
             let rangeDays = getPastRangeDaysFromSelect();
             ctx.title = 'Geçmiş Görevler / Tarihi Geçmiş Açık Eylemler'; ctx.fileName = 'Gecmis_Gorevler_Detayli.xlsx'; ctx.mode = 'past'; ctx.rows = getPastTasks(getFilteredData(), rangeDays); ctx.viewMode = getTaskViewMode('past'); ctx.viewLabel = getTaskViewLabel('past', ctx.viewMode); ctx.rangeLabel = getPastRangeLabel();
+        } else if (activeTab === 'tab-visits') {
+            ctx.title = 'Ziyaret ve İç Denetim Planı'; ctx.fileName = 'Ziyaret_ve_Ic_Denetim_Plani.xlsx'; ctx.mode = 'visits'; ctx.rows = getVisibleVisits();
         } else if (activeTab === 'tab-list') {
             ctx.title = 'Detaylı CAP Listesi Raporu'; ctx.fileName = 'Detayli_CAP_Listesi_Raporu.xlsx'; ctx.mode = 'list'; ctx.rows = getFilteredData();
         } else if (activeTab === 'tab-quality') {
@@ -5998,94 +6844,76 @@
         downloadReportWorkbook(wb, (ctx && ctx.fileName) || 'Veri_Kalitesi_Merkezi.xlsx');
     }
 
+    function buildDataQualityPdfDetailBlocks(detailRows) {
+        const blocks = [];
+        (detailRows || []).forEach((row, index) => {
+            blocks.push({
+                text: `${index + 1}. PQ ${row['PQ'] || '-'}${row['Adım'] ? ' / Adım ' + row['Adım'] : ''} — ${row['Kategori'] || '-'}`,
+                style: 'issueTitle',
+                pageBreak: index > 0 && index % 12 === 0 ? 'before' : undefined
+            });
+            blocks.push({
+                table: {
+                    widths: [105, '*'],
+                    body: [
+                        [{text:'Önem seviyesi',bold:true,fillColor:'#f1f5f9'}, fullTextForPdf(row['Seviye'] || '-')],
+                        [{text:'Denetim alanı / CE',bold:true,fillColor:'#f1f5f9'}, fullTextForPdf(`${row['Denetim Alanı'] || '-'} / ${row['CE'] || '-'}`)],
+                        [{text:'Sorumlu ofis',bold:true,fillColor:'#f1f5f9'}, fullTextForPdf(row['Sorumlu Ofis'] || '-')],
+                        [{text:'Kontrol edilen alan',bold:true,fillColor:'#f1f5f9'}, fullTextForPdf(row['Kontrol Edilen Alan'] || '-')],
+                        [{text:'Sorun',bold:true,fillColor:'#f1f5f9'}, fullTextForPdf(row['Sorun'] || '-')],
+                        [{text:'Mevcut değer',bold:true,fillColor:'#f1f5f9'}, fullTextForPdf(row['Mevcut Değer'] || '-')],
+                        [{text:'Düzeltme önerisi',bold:true,fillColor:'#f1f5f9'}, fullTextForPdf(row['Düzeltme Önerisi'] || '-')]
+                    ]
+                },
+                layout:'lightHorizontalLines',
+                margin:[0,0,0,8]
+            });
+        });
+        if (!blocks.length) blocks.push({text:'Seçili filtre kapsamında kalite sorunu bulunamadı.',italics:true,color:'#64748b'});
+        return blocks;
+    }
+
     function exportDataQualityPDF(ctx) {
-        const model = buildDataQualityModel((ctx && ctx.rows) || getFilteredData());
-        const visibleIssues = getVisibleDataQualityIssues(model);
-
-        if (!model.scope.pqs.length && !model.issues.length) {
-            alert('Dışa aktarılacak veri kalitesi kaydı bulunamadı.');
-            return;
-        }
-
-        showLoading();
-        setTimeout(() => {
-            try {
-                const summaryRows = buildDataQualitySummaryRows(model);
-                const categoryRows = buildDataQualityCategoryRows(model);
-                const areaRows = buildDataQualityAreaRows(model);
-                const detailRows = buildDataQualityIssueRows(visibleIssues);
-
-                const content = [
-                    { text: 'Veri Kalitesi Merkezi Raporu', style: 'header' },
-                    {
-                        text: `Rapor tarihi: ${formatLongTurkishDate(new Date())} | Veri tarihi: ${getReportDateText()} | Analiz edilen PQ: ${model.scope.pqs.length} | Toplam sorun: ${model.issues.length} | Yerel filtrede: ${visibleIssues.length}`,
-                        style: 'subheader'
-                    },
-                    { text: 'Kalite Göstergeleri', style: 'sectionHeader' },
-                    ...makePdfTableFromObjects(summaryRows, [
-                        { key: 'Metrik', title: 'Metrik' },
-                        { key: 'Değer', title: 'Değer' },
-                        { key: 'Açıklama', title: 'Açıklama' }
-                    ], ['*', 'auto', '2*'], { maxRows: 20 }),
-                    { text: 'Sorun Kategorileri', style: 'sectionHeader' },
-                    ...makePdfTableFromObjects(categoryRows, [
-                        { key: 'Kategori', title: 'Kategori' },
-                        { key: 'Seviye', title: 'Seviye' },
-                        { key: 'Sorun Sayısı', title: 'Sorun' },
-                        { key: 'Etkilenen PQ', title: 'PQ' },
-                        { key: 'Açıklama', title: 'Açıklama' }
-                    ], ['*', 'auto', 'auto', 'auto', '2*'], { maxRows: 50 }),
-                    { text: 'Alan Bazlı Kalite Özeti', style: 'sectionHeader' },
-                    ...makePdfTableFromObjects(areaRows, [
-                        { key: 'Denetim Alanı', title: 'Alan' },
-                        { key: 'PQ Sayısı', title: 'PQ' },
-                        { key: 'Etkilenen PQ', title: 'Etkilenen' },
-                        { key: 'Toplam Sorun', title: 'Sorun' },
-                        { key: 'Kritik/Yüksek', title: 'Kritik/Yüksek' },
-                        { key: 'Sorunsuz PQ %', title: 'Sorunsuz %' }
-                    ], ['*', 'auto', 'auto', 'auto', 'auto', 'auto'], { maxRows: 50 }),
-                    { text: 'Ayrıntılı Kalite Sorunları', style: 'sectionHeader' },
-                    ...makePdfTableFromObjects(detailRows, [
-                        { key: 'Seviye', title: 'Seviye' },
-                        { key: 'Kategori', title: 'Kategori' },
-                        { key: 'PQ', title: 'PQ' },
-                        { key: 'Adım', title: 'Adım' },
-                        { key: 'Denetim Alanı', title: 'Alan' },
-                        { key: 'Kontrol Edilen Alan', title: 'Kontrol' },
-                        { key: 'Sorun', title: 'Sorun' },
-                        { key: 'Mevcut Değer', title: 'Mevcut Değer' },
-                        { key: 'Düzeltme Önerisi', title: 'Düzeltme' }
-                    ], ['auto', 'auto', 'auto', 'auto', 'auto', 'auto', '*', '*', '*'], { maxRows: 100000 })
-                ];
-
-                const docDef = {
-                    pageOrientation: 'landscape',
-                    pageSize: 'A4',
-                    content,
-                    footer: (currentPage, pageCount) => ({
-                        text: currentPage + ' / ' + pageCount,
-                        alignment: 'right',
-                        margin: [0, 0, 25, 0],
-                        fontSize: 8,
-                        color: '#64748b'
-                    }),
-                    styles: {
-                        header: { fontSize: 17, bold: true, color: '#2563eb', margin: [0, 0, 0, 4] },
-                        subheader: { fontSize: 9, color: '#64748b', margin: [0, 0, 0, 12] },
-                        sectionHeader: { fontSize: 12, bold: true, color: '#0f172a', margin: [0, 8, 0, 6] },
-                        th: { bold: true, fontSize: 8, fillColor: '#f1f5f9', margin: [0, 3, 0, 3] }
-                    },
-                    defaultStyle: { font: 'Roboto', fontSize: 7.5 }
-                };
-
-                safeDownloadPdf(docDef, 'Veri_Kalitesi_Merkezi.pdf');
-            } catch (error) {
-                console.error(error);
-                alert('PDF oluşturulurken hata oluştu: ' + (error && error.message ? error.message : error));
-            } finally {
-                hideLoading();
+        try {
+            const model = buildDataQualityModel((ctx && ctx.rows) || getFilteredData());
+            const visibleIssues = getVisibleDataQualityIssues(model);
+            if (!model.scope.pqs.length && !model.issues.length) {
+                alert('Dışa aktarılacak veri kalitesi kaydı bulunamadı.');
+                return;
             }
-        }, 100);
+            const summaryRows = buildDataQualitySummaryRows(model);
+            const categoryRows = buildDataQualityCategoryRows(model);
+            const areaRows = buildDataQualityAreaRows(model);
+            const detailRows = buildDataQualityIssueRows(visibleIssues);
+            const content = [
+                { text: 'Veri Kalitesi Merkezi Raporu', style: 'header' },
+                { text: `Rapor tarihi: ${formatLongTurkishDate(new Date())} | Veri tarihi: ${getReportDateText()} | Analiz edilen PQ: ${model.scope.pqs.length} | Toplam sorun: ${model.issues.length} | Yerel filtrede: ${visibleIssues.length}`, style: 'subheader' },
+                { text: 'Kalite Göstergeleri', style: 'sectionHeader' },
+                ...makePdfTableFromObjects(summaryRows, [
+                    { key:'Metrik', title:'Metrik' }, { key:'Değer', title:'Değer' }, { key:'Açıklama', title:'Açıklama' }
+                ], ['*','auto','2*'], {maxRows:30}),
+                { text:'Sorun Kategorileri', style:'sectionHeader' },
+                ...makePdfTableFromObjects(categoryRows, [
+                    { key:'Kategori', title:'Kategori' }, { key:'Seviye', title:'Seviye' }, { key:'Sorun Sayısı', title:'Sorun' }, { key:'Etkilenen PQ', title:'PQ' }, { key:'Açıklama', title:'Açıklama' }
+                ], ['*','auto','auto','auto','2*'], {maxRows:100}),
+                { text:'Alan Bazlı Kalite Özeti', style:'sectionHeader' },
+                ...makePdfTableFromObjects(areaRows, [
+                    { key:'Denetim Alanı', title:'Alan' }, { key:'PQ Sayısı', title:'PQ' }, { key:'Etkilenen PQ', title:'Etkilenen' }, { key:'Toplam Sorun', title:'Sorun' }, { key:'Kritik/Yüksek', title:'Kritik/Yüksek' }, { key:'Sorunsuz PQ %', title:'Sorunsuz %' }
+                ], ['*','auto','auto','auto','auto','auto'], {maxRows:100}),
+                { text:'Ayrıntılı Kalite Sorunları', style:'sectionHeader' },
+                ...buildDataQualityPdfDetailBlocks(detailRows)
+            ];
+            const docDef = createStandardPdfDefinition(content, {
+                pageOrientation:'landscape', pageSize:'A4',
+                styles:{issueTitle:{fontSize:9.5,bold:true,color:'#991b1b',margin:[0,6,0,3]}},
+                defaultStyle:{font:'Roboto',fontSize:7.8}
+            });
+            return safeDownloadPdf(docDef, 'Veri_Kalitesi_Merkezi.pdf');
+        } catch (error) {
+            console.error('Veri Kalitesi PDF hatası:', error);
+            pdfExportToast('Veri Kalitesi PDF raporu hazırlanamadı: ' + (error && error.message ? error.message : error), true);
+            alert('PDF oluşturulurken hata oluştu: ' + (error && error.message ? error.message : error));
+        }
     }
 
 
@@ -6094,6 +6922,7 @@
         if (ctx.mode === 'trend') { exportTrendExcel(); return; }
         if (ctx.mode === 'strategic') { exportStrategicReportExcel(); return; }
         if (ctx.mode === 'quality') { exportDataQualityExcel(ctx); return; }
+        if (ctx.mode === 'visits') { exportVisitsExcel(ctx); return; }
         if (!ctx.rows || ctx.rows.length === 0) {
             if (!(ctx.mode === 'milestones' && Object.keys(baseEIData).length > 0)) return alert('Dışa aktarılacak veri bulunamadı.');
         }
@@ -6374,6 +7203,7 @@ Mevcut: ${issue.currentValue || 'Boş'}`), fontSize:8},
             if (ctx.mode === 'manager') { exportManagerPDF(); return; }
             if (ctx.mode === 'kanban') { exportKanbanPDF(); return; }
             if (ctx.mode === 'quality') { exportDataQualityPDF(ctx); return; }
+            if (ctx.mode === 'visits') { exportVisitsPDF(ctx); return; }
             if ((!ctx.rows || ctx.rows.length === 0) && !(ctx.mode === 'milestones' && Object.keys(baseEIData).length > 0)) return alert('Dışa aktarılacak veri bulunamadı.');
         } catch(e) {
             console.error(e);
@@ -6419,6 +7249,30 @@ Mevcut: ${issue.currentValue || 'Boş'}`), fontSize:8},
             } catch(e) { console.error(e); alert('PDF oluşturulurken hata oluştu: ' + (e && e.message ? e.message : e)); }
             finally { hideLoading(); }
         }, 100);
+    };
+
+
+    window.exportDataQualityPDF = exportDataQualityPDF;
+    window.exportStrategicReportPDF = exportStrategicReportPDF;
+    window.exportManagerPDF = exportManagerPDF;
+    window.exportKanbanPDF = exportKanbanPDF;
+    window.safeDownloadPdf = safeDownloadPdf;
+    window.runPdfExportAudit = function() {
+        const checks = {
+            pdfMakeLoaded: typeof pdfMake !== 'undefined' && !!pdfMake && typeof pdfMake.createPdf === 'function',
+            dispatcher: typeof window.exportPDF === 'function',
+            dataQuality: typeof exportDataQualityPDF === 'function',
+            visits: typeof exportVisitsPDF === 'function',
+            strategic: typeof exportStrategicReportPDF === 'function',
+            manager: typeof exportManagerPDF === 'function',
+            kanban: typeof exportKanbanPDF === 'function',
+            trend: typeof window.exportTrendPDF === 'function',
+            robustDownloader: typeof safeDownloadPdf === 'function',
+            pdfButtons: document.querySelectorAll('button[onclick*="PDF"],button[onclick*="Pdf"],button[onclick*="pdf"]').length
+        };
+        checks.passed = checks.dispatcher && checks.dataQuality && checks.visits && checks.strategic && checks.manager && checks.kanban && checks.robustDownloader;
+        console.table(checks);
+        return checks;
     };
 
 
