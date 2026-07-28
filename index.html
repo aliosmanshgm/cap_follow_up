@@ -175,6 +175,136 @@
 @media(max-width:1400px){.visit-mgmt-kpis{grid-template-columns:repeat(5,minmax(0,1fr))}.visit-mgmt-toolbar{grid-template-columns:repeat(4,minmax(0,1fr))}.visit-mgmt-main{grid-template-columns:1fr}.visit-mgmt-score-grid{grid-template-columns:1fr 1fr}}
 @media(max-width:800px){.visit-mgmt-header{flex-direction:column}.visit-mgmt-actions{width:100%}.visit-mgmt-actions button{flex:1}.visit-mgmt-toolbar{grid-template-columns:1fr 1fr}.visit-mgmt-kpis{grid-template-columns:1fr 1fr}.visit-mgmt-critical-grid,.visit-mgmt-score-grid{grid-template-columns:1fr}.visit-mgmt-calendar{min-width:760px}.visit-mgmt-panel-body.calendar-scroll{overflow:auto}.visit-mgmt-day{min-height:92px}}
 
+
+
+/* ===== SOL NAVIGASYON V3: MASAUSTU DIKEY + MOBIL YATAY KAYDIRMA ===== */
+@media (min-width:769px){
+  #mainAppContainer{
+    height:100dvh !important;
+    min-height:0 !important;
+    overflow:hidden !important;
+  }
+  .sidebar{
+    display:grid !important;
+    grid-template-rows:auto minmax(0,1fr) auto !important;
+    width:280px !important;
+    height:100dvh !important;
+    max-height:100dvh !important;
+    min-height:0 !important;
+    overflow:hidden !important;
+    box-sizing:border-box !important;
+  }
+  .sidebar > div:first-child{min-width:0;}
+  .sidebar .grouped-nav{
+    display:flex !important;
+    flex-direction:column !important;
+    flex-wrap:nowrap !important;
+    min-height:0 !important;
+    height:100% !important;
+    max-height:100% !important;
+    overflow-y:auto !important;
+    overflow-x:hidden !important;
+    margin:12px 0 0 !important;
+    padding:0 12px 18px !important;
+    box-sizing:border-box !important;
+    overscroll-behavior:contain !important;
+    touch-action:pan-y !important;
+    -webkit-overflow-scrolling:touch !important;
+    scrollbar-gutter:stable both-edges;
+  }
+  .sidebar-footer-action{
+    grid-row:3;
+    position:relative !important;
+    bottom:auto !important;
+    margin:0 !important;
+    flex:none !important;
+    background:var(--card);
+    box-shadow:0 -8px 16px rgba(15,23,42,.035);
+  }
+}
+
+@media (max-width:768px){
+  body{overflow:auto !important;}
+  #mainAppContainer{
+    display:flex !important;
+    flex-direction:column !important;
+    width:100% !important;
+    max-width:100vw !important;
+    height:auto !important;
+    min-height:100dvh !important;
+    overflow:visible !important;
+  }
+  .sidebar{
+    display:flex !important;
+    flex-direction:column !important;
+    width:100% !important;
+    max-width:100vw !important;
+    height:auto !important;
+    max-height:none !important;
+    min-height:0 !important;
+    overflow:hidden !important;
+    box-sizing:border-box !important;
+    border-right:none !important;
+  }
+  .sidebar .grouped-nav{
+    display:flex !important;
+    flex-direction:row !important;
+    flex-wrap:nowrap !important;
+    width:100% !important;
+    max-width:100vw !important;
+    min-width:0 !important;
+    min-height:0 !important;
+    height:auto !important;
+    max-height:none !important;
+    overflow-x:auto !important;
+    overflow-y:hidden !important;
+    margin:12px 0 0 !important;
+    padding:0 12px 12px !important;
+    gap:10px !important;
+    box-sizing:border-box !important;
+    scroll-snap-type:x proximity !important;
+    scroll-padding-inline:12px !important;
+    overscroll-behavior-x:contain !important;
+    overscroll-behavior-y:auto !important;
+    touch-action:pan-x pan-y pinch-zoom !important;
+    -webkit-overflow-scrolling:touch !important;
+    scrollbar-width:thin;
+  }
+  .sidebar .grouped-nav::-webkit-scrollbar{height:8px;width:0;}
+  .sidebar .grouped-nav::-webkit-scrollbar-thumb{border:2px solid var(--card);}
+  .sidebar .nav-group{
+    flex:0 0 min(84vw,320px) !important;
+    width:min(84vw,320px) !important;
+    min-width:min(84vw,320px) !important;
+    max-width:min(84vw,320px) !important;
+    scroll-snap-align:start;
+    overflow:hidden;
+  }
+  .sidebar .nav-group-items{display:flex !important;}
+  .sidebar .nav-group-title{position:sticky;top:0;z-index:1;}
+  .sidebar-footer-action{
+    width:100% !important;
+    box-sizing:border-box !important;
+    margin:0 !important;
+    flex:0 0 auto !important;
+  }
+}
+
+
+/* ZIYARET GUNCEL KAYNAK SENKRONIZASYONU */
+.visit-source-sync-panel{margin:10px 0 0;border:1px solid var(--border);border-left:5px solid var(--primary);border-radius:10px;background:var(--card);padding:10px 12px;font-size:10.5px;line-height:1.5}
+.visit-source-sync-panel.ok{border-left-color:var(--ok)}.visit-source-sync-panel.warn{border-left-color:var(--warn)}.visit-source-sync-panel.danger{border-left-color:var(--danger)}
+.visit-source-sync-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap}.visit-source-sync-title{font-weight:900;color:var(--text)}
+.visit-source-sync-meta{color:var(--muted);font-size:9.5px;margin-top:3px}.visit-source-sync-badges{display:flex;gap:5px;flex-wrap:wrap}
+.visit-source-sync-badge{display:inline-flex;align-items:center;padding:3px 7px;border-radius:999px;border:1px solid var(--border);background:var(--kanban-bg);font-size:9px;font-weight:900}
+.visit-source-sync-badge.changed{color:#b45309;border-color:#f59e0b}.visit-source-sync-badge.removed{color:#b91c1c;border-color:#ef4444}.visit-source-sync-badge.new{color:#0369a1;border-color:#0ea5e9}.visit-source-sync-badge.current{color:#047857;border-color:#10b981}
+.visit-source-sync-detail{margin-top:8px}.visit-source-sync-detail summary{cursor:pointer;font-weight:800;color:var(--primary)}.visit-source-sync-list{margin:7px 0 0;padding-left:18px;color:var(--text)}
+.visit-current-source-context{margin:8px 0;padding:9px 11px;border-radius:9px;border:1px solid var(--border);background:var(--kanban-bg);font-size:10px;line-height:1.5;white-space:normal}
+.visit-current-source-context.changed{border-left:5px solid var(--warn)}.visit-current-source-context.removed{border-left:5px solid var(--danger)}.visit-current-source-context.current{border-left:5px solid var(--ok)}
+.visit-current-source-context table{width:100%;border-collapse:collapse;margin-top:7px}.visit-current-source-context th,.visit-current-source-context td{padding:5px 6px;border-bottom:1px solid var(--border);text-align:left;vertical-align:top;font-size:9.5px;word-break:break-word}.visit-current-source-context th{color:var(--muted)}
+.visit-work-target.source-removed{border-left-color:var(--danger)!important;background:rgba(220,38,38,.06)}
+@media(max-width:768px){.visit-source-sync-head{display:block}.visit-source-sync-badges{margin-top:7px}.visit-current-source-context{overflow-x:auto}.visit-current-source-context table{min-width:520px}}
+
 </style>
 
     <style>
@@ -330,6 +460,31 @@
 }
 </style>
 
+
+<style id="stabilizationPackageStyles">
+.system-connection-badge{background:var(--card)!important;color:var(--muted)!important;border:1px solid var(--border)!important;white-space:nowrap;min-width:126px;justify-content:center}
+.system-connection-badge.ok{color:#047857!important;border-color:#34d399!important;background:rgba(16,185,129,.08)!important}
+.system-connection-badge.warn{color:#b45309!important;border-color:#f59e0b!important;background:rgba(245,158,11,.08)!important}
+.system-connection-badge.error{color:#b91c1c!important;border-color:#ef4444!important;background:rgba(239,68,68,.08)!important}
+.system-connection-badge.checking{color:var(--muted)!important}
+.system-health-content{width:min(980px,calc(100% - 28px));max-height:calc(100dvh - 36px);overflow:auto}
+.system-health-subtitle{font-size:12px;color:var(--muted);margin-top:4px}
+.system-health-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;margin:12px 0}
+.system-health-kpi{border:1px solid var(--border);border-top:4px solid var(--primary);border-radius:9px;padding:10px;background:var(--card)}
+.system-health-kpi.ok{border-top-color:#10b981}.system-health-kpi.warn{border-top-color:#f59e0b}.system-health-kpi.error{border-top-color:#ef4444}
+.system-health-kpi strong{display:block;font-size:20px}.system-health-kpi span{display:block;font-size:10px;color:var(--muted);font-weight:700;margin-top:4px}
+.system-health-actions{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.system-health-checks{display:grid;gap:7px}
+.system-health-row{display:grid;grid-template-columns:26px minmax(150px,.75fr) minmax(260px,1.5fr);gap:8px;align-items:start;border:1px solid var(--border);border-radius:8px;padding:9px;background:var(--card);font-size:11px;line-height:1.45}
+.system-health-row .icon{font-size:15px;text-align:center}.system-health-row b{color:var(--text)}.system-health-row .detail{color:var(--muted);overflow-wrap:anywhere}
+.system-health-row.error{border-left:5px solid #ef4444}.system-health-row.warn{border-left:5px solid #f59e0b}.system-health-row.ok{border-left:5px solid #10b981}
+.system-health-errors{margin-top:12px;border:1px solid var(--border);border-radius:8px;padding:10px}.system-health-errors summary{cursor:pointer;font-weight:800;color:var(--primary)}
+.system-health-error-item{margin-top:8px;border-left:4px solid #ef4444;padding:7px 9px;background:rgba(239,68,68,.06);font-size:10px;white-space:pre-wrap;overflow-wrap:anywhere}
+.app-runtime-toast{position:fixed;right:18px;bottom:18px;z-index:30050;max-width:440px;padding:11px 14px;border-radius:9px;color:#fff;font:600 12px Arial,sans-serif;box-shadow:0 10px 28px rgba(15,23,42,.28);transition:opacity .2s;background:#1d4ed8}
+.app-runtime-toast.error{background:#b91c1c}.app-runtime-toast.warn{background:#b45309}.app-runtime-toast.ok{background:#047857}
+@media(max-width:900px){.system-health-summary{grid-template-columns:1fr 1fr}.system-health-row{grid-template-columns:24px 1fr}.system-health-row .detail{grid-column:2}}
+@media(max-width:768px){.system-connection-badge{min-width:auto;flex:1}.system-health-content{width:calc(100% - 16px);max-height:calc(100dvh - 16px);margin:8px auto}.system-health-summary{grid-template-columns:1fr 1fr}}
+</style>
 </head>
 <body>
 
@@ -428,10 +583,12 @@
                 <button onclick="toggleFiltersPanel()" class="btn-outline header-primary-action">🔎 Filtreler</button>
                 <button type="button" onclick="exportPDF()" style="background:#dc2626;">📄 PDF</button>
                 <button onclick="exportExcel()" style="background:#059669;">📊 Excel</button>
+                <button type="button" id="systemConnectionBadge" class="system-connection-badge checking" onclick="openSystemHealthModal()" title="Sistem bağlantı ve kayıt durumunu görüntüle">⚪ Kontrol ediliyor</button>
                 <div class="more-actions-wrap">
                     <button class="btn-outline" onclick="toggleMoreActions(event)">⚙️ Diğer <span style="font-size:10px;">▼</span></button>
                     <div id="moreActionsMenu" class="more-actions-menu">
                         <button onclick="openDataManagement(); closeMoreActions();">📂 Veri Yönetimi</button>
+                        <button type="button" onclick="openSystemHealthModal(); closeMoreActions();">🩺 Sistem Kontrolü</button>
                         <button onclick="archiveCurrentState(); closeMoreActions();">💾 Anlık Arşivle</button>
                         <button onclick="toggleLang(); closeMoreActions();">🌐 TR/EN</button>
                         <button onclick="document.body.classList.toggle('dark-mode'); closeMoreActions();">🌓 Tema</button>
@@ -1476,10 +1633,11 @@
                 <div class="visit-scope-header">
                     <div>
                         <h3>🗂️ Ziyaret Kapsamı ve Hazırlık</h3>
-                        <p>Planlanan ziyareti seçin; ziyaret kapsamındaki PQ ve CAP adımlarını belirleyin, ziyaret öncesi soruları ve kanıt taleplerini kaydedin. Seçim anındaki CAP metni, tarih, sorumlu ofis ve durum bilgileri ziyaret kaydında anlık görüntü olarak saklanır.</p>
+                        <p>Planlanan ziyareti seçin; ziyaret kapsamındaki PQ ve CAP adımlarını belirleyin, ziyaret öncesi soruları ve kanıt taleplerini kaydedin. Çalışma ekranlarında en güncel Word/CAP verisi esas alınır; önceki anlık görüntüler değişiklik geçmişi olarak korunur.</p>
                     </div>
                     <div class="visit-scope-actions">
                         <button type="button" class="btn-outline" onclick="renderVisitScopeModule(true)">🔄 Yenile</button>
+                        <button type="button" id="visitScopeSyncButton" class="btn-outline" onclick="syncVisitScopeWithCurrentSource()">🔁 Güncel Kaynakla Senkronize Et</button>
                         <button type="button" class="btn-outline" onclick="exportVisitScopePDF()">📄 Çalışma Kâğıdı PDF</button>
                         <button type="button" class="btn-outline" onclick="exportVisitScopeExcel()">📊 Çalışma Kâğıdı Excel</button>
                     </div>
@@ -1491,6 +1649,7 @@
                     <button type="button" onclick="openVisitForm()">➕ Yeni Ziyaret</button>
                 </div>
                 <div id="visitScopeSyncNote" class="visit-sync-note">Kapsam çalışması için bir ziyaret seçiniz.</div>
+                <div id="visitScopeSourceSyncPanel" class="visit-source-sync-panel" style="display:none"></div>
 
                 <div class="visit-scope-kpis">
                     <div class="visit-scope-kpi"><strong id="visitScopeKpiEligible">0</strong><span>Uygun PQ</span></div>
@@ -1576,10 +1735,11 @@
                 <div class="visit-work-header">
                     <div>
                         <h3>📝 Ziyaret Çalışma Alanı</h3>
-                        <p>Ziyaret sırasında ziyaret geneli, PQ veya CAP adımı seviyesinde saha notu kaydedin; incelenen kanıtı değerlendirin, takip ihtiyacını ve danışılacak makamı belirleyin. Kayıtlar ziyaret kapsamındaki anlık PQ/CAP görüntüleriyle ilişkilendirilir.</p>
+                        <p>Ziyaret sırasında ziyaret geneli, PQ veya CAP adımı seviyesinde saha notu kaydedin; incelenen kanıtı değerlendirin, takip ihtiyacını ve danışılacak makamı belirleyin. Ekranda en güncel Word/CAP verisi gösterilir; notun oluşturulduğu andaki kaynak görüntüsü ayrıca denetim izi olarak saklanır.</p>
                     </div>
                     <div class="visit-work-actions">
                         <button type="button" class="btn-outline" onclick="renderVisitWorkspaceModule(true)">🔄 Yenile</button>
+                        <button type="button" class="btn-outline" onclick="syncActiveVisitWorkspaceSource()">🔁 Güncel Kaynakla Senkronize Et</button>
                         <button type="button" class="btn-outline" onclick="exportVisitWorkspacePDF()">📄 Saha Kayıtları PDF</button>
                         <button type="button" class="btn-outline" onclick="exportVisitWorkspaceExcel()">📊 Saha Kayıtları Excel</button>
                     </div>
@@ -1591,6 +1751,7 @@
                     <button type="button" onclick="openVisitScopeForVisit(activeVisitWorkspaceId)">🗂️ Kapsam ve Hazırlık</button>
                 </div>
                 <div id="visitWorkspaceSyncNote" class="visit-sync-note">Çalışma alanını kullanmak için bir ziyaret seçiniz.</div>
+                <div id="visitWorkspaceSourceSyncPanel" class="visit-source-sync-panel" style="display:none"></div>
 
                 <div class="visit-work-kpis">
                     <div class="visit-work-kpi info"><strong id="visitWorkKpiTotal">0</strong><span>Saha kaydı</span></div>
@@ -1611,6 +1772,7 @@
                         <div class="visit-work-panel-head"><h4>Saha Notu ve Değerlendirme</h4><span class="smart-scope">Ziyaret / PQ / Step</span></div>
                         <div class="visit-work-content">
                             <div id="visitWorkspaceSelectedTarget" class="visit-work-selected"><b>Seçili hedef:</b> Ziyaret geneli</div>
+                            <div id="visitWorkspaceCurrentSourceContext" class="visit-current-source-context" style="display:none"></div>
                             <div id="visitWorkspacePrepContext" class="visit-work-prep-context" style="display:none"></div>
 
                             <form id="visitWorkspaceForm" class="visit-work-form" onsubmit="saveVisitWorkspaceRecord(event)" oninput="scheduleVisitWorkspaceDraftSave()" onchange="scheduleVisitWorkspaceDraftSave()">
@@ -1791,6 +1953,30 @@
     </main> 
 </div> 
 
+
+<div id="systemHealthModal" class="modal system-health-modal" onclick="if(event.target===this) closeSystemHealthModal()">
+    <div class="modal-content system-health-content">
+        <div class="modal-header">
+            <div>
+                <h3 style="margin:0;color:var(--primary);">🩺 Sistem Kontrolü</h3>
+                <div id="systemHealthSubtitle" class="system-health-subtitle">Bağlantı, bağımlılık, veri ve arayüz kontrolleri</div>
+            </div>
+            <button type="button" class="btn-outline" onclick="closeSystemHealthModal()">✖</button>
+        </div>
+        <div id="systemHealthSummary" class="system-health-summary"></div>
+        <div class="system-health-actions">
+            <button type="button" onclick="renderSystemHealthModal()">🔄 Kontrolü Yenile</button>
+            <button type="button" class="btn-outline" onclick="downloadSystemDiagnosticReport()">⬇️ Tanılama Raporu</button>
+            <button type="button" class="btn-outline" onclick="flushPendingSystemSave(true)">💾 Bekleyen Kaydı Gönder</button>
+        </div>
+        <div id="systemHealthChecks" class="system-health-checks"></div>
+        <details class="system-health-errors">
+            <summary>Son çalışma zamanı hataları</summary>
+            <div id="systemHealthErrorList"></div>
+        </details>
+    </div>
+</div>
+
 <div id="gapModal" class="modal">
     <div class="modal-content">
         <div class="modal-header">
@@ -1901,9 +2087,34 @@
         });
     }
 
+    function keepNavGroupVisible(group) {
+        const nav = group && group.closest ? group.closest('.grouped-nav') : null;
+        if (!nav || !group) return;
+        requestAnimationFrame(() => {
+            if (window.innerWidth <= 768) {
+                const left = group.offsetLeft - 12;
+                const right = left + group.offsetWidth;
+                const viewLeft = nav.scrollLeft;
+                const viewRight = viewLeft + nav.clientWidth;
+                if (left < viewLeft || right > viewRight) {
+                    nav.scrollTo({ left: Math.max(0, left), behavior: 'smooth' });
+                }
+            } else {
+                const top = group.offsetTop;
+                const bottom = top + group.offsetHeight;
+                const viewTop = nav.scrollTop;
+                const viewBottom = viewTop + nav.clientHeight;
+                if (top < viewTop) nav.scrollTo({ top: Math.max(0, top - 8), behavior: 'smooth' });
+                else if (bottom > viewBottom) nav.scrollTo({ top: Math.max(0, bottom - nav.clientHeight + 8), behavior: 'smooth' });
+            }
+        });
+    }
     function toggleNavGroup(button) {
         const group = button && button.closest ? button.closest('.nav-group') : null;
-        if (group) group.classList.toggle('open');
+        if (group) {
+            group.classList.toggle('open');
+            keepNavGroupVisible(group);
+        }
     }
     function initSidebarWheelScroll() {
         const sidebar = document.querySelector('.sidebar');
@@ -1911,18 +2122,30 @@
         if (!sidebar || !nav || nav.dataset.wheelScrollBound === '1') return;
         nav.dataset.wheelScrollBound = '1';
 
+        const nestedSelector = '.file-list-container,.checkbox-list,.visit-check-grid,.kanban-cards,.right-panel,.modal-content,.smart-list,.priority-list';
         const handleSidebarWheel = function(event) {
-            if (window.innerWidth <= 768) return;
             const nestedScroller = event.target && event.target.closest
-                ? event.target.closest('.file-list-container,.checkbox-list,.visit-check-grid,.kanban-cards,.right-panel,.modal-content')
+                ? event.target.closest(nestedSelector)
                 : null;
             if (nestedScroller && nestedScroller !== nav) return;
 
-            const maxScroll = Math.max(0, nav.scrollHeight - nav.clientHeight);
-            if (maxScroll <= 0) return;
+            if (window.innerWidth <= 768) {
+                const maxHorizontal = Math.max(0, nav.scrollWidth - nav.clientWidth);
+                if (maxHorizontal <= 0) return;
+                const delta = Math.abs(event.deltaX) > Math.abs(event.deltaY) ? event.deltaX : event.deltaY;
+                const before = nav.scrollLeft;
+                nav.scrollLeft = Math.max(0, Math.min(maxHorizontal, before + delta));
+                if (nav.scrollLeft !== before) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+                return;
+            }
 
+            const maxVertical = Math.max(0, nav.scrollHeight - nav.clientHeight);
+            if (maxVertical <= 0) return;
             const before = nav.scrollTop;
-            nav.scrollTop = Math.max(0, Math.min(maxScroll, before + event.deltaY));
+            nav.scrollTop = Math.max(0, Math.min(maxVertical, before + event.deltaY));
             if (nav.scrollTop !== before) {
                 event.preventDefault();
                 event.stopPropagation();
@@ -1931,13 +2154,35 @@
 
         nav.addEventListener('wheel', handleSidebarWheel, { passive:false });
         sidebar.addEventListener('wheel', function(event) {
-            if (event.target === sidebar) handleSidebarWheel(event);
+            if (event.target === sidebar || (event.target && !event.target.closest('.grouped-nav'))) {
+                handleSidebarWheel(event);
+            }
         }, { passive:false });
+
+        let pointerStartX = 0;
+        let pointerStartScroll = 0;
+        let pointerDragging = false;
+        nav.addEventListener('pointerdown', function(event) {
+            if (window.innerWidth > 768 || event.pointerType === 'mouse') return;
+            pointerStartX = event.clientX;
+            pointerStartScroll = nav.scrollLeft;
+            pointerDragging = true;
+        }, { passive:true });
+        nav.addEventListener('pointermove', function(event) {
+            if (!pointerDragging || window.innerWidth > 768) return;
+            nav.scrollLeft = pointerStartScroll - (event.clientX - pointerStartX);
+        }, { passive:true });
+        const stopPointerDrag = () => { pointerDragging = false; };
+        nav.addEventListener('pointerup', stopPointerDrag, { passive:true });
+        nav.addEventListener('pointercancel', stopPointerDrag, { passive:true });
 
         window.addEventListener('resize', function() {
             if (window.innerWidth > 768) {
-                const maxScroll = Math.max(0, nav.scrollHeight - nav.clientHeight);
-                if (nav.scrollTop > maxScroll) nav.scrollTop = maxScroll;
+                const maxVertical = Math.max(0, nav.scrollHeight - nav.clientHeight);
+                if (nav.scrollTop > maxVertical) nav.scrollTop = maxVertical;
+            } else {
+                const maxHorizontal = Math.max(0, nav.scrollWidth - nav.clientWidth);
+                if (nav.scrollLeft > maxHorizontal) nav.scrollLeft = maxHorizontal;
             }
         }, { passive:true });
     }
@@ -1963,34 +2208,336 @@
         if (!wrap) closeMoreActions();
     });
 
-    function switchTab(tabId) { 
-        document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active')); document.querySelectorAll('.tab-btn').forEach(t => { t.classList.remove('active'); t.style.color = "var(--muted)"; }); 
-        document.getElementById('tab-' + tabId).classList.add('active'); let btn = document.getElementById('btn-tab-' + tabId); btn.classList.add('active'); const parentGroup = btn.closest('.nav-group'); if(parentGroup) parentGroup.classList.add('open'); 
-        if(tabId === 'report' || tabId === 'trend' || tabId === 'kanban' || tabId === 'strategic' || tabId === 'smart' || tabId === 'quality' || tabId === 'visits' || tabId === 'visit-scope' || tabId === 'visit-workspace' || tabId === 'visit-followup' || tabId === 'visit-consultation' || tabId === 'visit-reports' || tabId === 'visit-management' || tabId === 'visit-analysis' || tabId === 'visit-audit') { btn.style.color = "var(--primary)"; }
-        if(tabId === 'past' || tabId === 'empty-caps') { btn.style.color = "var(--danger)"; }
-        if(tabId === 'icao-closed') { btn.style.color = "#ca8a04"; }
-        if(tabId === 'report') updateReportPreview();
-        if(tabId === 'strategic') renderStrategicReportPreview();
-        if(tabId === 'smart') updateSmartManagementPanel(getFilteredData(), window.currentAnalyticsModel || null);
-        if(tabId === 'quality') updateDataQualityCenter(getFilteredData());
-        if(tabId === 'visits') renderVisitModule();
-        if(tabId === 'visit-scope') renderVisitScopeModule();
-        if(tabId === 'visit-workspace') renderVisitWorkspaceModule();
-        if(tabId === 'visit-followup') renderVisitFollowUpModule();
-        if(tabId === 'visit-consultation') renderVisitConsultationModule();
-        if(tabId === 'visit-reports') renderVisitReportsModule();
-        if(tabId === 'visit-management') renderVisitManagementDashboard();
-        if(tabId === 'visit-analysis') renderVisitAnalysisModule();
-        if(tabId === 'visit-audit') renderVisitAuditTrail();
-        document.getElementById('rightFiltersPanel').classList.remove('open');
-        if(tabId === 'dashboard') { if(charts.s) charts.s.resize(); if(charts.d) charts.d.resize(); if(charts.o) charts.o.resize(); if(charts.ei) charts.ei.resize(); } 
-        if(tabId === 'trend') { if(charts.histTrend) charts.histTrend.resize(); }
+    function switchTab(tabId) {
+        const target = document.getElementById('tab-' + tabId);
+        const btn = document.getElementById('btn-tab-' + tabId);
+        if (!target || !btn) {
+            const error = new Error(`Menü-sekme bağlantısı bulunamadı: ${tabId}`);
+            recordRuntimeIssue('navigation', error.message, { tabId });
+            showAppRuntimeToast('İstenen ekran açılamadı. Sistem Kontrolü ekranını inceleyiniz.', 'error');
+            return false;
+        }
+        try {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(t => { t.classList.remove('active'); t.style.color = "var(--muted)"; });
+            target.classList.add('active');
+            btn.classList.add('active');
+            const parentGroup = btn.closest('.nav-group');
+            if(parentGroup) { parentGroup.classList.add('open'); keepNavGroupVisible(parentGroup); }
+            if(tabId === 'report' || tabId === 'trend' || tabId === 'kanban' || tabId === 'strategic' || tabId === 'smart' || tabId === 'quality' || tabId === 'visits' || tabId === 'visit-scope' || tabId === 'visit-workspace' || tabId === 'visit-followup' || tabId === 'visit-consultation' || tabId === 'visit-reports' || tabId === 'visit-management' || tabId === 'visit-analysis' || tabId === 'visit-audit') { btn.style.color = "var(--primary)"; }
+            if(tabId === 'past' || tabId === 'empty-caps') { btn.style.color = "var(--danger)"; }
+            if(tabId === 'icao-closed') { btn.style.color = "#ca8a04"; }
+            if(tabId === 'report') updateReportPreview();
+            if(tabId === 'strategic') renderStrategicReportPreview();
+            if(tabId === 'smart') updateSmartManagementPanel(getFilteredData(), window.currentAnalyticsModel || null);
+            if(tabId === 'quality') updateDataQualityCenter(getFilteredData());
+            if(tabId === 'visits') renderVisitModule();
+            if(tabId === 'visit-scope') renderVisitScopeModule();
+            if(tabId === 'visit-workspace') renderVisitWorkspaceModule();
+            if(tabId === 'visit-followup') renderVisitFollowUpModule();
+            if(tabId === 'visit-consultation') renderVisitConsultationModule();
+            if(tabId === 'visit-reports') renderVisitReportsModule();
+            if(tabId === 'visit-management') renderVisitManagementDashboard();
+            if(tabId === 'visit-analysis') renderVisitAnalysisModule();
+            if(tabId === 'visit-audit') renderVisitAuditTrail();
+            const filterPanel = document.getElementById('rightFiltersPanel');
+            if (filterPanel) filterPanel.classList.remove('open');
+            if(tabId === 'dashboard') { if(charts.s) charts.s.resize(); if(charts.d) charts.d.resize(); if(charts.o) charts.o.resize(); if(charts.ei) charts.ei.resize(); }
+            if(tabId === 'trend') { if(charts.histTrend) charts.histTrend.resize(); }
+            return true;
+        } catch (error) {
+            recordRuntimeIssue('navigation', error.message || String(error), { tabId, stack:error.stack || '' });
+            showAppRuntimeToast('Ekran hazırlanırken hata oluştu. Sistem Kontrolü kayıt altına aldı.', 'error');
+            console.error('Sekme geçişi hatası:', tabId, error);
+            return false;
+        }
     }
+
+    // ================================================================
+    // STABILIZASYON PAKETI 1
+    // ================================================================
+    const STABILIZATION_VERSION = '1.0.0';
+    const stabilizationState = {
+        firebaseConnected: null,
+        connectionListenerStarted: false,
+        runtimeIssues: [],
+        initialized: false,
+        lastHealthSnapshot: null
+    };
+
+    function showAppRuntimeToast(message, type = 'info') {
+        let toast = document.getElementById('appRuntimeToast');
+        if (!toast) {
+            toast = document.createElement('div');
+            toast.id = 'appRuntimeToast';
+            toast.className = 'app-runtime-toast';
+            document.body.appendChild(toast);
+        }
+        toast.className = 'app-runtime-toast' + (type && type !== 'info' ? ' ' + type : '');
+        toast.textContent = message;
+        toast.style.opacity = '1';
+        clearTimeout(toast._hideTimer);
+        toast._hideTimer = setTimeout(() => { toast.style.opacity = '0'; }, type === 'error' ? 7000 : 3500);
+    }
+
+    function sanitizeDiagnosticValue(value) {
+        if (value === undefined) return '[undefined]';
+        if (value === null) return null;
+        if (value instanceof Error) return { name:value.name, message:value.message, stack:value.stack || '' };
+        if (typeof value === 'string') return value.slice(0, 4000);
+        try { return JSON.parse(JSON.stringify(value)); } catch (_) { return String(value).slice(0, 4000); }
+    }
+
+    function recordRuntimeIssue(source, message, detail = {}) {
+        const item = {
+            at: new Date().toISOString(),
+            source: source || 'runtime',
+            message: String(message || 'Bilinmeyen hata').slice(0, 1500),
+            detail: sanitizeDiagnosticValue(detail)
+        };
+        stabilizationState.runtimeIssues.unshift(item);
+        stabilizationState.runtimeIssues = stabilizationState.runtimeIssues.slice(0, 30);
+        try { sessionStorage.setItem('usoapRuntimeIssues', JSON.stringify(stabilizationState.runtimeIssues)); } catch (_) {}
+        return item;
+    }
+
+    function restoreRuntimeIssues() {
+        try {
+            const rows = JSON.parse(sessionStorage.getItem('usoapRuntimeIssues') || '[]');
+            if (Array.isArray(rows)) stabilizationState.runtimeIssues = rows.slice(0, 30);
+        } catch (_) {}
+    }
+
+    function updateSystemConnectionBadge() {
+        const badge = document.getElementById('systemConnectionBadge');
+        if (!badge) return;
+        let label = '⚪ Kontrol ediliyor', cls = 'checking';
+        if (!navigator.onLine) { label = '🔴 İnternet yok'; cls = 'error'; }
+        else if (!firebase.auth().currentUser) { label = '🟠 Oturum yok'; cls = 'warn'; }
+        else if (systemLastSaveError) { label = '🔴 Kayıt hatası'; cls = 'error'; }
+        else if (systemSaveInFlight || systemSavePending) { label = '🟠 Kaydediliyor'; cls = 'warn'; }
+        else if (stabilizationState.firebaseConnected === true) { label = '🟢 Firebase bağlı'; cls = 'ok'; }
+        else if (stabilizationState.firebaseConnected === false) { label = '🔴 Firebase yok'; cls = 'error'; }
+        badge.className = 'system-connection-badge ' + cls;
+        badge.textContent = label;
+        const last = systemLastSaveAt ? ` Son kayıt: ${systemLastSaveAt.toLocaleTimeString('tr-TR')}.` : '';
+        badge.title = label.replace(/^[^ ]+\s*/, '') + '.' + last;
+    }
+
+    function startFirebaseConnectionMonitor() {
+        if (stabilizationState.connectionListenerStarted || !db || typeof db.ref !== 'function') return;
+        stabilizationState.connectionListenerStarted = true;
+        try {
+            db.ref('.info/connected').on('value', snapshot => {
+                stabilizationState.firebaseConnected = snapshot.val() === true;
+                updateSystemConnectionBadge();
+            }, error => {
+                stabilizationState.firebaseConnected = false;
+                recordRuntimeIssue('firebase-connection', error.message || String(error));
+                updateSystemConnectionBadge();
+            });
+        } catch (error) {
+            stabilizationState.firebaseConnected = false;
+            recordRuntimeIssue('firebase-connection', error.message || String(error));
+            updateSystemConnectionBadge();
+        }
+    }
+
+    function safeDiagnosticCall(fn, fallback) {
+        try { return fn(); } catch (error) { return fallback; }
+    }
+
+    function getDuplicateHtmlIds() {
+        const counts = new Map();
+        document.querySelectorAll('[id]').forEach(el => counts.set(el.id, (counts.get(el.id) || 0) + 1));
+        return Array.from(counts.entries()).filter(([, count]) => count > 1).map(([id, count]) => ({ id, count }));
+    }
+
+    function getMenuIntegrityIssues() {
+        const issues = [];
+        document.querySelectorAll('.tab-btn[id^="btn-tab-"]').forEach(btn => {
+            const tabId = btn.id.replace(/^btn-tab-/, '');
+            if (!document.getElementById('tab-' + tabId)) issues.push(`Hedef ekran yok: ${tabId}`);
+        });
+        document.querySelectorAll('.tab-content[id^="tab-"]').forEach(tab => {
+            const tabId = tab.id.replace(/^tab-/, '');
+            if (!document.getElementById('btn-tab-' + tabId)) issues.push(`Menü düğmesi yok: ${tabId}`);
+        });
+        return issues;
+    }
+
+    function getVisitIntegritySummary() {
+        const visits = safeDiagnosticCall(() => getVisitRecords(), []);
+        const followups = safeDiagnosticCall(() => getAllVisitFollowUpItems(), []);
+        const consultations = safeDiagnosticCall(() => getAllVisitConsultationItems(), []);
+        const visitIds = new Set(visits.map(v => v.id));
+        const orphanFollow = followups.filter(item => !visitIds.has(item.visitId) || !item.source).length;
+        const orphanConsult = consultations.filter(item => !visitIds.has(item.visitId) || !item.source).length;
+        let duplicateFieldworkIds = 0;
+        visits.forEach(visit => {
+            const records = safeDiagnosticCall(() => getVisitFieldworkRecords(visit), []);
+            const seen = new Set();
+            records.forEach(r => { if (r.id && seen.has(r.id)) duplicateFieldworkIds++; else if (r.id) seen.add(r.id); });
+        });
+        return { visits:visits.length, followups:followups.length, consultations:consultations.length, orphanFollow, orphanConsult, duplicateFieldworkIds };
+    }
+
+    function buildSystemHealthSnapshot() {
+        const checks = [];
+        const add = (key, label, level, detail) => checks.push({ key, label, level, detail:String(detail || '') });
+        const authenticated = !!safeDiagnosticCall(() => firebase.auth().currentUser, null);
+        const duplicateIds = getDuplicateHtmlIds();
+        const menuIssues = getMenuIntegrityIssues();
+        const visit = getVisitIntegritySummary();
+        add('browser-online', 'Tarayıcı bağlantısı', navigator.onLine ? 'ok' : 'error', navigator.onLine ? 'İnternet bağlantısı algılandı.' : 'Tarayıcı çevrimdışı görünüyor.');
+        add('firebase-sdk', 'Firebase SDK', (typeof firebase !== 'undefined' && !!db) ? 'ok' : 'error', (typeof firebase !== 'undefined' && !!db) ? 'SDK ve veritabanı nesnesi hazır.' : 'Firebase SDK yüklenemedi.');
+        add('firebase-auth', 'Firebase oturumu', authenticated ? 'ok' : 'warn', authenticated ? (firebase.auth().currentUser.email || firebase.auth().currentUser.uid) : 'Yetkili kullanıcı oturumu bulunmuyor.');
+        add('firebase-connection', 'Firebase gerçek zamanlı bağlantı', stabilizationState.firebaseConnected === true ? 'ok' : (stabilizationState.firebaseConnected === false ? 'error' : 'warn'), stabilizationState.firebaseConnected === true ? 'Veritabanı bağlantısı aktif.' : stabilizationState.firebaseConnected === false ? 'Veritabanına aktif bağlantı kurulamıyor.' : 'Bağlantı durumu henüz alınmadı.');
+        add('system-save', 'Ana veri kayıt kuyruğu', systemLastSaveError ? 'error' : (systemSavePending || systemSaveInFlight ? 'warn' : 'ok'), systemLastSaveError ? (systemLastSaveError.message || String(systemLastSaveError)) : systemSaveInFlight ? 'Firebase kaydı devam ediyor.' : systemSavePending ? 'Kaydedilmeyi bekleyen değişiklik var.' : (systemLastSaveAt ? `Son kayıt: ${systemLastSaveAt.toLocaleString('tr-TR')}` : 'Bekleyen kayıt yok.'));
+        add('pdf', 'PDF motoru', (typeof pdfMake !== 'undefined' && pdfMake && typeof pdfMake.createPdf === 'function') ? 'ok' : 'warn', (typeof pdfMake !== 'undefined' && pdfMake && typeof pdfMake.createPdf === 'function') ? 'pdfMake hazır.' : 'pdfMake yüklenemedi; yazdırma yedeği kullanılacaktır.');
+        add('excel', 'Excel motoru', (typeof XLSX !== 'undefined' && XLSX && XLSX.utils) ? 'ok' : 'error', (typeof XLSX !== 'undefined' && XLSX && XLSX.utils) ? 'XLSX hazır.' : 'Excel kütüphanesi yüklenemedi.');
+        add('word', 'Word okuma motoru', (typeof JSZip !== 'undefined') ? 'ok' : 'error', (typeof JSZip !== 'undefined') ? 'JSZip hazır.' : 'Word ayrıştırma kütüphanesi yüklenemedi.');
+        add('charts', 'Grafik motoru', (typeof Chart !== 'undefined') ? 'ok' : 'warn', (typeof Chart !== 'undefined') ? 'Chart.js hazır.' : 'Grafik kütüphanesi yüklenemedi.');
+        add('duplicate-ids', 'HTML kimlik bütünlüğü', duplicateIds.length ? 'error' : 'ok', duplicateIds.length ? duplicateIds.map(x => `${x.id} (${x.count})`).join(', ') : 'Yinelenen HTML kimliği bulunmadı.');
+        add('menu-tabs', 'Menü ve ekran bağlantıları', menuIssues.length ? 'error' : 'ok', menuIssues.length ? menuIssues.join(' | ') : 'Bütün menü düğmeleri ilgili ekrana bağlı.');
+        const visitLevel = (visit.orphanFollow || visit.orphanConsult || visit.duplicateFieldworkIds) ? 'warn' : 'ok';
+        add('visit-integrity', 'Ziyaret veri bütünlüğü', visitLevel, `${visit.visits} ziyaret, ${visit.followups} takip, ${visit.consultations} danışma. Kaynaksız takip: ${visit.orphanFollow}; kaynaksız danışma: ${visit.orphanConsult}; mükerrer saha kimliği: ${visit.duplicateFieldworkIds}.`);
+        add('data-volume', 'Ana veri kapsamı', 'ok', `${(rawData || []).length} CAP satırı, ${Object.keys(pqMasterData || {}).length} master PQ, ${visit.visits} ziyaret.`);
+        add('runtime-errors', 'Çalışma zamanı hata kaydı', stabilizationState.runtimeIssues.length ? 'warn' : 'ok', stabilizationState.runtimeIssues.length ? `Bu oturumda ${stabilizationState.runtimeIssues.length} hata/uyarı kaydedildi.` : 'Bu oturumda kaydedilmiş çalışma zamanı hatası yok.');
+        const snapshot = {
+            generatedAt: new Date().toISOString(),
+            stabilizationVersion: STABILIZATION_VERSION,
+            app: { href:location.href, userAgent:navigator.userAgent, online:navigator.onLine },
+            counts: { rawData:(rawData || []).length, pqMaster:Object.keys(pqMasterData || {}).length, ...visit },
+            save: { pending:systemSavePending, inFlight:systemSaveInFlight, lastSaveAt:systemLastSaveAt ? systemLastSaveAt.toISOString() : null, error:systemLastSaveError ? (systemLastSaveError.message || String(systemLastSaveError)) : null },
+            checks,
+            runtimeIssues: stabilizationState.runtimeIssues
+        };
+        stabilizationState.lastHealthSnapshot = snapshot;
+        return snapshot;
+    }
+
+    function renderSystemHealthModal() {
+        const snapshot = buildSystemHealthSnapshot();
+        const summary = document.getElementById('systemHealthSummary');
+        const checks = document.getElementById('systemHealthChecks');
+        const errors = document.getElementById('systemHealthErrorList');
+        const subtitle = document.getElementById('systemHealthSubtitle');
+        if (subtitle) subtitle.textContent = `Stabilizasyon ${STABILIZATION_VERSION} · ${new Date(snapshot.generatedAt).toLocaleString('tr-TR')}`;
+        const ok = snapshot.checks.filter(x => x.level === 'ok').length;
+        const warn = snapshot.checks.filter(x => x.level === 'warn').length;
+        const error = snapshot.checks.filter(x => x.level === 'error').length;
+        if (summary) summary.innerHTML = [
+            ['ok', ok, 'Başarılı kontrol'],
+            ['warn', warn, 'Uyarı'],
+            ['error', error, 'Hata'],
+            [error ? 'error' : warn ? 'warn' : 'ok', snapshot.counts.visits || 0, 'Ziyaret kaydı']
+        ].map(([level,value,label]) => `<div class="system-health-kpi ${level}"><strong>${value}</strong><span>${label}</span></div>`).join('');
+        const icons = { ok:'✅', warn:'⚠️', error:'❌' };
+        if (checks) checks.innerHTML = snapshot.checks.map(row => `<div class="system-health-row ${row.level}"><div class="icon">${icons[row.level]}</div><b>${escapeHtml(row.label)}</b><div class="detail">${escapeHtml(row.detail)}</div></div>`).join('');
+        if (errors) errors.innerHTML = snapshot.runtimeIssues.length ? snapshot.runtimeIssues.map(item => `<div class="system-health-error-item"><b>${escapeHtml(new Date(item.at).toLocaleString('tr-TR'))} · ${escapeHtml(item.source)}</b>\n${escapeHtml(item.message)}${item.detail ? '\n' + escapeHtml(JSON.stringify(item.detail, null, 2)) : ''}</div>`).join('') : '<div style="padding:9px;color:var(--muted);font-size:11px;">Kayıtlı çalışma zamanı hatası bulunmuyor.</div>';
+        updateSystemConnectionBadge();
+        return snapshot;
+    }
+
+    function openSystemHealthModal() {
+        const modal = document.getElementById('systemHealthModal');
+        if (!modal) return;
+        renderSystemHealthModal();
+        modal.style.display = 'block';
+    }
+    function closeSystemHealthModal() {
+        const modal = document.getElementById('systemHealthModal');
+        if (modal) modal.style.display = 'none';
+    }
+    function downloadSystemDiagnosticReport() {
+        const snapshot = buildSystemHealthSnapshot();
+        const blob = new Blob([JSON.stringify(snapshot, null, 2)], { type:'application/json;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `USOAP_Sistem_Tanilama_${new Date().toISOString().replace(/[:.]/g,'-')}.json`;
+        document.body.appendChild(a); a.click(); a.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
+
+    function initDuplicateActionGuard() {
+        if (document.documentElement.dataset.actionGuardBound === '1') return;
+        document.documentElement.dataset.actionGuardBound = '1';
+        document.addEventListener('submit', event => {
+            const form = event.target;
+            if (!(form instanceof HTMLFormElement)) return;
+            const now = Date.now();
+            const until = Number(form.dataset.submitLockUntil || 0);
+            if (until > now) {
+                event.preventDefault(); event.stopImmediatePropagation();
+                showAppRuntimeToast('Aynı kayıt işlemi devam ediyor. Lütfen kısa süre bekleyiniz.', 'warn');
+                return;
+            }
+            form.dataset.submitLockUntil = String(now + 1200);
+        }, true);
+        document.addEventListener('click', event => {
+            const btn = event.target && event.target.closest ? event.target.closest('button') : null;
+            if (!btn) return;
+            const action = (btn.getAttribute('onclick') || '') + ' ' + (btn.type || '');
+            if (!/(save|kaydet|archiveCurrentState|import|deleteVisit|deleteVisit|submit)/i.test(action + ' ' + btn.textContent)) return;
+            const now = Date.now();
+            const until = Number(btn.dataset.actionLockUntil || 0);
+            if (until > now) {
+                event.preventDefault(); event.stopImmediatePropagation();
+                showAppRuntimeToast('İşlem zaten başlatıldı. Lütfen kısa süre bekleyiniz.', 'warn');
+                return;
+            }
+            btn.dataset.actionLockUntil = String(now + 900);
+        }, true);
+    }
+
+    function initStabilizationPackage() {
+        if (stabilizationState.initialized) return;
+        stabilizationState.initialized = true;
+        restoreRuntimeIssues();
+        startFirebaseConnectionMonitor();
+        initDuplicateActionGuard();
+        window.addEventListener('online', updateSystemConnectionBadge);
+        window.addEventListener('offline', updateSystemConnectionBadge);
+        window.addEventListener('error', event => {
+            recordRuntimeIssue('window-error', event.message || 'JavaScript hatası', { file:event.filename || '', line:event.lineno || 0, column:event.colno || 0, stack:event.error && event.error.stack || '' });
+            updateSystemConnectionBadge();
+        });
+        window.addEventListener('unhandledrejection', event => {
+            const reason = event.reason instanceof Error ? event.reason : new Error(String(event.reason || 'Promise hatası'));
+            recordRuntimeIssue('unhandled-promise', reason.message, { stack:reason.stack || '' });
+            updateSystemConnectionBadge();
+        });
+        window.addEventListener('beforeunload', event => {
+            if (systemSavePending || systemSaveInFlight) {
+                event.preventDefault();
+                event.returnValue = '';
+            }
+        });
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'hidden' && systemSavePending && !systemSaveInFlight) flushPendingSystemSave(false);
+        });
+        setTimeout(() => {
+            updateSystemConnectionBadge();
+            const snapshot = buildSystemHealthSnapshot();
+            const critical = snapshot.checks.filter(x => x.level === 'error');
+            if (critical.length) showAppRuntimeToast(`Sistem kontrolünde ${critical.length} kritik sorun bulundu.`, 'error');
+        }, 1500);
+    }
+
+    window.openSystemHealthModal = openSystemHealthModal;
+    window.closeSystemHealthModal = closeSystemHealthModal;
+    window.renderSystemHealthModal = renderSystemHealthModal;
+    window.downloadSystemDiagnosticReport = downloadSystemDiagnosticReport;
+    window.runStabilizationSelfCheck = buildSystemHealthSnapshot;
+
 
     // GİRİŞ & YÜKLEME
     window.onload = function() {
         applyLanguage();
         initSidebarWheelScroll();
+        initStabilizationPackage();
         firebase.auth().onAuthStateChanged((user) => {
             if (user) { document.getElementById('loginOverlay').style.display = 'none'; document.getElementById('mainAppContainer').style.display = 'flex'; loadFromLocalStorage(); startVisitFirebaseListener(); startVisitUnitSettingsListener(); } 
             else { stopVisitFirebaseListener(); stopVisitUnitSettingsListener(); document.getElementById('loadingOverlay').style.display = 'none'; document.getElementById('mainAppContainer').style.display = 'none'; document.getElementById('loginOverlay').style.display = 'flex'; }
@@ -2000,16 +2547,96 @@
     window.bypassLogin = function() { initSidebarWheelScroll(); document.getElementById('loginOverlay').style.display = 'none'; document.getElementById('mainAppContainer').style.display = 'flex'; renderFileList(); render(); };
     window.loginUser = function() { let email = document.getElementById('loginEmail').value.trim(); let pass = document.getElementById('loginPass').value; let errEl = document.getElementById('loginError'); if(!email || !pass) { errEl.innerText = "Lütfen e-posta ve şifrenizi giriniz."; errEl.style.display = "block"; return; } errEl.style.display = "none"; document.getElementById('loginOverlay').style.opacity = '0.5'; firebase.auth().signInWithEmailAndPassword(email, pass).then(() => { document.getElementById('loginOverlay').style.opacity = '1'; }).catch(() => { document.getElementById('loginOverlay').style.opacity = '1'; errEl.innerText = "Giriş başarısız."; errEl.style.display = "block"; }); };
 
-    function saveToLocalStorage() {
-        if(!firebase.auth().currentUser) return; 
-        try {
-            let safePqMasterData = []; Object.keys(pqMasterData).forEach(k => safePqMasterData.push({ key: k, data: pqMasterData[k] }));
-            let safeDailyPQNotes = []; Object.keys(dailyPQNotes).forEach(k => safeDailyPQNotes.push({ key: k, note: dailyPQNotes[k] }));
-            let safeKanbanWorkflowStages = []; Object.keys(kanbanWorkflowStages).forEach(k => safeKanbanWorkflowStages.push({ key: k, value: kanbanWorkflowStages[k] }));
-            const dataToSave = { rawData: rawData, pqMasterData: safePqMasterData, baseEIData: baseEIData, loadedFiles: Array.from(loadedFiles), loadedWordAreas: Array.from(window.loadedWordAreas), loadedExcelFile: loadedExcelFile, managementNotes: document.getElementById('managementNotes').value, dailyReviewed: Array.from(dailyReviewedSet), dailyReviewedPQs: Array.from(dailyReviewedPQs), dailyPQNotes: safeDailyPQNotes, kanbanWorkflowStages: safeKanbanWorkflowStages, reportDate: window_loadedReportDate ? window_loadedReportDate.getTime() : null };
-            db.ref('icao_system').set(dataToSave).catch(e => console.error(e));
-        } catch (e) { console.error(e); }
+    let systemSaveTimer = null;
+    let systemSaveInFlight = false;
+    let systemSaveQueued = false;
+    let systemSavePending = false;
+    let systemLastSaveAt = null;
+    let systemLastSaveError = null;
+    let systemSaveSequence = 0;
+
+    function buildSystemSavePayload() {
+        const safePqMasterData = [];
+        Object.keys(pqMasterData || {}).forEach(k => safePqMasterData.push({ key: k, data: pqMasterData[k] }));
+        const safeDailyPQNotes = [];
+        Object.keys(dailyPQNotes || {}).forEach(k => safeDailyPQNotes.push({ key: k, note: dailyPQNotes[k] }));
+        const safeKanbanWorkflowStages = [];
+        Object.keys(kanbanWorkflowStages || {}).forEach(k => safeKanbanWorkflowStages.push({ key: k, value: kanbanWorkflowStages[k] }));
+        return {
+            rawData: rawData || [],
+            pqMasterData: safePqMasterData,
+            baseEIData: baseEIData || {},
+            loadedFiles: Array.from(loadedFiles || []),
+            loadedWordAreas: Array.from(window.loadedWordAreas || []),
+            loadedExcelFile: loadedExcelFile || null,
+            managementNotes: (document.getElementById('managementNotes') || {}).value || '',
+            dailyReviewed: Array.from(dailyReviewedSet || []),
+            dailyReviewedPQs: Array.from(dailyReviewedPQs || []),
+            dailyPQNotes: safeDailyPQNotes,
+            kanbanWorkflowStages: safeKanbanWorkflowStages,
+            reportDate: window_loadedReportDate ? window_loadedReportDate.getTime() : null,
+            stabilization: {
+                schemaVersion: 1,
+                savedAt: new Date().toISOString(),
+                sequence: ++systemSaveSequence
+            }
+        };
     }
+
+    async function flushPendingSystemSave(showFeedback = false) {
+        clearTimeout(systemSaveTimer);
+        systemSaveTimer = null;
+        if (!firebase.auth().currentUser) {
+            systemSavePending = false;
+            updateSystemConnectionBadge();
+            return false;
+        }
+        if (systemSaveInFlight) {
+            systemSaveQueued = true;
+            systemSavePending = true;
+            updateSystemConnectionBadge();
+            return false;
+        }
+        systemSaveInFlight = true;
+        systemSavePending = false;
+        systemLastSaveError = null;
+        updateSystemConnectionBadge();
+        try {
+            const payload = buildSystemSavePayload();
+            await db.ref('icao_system').set(payload);
+            systemLastSaveAt = new Date();
+            if (showFeedback) showAppRuntimeToast('Bekleyen ana veri kaydı Firebase’e gönderildi.', 'ok');
+            return true;
+        } catch (error) {
+            systemLastSaveError = error;
+            systemSavePending = true;
+            recordRuntimeIssue('firebase-save', error.message || String(error), { stack:error.stack || '' });
+            showAppRuntimeToast('Ana veri Firebase’e kaydedilemedi. Bağlantıyı kontrol ediniz.', 'error');
+            console.error('Ana veri kayıt hatası:', error);
+            return false;
+        } finally {
+            systemSaveInFlight = false;
+            updateSystemConnectionBadge();
+            if (systemSaveQueued) {
+                systemSaveQueued = false;
+                systemSavePending = true;
+                systemSaveTimer = setTimeout(() => flushPendingSystemSave(false), 80);
+            }
+        }
+    }
+
+    function saveToLocalStorage(options = {}) {
+        if(!firebase.auth().currentUser) return;
+        systemSavePending = true;
+        systemSaveQueued = systemSaveInFlight || systemSaveQueued;
+        clearTimeout(systemSaveTimer);
+        const immediate = options === true || (options && options.immediate === true);
+        const delay = immediate ? 0 : 650;
+        systemSaveTimer = setTimeout(() => flushPendingSystemSave(false), delay);
+        updateSystemConnectionBadge();
+    }
+    window.flushPendingSystemSave = flushPendingSystemSave;
+    window.saveToLocalStorage = saveToLocalStorage;
 
     function loadFromLocalStorage() {
         showLoading();
@@ -2026,7 +2653,7 @@
                 if (Object.keys(baseEIData).length > 0) { document.getElementById('eiOverallProgressPanel').style.display = "grid"; document.getElementById('eiChartPanel').style.display = "block"; } else { document.getElementById('eiOverallProgressPanel').style.display = "none"; document.getElementById('eiChartPanel').style.display = "none"; }
                 setLoadingMessage('Kayıtlı veri yükleniyor...', 'Filtreler ve ekran bileşenleri hazırlanıyor.'); renderFileList(); await yieldToBrowser(); refreshAllFilters(); await yieldToBrowser(); render();
             } else { window_loadedReportDate = null; updateDynamicSubtitle(); renderFileList(); }
-        }).catch(e => console.error(e)).finally(() => { hideLoading(); });
+        }).catch(e => { console.error(e); recordRuntimeIssue('firebase-load', e.message || String(e), {stack:e.stack || ''}); showAppRuntimeToast('Kayıtlı ana veri yüklenemedi. Sistem Kontrolü ekranını inceleyiniz.', 'error'); }).finally(() => { hideLoading(); updateSystemConnectionBadge(); });
 
         db.ref('icao_archive').on('value', (snapshot) => {
             let rawArchives = snapshot.val() || {};
@@ -10060,5 +10687,196 @@ Mevcut: ${issue.currentValue || 'Boş'}`), fontSize:8},
     };
 
 </script>
+
+
+<script>
+// ZIYARET MODULU - GUNCEL WORD/CAP KAYNAK SENKRONIZASYONU
+(function(){
+    const VISIT_SYNC_PQ_FIELDS=['area','ce','responsible','verificationType','question','finding','reviewEvidence','statusCode','statusLabel'];
+    const VISIT_SYNC_STEP_FIELDS=['action','office','estDate','progress','statusCode','statusLabel','delayDays','sourceFile'];
+    const VISIT_SYNC_FIELD_LABELS={area:'Denetim alanı',ce:'CE',responsible:'PQ sorumlusu',verificationType:'Doğrulama türü',question:'PQ sorusu',finding:'ICAO bulgusu',reviewEvidence:'İncelenecek kanıtlar',statusCode:'Durum kodu',statusLabel:'Durum',action:'CAP metni',office:'Sorumlu ofis',estDate:'Hedef tarih',progress:'İlerleme',delayDays:'Gecikme günü',sourceFile:'Kaynak dosya'};
+
+    function visitSyncNorm(v){return String(v===undefined||v===null?'':v).replace(/\s+/g,' ').trim();}
+    function visitSyncStepNo(v){return visitSyncNorm(v).replace(/^step\s*/i,'').replace(/^adım\s*/i,'');}
+    function visitSourceFileDateValue(name){const m=String(name||'').match(/(20\d{2})(\d{2})(\d{2})/);if(!m)return 0;const d=new Date(Number(m[1]),Number(m[2])-1,Number(m[3]));return isNaN(d)?0:d.getTime();}
+    function getVisitCurrentSourceReportDate(){let max=0;visitArrayValue(Array.from(loadedFiles||[])).forEach(f=>{max=Math.max(max,visitSourceFileDateValue(f));});rawData.forEach(r=>{max=Math.max(max,visitSourceFileDateValue((r||{}).sourceFile));});return max?new Date(max):(window_loadedReportDate instanceof Date?window_loadedReportDate:null);}
+    function visitScopeStableStepKeyFromParts(pq,step,action){const p=visitSyncNorm(pq),s=visitSyncStepNo(step);return s?`${p}||STEP||${s}`:`${p}||ACTION||${visitSyncNorm(action).toLocaleLowerCase('tr').slice(0,180)}`;}
+    window.visitScopeStableStepKey=function(row){row=row||{};return visitScopeStableStepKeyFromParts(row.pq,row.step,row.action||row.capText||row.actionText||'');};
+    window.visitScopeStepKey=function(row){return visitScopeStableStepKey(row);};
+    function visitScopeLegacyKey(row){row=row||{};return makeActionKey(row.pq||'',row.step||'',row.action||row.capText||row.actionText||'');}
+    function visitScopeSourceDateIso(){const d=getVisitCurrentSourceReportDate();return d?d.toISOString():null;}
+
+    function selectLatestVisitRows(){
+        const dated=rawData.map((row,index)=>({row,index,date:visitSourceFileDateValue((row||{}).sourceFile)})).filter(x=>x.row&&x.row.pq);
+        const maxDate=dated.reduce((m,x)=>Math.max(m,x.date||0),0);
+        // Tarihli ICAO raporlarında yalnızca en güncel rapor tarihindeki satırlar çalışma kaynağıdır.
+        // Böylece yeni raporda kaldırılan/kapanan bir Step eski dosyadan yanlışlıkla taşınmaz.
+        const source=maxDate?dated.filter(x=>x.date===maxDate):dated;
+        const map=new Map();
+        source.forEach(({row,index})=>{const key=visitScopeStableStepKey(row);const prev=map.get(key);if(!prev||index>=prev.index)map.set(key,{row,index});});
+        return Array.from(map.values()).map(x=>x.row);
+    }
+
+    window.buildVisitCurrentSourceCandidates=function(visit,projectionDate){
+        if(!visit)return[];
+        const areas=new Set(visitArrayValue(visit.areas).map(a=>visitSyncNorm(a).toUpperCase()));
+        const latestRows=selectLatestVisitRows();
+        const allPqs=new Set([...Object.keys(pqMasterData||{}),...latestRows.map(r=>r&&r.pq).filter(Boolean)]);
+        const candidates=[];
+        allPqs.forEach(pq=>{
+            const master=pqMasterData[pq]||{},area=visitSyncNorm(master.alan||'DİĞER').toUpperCase();
+            if(areas.size&&!areas.has(area))return;
+            const sourceRows=latestRows.filter(r=>r&&String(r.pq)===String(pq));
+            const pqStatus=classifyCommonPQStatus(pq,sourceRows,{projectionDate:projectionDate||null});
+            const actionItems=sourceRows.filter(isUsableCapStep).map(row=>{
+                const cls=classifyCommonActionStatus(row,{projectionDate:projectionDate||null});
+                return {...row,statusCode:cls.code,statusLabel:cls.label,delayDays:cls.delayDays||0,daysLeft:cls.daysLeft,dueByProjection:!!cls.dueByProjection,parsedDate:cls.parsedDate||null,key:visitScopeStableStepKey(row),stableKey:visitScopeStableStepKey(row),legacyKey:visitScopeLegacyKey(row)};
+            }).sort((a,b)=>String(a.step||'').localeCompare(String(b.step||''),'tr',{numeric:true}));
+            candidates.push({pq,master,area,statusCode:pqStatus.code,statusLabel:pqStatus.label,question:visitScopeMasterText(master,['soru','question','pqQuestion']),finding:visitScopeMasterText(master,['bulgu','finding','description']),reviewEvidence:visitScopeMasterText(master,['reviewEvidence','incelenecekKanitlar','evidence']),ce:master.ce||'',responsible:master.sorumlu||'',verificationType:master.tur||'',actionItems,lateSteps:actionItems.filter(a=>a.statusCode===COMMON_ACTION_STATUS.LATE.code).length,dateRiskSteps:actionItems.filter(a=>a.statusCode===COMMON_ACTION_STATUS.DATE_RISK.code).length,openSteps:actionItems.filter(a=>a.statusCode!==COMMON_ACTION_STATUS.COMPLETED.code).length});
+        });
+        return candidates.sort((a,b)=>sortAreas(a.area,b.area)||sortPQs(a.pq,b.pq));
+    };
+
+    window.buildVisitScopeCandidates=function(){
+        const visit=getVisitScopeRecord();
+        const projectionDate=((document.getElementById('visitScopeDueDate')||{}).value)||null;
+        return buildVisitCurrentSourceCandidates(visit,projectionDate);
+    };
+
+    function visitCurrentIndex(visit){
+        const candidates=buildVisitCurrentSourceCandidates(visit,((visit||{}).scope||{}).projectionDate||null),pqMap=new Map(),stepMap=new Map();
+        candidates.forEach(c=>{pqMap.set(String(c.pq),c);c.actionItems.forEach(a=>{const key=visitScopeStableStepKey(a);if(!stepMap.has(key))stepMap.set(key,[]);stepMap.get(key).push({candidate:c,action:a});});});
+        return {candidates,pqMap,stepMap};
+    }
+    function findCurrentVisitStep(stored,index){const key=visitScopeStableStepKey(stored),list=index.stepMap.get(key)||[];if(!list.length)return null;const exact=list.find(x=>visitSyncNorm(x.action.action)===visitSyncNorm(stored.action||stored.capText||stored.actionText));return exact||list[0];}
+    function currentPqSnapshot(item,now){return {pq:item.pq,area:item.area,ce:item.ce,responsible:item.responsible,verificationType:item.verificationType,question:item.question,finding:item.finding,reviewEvidence:item.reviewEvidence,statusCode:item.statusCode,statusLabel:item.statusLabel,sourceReportDate:visitScopeSourceDateIso(),snapshotAt:now};}
+    function currentStepSnapshot(item,action,now){return {key:visitScopeStableStepKey(action),stableKey:visitScopeStableStepKey(action),legacyKey:visitScopeLegacyKey(action),pq:item.pq,step:action.step,action:action.action,office:action.office,estDate:action.estDate,progress:action.progress,statusCode:action.statusCode,statusLabel:action.statusLabel,delayDays:action.delayDays||0,sourceFile:action.sourceFile||'',sourceReportDate:visitScopeSourceDateIso(),snapshotAt:now};}
+    function visitSnapshotChanges(oldObj,newObj,fields){return fields.filter(k=>visitSyncNorm((oldObj||{})[k])!==visitSyncNorm((newObj||{})[k])).map(k=>({field:k,label:VISIT_SYNC_FIELD_LABELS[k]||k,before:(oldObj||{})[k],after:(newObj||{})[k]}));}
+    function compactVisitSnapshot(obj,fields){const out={};['pq','step','key','stableKey','sourceReportDate','snapshotAt'].concat(fields).forEach(k=>{if(obj&&obj[k]!==undefined)out[k]=obj[k];});return out;}
+    function mergeVisitSourceSnapshot(existing,current,fields,now){
+        const changes=visitSnapshotChanges(existing,current,fields),revisions=visitArrayValue((existing||{}).revisions).slice(-19);
+        if(changes.length)revisions.push({capturedAt:now,sourceReportDate:(existing||{}).sourceReportDate||null,snapshot:compactVisitSnapshot(existing,fields),changes:changes.map(c=>c.field)});
+        return {...existing,...current,revisions,lastSyncedAt:now,sourceState:'current'};
+    }
+    function resolveVisitPqCurrent(stored,index){
+        const current=index.pqMap.get(String((stored||{}).pq||''));
+        if(!rawData.length)return {...stored,sourceState:'unavailable',sourceChanges:[]};
+        if(!current)return {...stored,sourceState:'removed',sourceChanges:[],sourceStateLabel:'Güncel kaynakta bulunamadı'};
+        const snap=currentPqSnapshot(current,new Date().toISOString()),changes=visitSnapshotChanges(stored,snap,VISIT_SYNC_PQ_FIELDS);
+        return {...stored,...snap,storedSnapshot:{...stored,revisions:undefined},sourceState:changes.length?'changed':'current',sourceChanges:changes,sourceStateLabel:changes.length?'Güncel Word verisi farklı':'Güncel kaynakla uyumlu'};
+    }
+    function resolveVisitStepCurrent(stored,index){
+        if(!rawData.length)return {...stored,key:visitScopeStableStepKey(stored),stableKey:visitScopeStableStepKey(stored),sourceState:'unavailable',sourceChanges:[]};
+        const found=findCurrentVisitStep(stored,index);
+        if(!found)return {...stored,key:visitScopeStableStepKey(stored),stableKey:visitScopeStableStepKey(stored),sourceState:'removed',sourceChanges:[],sourceStateLabel:'Güncel kaynakta bulunamadı'};
+        const snap=currentStepSnapshot(found.candidate,found.action,new Date().toISOString()),changes=visitSnapshotChanges(stored,snap,VISIT_SYNC_STEP_FIELDS);
+        return {...stored,...snap,storedSnapshot:{...stored,revisions:undefined},sourceState:changes.length?'changed':'current',sourceChanges:changes,sourceStateLabel:changes.length?'Güncel Word verisi farklı':'Güncel kaynakla uyumlu'};
+    }
+    window.getVisitScopeWorkingPqs=function(visit){const index=visitCurrentIndex(visit);return getVisitScopeStoredPqs(visit).map(p=>resolveVisitPqCurrent(p,index));};
+    window.getVisitScopeWorkingSteps=function(visit){const index=visitCurrentIndex(visit);return getVisitScopeStoredSteps(visit).map(s=>resolveVisitStepCurrent(s,index));};
+
+    window.buildVisitScopeSourceSyncAnalysis=function(visit){
+        if(!visit)return null;const index=visitCurrentIndex(visit),pqs=getVisitScopeStoredPqs(visit).map(p=>resolveVisitPqCurrent(p,index)),steps=getVisitScopeStoredSteps(visit).map(s=>resolveVisitStepCurrent(s,index));
+        const selectedPqs=new Set(pqs.map(p=>String(p.pq||''))),storedStepKeys=new Set(steps.map(s=>visitScopeStableStepKey(s)));
+        const newSteps=index.candidates.filter(c=>selectedPqs.has(String(c.pq))).flatMap(c=>c.actionItems.map(a=>({pq:c.pq,step:a.step,action:a.action,key:visitScopeStableStepKey(a)}))).filter(s=>!storedStepKeys.has(s.key));
+        return {visit,pqs,steps,newSteps,changedPqs:pqs.filter(x=>x.sourceState==='changed'),changedSteps:steps.filter(x=>x.sourceState==='changed'),removedPqs:pqs.filter(x=>x.sourceState==='removed'),removedSteps:steps.filter(x=>x.sourceState==='removed'),currentPqs:pqs.filter(x=>x.sourceState==='current'),currentSteps:steps.filter(x=>x.sourceState==='current'),sourceAvailable:rawData.length>0,sourceReportDate:visitScopeSourceDateIso()};
+    };
+
+    function visitSyncAnalysisHtml(analysis,compact){
+        if(!analysis)return'';
+        if(!analysis.sourceAvailable)return '<div class="visit-source-sync-title">Güncel Word/CAP kaynağı bulunamadı.</div><div class="visit-source-sync-meta">Önce güncel Word belgesini yükleyiniz. Mevcut ziyaret kayıtları ve önceki anlık görüntüler korunmaktadır.</div>';
+        const changed=analysis.changedPqs.length+analysis.changedSteps.length,removed=analysis.removedPqs.length+analysis.removedSteps.length,newCount=analysis.newSteps.length,current=analysis.currentPqs.length+analysis.currentSteps.length;
+        const issues=[...analysis.changedPqs.map(x=>`PQ ${x.pq}: ${x.sourceChanges.map(c=>c.label).join(', ')}`),...analysis.changedSteps.map(x=>`PQ ${x.pq} / Step ${x.step}: ${x.sourceChanges.map(c=>c.label).join(', ')}`),...analysis.removedPqs.map(x=>`PQ ${x.pq}: güncel kaynakta bulunamadı`),...analysis.removedSteps.map(x=>`PQ ${x.pq} / Step ${x.step}: güncel kaynakta bulunamadı`),...analysis.newSteps.map(x=>`PQ ${x.pq} / Step ${x.step}: kapsamda olmayan yeni adım`)];
+        return `<div class="visit-source-sync-head"><div><div class="visit-source-sync-title">Güncel Word/CAP kaynak kontrolü</div><div class="visit-source-sync-meta">Kaynak tarihi: ${escapeHtml(analysis.sourceReportDate?formatVisitDate(analysis.sourceReportDate):'-')} · Çalışma ekranı güncel veriyi otomatik kullanır. “Senkronize Et” işlemi yeni görüntüyü Firebase'e kaydeder, önceki görüntüyü geçmişte korur.</div></div><div class="visit-source-sync-badges"><span class="visit-source-sync-badge current">${current} uyumlu</span><span class="visit-source-sync-badge changed">${changed} değişti</span><span class="visit-source-sync-badge removed">${removed} kaynakta yok</span><span class="visit-source-sync-badge new">${newCount} yeni adım</span></div></div>${!compact&&issues.length?`<details class="visit-source-sync-detail"><summary>Değişiklik ayrıntıları (${issues.length})</summary><ul class="visit-source-sync-list">${issues.slice(0,60).map(x=>`<li>${escapeHtml(x)}</li>`).join('')}</ul></details>`:''}`;
+    }
+    window.renderVisitScopeSourceSyncStatus=function(visit){const el=document.getElementById('visitScopeSourceSyncPanel');if(!el)return;if(!visit){el.style.display='none';return;}const a=buildVisitScopeSourceSyncAnalysis(visit);el.style.display='block';const changed=a.changedPqs.length+a.changedSteps.length,removed=a.removedPqs.length+a.removedSteps.length;el.className=`visit-source-sync-panel ${removed?'danger':changed||a.newSteps.length?'warn':'ok'}`;el.innerHTML=visitSyncAnalysisHtml(a,false);};
+    window.renderVisitWorkspaceSourceSyncStatus=function(visit){const el=document.getElementById('visitWorkspaceSourceSyncPanel');if(!el)return;if(!visit){el.style.display='none';return;}const a=buildVisitScopeSourceSyncAnalysis(visit);el.style.display='block';const changed=a.changedPqs.length+a.changedSteps.length,removed=a.removedPqs.length+a.removedSteps.length;el.className=`visit-source-sync-panel ${removed?'danger':changed||a.newSteps.length?'warn':'ok'}`;el.innerHTML=visitSyncAnalysisHtml(a,true);};
+
+    window.syncVisitScopeWithCurrentSource=async function(visitId){
+        const id=visitId||activeVisitScopeId||((document.getElementById('visitScopeVisitSelect')||{}).value||'');const raw=id&&icaoVisits[id];if(!raw)return alert('Önce bir ziyaret seçiniz.');if(!rawData.length)return alert('Güncel Word/CAP verisi bulunamadı. Önce güncel Word belgesini yükleyiniz.');if(!firebase.auth().currentUser)return alert('Senkronizasyon için yetkili giriş gereklidir.');
+        const visit={id,...raw},analysis=buildVisitScopeSourceSyncAnalysis(visit),changed=analysis.changedPqs.length+analysis.changedSteps.length,removed=analysis.removedPqs.length+analysis.removedSteps.length;
+        if(!getVisitScopeStoredPqs(visit).length&&!getVisitScopeStoredSteps(visit).length)return alert('Bu ziyaret için kaydedilmiş PQ/CAP kapsamı bulunmuyor. Önce kapsam oluşturunuz.');
+        if((changed||removed||analysis.newSteps.length)&&!confirm(`Güncel kaynakla senkronizasyon özeti:\n${changed} değişen kayıt\n${removed} güncel kaynakta bulunamayan kayıt\n${analysis.newSteps.length} kapsamda olmayan yeni adım\n\nMevcut notlar, takipler ve danışmalar korunacaktır. Devam edilsin mi?`))return;
+        const actor=getCurrentVisitUser(),now=new Date().toISOString(),index=visitCurrentIndex(visit);
+        const pqs=getVisitScopeStoredPqs(visit).map(old=>{const cur=index.pqMap.get(String(old.pq||''));if(!cur)return {...old,sourceState:'removed',lastSyncedAt:now};return mergeVisitSourceSnapshot(old,currentPqSnapshot(cur,now),VISIT_SYNC_PQ_FIELDS,now);});
+        const steps=getVisitScopeStoredSteps(visit).map(old=>{const found=findCurrentVisitStep(old,index);if(!found)return {...old,key:visitScopeStableStepKey(old),stableKey:visitScopeStableStepKey(old),sourceState:'removed',lastSyncedAt:now};return mergeVisitSourceSnapshot(old,currentStepSnapshot(found.candidate,found.action,now),VISIT_SYNC_STEP_FIELDS,now);});
+        const history=visitArrayValue(((visit.scope||{}).sourceHistory)).slice(-29);history.push({timestamp:now,actor,sourceReportDate:visitScopeSourceDateIso(),changed,removed,newSteps:analysis.newSteps.length,summary:`${changed} değişen, ${removed} kaynakta bulunamayan, ${analysis.newSteps.length} yeni adım`});
+        const scope={...(visit.scope||{}),pqs,steps,sourceSync:{lastSyncedAt:now,lastSyncedBy:actor,sourceReportDate:visitScopeSourceDateIso(),changed,removed,newSteps:analysis.newSteps.length,moduleVersion:'visit-current-source-sync-1'},sourceHistory:history,updatedAt:now,updatedBy:actor,moduleVersion:'visit-current-source-sync-1'};
+        const updates={};updates[`icao_visits/${id}/scope`]=scope;updates[`icao_visits/${id}/updatedAt`]=now;updates[`icao_visits/${id}/updatedBy`]=actor;
+        const auditBefore={sourceReportDate:(((visit.scope||{}).sourceSync||{}).sourceReportDate)||null,changed:(((visit.scope||{}).sourceSync||{}).changed)||0,removed:(((visit.scope||{}).sourceSync||{}).removed)||0,newSteps:(((visit.scope||{}).sourceSync||{}).newSteps)||0};
+        const auditAfter={sourceReportDate:scope.sourceSync.sourceReportDate,changed,removed,newSteps:analysis.newSteps.length};
+        addVisitAuditToUpdates(updates,id,'scope','source_sync','update',auditBefore,auditAfter,'Ziyaret kapsamı güncel Word/CAP kaynağıyla senkronize edildi.',now,actor,{});
+        const btn=document.getElementById('visitScopeSyncButton');if(btn){btn.disabled=true;btn.textContent='Senkronize ediliyor...';}
+        try{showLoading();await db.ref().update(updates);alert('Ziyaret kapsamı güncel kaynakla senkronize edildi. Önceki kaynak görüntüleri geçmişte korunmuştur.');}
+        catch(e){console.error(e);alert('Güncel kaynak senkronizasyonu başarısız: '+(e.message||e));}
+        finally{hideLoading();if(btn){btn.disabled=false;btn.textContent='🔁 Güncel Kaynakla Senkronize Et';}}
+    };
+    window.syncActiveVisitWorkspaceSource=function(){const id=activeVisitWorkspaceId||((document.getElementById('visitWorkspaceVisitSelect')||{}).value||'');return syncVisitScopeWithCurrentSource(id);};
+
+    const originalLoadScope=window.loadVisitScopeSelection;
+    window.loadVisitScopeSelection=function(id,silent){const result=originalLoadScope.call(this,id,silent);const visit=getVisitScopeRecord();visitScopeSelectedSteps=new Set(getVisitScopeStoredSteps(visit).map(x=>visitScopeStableStepKey(x)).filter(Boolean));renderVisitScopeCandidates();renderVisitPreparationPanel();renderVisitScopeSourceSyncStatus(visit);return result;};
+    const originalRenderScopeCandidates=window.renderVisitScopeCandidates;
+    window.renderVisitScopeCandidates=function(){const r=originalRenderScopeCandidates.apply(this,arguments);renderVisitScopeSourceSyncStatus(getVisitScopeRecord());return r;};
+
+    window.buildVisitScopeSnapshots=function(){
+        const visit=getVisitScopeRecord(),candidates=buildVisitScopeCandidates(),now=new Date().toISOString(),index=visitCurrentIndex(visit),oldPqMap=new Map(getVisitScopeStoredPqs(visit).map(x=>[String(x.pq||''),x])),oldStepMap=new Map(getVisitScopeStoredSteps(visit).map(x=>[visitScopeStableStepKey(x),x]));
+        const pqs=[];visitScopeSelectedPqs.forEach(pq=>{const cur=index.pqMap.get(String(pq)),old=oldPqMap.get(String(pq));if(cur){const snap=currentPqSnapshot(cur,now);pqs.push(old?mergeVisitSourceSnapshot(old,snap,VISIT_SYNC_PQ_FIELDS,now):snap);}else if(old)pqs.push({...old,sourceState:'removed',lastSyncedAt:now});});
+        const steps=[];visitScopeSelectedSteps.forEach(key=>{const old=oldStepMap.get(key),list=index.stepMap.get(key)||[],found=old?findCurrentVisitStep(old,index):(list[0]||null);if(found){const snap=currentStepSnapshot(found.candidate,found.action,now);steps.push(old?mergeVisitSourceSnapshot(old,snap,VISIT_SYNC_STEP_FIELDS,now):snap);}else if(old)steps.push({...old,key,stableKey:key,sourceState:'removed',lastSyncedAt:now});});
+        return {pqs,steps};
+    };
+
+    window.getVisitWorkspaceTargets=function(visit){
+        if(!visit)return[];const targets=[{type:'visit',key:'visit',label:'Ziyaret geneli',pq:'',step:'',snapshot:{visitName:visit.visitName||'',areas:visitArrayValue(visit.areas),units:getVisitUnits(visit),sourceState:'current'}}];
+        getVisitScopeWorkingPqs(visit).forEach(p=>targets.push({type:'pq',key:String(p.pq||''),label:`PQ ${p.pq||'-'} — ${p.area||'-'}${p.sourceState==='removed'?' [KAYNAKTA YOK]':''}`,pq:String(p.pq||''),step:'',snapshot:{...p}}));
+        getVisitScopeWorkingSteps(visit).forEach(s=>targets.push({type:'step',key:visitScopeStableStepKey(s),label:`PQ ${s.pq||'-'} / Step ${s.step||'-'}${s.sourceState==='removed'?' [KAYNAKTA YOK]':''}`,pq:String(s.pq||''),step:String(s.step||''),snapshot:{...s}}));
+        return targets;
+    };
+    const originalTargetStatus=window.visitWorkspaceTargetStatusClass;
+    window.visitWorkspaceTargetStatusClass=function(target){if(((target||{}).snapshot||{}).sourceState==='removed')return 'source-removed';return originalTargetStatus(target);};
+
+    function sourceContextHtml(target){
+        if(!target||target.type==='visit')return'';const s=target.snapshot||{},changes=visitArrayValue(s.sourceChanges),cls=s.sourceState==='removed'?'removed':s.sourceState==='changed'?'changed':'current';
+        let msg=s.sourceState==='removed'?'Bu PQ/CAP adımı güncel Word kaynağında bulunamadı. Eski ziyaret kaydı, notlar ve takipler korunmuştur.':s.sourceState==='changed'?'Ekranda güncel Word/CAP bilgisi kullanılmaktadır. Önceki kapsam görüntüsünden farklı alanlar aşağıdadır.':'Bu hedef güncel Word/CAP kaynağıyla uyumludur.';
+        const rows=changes.map(c=>`<tr><th>${escapeHtml(c.label)}</th><td>${escapeHtml(visitSyncNorm(c.before)||'-')}</td><td>${escapeHtml(visitSyncNorm(c.after)||'-')}</td></tr>`).join('');
+        return `<b>Güncel kaynak durumu:</b> ${escapeHtml(s.sourceStateLabel||msg)}<br>${escapeHtml(msg)}${rows?`<table><thead><tr><th>Alan</th><th>Önceki görüntü</th><th>Güncel Word</th></tr></thead><tbody>${rows}</tbody></table>`:''}`;
+    }
+    const originalRenderSelected=window.renderVisitWorkspaceSelectedTarget;
+    window.renderVisitWorkspaceSelectedTarget=function(){
+        const el=document.getElementById('visitWorkspaceSelectedTarget');if(el)el.innerHTML=`<b>Seçili hedef:</b> ${escapeHtml((activeVisitWorkspaceTarget||{}).label||'Ziyaret geneli')}`;
+        const sourceEl=document.getElementById('visitWorkspaceCurrentSourceContext');if(sourceEl){const h=sourceContextHtml(activeVisitWorkspaceTarget);sourceEl.style.display=h?'block':'none';sourceEl.className=`visit-current-source-context ${((activeVisitWorkspaceTarget||{}).snapshot||{}).sourceState||'current'}`;sourceEl.innerHTML=h;}
+        const prepEl=document.getElementById('visitWorkspacePrepContext');if(!prepEl)return;const visit=getVisitWorkspaceVisit(),t=activeVisitWorkspaceTarget||{};const prep=getVisitPreparationRecords(visit).filter(r=>{if(t.type==='visit')return r.targetType==='visit';if(t.type==='pq')return r.targetType==='pq'&&String(r.pq||'')===String(t.pq||'');return r.targetType==='step'&&((String(r.pq||'')===String(t.pq||'')&&String(r.step||'')===String(t.step||''))||String(r.stepKey||r.targetKey||'')===String(t.key||''));});if(!prep.length){prepEl.style.display='none';prepEl.textContent='';return;}prepEl.style.display='block';prepEl.textContent='Hazırlık kaydı:\n'+prep.map((r,i)=>`${i+1}. ${(r.questions||r.evidenceRequests||r.verificationPoints||r.notes||'').trim()}`).join('\n');
+    };
+    const originalLoadWorkspace=window.loadVisitWorkspaceSelection;
+    window.loadVisitWorkspaceSelection=function(id,silent){const r=originalLoadWorkspace.call(this,id,silent);renderVisitWorkspaceSourceSyncStatus(getVisitWorkspaceVisit());return r;};
+    const originalRenderWorkspace=window.renderVisitWorkspaceModule;
+    window.renderVisitWorkspaceModule=function(){const r=originalRenderWorkspace.apply(this,arguments);renderVisitWorkspaceSourceSyncStatus(getVisitWorkspaceVisit());return r;};
+
+    window.editVisitWorkspaceRecord=function(id){const visit=getVisitWorkspaceVisit(),rec=getVisitFieldworkRecords(visit,true).find(r=>r.id===id);if(!rec)return alert('Kayıt bulunamadı.');const target=getVisitWorkspaceTargets(visit).find(t=>t.type===rec.targetType&&(t.key===rec.targetKey||(rec.targetType==='step'&&String(t.pq||'')===String(rec.pq||'')&&String(t.step||'')===String(rec.step||''))));if(target)activeVisitWorkspaceTarget=target;const el=document.getElementById('visitWorkspaceRecordId');if(el)el.value=id;setVisitWorkspaceFormData(rec);renderVisitWorkspaceTargets();renderVisitWorkspaceSelectedTarget();document.getElementById('visitWorkspaceForm').scrollIntoView({behavior:'smooth',block:'start'});};
+
+    const originalPrepOptions=window.renderVisitPreparationTargetOptions;
+    window.renderVisitPreparationTargetOptions=function(){
+        const result=originalPrepOptions.apply(this,arguments),select=document.getElementById('visitPrepTarget'),visit=getVisitScopeRecord();if(!select||!visit)return result;
+        const existing=new Set(Array.from(select.options).map(o=>o.value));
+        getVisitScopeStoredSteps(visit).filter(s=>visitScopeSelectedSteps.has(visitScopeStableStepKey(s))).forEach(s=>{const value='step::'+encodeURIComponent(visitScopeStableStepKey(s));if(existing.has(value))return;const opt=document.createElement('option');opt.value=value;opt.textContent=`PQ ${s.pq||'-'} / Step ${s.step||'-'} — [Güncel kaynakta bulunamadı]`;select.appendChild(opt);existing.add(value);});
+        return result;
+    };
+    window.parseVisitPrepTarget=function(value){
+        const visit=getVisitScopeRecord(),candidates=buildVisitScopeCandidates();if(!value||value==='visit')return {targetType:'visit',targetLabel:(visit&&visit.visitName)||'Ziyaret geneli',pq:'',step:'',stepKey:''};
+        if(value.startsWith('pq::')){const pq=value.slice(4);return {targetType:'pq',targetLabel:`PQ ${pq}`,pq,step:'',stepKey:''};}
+        if(value.startsWith('step::')){const key=decodeURIComponent(value.slice(6));const found=candidates.flatMap(x=>x.actionItems.map(a=>({x,a}))).find(z=>z.a.key===key);if(found)return {targetType:'step',targetLabel:`PQ ${found.x.pq} / Step ${found.a.step}`,pq:found.x.pq,step:found.a.step,stepKey:key};const stored=getVisitScopeStoredSteps(visit).find(s=>visitScopeStableStepKey(s)===key);return stored?{targetType:'step',targetLabel:`PQ ${stored.pq} / Step ${stored.step}`,pq:stored.pq||'',step:stored.step||'',stepKey:key}:{targetType:'step',targetLabel:'CAP adımı',pq:'',step:'',stepKey:key};}
+        return {targetType:'visit',targetLabel:'Ziyaret geneli',pq:'',step:'',stepKey:''};
+    };
+    window.editVisitPreparationRecord=function(id){const record=getVisitPreparationRecords(getVisitScopeRecord()).find(r=>r.id===id);if(!record)return;const set=(field,val)=>{const el=document.getElementById(field);if(el)el.value=val||'';};set('visitPrepRecordId',record.id);set('visitPrepQuestions',record.questions);set('visitPrepEvidence',record.evidenceRequests);set('visitPrepAuthorities',record.personsAuthorities);set('visitPrepVerification',record.verificationPoints);set('visitPrepAssessment',record.preliminaryAssessment);set('visitPrepRisks',record.risks);set('visitPrepNotes',record.notes);renderVisitPreparationTargetOptions();const target=document.getElementById('visitPrepTarget');if(target){if(record.targetType==='pq')target.value='pq::'+record.pq;else if(record.targetType==='step')target.value='step::'+encodeURIComponent(visitScopeStableStepKey(record));else target.value='visit';}};
+
+    window.buildVisitScopeExportBundle=function(){const visit=getVisitScopeRecord();if(!visit)return null;return {visit,scope:{...(visit.scope||{}),pqs:getVisitScopeWorkingPqs(visit),steps:getVisitScopeWorkingSteps(visit)},historicalScope:visit.scope||{},general:((visit.preparation||{}).general)||{},records:getVisitPreparationRecords(visit)};};
+    window.buildVisitScopePqExportRows=function(bundle){return visitArrayValue((bundle.scope||{}).pqs).map(x=>({'PQ':x.pq||'','Denetim Alanı':x.area||'','CE':x.ce||'','PQ Sorumlusu':x.responsible||'','Doğrulama Türü':x.verificationType||'','Standart Durum':x.statusLabel||'','Kaynak Eşleşme Durumu':x.sourceStateLabel||x.sourceState||'','Değişen Alanlar':visitArrayValue(x.sourceChanges).map(c=>c.label).join(', '),'PQ Sorusu':fullTextForExcel(x.question||''),'ICAO Bulgusu':fullTextForExcel(x.finding||''),'İncelenecek Kanıtlar':fullTextForExcel(x.reviewEvidence||''),'Kaynak Rapor Tarihi':x.sourceReportDate||'','Anlık Görüntü Tarihi':x.snapshotAt||''}));};
+    window.buildVisitScopeStepExportRows=function(bundle){return visitArrayValue((bundle.scope||{}).steps).map(x=>({'PQ':x.pq||'','Step':x.step||'','CAP Eylemi':fullTextForExcel(x.action||''),'Sorumlu Ofis':x.office||'','Hedef Tarih':x.estDate||'','İlerleme':x.progress||'','Standart Durum':x.statusLabel||'','Kaynak Eşleşme Durumu':x.sourceStateLabel||x.sourceState||'','Değişen Alanlar':visitArrayValue(x.sourceChanges).map(c=>c.label).join(', '),'Önceki CAP Metni':fullTextForExcel((((x.storedSnapshot||{}).action)||'')),'Önceki Hedef Tarih':((x.storedSnapshot||{}).estDate)||'','Gecikme Günü':x.delayDays||0,'Kaynak Dosya':x.sourceFile||'','Kaynak Rapor Tarihi':x.sourceReportDate||'','Anlık Görüntü Tarihi':x.snapshotAt||''}));};
+    window.visitReportGetScopePqs=function(visits){return (visits||[]).flatMap(v=>getVisitScopeWorkingPqs(v).map(p=>({...p,visitId:v.id,visitName:v.visitName||'Adsız ziyaret',visitAreas:visitArrayValue(v.areas),visitUnits:getVisitUnits(v)})));};
+    window.visitReportGetScopeSteps=function(visits){return (visits||[]).flatMap(v=>getVisitScopeWorkingSteps(v).map(s=>({...s,visitId:v.id,visitName:v.visitName||'Adsız ziyaret',visitAreas:visitArrayValue(v.areas),visitUnits:getVisitUnits(v)})));};
+
+    window.runVisitCurrentSourceSyncSelfCheck=function(){const visit=getVisitScopeRecord()||getVisitWorkspaceVisit()||getVisitRecords()[0]||null,a=visit?buildVisitScopeSourceSyncAnalysis(visit):null;const result={passed:typeof syncVisitScopeWithCurrentSource==='function'&&typeof getVisitScopeWorkingSteps==='function'&&!!document.getElementById('visitScopeSourceSyncPanel')&&!!document.getElementById('visitWorkspaceCurrentSourceContext'),visit:visit&&visit.visitName||null,sourceAvailable:!!(a&&a.sourceAvailable),changed:a?(a.changedPqs.length+a.changedSteps.length):0,removed:a?(a.removedPqs.length+a.removedSteps.length):0,newSteps:a?a.newSteps.length:0};console.log('Ziyaret güncel kaynak senkronizasyon kontrolü:',result);return result;};
+})();
+</script>
+
 </body>
 </html>
