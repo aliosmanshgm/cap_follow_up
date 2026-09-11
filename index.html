@@ -309,6 +309,79 @@
 .visit-work-target.source-removed{border-left-color:var(--danger)!important;background:rgba(220,38,38,.06)}
 @media(max-width:768px){.visit-source-sync-head{display:block}.visit-source-sync-badges{margin-top:7px}.visit-current-source-context{overflow-x:auto}.visit-current-source-context table{min-width:520px}}
 
+
+
+/* ===== SOL MENÜ V4 - ODAKLI AKORDEON + TEK KAYDIRMA ALANI =====
+   Masaüstünde nested scroll kaldırıldı. Sidebar'ın tamamı doğal olarak kayar.
+   Açılan menü grubu diğerlerini kapatır; böylece alt başlıklar kırpılmaz. */
+@media (min-width:769px){
+  #mainAppContainer{
+    height:100dvh !important;
+    min-height:0 !important;
+    overflow:hidden !important;
+  }
+  .sidebar{
+    display:flex !important;
+    flex-direction:column !important;
+    width:280px !important;
+    height:100dvh !important;
+    max-height:100dvh !important;
+    min-height:0 !important;
+    overflow-y:auto !important;
+    overflow-x:hidden !important;
+    box-sizing:border-box !important;
+    scrollbar-gutter:stable;
+    overscroll-behavior-y:contain;
+    -webkit-overflow-scrolling:touch;
+  }
+  .sidebar::-webkit-scrollbar{width:10px;}
+  .sidebar::-webkit-scrollbar-track{background:transparent;}
+  .sidebar::-webkit-scrollbar-thumb{background:var(--border);border-radius:999px;border:2px solid var(--card);}
+  .sidebar::-webkit-scrollbar-thumb:hover{background:var(--muted);}
+  .sidebar{scrollbar-width:thin;scrollbar-color:var(--border) transparent;}
+
+  .sidebar .grouped-nav{
+    display:flex !important;
+    flex:0 0 auto !important;
+    flex-direction:column !important;
+    flex-wrap:nowrap !important;
+    width:auto !important;
+    height:auto !important;
+    max-height:none !important;
+    min-height:0 !important;
+    overflow:visible !important;
+    margin:12px 0 0 !important;
+    padding:0 12px 12px !important;
+    box-sizing:border-box !important;
+    gap:10px !important;
+  }
+  .sidebar .nav-group{
+    flex:0 0 auto !important;
+    width:auto !important;
+    min-width:0 !important;
+    max-width:none !important;
+    overflow:visible !important;
+  }
+  .sidebar .nav-group-items{
+    overflow:visible !important;
+    max-height:none !important;
+  }
+  .sidebar .nav-group.open .nav-group-items{display:flex !important;}
+  .sidebar .nav-group:not(.open) .nav-group-items{display:none !important;}
+  .sidebar-footer-action{
+    flex:0 0 auto !important;
+    position:static !important;
+    margin:0 !important;
+    padding:12px 16px 14px !important;
+    border-top:1px solid var(--border) !important;
+    box-shadow:none !important;
+    background:var(--card) !important;
+  }
+  .sidebar .nav-group-title{
+    position:static !important;
+  }
+}
+
 </style>
 
     <style>
@@ -2373,8 +2446,16 @@
         });
     }
 
+    function focusDesktopNavGroup(group) {
+        if (!group || window.innerWidth <= 768) return;
+        document.querySelectorAll('.grouped-nav .nav-group').forEach(other => {
+            if (other !== group) other.classList.remove('open');
+        });
+        group.classList.add('open');
+    }
     function keepNavGroupVisible(group) {
         const nav = group && group.closest ? group.closest('.grouped-nav') : null;
+        const sidebar = group && group.closest ? group.closest('.sidebar') : null;
         if (!nav || !group) return;
         requestAnimationFrame(() => {
             if (window.innerWidth <= 768) {
@@ -2385,22 +2466,42 @@
                 if (left < viewLeft || right > viewRight) {
                     nav.scrollTo({ left: Math.max(0, left), behavior: 'smooth' });
                 }
-            } else {
-                const top = group.offsetTop;
-                const bottom = top + group.offsetHeight;
-                const viewTop = nav.scrollTop;
-                const viewBottom = viewTop + nav.clientHeight;
-                if (top < viewTop) nav.scrollTo({ top: Math.max(0, top - 8), behavior: 'smooth' });
-                else if (bottom > viewBottom) nav.scrollTo({ top: Math.max(0, bottom - nav.clientHeight + 8), behavior: 'smooth' });
+                return;
+            }
+            if (!sidebar) return;
+            const groupRect = group.getBoundingClientRect();
+            const sidebarRect = sidebar.getBoundingClientRect();
+            const topPadding = 8;
+            const bottomPadding = 12;
+            if (groupRect.top < sidebarRect.top + topPadding) {
+                sidebar.scrollBy({ top: groupRect.top - sidebarRect.top - topPadding, behavior: 'smooth' });
+            } else if (groupRect.bottom > sidebarRect.bottom - bottomPadding) {
+                sidebar.scrollBy({ top: groupRect.bottom - sidebarRect.bottom + bottomPadding, behavior: 'smooth' });
             }
         });
     }
     function toggleNavGroup(button) {
         const group = button && button.closest ? button.closest('.nav-group') : null;
-        if (group) {
-            group.classList.toggle('open');
-            keepNavGroupVisible(group);
+        if (!group) return;
+        if (window.innerWidth > 768) {
+            const wasOpen = group.classList.contains('open');
+            if (wasOpen) {
+                group.classList.remove('open');
+            } else {
+                focusDesktopNavGroup(group);
+                keepNavGroupVisible(group);
+            }
+            return;
         }
+        group.classList.toggle('open');
+        keepNavGroupVisible(group);
+    }
+    function initDesktopNavFocus() {
+        if (window.innerWidth <= 768) return;
+        const activeBtn = document.querySelector('.grouped-nav .tab-btn.active');
+        const activeGroup = activeBtn && activeBtn.closest ? activeBtn.closest('.nav-group') : null;
+        const firstGroup = document.querySelector('.grouped-nav .nav-group');
+        focusDesktopNavGroup(activeGroup || firstGroup);
     }
     function initSidebarWheelScroll() {
         const sidebar = document.querySelector('.sidebar');
@@ -2428,11 +2529,11 @@
                 return;
             }
 
-            const maxVertical = Math.max(0, nav.scrollHeight - nav.clientHeight);
+            const maxVertical = Math.max(0, sidebar.scrollHeight - sidebar.clientHeight);
             if (maxVertical <= 0) return;
-            const before = nav.scrollTop;
-            nav.scrollTop = Math.max(0, Math.min(maxVertical, before + event.deltaY));
-            if (nav.scrollTop !== before) {
+            const before = sidebar.scrollTop;
+            sidebar.scrollTop = Math.max(0, Math.min(maxVertical, before + event.deltaY));
+            if (sidebar.scrollTop !== before) {
                 event.preventDefault();
                 event.stopPropagation();
             }
@@ -2464,8 +2565,9 @@
 
         window.addEventListener('resize', function() {
             if (window.innerWidth > 768) {
-                const maxVertical = Math.max(0, nav.scrollHeight - nav.clientHeight);
-                if (nav.scrollTop > maxVertical) nav.scrollTop = maxVertical;
+                const maxVertical = Math.max(0, sidebar.scrollHeight - sidebar.clientHeight);
+                if (sidebar.scrollTop > maxVertical) sidebar.scrollTop = maxVertical;
+                initDesktopNavFocus();
             } else {
                 const maxHorizontal = Math.max(0, nav.scrollWidth - nav.clientWidth);
                 if (nav.scrollLeft > maxHorizontal) nav.scrollLeft = maxHorizontal;
@@ -2509,7 +2611,7 @@
             target.classList.add('active');
             btn.classList.add('active');
             const parentGroup = btn.closest('.nav-group');
-            if(parentGroup) { parentGroup.classList.add('open'); keepNavGroupVisible(parentGroup); }
+            if(parentGroup) { if(window.innerWidth > 768) focusDesktopNavGroup(parentGroup); else parentGroup.classList.add('open'); keepNavGroupVisible(parentGroup); }
             if(tabId === 'report' || tabId === 'trend' || tabId === 'kanban' || tabId === 'strategic' || tabId === 'smart' || tabId === 'quality' || tabId === 'visits' || tabId === 'visit-scope' || tabId === 'icao-visit-validation' || tabId === 'visit-workspace' || tabId === 'visit-followup' || tabId === 'visit-consultation' || tabId === 'visit-reports' || tabId === 'visit-management' || tabId === 'visit-analysis' || tabId === 'visit-audit') { btn.style.color = "var(--primary)"; }
             if(tabId === 'past' || tabId === 'empty-caps') { btn.style.color = "var(--danger)"; }
             if(tabId === 'icao-closed') { btn.style.color = "#ca8a04"; }
@@ -2825,6 +2927,7 @@
     window.onload = function() {
         applyLanguage();
         initSidebarWheelScroll();
+        initDesktopNavFocus();
         initStabilizationPackage();
         firebase.auth().onAuthStateChanged((user) => {
             if (user) { document.getElementById('loginOverlay').style.display = 'none'; document.getElementById('mainAppContainer').style.display = 'flex'; loadFromLocalStorage(); startVisitFirebaseListener(); startVisitUnitSettingsListener(); startIcaoOfficialEiListener(); } 
@@ -2832,7 +2935,7 @@
         });
     };
     
-    window.bypassLogin = function() { initSidebarWheelScroll(); document.getElementById('loginOverlay').style.display = 'none'; document.getElementById('mainAppContainer').style.display = 'flex'; renderFileList(); render(); };
+    window.bypassLogin = function() { initSidebarWheelScroll(); initDesktopNavFocus(); document.getElementById('loginOverlay').style.display = 'none'; document.getElementById('mainAppContainer').style.display = 'flex'; renderFileList(); render(); };
     window.loginUser = function() { let email = document.getElementById('loginEmail').value.trim(); let pass = document.getElementById('loginPass').value; let errEl = document.getElementById('loginError'); if(!email || !pass) { errEl.innerText = "Lütfen e-posta ve şifrenizi giriniz."; errEl.style.display = "block"; return; } errEl.style.display = "none"; document.getElementById('loginOverlay').style.opacity = '0.5'; firebase.auth().signInWithEmailAndPassword(email, pass).then(() => { document.getElementById('loginOverlay').style.opacity = '1'; }).catch(() => { document.getElementById('loginOverlay').style.opacity = '1'; errEl.innerText = "Giriş başarısız."; errEl.style.display = "block"; }); };
 
     let systemSaveTimer = null;
