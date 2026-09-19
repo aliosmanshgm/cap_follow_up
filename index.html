@@ -5890,7 +5890,7 @@
         const btn=document.getElementById('icaoValidationSaveButton');if(btn){btn.disabled=true;btn.textContent='Kaydediliyor...';}try{const updates={};updates[`icao_visits/${visitId}/icaoValidation/records/${key}`]=window.visitFirebaseSafeValue?window.visitFirebaseSafeValue(record):record;updates[`icao_visits/${visitId}/icaoValidation/updatedAt`]=now;updates[`icao_visits/${visitId}/icaoValidation/updatedBy`]=actor;updates[`icao_visits/${visitId}/icaoValidation/moduleVersion`]='icao-official-visit-validation-v1.2';addVisitAuditToUpdates(updates,visitId,'icao_validation',pq,existing.createdAt?'update':'create',existing,record,status==='validated'?'PQ/CAP ICVM kapsamında kapatıldı / validated olarak kaydedildi.':'PQ/CAP ICVM validasyon sonucu güncellendi.',now,actor,{pq});await db.ref().update(updates);const verify=await db.ref(`icao_visits/${visitId}/icaoValidation/records/${key}`).once('value');if(!verify.exists())throw new Error('Firebase yazma doğrulaması başarısız.');clearTimeout(icaoValidationDraftTimer);icaoValidationDraftTimer=null;clearIcaoValidationTextDraft();showAppRuntimeToast(status==='validated'?'CAP sonucu kaydedildi; geçici EI etkisine dahil edildi.':'ICVM değerlendirme kaydı Firebase üzerinde kaydedildi.','success');renderIcaoOfficialVisitModule(true);selectIcaoValidationPq(pq);}catch(err){console.error(err);alert('ICVM değerlendirme kaydı kaydedilemedi: '+(err.message||err));}finally{if(btn){btn.disabled=false;btn.textContent='💾 CAP Sonucunu Kaydet';}}
     }
     function renderIcaoOfficialVisitEiSummary(){
-        const el=document.getElementById('icaoOfficialVisitEiSummary');if(!el)return;const visit=activeIcaoOfficialVisitId&&icaoVisits[activeIcaoOfficialVisitId]?{id:activeIcaoOfficialVisitId,...icaoVisits[activeIcaoOfficialVisitId]}:null;if(!visit){el.innerHTML='<div class="icao-visit-empty">Ziyaret seçildiğinde alan ve Overall EI etkisi hesaplanacaktır.</div>';return;}if(!Object.keys(baseEIData||{}).length){el.innerHTML='<div class="icao-visit-empty">EI hesaplaması için EI Referans Excel verisi yüklenmelidir.</div>';return;}const areaFilter=getSelectedIcaoVisitAreaFilter(),scopedPqs=getIcaoVisitAreaScopedPqs(visit,areaFilter),m=getIcaoOfficialVisitImpactModel(visit,scopedPqs),visitAreas=new Set(areaFilter==='all'?visitArrayValue(visit.areas).map(normalizeAreaKey):[areaFilter]);const rows=[{area:'Overall',total:m.total,baselineSat:m.baselineSat,validatedNew:m.validatedNew,newSat:m.newSat,baselinePct:m.baselinePct,newPct:m.newPct,delta:m.delta},...Object.values(m.areas).filter(a=>visitAreas.has(a.area))];el.innerHTML=`<div class="visit-sync-note" style="margin-bottom:8px">Bu hesap ziyaret sırasında çalışma amaçlıdır. ICAO'nun resmî sonuçları kesinleşmeden “ICAO Resmî EI Veri Yönetimi” tarihçesine otomatik aktarılmaz.${areaFilter!=='all'?` Overall satırı, yalnızca <b>${escapeHtml(areaFilter)}</b> alanında ICVM kapsamında kapanan PQ'ların Overall EI'ye geçici katkısını gösterir.`:''}</div><div style="overflow-x:auto"><table class="icao-ei-table icvm-ei-summary-table"><thead><tr><th>Alan</th><th>Uygulanabilir PQ</th><th>Mevcut Resmî SAT</th><th>ICVM'de Kapatılan Yeni PQ</th><th>Mevcut EI</th><th>Geçici ICVM Sonrası EI</th><th>Değişim</th></tr></thead><tbody>${rows.map(r=>`<tr><td><b>${escapeHtml(r.area)}</b></td><td>${r.total}</td><td>${r.baselineSat}</td><td class="icao-ei-positive">+${r.validatedNew}</td><td>${formatOfficialEiPct(r.baselinePct)}</td><td><b>${formatOfficialEiPct(r.newPct)}</b></td><td class="${r.delta>0?'icao-ei-positive':''}">${formatOfficialEiDelta(r.delta)}</td></tr>`).join('')}</tbody></table></div>`;updateIcaoVisitKpis(visit);
+        const el=document.getElementById('icaoOfficialVisitEiSummary');if(!el)return;const visit=activeIcaoOfficialVisitId&&icaoVisits[activeIcaoOfficialVisitId]?{id:activeIcaoOfficialVisitId,...icaoVisits[activeIcaoOfficialVisitId]}:null;if(!visit){el.innerHTML='<div class="icao-visit-empty">Ziyaret seçildiğinde alan ve Overall EI etkisi hesaplanacaktır.</div>';return;}if(!Object.keys(baseEIData||{}).length){el.innerHTML='<div class="icao-visit-empty">EI hesaplaması için EI Referans Excel verisi yüklenmelidir.</div>';return;}const areaFilter=getSelectedIcaoVisitAreaFilter(),scopedPqs=getIcaoVisitAreaScopedPqs(visit,areaFilter),m=getIcaoOfficialVisitImpactModel(visit,scopedPqs),visitAreas=new Set(areaFilter==='all'?visitArrayValue(visit.areas).map(normalizeAreaKey):[areaFilter]);const rows=[{area:'Overall',total:m.total,baselineSat:m.baselineSat,validatedNew:m.validatedNew,newSat:m.newSat,baselinePct:m.baselinePct,newPct:m.newPct,delta:m.delta},...Object.values(m.areas).filter(a=>visitAreas.has(a.area))];const chartSvg=buildIcaoEiComparisonChartSvg(rows,{width:980,height:360});el.innerHTML=`<div class="visit-sync-note" style="margin-bottom:8px">Bu hesap ziyaret sırasında çalışma amaçlıdır. ICAO'nun resmî sonuçları kesinleşmeden “ICAO Resmî EI Veri Yönetimi” tarihçesine otomatik aktarılmaz.${areaFilter!=='all'?` Overall satırı, yalnızca <b>${escapeHtml(areaFilter)}</b> alanında ICVM kapsamında kapanan PQ'ların Overall EI'ye geçici katkısını gösterir.`:''}</div><div style="overflow-x:auto"><table class="icao-ei-table icvm-ei-summary-table"><thead><tr><th>Alan</th><th>Uygulanabilir PQ</th><th>Mevcut Resmî SAT</th><th>ICVM'de Kapatılan Yeni PQ</th><th>Mevcut EI</th><th>Geçici ICVM Sonrası EI</th><th>Değişim</th></tr></thead><tbody>${rows.map(r=>`<tr><td><b>${escapeHtml(r.area)}</b></td><td>${r.total}</td><td>${r.baselineSat}</td><td class="icao-ei-positive">+${r.validatedNew}</td><td>${formatOfficialEiPct(r.baselinePct)}</td><td><b>${formatOfficialEiPct(r.newPct)}</b></td><td class="${r.delta>0?'icao-ei-positive':''}">${formatOfficialEiDelta(r.delta)}</td></tr>`).join('')}</tbody></table></div>${chartSvg?`<div style="margin-top:12px;padding:10px;border:1px solid #e2e8f0;border-radius:12px;background:#fff;overflow-x:auto"><div style="font-size:11px;font-weight:700;color:#0f172a;margin-bottom:6px">EI Değişim Sütun Grafiği</div>${chartSvg}</div>`:''}`;updateIcaoVisitKpis(visit);
     }
     function getActiveIcaoOfficialVisitRecord(){
         return activeIcaoOfficialVisitId&&icaoVisits[activeIcaoOfficialVisitId]?{id:activeIcaoOfficialVisitId,...icaoVisits[activeIcaoOfficialVisitId]}:null;
@@ -6065,6 +6065,50 @@
         return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}"><text x="8" y="44" font-size="12" font-weight="700" fill="#0f172a">${String(areaRow.area).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</text><text x="118" y="44" font-size="9" text-anchor="end" fill="#64748b">${areaRow.total} PQ</text><rect x="${x0}" y="${y}" width="${barW}" height="${barH}" rx="4" fill="#e2e8f0"/>${rects}${labels}${legend}</svg>`;
     }
 
+    function buildIcaoEiComparisonChartSvg(rows, opts={}){
+        const data=(rows||[]).filter(r=>String(r.area||r['Alan']||'').trim());
+        if(!data.length) return '';
+        const width=opts.width||960, height=opts.height||360;
+        const left=58, right=16, top=26, bottom=82;
+        const plotW=width-left-right, plotH=height-top-bottom;
+        const baselineColor='#5b9bd5', newColor='#2f5597', gridColor='#dbe3ef', textColor='#334155';
+        const maxVal=Math.max(100,...data.map(r=>Math.max(Number(r.newPct ?? r['newPct'] ?? r['Geçici ICVM Sonrası EI'] ?? 0), Number(r.baselinePct ?? r['baselinePct'] ?? r['Mevcut Resmî EI'] ?? 0))));
+        const yMax=Math.ceil(maxVal/10)*10;
+        const groupW=plotW/data.length;
+        const barGap=Math.min(16, groupW*0.12);
+        const barW=Math.min(34, Math.max(18, (groupW - barGap*3)/2));
+        const fmt=v=>`${Number(v||0).toFixed(2).replace('.',',')}%`;
+        const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+        let grid='',bars='',labels='';
+        for(let t=0;t<=yMax;t+=10){
+            const y=top + plotH - (t/yMax)*plotH;
+            grid += `<line x1="${left}" y1="${y.toFixed(1)}" x2="${(left+plotW).toFixed(1)}" y2="${y.toFixed(1)}" stroke="${gridColor}" stroke-width="1"/>`;
+            labels += `<text x="${left-8}" y="${(y+4).toFixed(1)}" font-size="10" text-anchor="end" fill="${textColor}">${t}%</text>`;
+        }
+        data.forEach((row,idx)=>{
+            const area=String(row.area||row['Alan']||'');
+            const b=Number(row.baselinePct ?? row['baselinePct'] ?? String(row['Mevcut Resmî EI']||'').replace('%','').replace(',','.'))||0;
+            const n=Number(row.newPct ?? row['newPct'] ?? String(row['Geçici ICVM Sonrası EI']||'').replace('%','').replace(',','.'))||0;
+            const delta=n-b;
+            const xGroup=left + idx*groupW;
+            const x1=xGroup + (groupW/2) - barW - (barGap/2);
+            const x2=xGroup + (groupW/2) + (barGap/2);
+            const h1=(b/yMax)*plotH, h2=(n/yMax)*plotH;
+            const y1=top + plotH - h1, y2=top + plotH - h2;
+            bars += `<rect x="${x1.toFixed(1)}" y="${y1.toFixed(1)}" width="${barW.toFixed(1)}" height="${h1.toFixed(1)}" rx="3" fill="${baselineColor}"/>`;
+            bars += `<rect x="${x2.toFixed(1)}" y="${y2.toFixed(1)}" width="${barW.toFixed(1)}" height="${h2.toFixed(1)}" rx="3" fill="${newColor}"/>`;
+            bars += `<text x="${(x1+barW/2).toFixed(1)}" y="${(y1-6).toFixed(1)}" font-size="10" text-anchor="middle" fill="${textColor}" font-weight="700">${fmt(b)}</text>`;
+            bars += `<text x="${(x2+barW/2).toFixed(1)}" y="${(y2-6).toFixed(1)}" font-size="10" text-anchor="middle" fill="${textColor}" font-weight="700">${fmt(n)}</text>`;
+            labels += `<text x="${(xGroup+groupW/2).toFixed(1)}" y="${(top+plotH+22).toFixed(1)}" font-size="11" text-anchor="middle" fill="${textColor}" font-weight="700">${esc(area)}</text>`;
+            labels += `<text x="${(xGroup+groupW/2).toFixed(1)}" y="${(top+plotH+38).toFixed(1)}" font-size="9" text-anchor="middle" fill="#64748b">Mevcut: ${fmt(b)}</text>`;
+            labels += `<text x="${(xGroup+groupW/2).toFixed(1)}" y="${(top+plotH+51).toFixed(1)}" font-size="9" text-anchor="middle" fill="#64748b">ICVM: ${fmt(n)}</text>`;
+            labels += `<text x="${(xGroup+groupW/2).toFixed(1)}" y="${(top+plotH+64).toFixed(1)}" font-size="9" text-anchor="middle" fill="${delta>0?'#166534':'#64748b'}">Δ ${delta.toFixed(2).replace('.',',')} puan</text>`;
+        });
+        const legendY=14;
+        const legend=`<rect x="${left+10}" y="${legendY}" width="12" height="12" rx="2" fill="${baselineColor}"/><text x="${left+28}" y="${legendY+10}" font-size="10" fill="${textColor}">Mevcut Resmî EI</text><rect x="${left+180}" y="${legendY}" width="12" height="12" rx="2" fill="${newColor}"/><text x="${left+198}" y="${legendY+10}" font-size="10" fill="${textColor}">Geçici ICVM Sonrası EI</text>`;
+        return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}"><rect x="0" y="0" width="${width}" height="${height}" fill="#ffffff"/>${grid}<line x1="${left}" y1="${top+plotH}" x2="${left+plotW}" y2="${top+plotH}" stroke="#94a3b8" stroke-width="1.2"/>${labels}${bars}${legend}</svg>`;
+    }
+
     function exportIcaoOfficialVisitPDF(){
         const visit=getActiveIcaoOfficialVisitRecord();
         if(!visit)return alert('Önce ICAO Resmî Ziyareti ekranından bir ziyaret kaydı seçiniz.');
@@ -6099,12 +6143,13 @@
             }
         }
         if(eiRows.length){
-            content.push({text:'ICVM Geçici EI Etki Özeti',style:'sectionHeader'});
-            const eiBody=[[{text:'Alan',bold:true,fillColor:'#f1f5f9'},{text:'Uyg. PQ',bold:true,fillColor:'#f1f5f9'},{text:'Mevcut SAT',bold:true,fillColor:'#f1f5f9'},{text:'Yeni PQ',bold:true,fillColor:'#f1f5f9'},{text:'Mevcut EI',bold:true,fillColor:'#f1f5f9'},{text:'ICVM Sonrası',bold:true,fillColor:'#f1f5f9'},{text:'Değişim',bold:true,fillColor:'#f1f5f9'}]];
-            eiRows.forEach(r=>eiBody.push([r['Alan'],r['Uygulanabilir PQ'],r['Mevcut Resmî SAT'],r['ICVM’de Kapatılan Yeni PQ'],r['Mevcut Resmî EI'],r['Geçici ICVM Sonrası EI'],r['Değişim']]));
+            content.push({text:'ICVM Geçici EI Etki Özeti',style:'sectionHeader',pageBreak:'before'});
+            const eiBody=[[{text:'Alan',bold:true,fillColor:'#f1f5f9',alignment:'center'},{text:'Uyg. PQ',bold:true,fillColor:'#f1f5f9',alignment:'center'},{text:'Mevcut SAT',bold:true,fillColor:'#f1f5f9',alignment:'center'},{text:'Yeni PQ',bold:true,fillColor:'#f1f5f9',alignment:'center'},{text:'Mevcut EI',bold:true,fillColor:'#f1f5f9',alignment:'center'},{text:'ICVM Sonrası',bold:true,fillColor:'#f1f5f9',alignment:'center'},{text:'Değişim',bold:true,fillColor:'#f1f5f9',alignment:'center'}]];
+            eiRows.forEach(r=>eiBody.push([{text:r['Alan'],alignment:'center'},{text:r['Uygulanabilir PQ'],alignment:'center'},{text:r['Mevcut Resmî SAT'],alignment:'center'},{text:r['ICVM’de Kapatılan Yeni PQ'],alignment:'center'},{text:r['Mevcut Resmî EI'],alignment:'center'},{text:r['Geçici ICVM Sonrası EI'],alignment:'center'},{text:r['Değişim'],alignment:'center'}]));
             content.push({table:{headerRows:1,widths:['auto','auto','auto','auto','auto','auto','auto'],body:eiBody},layout:'lightHorizontalLines',margin:[0,0,0,10]});
+            content.push({svg:buildIcaoEiComparisonChartSvg(eiRows,{width:760,height:330}),width:760,margin:[0,2,0,12]});
         }
-        content.push({text:'PQ / CAP Validasyon Sonuçları',style:'sectionHeader'});
+        content.push({text:'PQ / CAP Validasyon Sonuçları',style:'sectionHeader',pageBreak:'before'});
         if(!rows.length){content.push({text:'Aktif ekran filtresine uygun PQ bulunamadı.',italics:true,color:'#64748b'});}
         else{
             rows.forEach((r,i)=>{
@@ -6169,14 +6214,15 @@
             content.push({table:{headerRows:1,widths:['*',90],body},layout:'lightHorizontalLines',margin:[0,0,0,10]});
         }
         if(eiRows.length){
-            content.push({text:'ICVM Geçici EI Etki Özeti',style:'sectionHeader'});
+            content.push({text:'ICVM Geçici EI Etki Özeti',style:'sectionHeader',pageBreak:'before'});
             const eiBody=[[{text:'Alan',bold:true,fillColor:'#f1f5f9',alignment:'center'},{text:'Uyg. PQ',bold:true,fillColor:'#f1f5f9',alignment:'center'},{text:'Mevcut SAT',bold:true,fillColor:'#f1f5f9',alignment:'center'},{text:'Yeni PQ',bold:true,fillColor:'#f1f5f9',alignment:'center'},{text:'Mevcut EI',bold:true,fillColor:'#f1f5f9',alignment:'center'},{text:'ICVM Sonrası',bold:true,fillColor:'#f1f5f9',alignment:'center'},{text:'Değişim',bold:true,fillColor:'#f1f5f9',alignment:'center'}]];
             eiRows.forEach(r=>eiBody.push([
                 {text:String(r['Alan']||''),alignment:'center'},{text:String(r['Uygulanabilir PQ']??''),alignment:'center'},{text:String(r['Mevcut Resmî SAT']??''),alignment:'center'},{text:String(r['ICVM’de Kapatılan Yeni PQ']??''),alignment:'center'},{text:String(r['Mevcut Resmî EI']||''),alignment:'center'},{text:String(r['Geçici ICVM Sonrası EI']||''),alignment:'center'},{text:String(r['Değişim']||''),alignment:'center'}
             ]));
             content.push({table:{headerRows:1,widths:['auto','auto','auto','auto','auto','auto','auto'],body:eiBody},layout:'lightHorizontalLines',margin:[0,0,0,10]});
+            content.push({svg:buildIcaoEiComparisonChartSvg(eiRows,{width:760,height:330}),width:760,margin:[0,2,0,12]});
         }
-        content.push({text:'PQ / CAP Validasyon Ayrıntıları',style:'sectionHeader'});
+        content.push({text:'PQ / CAP Validasyon Ayrıntıları',style:'sectionHeader',pageBreak:'before'});
         if(!rows.length) content.push({text:'Ziyaret kapsamında PQ bulunamadı.',italics:true,color:'#64748b'});
         rows.forEach((r,i)=>{
             content.push(icaoValidationPdfHeading(r,i));
