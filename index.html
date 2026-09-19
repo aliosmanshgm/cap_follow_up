@@ -6072,8 +6072,19 @@
         const left=58, right=16, top=26, bottom=82;
         const plotW=width-left-right, plotH=height-top-bottom;
         const baselineColor='#5b9bd5', newColor='#2f5597', gridColor='#dbe3ef', textColor='#334155';
-        const maxVal=Math.max(100,...data.map(r=>Math.max(Number(r.newPct ?? r['newPct'] ?? r['Geçici ICVM Sonrası EI'] ?? 0), Number(r.baselinePct ?? r['baselinePct'] ?? r['Mevcut Resmî EI'] ?? 0))));
-        const yMax=Math.ceil(maxVal/10)*10;
+        const parsePctValue=value=>{
+            if(value===null||value===undefined||value==='') return 0;
+            if(typeof value==='number') return Number.isFinite(value)?value:0;
+            let s=String(value).trim().replace(/%/g,'').replace(/\s/g,'');
+            if(s.includes(',')&&s.includes('.')) s=s.replace(/\./g,'').replace(',','.');
+            else s=s.replace(',','.');
+            const n=parseFloat(s);
+            return Number.isFinite(n)?n:0;
+        };
+        const rowBaseline=r=>parsePctValue(r.baselinePct ?? r['baselinePct'] ?? r['Mevcut Resmî EI'] ?? 0);
+        const rowNew=r=>parsePctValue(r.newPct ?? r['newPct'] ?? r['Geçici ICVM Sonrası EI'] ?? 0);
+        const maxVal=Math.max(100,...data.map(r=>Math.max(rowNew(r),rowBaseline(r))));
+        const yMax=Math.max(100,Math.ceil(maxVal/10)*10);
         const groupW=plotW/data.length;
         const barGap=Math.min(16, groupW*0.12);
         const barW=Math.min(34, Math.max(18, (groupW - barGap*3)/2));
@@ -6087,8 +6098,8 @@
         }
         data.forEach((row,idx)=>{
             const area=String(row.area||row['Alan']||'');
-            const b=Number(row.baselinePct ?? row['baselinePct'] ?? String(row['Mevcut Resmî EI']||'').replace('%','').replace(',','.'))||0;
-            const n=Number(row.newPct ?? row['newPct'] ?? String(row['Geçici ICVM Sonrası EI']||'').replace('%','').replace(',','.'))||0;
+            const b=rowBaseline(row);
+            const n=rowNew(row);
             const delta=n-b;
             const xGroup=left + idx*groupW;
             const x1=xGroup + (groupW/2) - barW - (barGap/2);
