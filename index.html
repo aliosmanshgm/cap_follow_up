@@ -383,7 +383,17 @@
 }
 
 
-@media(max-width:900px){#tab-icao-visit-validation .icao-visit-panel>div[style*="grid-template-columns:minmax(220px,1fr)"]{grid-template-columns:1fr!important}}
+#tab-icao-visit-validation .icao-visit-filter-grid{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+  gap:8px;
+  margin-bottom:10px;
+  min-width:0;
+}
+#tab-icao-visit-validation .icao-visit-filter-grid .icao-visit-filter-search{grid-column:1/-1;}
+#tab-icao-visit-validation .icao-visit-filter-grid input,
+#tab-icao-visit-validation .icao-visit-filter-grid select{width:100%;min-width:0;box-sizing:border-box;}
+@media(max-width:900px){#tab-icao-visit-validation .icao-visit-filter-grid{grid-template-columns:1fr;}#tab-icao-visit-validation .icao-visit-filter-grid .icao-visit-filter-search{grid-column:auto;}}
 </style>
 
     <style>
@@ -1916,8 +1926,8 @@
                 <div class="icao-visit-layout">
                     <section class="icao-visit-panel">
                         <div class="icao-visit-panel-head"><h4>PQ / CAP Validasyon Listesi</h4><span id="icaoVisitListCount" class="smart-scope">0 PQ</span></div>
-                        <div style="display:grid;grid-template-columns:minmax(220px,1fr) 150px 170px;gap:8px;margin-bottom:10px">
-                            <input id="icaoVisitSearch" type="text" placeholder="PQ, alan, CE veya doğrulama türü ara..." oninput="renderIcaoOfficialVisitPqList()">
+                        <div class="icao-visit-filter-grid">
+                            <input id="icaoVisitSearch" class="icao-visit-filter-search" type="text" placeholder="PQ, alan, CE veya doğrulama türü ara..." oninput="renderIcaoOfficialVisitPqList()">
                             <select id="icaoVisitAreaFilter" onchange="handleIcaoVisitAreaFilterChange()" title="Ziyaret kapsamındaki denetim alanına göre filtrele"><option value="all">Tüm alanlar</option></select>
                             <select id="icaoVisitStatusFilter" onchange="renderIcaoOfficialVisitPqList()"><option value="all">Tüm sonuçlar</option><option value="not_evaluated">Değerlendirilmedi</option><option value="under_review">İnceleniyor</option><option value="additional_evidence">Ek kanıt talebi</option><option value="open">CAP açık kaldı</option><option value="validated">CAP kapatıldı</option><option value="post_visit">Ziyaret sonrası takip</option></select>
                         </div>
@@ -5995,6 +6005,64 @@
         return {table:{widths:['*'],body:[[{text:`${index+1}. PQ ${row['PQ']} — ${row['Alan']} — ${row['ICAO / ICVM Sonucu']}`,bold:true,fontSize:9,color:palette.text,fillColor:palette.fill,margin:[5,4,5,4]}]]},layout:'noBorders',margin:[0,index?7:0,0,3]};
     }
 
+    function icaoValidationStatusKeyFromLabel(label){
+        const normalized=String(label||'').trim();
+        return Object.keys(ICAO_VALIDATION_STATUSES).find(k=>String(ICAO_VALIDATION_STATUSES[k]||'').trim()===normalized)||'not_evaluated';
+    }
+    function buildIcaoScreenPdfStatusSummary(rows){
+        const counts={total:(rows||[]).length,validated:0,open:0,additional_evidence:0,post_visit:0,under_review:0,not_evaluated:0};
+        (rows||[]).forEach(r=>{const key=icaoValidationStatusKeyFromLabel(r['ICAO / ICVM Sonucu']);counts[key]=(counts[key]||0)+1;});
+        counts.evidence_followup=(counts.additional_evidence||0)+(counts.post_visit||0);
+        return counts;
+    }
+    function buildIcaoScreenPdfPqStatusTable(rows){
+        const body=[[{text:'PQ',bold:true,fillColor:'#e2e8f0'},{text:'Alan',bold:true,fillColor:'#e2e8f0'},{text:'CE',bold:true,fillColor:'#e2e8f0'},{text:'Tür',bold:true,fillColor:'#e2e8f0'},{text:'ICVM / ICAO Sonucu',bold:true,fillColor:'#e2e8f0'}]];
+        (rows||[]).forEach(r=>{
+            const palette=icaoValidationPdfPaletteFromLabel(r['ICAO / ICVM Sonucu']);
+            body.push([
+                {text:String(r['PQ']||'-'),bold:true},
+                String(r['Alan']||'-'),
+                String(r['CE']||'-'),
+                String(r['Doğrulama Türü']||'-'),
+                {text:String(r['ICAO / ICVM Sonucu']||'-'),bold:true,color:palette.text,fillColor:palette.fill}
+            ]);
+        });
+        return body;
+    }
+    function buildIcaoScreenPdfAreaStatusData(rows){
+        const map={};
+        (rows||[]).forEach(r=>{
+            const area=normalizeAreaKey(r['Alan']||'')||'DİĞER';
+            if(!map[area])map[area]={area,total:0,validated:0,open:0,additional_evidence:0,post_visit:0,under_review:0,not_evaluated:0};
+            const key=icaoValidationStatusKeyFromLabel(r['ICAO / ICVM Sonucu']);
+            map[area].total++;map[area][key]=(map[area][key]||0)+1;
+        });
+        return Object.values(map).sort((a,b)=>sortAreas(a.area,b.area));
+    }
+    function buildIcaoScreenPdfAreaBarSvg(areaRow){
+        const W=680,H=74,x0=150,y=31,barW=490,barH=18,total=Math.max(1,Number(areaRow.total||0));
+        const segments=[
+            {key:'validated',label:'Kapalı',color:'#22c55e'},
+            {key:'open',label:'Açık',color:'#ef4444'},
+            {key:'additional_evidence',label:'Ek Kanıt',color:'#f59e0b'},
+            {key:'post_visit',label:'Takip',color:'#eab308'},
+            {key:'under_review',label:'İnceleniyor',color:'#3b82f6'},
+            {key:'not_evaluated',label:'Değerlendirilmedi',color:'#94a3b8'}
+        ];
+        let cursor=x0,rects='',labels='';
+        segments.forEach(seg=>{
+            const count=Number(areaRow[seg.key]||0);if(!count)return;
+            const w=barW*(count/total);
+            rects+=`<rect x="${cursor.toFixed(1)}" y="${y}" width="${Math.max(0,w).toFixed(1)}" height="${barH}" fill="${seg.color}"/>`;
+            if(w>=30)labels+=`<text x="${(cursor+w/2).toFixed(1)}" y="${y+13}" font-size="9" text-anchor="middle" fill="#ffffff" font-weight="700">${count}</text>`;
+            cursor+=w;
+        });
+        const legend=segments.filter(seg=>Number(areaRow[seg.key]||0)>0).map((seg,i)=>{
+            const x=150+i*85;return `<rect x="${x}" y="58" width="8" height="8" rx="2" fill="${seg.color}"/><text x="${x+12}" y="66" font-size="8" fill="#475569">${seg.label} ${areaRow[seg.key]||0}</text>`;
+        }).join('');
+        return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}"><text x="8" y="44" font-size="12" font-weight="700" fill="#0f172a">${String(areaRow.area).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</text><text x="118" y="44" font-size="9" text-anchor="end" fill="#64748b">${areaRow.total} PQ</text><rect x="${x0}" y="${y}" width="${barW}" height="${barH}" rx="4" fill="#e2e8f0"/>${rects}${labels}${legend}</svg>`;
+    }
+
     function exportIcaoOfficialVisitPDF(){
         const visit=getActiveIcaoOfficialVisitRecord();
         if(!visit)return alert('Önce ICAO Resmî Ziyareti ekranından bir ziyaret kaydı seçiniz.');
@@ -6007,6 +6075,27 @@
             {text:`${visit.visitName||'-'} | ${formatVisitDateRange(visit.plannedStart,visit.plannedEnd)} | Alanlar: ${visitArrayValue(visit.areas).join(', ')||'-'}`,style:'subheader'},
             {text:`Aktif ekran filtresi: Alan ${areaFilter} | ${statusFilter}${searchText?` | Arama: ${searchText}`:''} | Görünen PQ: ${rows.length}`,fontSize:8,color:'#64748b',margin:[0,0,0,10]}
         ];
+        const screenSummary=buildIcaoScreenPdfStatusSummary(rows);
+        content.push({text:'Aktif Kapsam Durum Özeti',style:'sectionHeader'});
+        content.push({table:{widths:['*','*','*','*','*','*'],body:[
+            [
+                {text:`Toplam PQ\n${screenSummary.total}`,alignment:'center',bold:true,fillColor:'#f8fafc'},
+                {text:`Kapalı\n${screenSummary.validated}`,alignment:'center',bold:true,color:'#166534',fillColor:'#dcfce7'},
+                {text:`Açık\n${screenSummary.open}`,alignment:'center',bold:true,color:'#991b1b',fillColor:'#fee2e2'},
+                {text:`Ek Kanıt / Takip\n${screenSummary.evidence_followup}`,alignment:'center',bold:true,color:'#92400e',fillColor:'#fef3c7'},
+                {text:`İnceleniyor\n${screenSummary.under_review}`,alignment:'center',bold:true,color:'#1e40af',fillColor:'#dbeafe'},
+                {text:`Değerlendirilmedi\n${screenSummary.not_evaluated}`,alignment:'center',bold:true,color:'#475569',fillColor:'#f1f5f9'}
+            ]
+        ]},layout:'lightHorizontalLines',margin:[0,0,0,8]});
+        if(rows.length){
+            content.push({text:'Kapsamdaki PQ Durumları',style:'sectionHeader'});
+            content.push({table:{headerRows:1,widths:[55,48,50,70,'*'],body:buildIcaoScreenPdfPqStatusTable(rows)},layout:'lightHorizontalLines',margin:[0,0,0,10]});
+            const areaStatusRows=buildIcaoScreenPdfAreaStatusData(rows);
+            if(areaStatusRows.length){
+                content.push({text:'Denetim Alanı Bazında Son Durum',style:'sectionHeader'});
+                areaStatusRows.forEach(a=>content.push({svg:buildIcaoScreenPdfAreaBarSvg(a),width:680,margin:[0,0,0,4]}));
+            }
+        }
         if(eiRows.length){
             content.push({text:'ICVM Geçici EI Etki Özeti',style:'sectionHeader'});
             const eiBody=[[{text:'Alan',bold:true,fillColor:'#f1f5f9'},{text:'Uyg. PQ',bold:true,fillColor:'#f1f5f9'},{text:'Mevcut SAT',bold:true,fillColor:'#f1f5f9'},{text:'Yeni PQ',bold:true,fillColor:'#f1f5f9'},{text:'Mevcut EI',bold:true,fillColor:'#f1f5f9'},{text:'ICVM Sonrası',bold:true,fillColor:'#f1f5f9'},{text:'Değişim',bold:true,fillColor:'#f1f5f9'}]];
