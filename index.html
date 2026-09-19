@@ -5906,6 +5906,8 @@
             return {
                 'PQ':pq,
                 'Alan':normalizeAreaKey(p.area||m.alan||''),
+                'CE':String(p.ce||m.ce||'').trim(),
+                'Doğrulama Türü':String(p.verificationType||m.tur||'').trim(),
                 'ICAO / ICVM Sonucu':ICAO_VALIDATION_STATUSES[status]||status,
                 'Sonuç Tarihi':r.resultDate||'',
                 'Bulgu / PQ Bilgisi':fullTextForExcel(p.finding||m.bulgu||p.question||m.soru||''),
