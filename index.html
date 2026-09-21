@@ -6015,6 +6015,7 @@
         const counts={total:(rows||[]).length,validated:0,open:0,additional_evidence:0,post_visit:0,under_review:0,not_evaluated:0};
         (rows||[]).forEach(r=>{const key=icaoValidationStatusKeyFromLabel(r['ICAO / ICVM Sonucu']);counts[key]=(counts[key]||0)+1;});
         counts.evidence_followup=(counts.additional_evidence||0)+(counts.post_visit||0);
+        counts.progressPct=counts.total>0?(counts.validated/counts.total)*100:0;
         return counts;
     }
     function buildIcaoScreenPdfPqStatusTable(rows){
@@ -6042,7 +6043,10 @@
         return Object.values(map).sort((a,b)=>sortAreas(a.area,b.area));
     }
     function buildIcaoScreenPdfAreaBarSvg(areaRow){
-        const W=680,H=74,x0=150,y=31,barW=490,barH=18,total=Math.max(1,Number(areaRow.total||0));
+        const W=680,H=86,x0=150,y=35,barW=490,barH=18,total=Math.max(1,Number(areaRow.total||0));
+        const validated=Number(areaRow.validated||0);
+        const progressPct=(validated/total)*100;
+        const progressText=progressPct.toFixed(2).replace('.',',')+'%';
         const segments=[
             {key:'validated',label:'Kapalı',color:'#22c55e'},
             {key:'open',label:'Açık',color:'#ef4444'},
@@ -6060,9 +6064,9 @@
             cursor+=w;
         });
         const legend=segments.filter(seg=>Number(areaRow[seg.key]||0)>0).map((seg,i)=>{
-            const x=150+i*85;return `<rect x="${x}" y="58" width="8" height="8" rx="2" fill="${seg.color}"/><text x="${x+12}" y="66" font-size="8" fill="#475569">${seg.label} ${areaRow[seg.key]||0}</text>`;
+            const x=150+i*85;return `<rect x="${x}" y="66" width="8" height="8" rx="2" fill="${seg.color}"/><text x="${x+12}" y="74" font-size="8" fill="#475569">${seg.label} ${areaRow[seg.key]||0}</text>`;
         }).join('');
-        return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}"><text x="8" y="44" font-size="12" font-weight="700" fill="#0f172a">${String(areaRow.area).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</text><text x="118" y="44" font-size="9" text-anchor="end" fill="#64748b">${areaRow.total} PQ</text><rect x="${x0}" y="${y}" width="${barW}" height="${barH}" rx="4" fill="#e2e8f0"/>${rects}${labels}${legend}</svg>`;
+        return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}"><text x="8" y="47" font-size="12" font-weight="700" fill="#0f172a">${String(areaRow.area).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</text><text x="118" y="39" font-size="9" text-anchor="end" fill="#64748b">${areaRow.total} PQ</text><text x="118" y="52" font-size="9" text-anchor="end" fill="#166534" font-weight="700">${validated}/${areaRow.total} kapalı</text><text x="${x0}" y="24" font-size="10" fill="#166534" font-weight="700">İlerleme: ${progressText}</text><rect x="${x0}" y="${y}" width="${barW}" height="${barH}" rx="4" fill="#e2e8f0"/>${rects}${labels}${legend}</svg>`;
     }
 
     function buildIcaoEiComparisonChartSvg(rows, opts={}){
@@ -6136,14 +6140,15 @@
         // SAYFA 1: Aktif Kapsam Durum Özeti + Denetim Alanı Bazında Son Durum
         const screenSummary=buildIcaoScreenPdfStatusSummary(rows);
         content.push({text:'Aktif Kapsam Durum Özeti',style:'sectionHeader'});
-        content.push({table:{widths:['*','*','*','*','*','*'],body:[
+        content.push({table:{widths:['*','*','*','*','*','*','*'],body:[
             [
                 {text:`Toplam PQ\n${screenSummary.total}`,alignment:'center',bold:true,fillColor:'#f8fafc'},
                 {text:`Kapalı\n${screenSummary.validated}`,alignment:'center',bold:true,color:'#166534',fillColor:'#dcfce7'},
                 {text:`Açık\n${screenSummary.open}`,alignment:'center',bold:true,color:'#991b1b',fillColor:'#fee2e2'},
                 {text:`Ek Kanıt / Takip\n${screenSummary.evidence_followup}`,alignment:'center',bold:true,color:'#92400e',fillColor:'#fef3c7'},
                 {text:`İnceleniyor\n${screenSummary.under_review}`,alignment:'center',bold:true,color:'#1e40af',fillColor:'#dbeafe'},
-                {text:`Değerlendirilmedi\n${screenSummary.not_evaluated}`,alignment:'center',bold:true,color:'#475569',fillColor:'#f1f5f9'}
+                {text:`Değerlendirilmedi\n${screenSummary.not_evaluated}`,alignment:'center',bold:true,color:'#475569',fillColor:'#f1f5f9'},
+                {text:`İlerleme\n%${screenSummary.progressPct.toFixed(2).replace('.',',')}\n(${screenSummary.validated}/${screenSummary.total||0})`,alignment:'center',bold:true,color:'#166534',fillColor:'#ecfdf5'}
             ]
         ]},layout:'lightHorizontalLines',margin:[0,0,0,8]});
         const areaStatusRows=buildIcaoScreenPdfAreaStatusData(rows);
@@ -6237,14 +6242,15 @@
         // SAYFA 1: Aktif Kapsam Durum Özeti + Denetim Alanı Bazında Son Durum
         const detailedSummary=buildIcaoScreenPdfStatusSummary(rows);
         content.push({text:'Aktif Kapsam Durum Özeti',style:'sectionHeader'});
-        content.push({table:{widths:['*','*','*','*','*','*'],body:[
+        content.push({table:{widths:['*','*','*','*','*','*','*'],body:[
             [
                 {text:`Toplam PQ\n${detailedSummary.total}`,alignment:'center',bold:true,fillColor:'#f8fafc'},
                 {text:`Kapalı\n${detailedSummary.validated}`,alignment:'center',bold:true,color:'#166534',fillColor:'#dcfce7'},
                 {text:`Açık\n${detailedSummary.open}`,alignment:'center',bold:true,color:'#991b1b',fillColor:'#fee2e2'},
                 {text:`Ek Kanıt / Takip\n${detailedSummary.evidence_followup}`,alignment:'center',bold:true,color:'#92400e',fillColor:'#fef3c7'},
                 {text:`İnceleniyor\n${detailedSummary.under_review}`,alignment:'center',bold:true,color:'#1e40af',fillColor:'#dbeafe'},
-                {text:`Değerlendirilmedi\n${detailedSummary.not_evaluated}`,alignment:'center',bold:true,color:'#475569',fillColor:'#f1f5f9'}
+                {text:`Değerlendirilmedi\n${detailedSummary.not_evaluated}`,alignment:'center',bold:true,color:'#475569',fillColor:'#f1f5f9'},
+                {text:`İlerleme\n%${detailedSummary.progressPct.toFixed(2).replace('.',',')}\n(${detailedSummary.validated}/${detailedSummary.total||0})`,alignment:'center',bold:true,color:'#166534',fillColor:'#ecfdf5'}
             ]
         ]},layout:'lightHorizontalLines',margin:[0,0,0,8]});
         const detailedAreaRows=buildIcaoScreenPdfAreaStatusData(rows);
