@@ -6132,6 +6132,8 @@
             {text:`${visit.visitName||'-'} | ${formatVisitDateRange(visit.plannedStart,visit.plannedEnd)} | Alanlar: ${visitArrayValue(visit.areas).join(', ')||'-'}`,style:'subheader'},
             {text:`Aktif ekran filtresi: Alan ${areaFilter} | ${statusFilter}${searchText?` | Arama: ${searchText}`:''} | Görünen PQ: ${rows.length}`,fontSize:8,color:'#64748b',margin:[0,0,0,10]}
         ];
+
+        // SAYFA 1: Aktif Kapsam Durum Özeti + Denetim Alanı Bazında Son Durum
         const screenSummary=buildIcaoScreenPdfStatusSummary(rows);
         content.push({text:'Aktif Kapsam Durum Özeti',style:'sectionHeader'});
         content.push({table:{widths:['*','*','*','*','*','*'],body:[
@@ -6144,25 +6146,38 @@
                 {text:`Değerlendirilmedi\n${screenSummary.not_evaluated}`,alignment:'center',bold:true,color:'#475569',fillColor:'#f1f5f9'}
             ]
         ]},layout:'lightHorizontalLines',margin:[0,0,0,8]});
-        if(rows.length){
-            content.push({text:'Kapsamdaki PQ Durumları',style:'sectionHeader'});
-            content.push({table:{headerRows:1,widths:[55,48,50,70,'*'],body:buildIcaoScreenPdfPqStatusTable(rows)},layout:'lightHorizontalLines',margin:[0,0,0,10]});
-            const areaStatusRows=buildIcaoScreenPdfAreaStatusData(rows);
-            if(areaStatusRows.length){
-                content.push({text:'Denetim Alanı Bazında Son Durum',style:'sectionHeader'});
-                areaStatusRows.forEach(a=>content.push({svg:buildIcaoScreenPdfAreaBarSvg(a),width:680,margin:[0,0,0,4]}));
-            }
+        const areaStatusRows=buildIcaoScreenPdfAreaStatusData(rows);
+        content.push({text:'Denetim Alanı Bazında Son Durum',style:'sectionHeader'});
+        if(areaStatusRows.length){
+            areaStatusRows.forEach(a=>content.push({svg:buildIcaoScreenPdfAreaBarSvg(a),width:680,margin:[0,0,0,4]}));
+        }else{
+            content.push({text:'Aktif ekran filtresine uygun denetim alanı verisi bulunamadı.',italics:true,color:'#64748b',margin:[0,0,0,8]});
         }
+
+        // SAYFA 2: ICVM Geçici EI Etki Özeti
+        content.push({text:'ICVM Geçici EI Etki Özeti',style:'sectionHeader',pageBreak:'before'});
         if(eiRows.length){
-            content.push({text:'ICVM Geçici EI Etki Özeti',style:'sectionHeader',pageBreak:'before'});
             const eiBody=[[{text:'Alan',bold:true,fillColor:'#f1f5f9',alignment:'center'},{text:'Uyg. PQ',bold:true,fillColor:'#f1f5f9',alignment:'center'},{text:'Mevcut SAT',bold:true,fillColor:'#f1f5f9',alignment:'center'},{text:'Yeni PQ',bold:true,fillColor:'#f1f5f9',alignment:'center'},{text:'Mevcut EI',bold:true,fillColor:'#f1f5f9',alignment:'center'},{text:'ICVM Sonrası',bold:true,fillColor:'#f1f5f9',alignment:'center'},{text:'Değişim',bold:true,fillColor:'#f1f5f9',alignment:'center'}]];
             eiRows.forEach(r=>eiBody.push([{text:r['Alan'],alignment:'center'},{text:r['Uygulanabilir PQ'],alignment:'center'},{text:r['Mevcut Resmî SAT'],alignment:'center'},{text:r['ICVM’de Kapatılan Yeni PQ'],alignment:'center'},{text:r['Mevcut Resmî EI'],alignment:'center'},{text:r['Geçici ICVM Sonrası EI'],alignment:'center'},{text:r['Değişim'],alignment:'center'}]));
             content.push({table:{headerRows:1,widths:['auto','auto','auto','auto','auto','auto','auto'],body:eiBody},layout:'lightHorizontalLines',margin:[0,0,0,10]});
             content.push({svg:buildIcaoEiComparisonChartSvg(eiRows,{width:760,height:330}),width:760,margin:[0,2,0,12]});
+        }else{
+            content.push({text:'EI etki hesabı için veri bulunamadı.',italics:true,color:'#64748b'});
         }
+
+        // SAYFA 3: Kapsamdaki PQ Durumları
+        content.push({text:'Kapsamdaki PQ Durumları',style:'sectionHeader',pageBreak:'before'});
+        if(rows.length){
+            content.push({table:{headerRows:1,widths:[55,48,50,70,'*'],body:buildIcaoScreenPdfPqStatusTable(rows)},layout:'lightHorizontalLines',margin:[0,0,0,10]});
+        }else{
+            content.push({text:'Aktif ekran filtresine uygun PQ bulunamadı.',italics:true,color:'#64748b'});
+        }
+
+        // SAYFA 4+: PQ / CAP Validasyon Sonuçları
         content.push({text:'PQ / CAP Validasyon Sonuçları',style:'sectionHeader',pageBreak:'before'});
-        if(!rows.length){content.push({text:'Aktif ekran filtresine uygun PQ bulunamadı.',italics:true,color:'#64748b'});}
-        else{
+        if(!rows.length){
+            content.push({text:'Aktif ekran filtresine uygun PQ bulunamadı.',italics:true,color:'#64748b'});
+        }else{
             rows.forEach((r,i)=>{
                 content.push(icaoValidationPdfHeading(r,i));
                 content.push({table:{widths:[105,'*'],body:[
@@ -6211,30 +6226,67 @@
     function exportIcaoOfficialVisitDetailedPDF(){
         const visit=getActiveIcaoOfficialVisitRecord();
         if(!visit)return alert('Önce ICAO Resmî Ziyareti ekranından bir ziyaret kaydı seçiniz.');
-        const rows=buildIcaoOfficialVisitDetailedExportRows(visit), eiRows=buildIcaoOfficialVisitEiExportRows(visit), statusRows=buildIcaoOfficialVisitStatusSummaryRows(visit);
+        const rows=buildIcaoOfficialVisitDetailedExportRows(visit), eiRows=buildIcaoOfficialVisitEiExportRows(visit);
         const areaFilter=icaoOfficialVisitAreaLabel();
         const content=[
             {text:'ICAO Resmî Ziyareti / ICVM — Detaylı Rapor',style:'header'},
             {text:`${visit.visitName||'-'} | ${formatVisitDateRange(visit.plannedStart,visit.plannedEnd)} | Ziyaret alanları: ${visitArrayValue(visit.areas).join(', ')||'-'}`,style:'subheader'},
             {text:`Denetim alanı filtresi: ${areaFilter} | Rapor kapsamı: ${rows.length} PQ. Detaylı rapor ekran araması ve sonuç filtresinden bağımsızdır; denetim alanı filtresini esas alır.`,fontSize:8,color:'#64748b',margin:[0,0,0,10]}
         ];
-        if(statusRows.length){
-            content.push({text:'Validasyon Durum Özeti',style:'sectionHeader'});
-            const body=[[{text:'Durum',bold:true,fillColor:'#f1f5f9',alignment:'center'},{text:'PQ Sayısı',bold:true,fillColor:'#f1f5f9',alignment:'center'}]];
-            statusRows.forEach(r=>{const p=icaoValidationPdfPaletteFromLabel(r['Durum']);body.push([{text:String(r['Durum']||''),alignment:'center',fillColor:p.fill,color:p.text,bold:true},{text:String(r['PQ Sayısı']||0),alignment:'center',fillColor:p.fill,color:p.text,bold:true}]);});
-            content.push({table:{headerRows:1,widths:['*',90],body},layout:'lightHorizontalLines',margin:[0,0,0,10]});
+
+        // SAYFA 1: Aktif Kapsam Durum Özeti + Denetim Alanı Bazında Son Durum
+        const detailedSummary=buildIcaoScreenPdfStatusSummary(rows);
+        content.push({text:'Aktif Kapsam Durum Özeti',style:'sectionHeader'});
+        content.push({table:{widths:['*','*','*','*','*','*'],body:[
+            [
+                {text:`Toplam PQ\n${detailedSummary.total}`,alignment:'center',bold:true,fillColor:'#f8fafc'},
+                {text:`Kapalı\n${detailedSummary.validated}`,alignment:'center',bold:true,color:'#166534',fillColor:'#dcfce7'},
+                {text:`Açık\n${detailedSummary.open}`,alignment:'center',bold:true,color:'#991b1b',fillColor:'#fee2e2'},
+                {text:`Ek Kanıt / Takip\n${detailedSummary.evidence_followup}`,alignment:'center',bold:true,color:'#92400e',fillColor:'#fef3c7'},
+                {text:`İnceleniyor\n${detailedSummary.under_review}`,alignment:'center',bold:true,color:'#1e40af',fillColor:'#dbeafe'},
+                {text:`Değerlendirilmedi\n${detailedSummary.not_evaluated}`,alignment:'center',bold:true,color:'#475569',fillColor:'#f1f5f9'}
+            ]
+        ]},layout:'lightHorizontalLines',margin:[0,0,0,8]});
+        const detailedAreaRows=buildIcaoScreenPdfAreaStatusData(rows);
+        content.push({text:'Denetim Alanı Bazında Son Durum',style:'sectionHeader'});
+        if(detailedAreaRows.length){
+            detailedAreaRows.forEach(a=>content.push({svg:buildIcaoScreenPdfAreaBarSvg(a),width:680,margin:[0,0,0,4]}));
+        }else{
+            content.push({text:'Seçili denetim alanı kapsamında veri bulunamadı.',italics:true,color:'#64748b',margin:[0,0,0,8]});
         }
+
+        // SAYFA 2: ICVM Geçici EI Etki Özeti
+        content.push({text:'ICVM Geçici EI Etki Özeti',style:'sectionHeader',pageBreak:'before'});
         if(eiRows.length){
-            content.push({text:'ICVM Geçici EI Etki Özeti',style:'sectionHeader',pageBreak:'before'});
             const eiBody=[[{text:'Alan',bold:true,fillColor:'#f1f5f9',alignment:'center'},{text:'Uyg. PQ',bold:true,fillColor:'#f1f5f9',alignment:'center'},{text:'Mevcut SAT',bold:true,fillColor:'#f1f5f9',alignment:'center'},{text:'Yeni PQ',bold:true,fillColor:'#f1f5f9',alignment:'center'},{text:'Mevcut EI',bold:true,fillColor:'#f1f5f9',alignment:'center'},{text:'ICVM Sonrası',bold:true,fillColor:'#f1f5f9',alignment:'center'},{text:'Değişim',bold:true,fillColor:'#f1f5f9',alignment:'center'}]];
             eiRows.forEach(r=>eiBody.push([
-                {text:String(r['Alan']||''),alignment:'center'},{text:String(r['Uygulanabilir PQ']??''),alignment:'center'},{text:String(r['Mevcut Resmî SAT']??''),alignment:'center'},{text:String(r['ICVM’de Kapatılan Yeni PQ']??''),alignment:'center'},{text:String(r['Mevcut Resmî EI']||''),alignment:'center'},{text:String(r['Geçici ICVM Sonrası EI']||''),alignment:'center'},{text:String(r['Değişim']||''),alignment:'center'}
+                {text:String(r['Alan']||''),alignment:'center'},
+                {text:String(r['Uygulanabilir PQ']??''),alignment:'center'},
+                {text:String(r['Mevcut Resmî SAT']??''),alignment:'center'},
+                {text:String(r['ICVM’de Kapatılan Yeni PQ']??''),alignment:'center'},
+                {text:String(r['Mevcut Resmî EI']||''),alignment:'center'},
+                {text:String(r['Geçici ICVM Sonrası EI']||''),alignment:'center'},
+                {text:String(r['Değişim']||''),alignment:'center'}
             ]));
             content.push({table:{headerRows:1,widths:['auto','auto','auto','auto','auto','auto','auto'],body:eiBody},layout:'lightHorizontalLines',margin:[0,0,0,10]});
             content.push({svg:buildIcaoEiComparisonChartSvg(eiRows,{width:760,height:330}),width:760,margin:[0,2,0,12]});
+        }else{
+            content.push({text:'EI etki hesabı için veri bulunamadı.',italics:true,color:'#64748b'});
         }
-        content.push({text:'PQ / CAP Validasyon Ayrıntıları',style:'sectionHeader',pageBreak:'before'});
-        if(!rows.length) content.push({text:'Ziyaret kapsamında PQ bulunamadı.',italics:true,color:'#64748b'});
+
+        // SAYFA 3: Kapsamdaki PQ Durumları
+        content.push({text:'Kapsamdaki PQ Durumları',style:'sectionHeader',pageBreak:'before'});
+        if(rows.length){
+            content.push({table:{headerRows:1,widths:[55,48,50,70,'*'],body:buildIcaoScreenPdfPqStatusTable(rows)},layout:'lightHorizontalLines',margin:[0,0,0,10]});
+        }else{
+            content.push({text:'Ziyaret kapsamında PQ bulunamadı.',italics:true,color:'#64748b'});
+        }
+
+        // SAYFA 4+: PQ / CAP Validasyon Sonuçları — detay alanları korunur
+        content.push({text:'PQ / CAP Validasyon Sonuçları',style:'sectionHeader',pageBreak:'before'});
+        if(!rows.length){
+            content.push({text:'Ziyaret kapsamında PQ bulunamadı.',italics:true,color:'#64748b'});
+        }
         rows.forEach((r,i)=>{
             content.push(icaoValidationPdfHeading(r,i));
             content.push({table:{widths:[112,'*'],body:[
