@@ -6007,6 +6007,25 @@
         return {table:{widths:['*'],body:[[{text:`${index+1}. PQ ${row['PQ']} — ${row['Alan']} — ${row['ICAO / ICVM Sonucu']}`,bold:true,fontSize:9,color:palette.text,fillColor:palette.fill,margin:[5,4,5,4]}]]},layout:'noBorders',margin:[0,index?7:0,0,3]};
     }
 
+    function buildIcaoValidationPdfResultBlock(row,index,detailed=false){
+        const palette=icaoValidationPdfPaletteFromLabel(row['ICAO / ICVM Sonucu']);
+        const rows=[
+            [{text:`${index+1}. PQ ${row['PQ']} — ${row['Alan']} — ${row['ICAO / ICVM Sonucu']}`,colSpan:2,bold:true,fontSize:9,color:palette.text,fillColor:palette.fill,margin:[5,4,5,4]},{}],
+            [{text:'Bulgu / PQ',bold:true,fillColor:'#f1f5f9'},fullTextForPdf(row['Bulgu / PQ Bilgisi']||'-')],
+            [{text:'Sonuç tarihi',bold:true,fillColor:'#f1f5f9'},row['Sonuç Tarihi']||'-'],
+            [{text:detailed?'Sunulan ek/özel kanıt':'Kanıt',bold:true,fillColor:'#f1f5f9'},fullTextForPdf(row['ICAO’ya Sunulan Kanıt / Uygulama Kanıtı']||'-')],
+            [{text:'ICAO görüşü',bold:true,fillColor:'#f1f5f9'},fullTextForPdf(row['ICAO Görüşü / Ziyaret Notu']||'-')],
+            [{text:detailed?'Ek kanıt / açıklama talebi':'Ek talep',bold:true,fillColor:'#f1f5f9'},fullTextForPdf(row['Ek Kanıt / Açıklama Talebi']||'-')],
+            [{text:'Sorumlu / takip',bold:true,fillColor:'#f1f5f9'},`${row['Sorumlu SHGM Birimi']||'-'} / ${row['Takip Tarihi']||'-'}`]
+        ];
+        if(detailed){
+            rows.push([{text:'İç not',bold:true,fillColor:'#f1f5f9'},fullTextForPdf(row['İç Not']||'-')]);
+            rows.push([{text:'CAP Step’leri / Evidence Reference',bold:true,fillColor:'#f1f5f9'},fullTextForPdf(row['CAP Step’leri (Bilgi Amaçlı)']||'-')]);
+        }
+        rows.push([{text:detailed?'Geçici EI etkisi':'EI etkisi',bold:true,fillColor:'#f1f5f9'},row['Geçici EI Etkisi']||'-']);
+        return {table:{headerRows:1,dontBreakRows:true,keepWithHeaderRows:1,widths:[detailed?112:105,'*'],body:rows},layout:'lightHorizontalLines',margin:[0,index?7:0,0,5]};
+    }
+
     function icaoValidationStatusKeyFromLabel(label){
         const normalized=String(label||'').trim();
         return Object.keys(ICAO_VALIDATION_STATUSES).find(k=>String(ICAO_VALIDATION_STATUSES[k]||'').trim()===normalized)||'not_evaluated';
@@ -6042,11 +6061,10 @@
         });
         return Object.values(map).sort((a,b)=>sortAreas(a.area,b.area));
     }
-    function buildIcaoScreenPdfAreaBarSvg(areaRow){
-        const W=680,H=86,x0=150,y=35,barW=490,barH=18,total=Math.max(1,Number(areaRow.total||0));
-        const validated=Number(areaRow.validated||0);
-        const progressPct=(validated/total)*100;
-        const progressText=progressPct.toFixed(2).replace('.',',')+'%';
+    function buildIcaoScreenPdfAreaCombinedSvg(areaRows){
+        const rows=(areaRows||[]).filter(r=>r&&r.area);
+        if(!rows.length)return '';
+        const W=760,left=128,right=118,barX=left,barW=W-left-right,barH=18,rowH=46,top=34,legendH=34,H=top+(rows.length*rowH)+legendH;
         const segments=[
             {key:'validated',label:'Kapalı',color:'#22c55e'},
             {key:'open',label:'Açık',color:'#ef4444'},
@@ -6055,18 +6073,33 @@
             {key:'under_review',label:'İnceleniyor',color:'#3b82f6'},
             {key:'not_evaluated',label:'Değerlendirilmedi',color:'#94a3b8'}
         ];
-        let cursor=x0,rects='',labels='';
-        segments.forEach(seg=>{
-            const count=Number(areaRow[seg.key]||0);if(!count)return;
-            const w=barW*(count/total);
-            rects+=`<rect x="${cursor.toFixed(1)}" y="${y}" width="${Math.max(0,w).toFixed(1)}" height="${barH}" fill="${seg.color}"/>`;
-            if(w>=30)labels+=`<text x="${(cursor+w/2).toFixed(1)}" y="${y+13}" font-size="9" text-anchor="middle" fill="#ffffff" font-weight="700">${count}</text>`;
-            cursor+=w;
+        const esc=s=>String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+        let body='';
+        rows.forEach((areaRow,idx)=>{
+            const total=Math.max(1,Number(areaRow.total||0));
+            const validated=Number(areaRow.validated||0);
+            const progressPct=(validated/total)*100;
+            const y=top+(idx*rowH);
+            let cursor=barX,rects='',counts='';
+            segments.forEach(seg=>{
+                const count=Number(areaRow[seg.key]||0);if(!count)return;
+                const w=barW*(count/total);
+                rects+=`<rect x="${cursor.toFixed(1)}" y="${y}" width="${Math.max(0,w).toFixed(1)}" height="${barH}" fill="${seg.color}"/>`;
+                if(w>=28)counts+=`<text x="${(cursor+w/2).toFixed(1)}" y="${y+13}" font-size="9" text-anchor="middle" fill="#ffffff" font-weight="700">${count}</text>`;
+                cursor+=w;
+            });
+            body+=`<text x="8" y="${y+13}" font-size="12" font-weight="700" fill="#0f172a">${esc(areaRow.area)}</text>`;
+            body+=`<text x="70" y="${y+13}" font-size="9" fill="#64748b">${areaRow.total} PQ</text>`;
+            body+=`<rect x="${barX}" y="${y}" width="${barW}" height="${barH}" rx="4" fill="#e2e8f0"/>${rects}${counts}`;
+            body+=`<text x="${barX+barW+10}" y="${y+8}" font-size="9" fill="#166534" font-weight="700">${validated}/${areaRow.total} kapalı</text>`;
+            body+=`<text x="${barX+barW+10}" y="${y+20}" font-size="10" fill="#166534" font-weight="700">%${progressPct.toFixed(2).replace('.',',')}</text>`;
         });
-        const legend=segments.filter(seg=>Number(areaRow[seg.key]||0)>0).map((seg,i)=>{
-            const x=150+i*85;return `<rect x="${x}" y="66" width="8" height="8" rx="2" fill="${seg.color}"/><text x="${x+12}" y="74" font-size="8" fill="#475569">${seg.label} ${areaRow[seg.key]||0}</text>`;
-        }).join('');
-        return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}"><text x="8" y="47" font-size="12" font-weight="700" fill="#0f172a">${String(areaRow.area).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</text><text x="118" y="39" font-size="9" text-anchor="end" fill="#64748b">${areaRow.total} PQ</text><text x="118" y="52" font-size="9" text-anchor="end" fill="#166534" font-weight="700">${validated}/${areaRow.total} kapalı</text><text x="${x0}" y="24" font-size="10" fill="#166534" font-weight="700">İlerleme: ${progressText}</text><rect x="${x0}" y="${y}" width="${barW}" height="${barH}" rx="4" fill="#e2e8f0"/>${rects}${labels}${legend}</svg>`;
+        let lx=8,ly=H-18,legend='';
+        segments.forEach(seg=>{
+            legend+=`<rect x="${lx}" y="${ly-8}" width="9" height="9" rx="2" fill="${seg.color}"/><text x="${lx+13}" y="${ly}" font-size="8" fill="#475569">${seg.label}</text>`;
+            lx+=seg.label.length*5.4+36;
+        });
+        return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}"><rect width="${W}" height="${H}" fill="#ffffff"/><text x="${barX}" y="18" font-size="10" fill="#64748b">Durum dağılımı</text><text x="${barX+barW+10}" y="18" font-size="10" fill="#166534" font-weight="700">İlerleme</text>${body}${legend}</svg>`;
     }
 
     function buildIcaoEiComparisonChartSvg(rows, opts={}){
@@ -6154,7 +6187,7 @@
         const areaStatusRows=buildIcaoScreenPdfAreaStatusData(rows);
         content.push({text:'Denetim Alanı Bazında Son Durum',style:'sectionHeader'});
         if(areaStatusRows.length){
-            areaStatusRows.forEach(a=>content.push({svg:buildIcaoScreenPdfAreaBarSvg(a),width:680,margin:[0,0,0,4]}));
+            content.push({svg:buildIcaoScreenPdfAreaCombinedSvg(areaStatusRows),width:760,margin:[0,0,0,8]});
         }else{
             content.push({text:'Aktif ekran filtresine uygun denetim alanı verisi bulunamadı.',italics:true,color:'#64748b',margin:[0,0,0,8]});
         }
@@ -6183,18 +6216,7 @@
         if(!rows.length){
             content.push({text:'Aktif ekran filtresine uygun PQ bulunamadı.',italics:true,color:'#64748b'});
         }else{
-            rows.forEach((r,i)=>{
-                content.push(icaoValidationPdfHeading(r,i));
-                content.push({table:{widths:[105,'*'],body:[
-                    [{text:'Bulgu / PQ',bold:true,fillColor:'#f1f5f9'},fullTextForPdf(r['Bulgu / PQ Bilgisi']||'-')],
-                    [{text:'Sonuç tarihi',bold:true,fillColor:'#f1f5f9'},r['Sonuç Tarihi']||'-'],
-                    [{text:'Kanıt',bold:true,fillColor:'#f1f5f9'},fullTextForPdf(r['ICAO’ya Sunulan Kanıt / Uygulama Kanıtı']||'-')],
-                    [{text:'ICAO görüşü',bold:true,fillColor:'#f1f5f9'},fullTextForPdf(r['ICAO Görüşü / Ziyaret Notu']||'-')],
-                    [{text:'Ek talep',bold:true,fillColor:'#f1f5f9'},fullTextForPdf(r['Ek Kanıt / Açıklama Talebi']||'-')],
-                    [{text:'Sorumlu / takip',bold:true,fillColor:'#f1f5f9'},`${r['Sorumlu SHGM Birimi']||'-'} / ${r['Takip Tarihi']||'-'}`],
-                    [{text:'EI etkisi',bold:true,fillColor:'#f1f5f9'},r['Geçici EI Etkisi']||'-']
-                ]},layout:'lightHorizontalLines',margin:[0,0,0,5]});
-            });
+            rows.forEach((r,i)=>content.push(buildIcaoValidationPdfResultBlock(r,i,false)));
         }
         const docDef=createStandardPdfDefinition(content,{pageOrientation:'landscape',pageSize:'A4',defaultStyle:{font:'Roboto',fontSize:8}});
         return safeDownloadPdf(docDef,icaoOfficialVisitExportFileBase(visit)+icaoOfficialVisitAreaFileSuffix()+'_Aktif_Ekran.pdf');
@@ -6256,7 +6278,7 @@
         const detailedAreaRows=buildIcaoScreenPdfAreaStatusData(rows);
         content.push({text:'Denetim Alanı Bazında Son Durum',style:'sectionHeader'});
         if(detailedAreaRows.length){
-            detailedAreaRows.forEach(a=>content.push({svg:buildIcaoScreenPdfAreaBarSvg(a),width:680,margin:[0,0,0,4]}));
+            content.push({svg:buildIcaoScreenPdfAreaCombinedSvg(detailedAreaRows),width:760,margin:[0,0,0,8]});
         }else{
             content.push({text:'Seçili denetim alanı kapsamında veri bulunamadı.',italics:true,color:'#64748b',margin:[0,0,0,8]});
         }
@@ -6293,20 +6315,7 @@
         if(!rows.length){
             content.push({text:'Ziyaret kapsamında PQ bulunamadı.',italics:true,color:'#64748b'});
         }
-        rows.forEach((r,i)=>{
-            content.push(icaoValidationPdfHeading(r,i));
-            content.push({table:{widths:[112,'*'],body:[
-                [{text:'Bulgu / PQ',bold:true,fillColor:'#f1f5f9'},fullTextForPdf(r['Bulgu / PQ Bilgisi']||'-')],
-                [{text:'Sonuç tarihi',bold:true,fillColor:'#f1f5f9'},r['Sonuç Tarihi']||'-'],
-                [{text:'Sunulan ek/özel kanıt',bold:true,fillColor:'#f1f5f9'},fullTextForPdf(r['ICAO’ya Sunulan Kanıt / Uygulama Kanıtı']||'-')],
-                [{text:'ICAO görüşü',bold:true,fillColor:'#f1f5f9'},fullTextForPdf(r['ICAO Görüşü / Ziyaret Notu']||'-')],
-                [{text:'Ek kanıt / açıklama talebi',bold:true,fillColor:'#f1f5f9'},fullTextForPdf(r['Ek Kanıt / Açıklama Talebi']||'-')],
-                [{text:'Sorumlu / takip',bold:true,fillColor:'#f1f5f9'},`${r['Sorumlu SHGM Birimi']||'-'} / ${r['Takip Tarihi']||'-'}`],
-                [{text:'İç not',bold:true,fillColor:'#f1f5f9'},fullTextForPdf(r['İç Not']||'-')],
-                [{text:'CAP Step’leri / Evidence Reference',bold:true,fillColor:'#f1f5f9'},fullTextForPdf(r['CAP Step’leri (Bilgi Amaçlı)']||'-')],
-                [{text:'Geçici EI etkisi',bold:true,fillColor:'#f1f5f9'},r['Geçici EI Etkisi']||'-']
-            ]},layout:'lightHorizontalLines',margin:[0,0,0,5]});
-        });
+        rows.forEach((r,i)=>content.push(buildIcaoValidationPdfResultBlock(r,i,true)));
         const docDef=createStandardPdfDefinition(content,{pageOrientation:'landscape',pageSize:'A4',defaultStyle:{font:'Roboto',fontSize:8}});
         return safeDownloadPdf(docDef,icaoOfficialVisitExportFileBase(visit)+icaoOfficialVisitAreaFileSuffix()+'_Detayli.pdf');
     }
