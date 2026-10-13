@@ -3097,6 +3097,24 @@
         const key=Object.keys(row||{}).find(k=>wanted.includes(normalizeExcelHeaderName(k)));
         return key!==undefined?row[key]:"";
     }
+    function normalizeExcelHeaderLoose(value){
+        return normalizeExcelHeaderName(value)
+            .replace(/[()\[\]{}.:;\/\\]+/g,' ')
+            .replace(/\s+/g,' ')
+            .trim();
+    }
+    function getColExactLoose(row, headers){
+        const wanted=(headers||[]).map(normalizeExcelHeaderLoose);
+        const key=Object.keys(row||{}).find(k=>wanted.includes(normalizeExcelHeaderLoose(k)));
+        return key!==undefined?row[key]:"";
+    }
+    function findExcelMasterSheetName(wb){
+        const names=(wb&&wb.SheetNames)||[];
+        return names.find(n=>normalizeExcelHeaderLoose(n)==='EXCEL VERİ')
+            || names.find(n=>normalizeExcelHeaderLoose(n)==='EXCEL VERI')
+            || names.find(n=>normalizeExcelHeaderLoose(n).includes('EXCEL')&&normalizeExcelHeaderLoose(n).includes('VER'))
+            || names[0];
+    }
     function getDirectChildElements(node, localName) {
         return Array.from(node.childNodes || []).filter(n => n.nodeType === 1 && (n.localName === localName || n.nodeName === "w:" + localName));
     }
@@ -3630,11 +3648,17 @@
             setLoadingMessage('Excel çalışma kitabı ayrıştırılıyor...', file.name);
             const wb = XLSX.read(data);
             await yieldToBrowser();
-            const wsMaster = wb.Sheets[wb.SheetNames[0]];
-            const jsonData = XLSX.utils.sheet_to_json(wsMaster);
+            const masterSheetName = findExcelMasterSheetName(wb);
+            const wsMaster = wb.Sheets[masterSheetName];
+            const jsonData = XLSX.utils.sheet_to_json(wsMaster, {defval:''});
             await yieldToBrowser();
-            const firstHeaders=jsonData.length?Object.keys(jsonData[0]||{}).map(normalizeExcelHeaderName):[];
+            const rawHeaders=jsonData.length?Object.keys(jsonData[0]||{}):[];
+            const firstHeaders=rawHeaders.map(normalizeExcelHeaderName);
+            const looseHeaders=rawHeaders.map(normalizeExcelHeaderLoose);
             let isBackupFile = jsonData.length > 0 && firstHeaders.includes('GÜNLÜK RAPORA EKLE') && !firstHeaders.includes('BULGU') && !firstHeaders.includes('PQ SORUSU');
+            const hasQuestionTrHeader=looseHeaders.some(h=>['PQ SORUSU TR','SORU TR','PQ QUESTION TR'].includes(h));
+            const hasFindingTrHeader=looseHeaders.some(h=>['BULGU TR','FINDING TR','AÇIKLAMA TR'].includes(h));
+            let trQuestionImported=0,trFindingImported=0,trBothImported=0;
             if(!isBackupFile) pqMasterData = {};
             
             for (let i = 0; i < jsonData.length; i++) {
@@ -3651,8 +3675,11 @@
                             let alan = getCol(row, ['ALAN', 'AREA', 'DENETİM ALANI']) || "DİĞER";
                             const soruEng=getColExact(row,['PQ Sorusu','SORU','QUESTION','PQ QUESTION']) || getCol(row,['QUESTION']);
                             const bulguEng=getColExact(row,['Bulgu','FINDING','DESCRIPTION','AÇIKLAMA']) || getCol(row,['FINDING']);
-                            const soruTr=getColExact(row,['PQ Sorusu (TR)','PQ Sorusu TR','SORU (TR)','SORU TR','PQ QUESTION (TR)']);
-                            const bulguTr=getColExact(row,['Bulgu (TR)','Bulgu TR','FINDING (TR)','FINDING TR','AÇIKLAMA (TR)']);
+                            const soruTr=getColExactLoose(row,['PQ Sorusu (TR)','PQ Sorusu TR','SORU (TR)','SORU TR','PQ QUESTION (TR)','PQ QUESTION TR']);
+                            const bulguTr=getColExactLoose(row,['Bulgu (TR)','Bulgu TR','FINDING (TR)','FINDING TR','AÇIKLAMA (TR)','AÇIKLAMA TR']);
+                            if(String(soruTr||'').trim()) trQuestionImported++;
+                            if(String(bulguTr||'').trim()) trFindingImported++;
+                            if(String(soruTr||'').trim()&&String(bulguTr||'').trim()) trBothImported++;
                             pqMasterData[pqStr] = {
                                 alan: alan,
                                 ce: getCol(row, ['CE', 'KRİTİK', 'CRITICAL']),
@@ -3685,6 +3712,26 @@
             }
             
             loadedExcelFile = file.name;
+            window.lastPqTranslationImportDiagnostic={
+                fileName:file.name,
+                sheetName:masterSheetName,
+                rowCount:jsonData.length,
+                hasQuestionTrHeader,
+                hasFindingTrHeader,
+                questionTrCount:trQuestionImported,
+                findingTrCount:trFindingImported,
+                completeTrCount:trBothImported,
+                importedAt:new Date().toISOString()
+            };
+            if(!isBackupFile){
+                if(!hasQuestionTrHeader||!hasFindingTrHeader){
+                    showAppRuntimeToast(`TR sütunları eksik: ${!hasQuestionTrHeader?'PQ Sorusu (TR) ':''}${!hasFindingTrHeader?'Bulgu (TR)':''}`.trim(),'error');
+                } else if(trQuestionImported===0&&trFindingImported===0){
+                    showAppRuntimeToast('TR sütunları bulundu ancak Türkçe hücrelerde veri yok. TR görünümünde ENG yedek metni gösterilecektir.','warn');
+                } else {
+                    showAppRuntimeToast(`Türkçe PQ verisi yüklendi: Soru ${trQuestionImported}, Bulgu ${trFindingImported}, ikisi tam ${trBothImported}.`,'success');
+                }
+            }
 
             let eiSheetName = wb.SheetNames.find(n => n.toUpperCase().includes('EI'));
             if (eiSheetName) {
@@ -5828,6 +5875,10 @@
     function handleIcaoVisitLanguageChange(){
         setIcaoPqTextLanguage(getIcaoPqTextLanguage());
     }
+    window.runPqTranslationImportSelfCheck=function(pq){
+        const key=normalizePQ(pq||activeIcaoValidationPq||'');
+        const m=key?(pqMasterData[key]||{}):{};
+        const result={latestImport:window.lastPqTranslationImportDiagnostic||null,pq:key||null,questionTr:String(m.soruTr||''),findingTr:String(m.bulguTr||''),questionEn:String(m.soru||''),findingEn:String(m.bulgu||''),masterCount:Object.keys(pqMasterData||{}).length,trQuestionCount:Object.values(pqMasterData||{}).filter(x=>String((x||{}).soruTr||'').trim()).length,trFindingCount:Object.values(pqMasterData||{}).filter(x=>String((x||{}).bulguTr||'').trim()).length};console.log('PQ TR import kontrolü:',result);return result;};
     function getIcaoPqBilingualTexts(pq,scope={}){
         const m=pqMasterData[pq]||{};
         return {
