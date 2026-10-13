@@ -385,14 +385,18 @@
 
 #tab-icao-visit-validation .icao-visit-filter-grid{
   display:grid;
-  grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+  grid-template-columns:repeat(3,minmax(0,1fr));
   gap:8px;
-  margin-bottom:10px;
+  margin-bottom:6px;
   min-width:0;
 }
 #tab-icao-visit-validation .icao-visit-filter-grid .icao-visit-filter-search{grid-column:1/-1;}
 #tab-icao-visit-validation .icao-visit-filter-grid input,
 #tab-icao-visit-validation .icao-visit-filter-grid select{width:100%;min-width:0;box-sizing:border-box;}
+.icao-translation-status{font-size:9px;color:var(--muted);margin:0 0 10px;padding:6px 8px;border:1px dashed var(--border);border-radius:7px;background:rgba(148,163,184,.05);line-height:1.45}
+.icao-translation-status .ok{color:var(--ok);font-weight:800}.icao-translation-status .warn{color:var(--warn);font-weight:800}
+.icao-pq-text-block{margin-top:7px;padding:8px 9px;border:1px solid var(--border);border-radius:8px;background:var(--card)}
+.icao-pq-text-block:first-child{margin-top:0}.icao-pq-text-label{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:9px;font-weight:900;color:var(--muted);text-transform:uppercase;margin-bottom:4px}.icao-pq-text-body{font-size:11px;color:var(--text);line-height:1.5;white-space:pre-wrap}.icao-pq-text-missing{display:inline-flex;padding:2px 6px;border-radius:999px;background:#fff7ed;color:#9a3412;border:1px solid #fed7aa;font-size:8px;font-weight:900;text-transform:none}
 @media(max-width:900px){#tab-icao-visit-validation .icao-visit-filter-grid{grid-template-columns:1fr;}#tab-icao-visit-validation .icao-visit-filter-grid .icao-visit-filter-search{grid-column:auto;}}
 </style>
 
@@ -1930,7 +1934,9 @@
                             <input id="icaoVisitSearch" class="icao-visit-filter-search" type="text" placeholder="PQ, alan, CE veya doğrulama türü ara..." oninput="renderIcaoOfficialVisitPqList()">
                             <select id="icaoVisitAreaFilter" onchange="handleIcaoVisitAreaFilterChange()" title="Ziyaret kapsamındaki denetim alanına göre filtrele"><option value="all">Tüm alanlar</option></select>
                             <select id="icaoVisitStatusFilter" onchange="renderIcaoOfficialVisitPqList()"><option value="all">Tüm sonuçlar</option><option value="not_evaluated">Değerlendirilmedi</option><option value="under_review">İnceleniyor</option><option value="additional_evidence">Ek kanıt talebi</option><option value="open">CAP açık kaldı</option><option value="validated">CAP kapatıldı</option><option value="post_visit">Ziyaret sonrası takip</option></select>
+                            <select id="icaoVisitTextLanguage" onchange="handleIcaoVisitLanguageChange()" title="PQ sorusu ve bulgu metinlerinin görüntüleme dili"><option value="both">PQ Metin Dili: ENG + TR</option><option value="en">PQ Metin Dili: ENG</option><option value="tr">PQ Metin Dili: TR</option></select>
                         </div>
+                        <div id="icaoVisitTranslationStatus" class="icao-translation-status">Türkçe PQ metinleri Excel master yüklendiğinde burada kontrol edilir.</div>
                         <div id="icaoOfficialVisitPqList" class="icao-visit-list"><div class="icao-visit-empty">Ziyaret seçildiğinde kapsamdaki PQ'lar burada gösterilecektir.</div></div>
                     </section>
                     <section class="icao-visit-panel">
@@ -3072,6 +3078,12 @@
     function normalizePQ(rawPq) { if (!rawPq) return ""; let str = rawPq.toString().trim().replace(',', '.'); if (/^\d{4}$/.test(str)) str = str.slice(0,1) + '.' + str.slice(1); if (/^\d{5}$/.test(str)) str = str.slice(0,2) + '.' + str.slice(2); let match = str.match(/\b(\d{1,2}\.\d{3})\b/); if (match) return match[1]; if (!isNaN(str) && str.includes('.')) { let parts = str.split('.'); if (parts[0].length >= 1 && parts[0].length <= 2) { if (parts[1].length === 1) return parts[0] + '.' + parts[1] + '00'; if (parts[1].length === 2) return parts[0] + '.' + parts[1] + '0'; if (parts[1].length === 3) return str; } } return str; }
     function findPQColumn(row) { const keys = Object.keys(row); for (let k of keys) { let uk = k.toUpperCase().trim(); if (uk === 'PQ' || uk === 'PQ NO' || uk === 'PROTOKOL NO' || uk === 'PROTOKOL' || uk === 'PQ NUMBER') return k; } for (let k of keys) { let uk = k.toUpperCase(); if ((uk.includes('PQ') || uk.includes('PROTOKOL')) && !uk.includes('SORU') && !uk.includes('QUESTION')) return k; } return null; }
     function getCol(row, keywords) { let key = Object.keys(row).find(k => keywords.some(kw => k.toUpperCase().includes(kw))); return key ? row[key] : ""; }
+    function normalizeExcelHeaderName(value){return String(value||'').trim().toLocaleUpperCase('tr-TR').replace(/[_\-]+/g,' ').replace(/\s+/g,' ');}
+    function getColExact(row, headers){
+        const wanted=(headers||[]).map(normalizeExcelHeaderName);
+        const key=Object.keys(row||{}).find(k=>wanted.includes(normalizeExcelHeaderName(k)));
+        return key!==undefined?row[key]:"";
+    }
     function getDirectChildElements(node, localName) {
         return Array.from(node.childNodes || []).filter(n => n.nodeType === 1 && (n.localName === localName || n.nodeName === "w:" + localName));
     }
@@ -3608,7 +3620,8 @@
             const wsMaster = wb.Sheets[wb.SheetNames[0]];
             const jsonData = XLSX.utils.sheet_to_json(wsMaster);
             await yieldToBrowser();
-            let isBackupFile = jsonData.length > 0 && jsonData[0]['GÜNLÜK RAPORA EKLE'] !== undefined && jsonData[0]['BULGU'] === undefined;
+            const firstHeaders=jsonData.length?Object.keys(jsonData[0]||{}).map(normalizeExcelHeaderName):[];
+            let isBackupFile = jsonData.length > 0 && firstHeaders.includes('GÜNLÜK RAPORA EKLE') && !firstHeaders.includes('BULGU') && !firstHeaders.includes('PQ SORUSU');
             if(!isBackupFile) pqMasterData = {};
             
             for (let i = 0; i < jsonData.length; i++) {
@@ -3623,11 +3636,17 @@
 
                         if(!isBackupFile) {
                             let alan = getCol(row, ['ALAN', 'AREA', 'DENETİM ALANI']) || "DİĞER";
+                            const soruEng=getColExact(row,['PQ Sorusu','SORU','QUESTION','PQ QUESTION']) || getCol(row,['QUESTION']);
+                            const bulguEng=getColExact(row,['Bulgu','FINDING','DESCRIPTION','AÇIKLAMA']) || getCol(row,['FINDING']);
+                            const soruTr=getColExact(row,['PQ Sorusu (TR)','PQ Sorusu TR','SORU (TR)','SORU TR','PQ QUESTION (TR)']);
+                            const bulguTr=getColExact(row,['Bulgu (TR)','Bulgu TR','FINDING (TR)','FINDING TR','AÇIKLAMA (TR)']);
                             pqMasterData[pqStr] = {
                                 alan: alan,
                                 ce: getCol(row, ['CE', 'KRİTİK', 'CRITICAL']),
-                                soru: getCol(row, ['SORU', 'QUESTION']),
-                                bulgu: getCol(row, ['BULGU', 'DESCRIPTION', 'FINDING', 'AÇIKLAMA']),
+                                soru: soruEng,
+                                soruTr: soruTr,
+                                bulgu: bulguEng,
+                                bulguTr: bulguTr,
                                 tur: getCol(row, ['TÜR', 'TYPE', 'DOĞRULAMA']),
                                 degerlendirme: getCol(row, ['DEĞERLENDİRME', 'STATUS', 'ICAO', 'DURUM']),
                                 sorumlu: getCol(row, ['SORUMLU', 'PERSONEL']),
@@ -5757,16 +5776,61 @@
         return selected==='all'?'':('_'+selected.replace(/[^A-Za-z0-9_-]+/g,'_'));
     }
     function populateIcaoValidationStatus(){const s=document.getElementById('icaoValidationStatus');if(!s)return;const cur=s.value;s.innerHTML=Object.entries(ICAO_VALIDATION_STATUSES).map(([k,v])=>`<option value="${k}">${escapeHtml(v)}</option>`).join('');if(cur&&Array.from(s.options).some(o=>o.value===cur))s.value=cur;}
+    const ICAO_PQ_TEXT_LANGUAGE_KEY='icao_pq_text_language';
+    function getIcaoPqTextLanguage(){
+        const el=document.getElementById('icaoVisitTextLanguage');
+        return (el&&el.value)||localStorage.getItem(ICAO_PQ_TEXT_LANGUAGE_KEY)||'both';
+    }
+    function initializeIcaoPqTextLanguage(){
+        const el=document.getElementById('icaoVisitTextLanguage');if(!el)return;
+        const saved=localStorage.getItem(ICAO_PQ_TEXT_LANGUAGE_KEY)||'both';
+        if(Array.from(el.options).some(o=>o.value===saved))el.value=saved;else el.value='both';
+    }
+    function handleIcaoVisitLanguageChange(){
+        const mode=getIcaoPqTextLanguage();localStorage.setItem(ICAO_PQ_TEXT_LANGUAGE_KEY,mode);
+        renderIcaoOfficialVisitPqList();
+        if(activeIcaoValidationPq)selectIcaoValidationPq(activeIcaoValidationPq);
+    }
+    function getIcaoPqBilingualTexts(pq,scope={}){
+        const m=pqMasterData[pq]||{};
+        return {
+            questionEn:String(scope.question||m.soru||'').trim(),
+            questionTr:String(scope.questionTr||m.soruTr||'').trim(),
+            findingEn:String(scope.finding||m.bulgu||'').trim(),
+            findingTr:String(scope.findingTr||m.bulguTr||'').trim()
+        };
+    }
+    function buildIcaoPqTextSummaryHtml(pq,scope={}){
+        const t=getIcaoPqBilingualTexts(pq,scope),mode=getIcaoPqTextLanguage(),blocks=[];
+        const add=(label,body,missing=false)=>blocks.push(`<div class="icao-pq-text-block"><div class="icao-pq-text-label">${escapeHtml(label)}${missing?'<span class="icao-pq-text-missing">TR çeviri yok · ENG gösteriliyor</span>':''}</div><div class="icao-pq-text-body">${escapeHtml(body||'-')}</div></div>`);
+        if(mode==='en'||mode==='both'){
+            add('PQ Question (ENG)',t.questionEn||'-');
+            add('Finding (ENG)',t.findingEn||'-');
+        }
+        if(mode==='tr'||mode==='both'){
+            add('PQ Sorusu (TR)',t.questionTr||t.questionEn||'-',!t.questionTr&&!!t.questionEn);
+            add('Bulgu (TR)',t.findingTr||t.findingEn||'-',!t.findingTr&&!!t.findingEn);
+        }
+        return blocks.join('');
+    }
+    function updateIcaoTranslationStatus(visit){
+        const el=document.getElementById('icaoVisitTranslationStatus');if(!el)return;
+        if(!visit){el.textContent='Türkçe PQ metinleri Excel master yüklendiğinde burada kontrol edilir.';return;}
+        const pqs=getIcaoVisitAreaScopedPqs(visit);let qOk=0,fOk=0,both=0;
+        pqs.forEach(p=>{const m=pqMasterData[String(p.pq||'')]||{},q=String(m.soruTr||'').trim(),f=String(m.bulguTr||'').trim();if(q)qOk++;if(f)fOk++;if(q&&f)both++;});
+        const total=pqs.length,pct=total?((both/total)*100).toFixed(1).replace('.',','):'0,0';
+        el.innerHTML=`TR çeviri durumu: <span class="${both===total&&total?'ok':'warn'}">${both}/${total} PQ tam (%${pct})</span> · PQ Sorusu (TR): ${qOk}/${total} · Bulgu (TR): ${fOk}/${total}`;
+    }
     function renderIcaoOfficialVisitModule(preserveSelection=false){
         const select=document.getElementById('icaoOfficialVisitSelect');if(!select)return;
         const visits=getIcaoOfficialVisits(),current=preserveSelection?(activeIcaoOfficialVisitId||select.value):select.value;
         select.innerHTML='<option value="">Bir ICAO resmî ziyareti seçiniz...</option>'+visits.map(v=>`<option value="${escapeHtml(v.id)}">${escapeHtml((ICAO_VISIT_TYPES[v.icaoVisitType]||'ICAO')+' — '+(v.visitName||'Adsız ziyaret')+' — '+formatVisitDateRange(v.plannedStart,v.plannedEnd))}</option>`).join('');
         if(current&&visits.some(v=>v.id===current)){select.value=current;activeIcaoOfficialVisitId=current;}else if(!activeIcaoOfficialVisitId&&visits.length===1){select.value=visits[0].id;activeIcaoOfficialVisitId=visits[0].id;}
-        populateIcaoValidationStatus();
+        populateIcaoValidationStatus();initializeIcaoPqTextLanguage();
         const activeVisit=activeIcaoOfficialVisitId&&icaoVisits[activeIcaoOfficialVisitId]?{id:activeIcaoOfficialVisitId,...icaoVisits[activeIcaoOfficialVisitId]}:null;
-        populateIcaoVisitAreaFilter(activeVisit,true);renderIcaoOfficialVisitPqList();renderIcaoOfficialVisitEiSummary();
+        populateIcaoVisitAreaFilter(activeVisit,true);updateIcaoTranslationStatus(activeVisit);renderIcaoOfficialVisitPqList();renderIcaoOfficialVisitEiSummary();
     }
-    function loadIcaoOfficialVisit(id){activeIcaoOfficialVisitId=id||null;activeIcaoValidationPq=null;const visit=getActiveIcaoOfficialVisitRecord();populateIcaoVisitAreaFilter(visit,false);renderIcaoOfficialVisitPqList();renderIcaoOfficialVisitEiSummary();resetIcaoValidationForm();}
+    function loadIcaoOfficialVisit(id){activeIcaoOfficialVisitId=id||null;activeIcaoValidationPq=null;const visit=getActiveIcaoOfficialVisitRecord();initializeIcaoPqTextLanguage();populateIcaoVisitAreaFilter(visit,false);updateIcaoTranslationStatus(visit);renderIcaoOfficialVisitPqList();renderIcaoOfficialVisitEiSummary();resetIcaoValidationForm();}
     function openIcaoOfficialVisitValidation(id){activeIcaoOfficialVisitId=id;switchTab('icao-visit-validation');const s=document.getElementById('icaoOfficialVisitSelect');if(s)s.value=id;renderIcaoOfficialVisitModule(true);}
     function openIcaoOfficialVisitForm(){openVisitForm();const t=document.getElementById('visitType'),sub=document.getElementById('icaoVisitType');if(t)t.value='icao_official';if(sub)sub.value='ICVM';toggleVisitTypeFields();}
     function openSelectedIcaoVisitScope(){if(!activeIcaoOfficialVisitId)return alert('Önce bir ICAO resmî ziyareti seçiniz.');openVisitScopeForVisit(activeIcaoOfficialVisitId);}
@@ -5779,16 +5843,16 @@
             const pq=String(p.pq||''),m=pqMasterData[pq]||{},r=map.get(pq),st=(r&&r.status)||'not_evaluated';
             if(sf!=='all'&&st!==sf)return false;
             if(!q)return true;
-            return [pq,p.area,m.alan,p.ce,m.ce,p.verificationType,m.tur,m.bulgu,m.soru,p.finding,p.question].join(' ').toLocaleLowerCase('tr-TR').includes(q);
+            return [pq,p.area,m.alan,p.ce,m.ce,p.verificationType,m.tur,m.bulgu,m.bulguTr,m.soru,m.soruTr,p.finding,p.findingTr,p.question,p.questionTr].join(' ').toLocaleLowerCase('tr-TR').includes(q);
         });
     }
 
     function renderIcaoOfficialVisitPqList(){
         const list=document.getElementById('icaoOfficialVisitPqList'),note=document.getElementById('icaoOfficialVisitNote');if(!list)return;
         const visit=activeIcaoOfficialVisitId&&icaoVisits[activeIcaoOfficialVisitId]?{id:activeIcaoOfficialVisitId,...icaoVisits[activeIcaoOfficialVisitId]}:null;
-        if(!visit){list.innerHTML='<div class="icao-visit-empty">ICAO resmî ziyaret kaydı seçiniz.</div>';if(note)note.textContent='ICAO resmî ziyaret kaydı seçiniz.';updateIcaoVisitKpis(null);return;}
+        if(!visit){list.innerHTML='<div class="icao-visit-empty">ICAO resmî ziyaret kaydı seçiniz.</div>';if(note)note.textContent='ICAO resmî ziyaret kaydı seçiniz.';updateIcaoTranslationStatus(null);updateIcaoVisitKpis(null);return;}
         const totalScope=getIcaoVisitScopePqs(visit),scope=getIcaoVisitAreaScopedPqs(visit),records=getIcaoValidationRecords(visit),map=new Map(records.map(r=>[String(r.pq),r]));
-        const rows=getVisibleIcaoOfficialVisitPqs(visit),areaLabel=icaoOfficialVisitAreaLabel();
+        const rows=getVisibleIcaoOfficialVisitPqs(visit),areaLabel=icaoOfficialVisitAreaLabel();updateIcaoTranslationStatus(visit);
         const c=document.getElementById('icaoVisitListCount');if(c)c.textContent=`${rows.length} / ${scope.length} PQ${areaLabel!=='Tüm alanlar'?` · ${areaLabel}`:''}`;
         if(note)note.textContent=`${visit.visitName||'ICAO ziyareti'} | Tür: ${ICAO_VISIT_TYPES[visit.icaoVisitType]||visit.icaoVisitType||'ICAO'} | Ziyaret alanları: ${visitArrayValue(visit.areas).join(', ')||'-'} | Alan filtresi: ${areaLabel} | Filtre kapsamı: ${scope.length} / toplam ${totalScope.length} açık CAP/PQ. Daha önce ICAO tarafından kapatılmış veya güncel CAP kaydı bulunmayan PQ'lar validasyon listesine alınmaz.`;
         list.innerHTML=rows.length?rows.map(p=>{const pq=String(p.pq||''),m=pqMasterData[pq]||{},r=map.get(pq)||{},st=r.status||'not_evaluated',area=normalizeAreaKey(p.area||m.alan||'')||'-',ce=String(p.ce||m.ce||'-').trim()||'-',verification=String(p.verificationType||m.tur||'-').trim()||'-';return `<button type="button" class="icao-visit-pq ${st} ${activeIcaoValidationPq===pq?'active':''}" onclick="selectIcaoValidationPq('${escapeHtml(pq)}')"><div class="icao-visit-pq-title-row"><div class="icao-visit-pq-title">PQ ${escapeHtml(pq)}</div><span class="icao-visit-status-badge ${st}">${escapeHtml(ICAO_VALIDATION_STATUSES[st]||st)}</span></div><div class="icao-visit-pq-tags"><span class="icao-visit-meta-chip">${escapeHtml(area)}</span><span class="icao-visit-meta-chip">CE: ${escapeHtml(ce)}</span><span class="icao-visit-meta-chip">${escapeHtml(verification)}</span></div></button>`;}).join(''):'<div class="icao-visit-empty">Seçili ölçütlere uygun PQ bulunamadı. Ziyaret kapsamının “Kapsam ve Hazırlık” ekranında kaydedildiğini kontrol ediniz.</div>';
@@ -5877,7 +5941,7 @@
         set('icaoValidationStatus',r.status||'not_evaluated');set('icaoValidationResultDate',r.resultDate);set('icaoValidationEvidence',evidenceValue);set('icaoValidationComment',r.icaoComment);set('icaoValidationAdditionalRequest',r.additionalRequest);set('icaoValidationResponsibleUnit',r.responsibleUnit);set('icaoValidationFollowUpDate',r.followUpDate);set('icaoValidationNotes',r.notes);
         updateIcaoValidationDraftInfo('Metin alanlarındaki değişiklikler tarayıcıda taslak olarak korunur.');restoreIcaoValidationTextDraft(r);refreshIcaoValidationTextareas();
         const evidenceInfo=document.getElementById('icaoValidationEvidenceAutoInfo');if(evidenceInfo)evidenceInfo.textContent='Step bazlı EVIDENCE REFERENCE bilgileri aşağıdaki salt okunur CAP Step bölümünde gösterilir. Bu alan otomatik doldurulmaz.';
-        const summary=document.getElementById('icaoValidationSummary');if(summary)summary.innerHTML=`<b>PQ ${escapeHtml(pq)} — ${escapeHtml(scope.area||m.alan||'-')}</b><br>${escapeHtml(scope.finding||m.bulgu||scope.question||m.soru||'-')}<br><span style="color:var(--muted)">Mevcut CAP adımları aşağıda yalnızca bilgi amaçlı gösterilir. Validasyon sonucu PQ/CAP seviyesinde kaydedilir.</span>`;
+        const summary=document.getElementById('icaoValidationSummary');if(summary)summary.innerHTML=`<div style="display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:7px"><b>PQ ${escapeHtml(pq)} — ${escapeHtml(scope.area||m.alan||'-')}</b><span style="font-size:9px;color:var(--muted)">${getIcaoPqTextLanguage()==='both'?'ENG + TR':getIcaoPqTextLanguage().toUpperCase()}</span></div>${buildIcaoPqTextSummaryHtml(pq,scope)}<div style="color:var(--muted);margin-top:7px">Mevcut CAP adımları aşağıda yalnızca bilgi amaçlı gösterilir. Validasyon sonucu PQ/CAP seviyesinde kaydedilir.</div>`;
         const steps=getIcaoVisitPqSteps(visit,pq),stepEl=document.getElementById('icaoValidationSteps');if(stepEl)stepEl.innerHTML=steps.length?steps.map(s=>`<div class="icao-valid-step"><b>Step ${escapeHtml(s.step||'-')}</b> — ${escapeHtml(s.action||s.capText||s.description||'-')}<br><span style="color:var(--muted)">${escapeHtml(s.office||'-')} | ${escapeHtml(s.estDate||'-')} | ${escapeHtml(s.statusLabel||s.progress||'')}</span>${s.evidenceReference?`<br><span style="color:var(--text)"><b>📎 EVIDENCE REFERENCE:</b> ${escapeHtml(s.evidenceReference)}</span>`:''}</div>`).join(''):'<div class="icao-valid-step">Bu PQ için gösterilecek CAP Step kaydı bulunamadı.</div>';
         renderIcaoValidationImpactForPq(visit,pq);renderIcaoOfficialVisitPqList();
     }
@@ -5910,6 +5974,10 @@
                 'Doğrulama Türü':String(p.verificationType||m.tur||'').trim(),
                 'ICAO / ICVM Sonucu':ICAO_VALIDATION_STATUSES[status]||status,
                 'Sonuç Tarihi':r.resultDate||'',
+                'PQ Sorusu (ENG)':fullTextForExcel(p.question||m.soru||''),
+                'PQ Sorusu (TR)':fullTextForExcel(p.questionTr||m.soruTr||''),
+                'Bulgu (ENG)':fullTextForExcel(p.finding||m.bulgu||''),
+                'Bulgu (TR)':fullTextForExcel(p.findingTr||m.bulguTr||''),
                 'Bulgu / PQ Bilgisi':fullTextForExcel(p.finding||m.bulgu||p.question||m.soru||''),
                 'ICAO’ya Sunulan Kanıt / Uygulama Kanıtı':fullTextForExcel(r.evidence||''),
                 'ICAO Görüşü / Ziyaret Notu':fullTextForExcel(r.icaoComment||''),
@@ -5971,7 +6039,7 @@
     function exportIcaoOfficialVisitExcel(){
         const visit=getActiveIcaoOfficialVisitRecord();
         if(!visit)return alert('Önce ICAO Resmî Ziyareti ekranından bir ziyaret kaydı seçiniz.');
-        const rows=buildIcaoOfficialVisitExportRows(visit),eiRows=buildIcaoOfficialVisitEiExportRows(visit),stepRows=buildIcaoOfficialVisitStepExportRows(visit);
+        const rows=buildIcaoOfficialVisitExportRows(visit),screenRows=buildIcaoScreenLanguageExportRows(rows),eiRows=buildIcaoOfficialVisitEiExportRows(visit),stepRows=buildIcaoOfficialVisitStepExportRows(visit);
         const wb=createReportWorkbook({title:'ICAO Resmî Ziyareti / ICVM',subject:'Aktif ekran raporu'});
         addJsonSheet(wb,'Rapor_Baglamı',[
             {'Başlık':'Aktif ekran','Değer':'ICAO Resmî Ziyareti / ICVM'},
@@ -5982,12 +6050,42 @@
             {'Başlık':'Denetim alanı filtresi','Değer':icaoOfficialVisitAreaLabel()},
             {'Başlık':'Ekran araması','Değer':((document.getElementById('icaoVisitSearch')||{}).value||'')},
             {'Başlık':'Sonuç filtresi','Değer':((document.getElementById('icaoVisitStatusFilter')||{}).selectedOptions||[])[0]?.textContent||'Tüm sonuçlar'},
-            {'Başlık':'Ekranda görünen PQ','Değer':rows.length}
+            {'Başlık':'Ekranda görünen PQ','Değer':rows.length},
+            {'Başlık':'PQ metin dili','Değer':getIcaoPqTextLanguage()==='both'?'ENG + TR':getIcaoPqTextLanguage().toUpperCase()}
         ]);
         addJsonSheet(wb,'ICVM_EI_Ozeti',eiRows);
-        addJsonSheet(wb,'PQ_CAP_Validasyon',rows);
+        addJsonSheet(wb,'PQ_CAP_Validasyon',screenRows);
         addJsonSheet(wb,'CAP_Stepleri_Bilgi',stepRows);
         downloadReportWorkbook(wb,icaoOfficialVisitExportFileBase(visit)+icaoOfficialVisitAreaFileSuffix()+'_Aktif_Ekran.xlsx');
+    }
+    function buildIcaoScreenLanguageExportRows(rows){
+        const mode=getIcaoPqTextLanguage();
+        return (rows||[]).map(r=>{
+            const out={...r};
+            if(mode==='en'){
+                out['PQ Sorusu']=r['PQ Sorusu (ENG)']||'';out['Bulgu']=r['Bulgu (ENG)']||'';
+            }else if(mode==='tr'){
+                out['PQ Sorusu']=r['PQ Sorusu (TR)']||r['PQ Sorusu (ENG)']||'';out['Bulgu']=r['Bulgu (TR)']||r['Bulgu (ENG)']||'';
+                out['TR Çeviri Durumu']=`${r['PQ Sorusu (TR)']?'PQ Sorusu ✓':'PQ Sorusu eksik'}; ${r['Bulgu (TR)']?'Bulgu ✓':'Bulgu eksik'}`;
+            }
+            if(mode!=='both'){
+                delete out['PQ Sorusu (ENG)'];delete out['PQ Sorusu (TR)'];delete out['Bulgu (ENG)'];delete out['Bulgu (TR)'];delete out['Bulgu / PQ Bilgisi'];
+            }else delete out['Bulgu / PQ Bilgisi'];
+            return out;
+        });
+    }
+    function icaoPqTextPdfRows(row,detailed=false){
+        const mode=detailed?'both':getIcaoPqTextLanguage(),rows=[];
+        const qEn=row['PQ Sorusu (ENG)']||'',qTr=row['PQ Sorusu (TR)']||'',fEn=row['Bulgu (ENG)']||'',fTr=row['Bulgu (TR)']||'';
+        if(mode==='en'||mode==='both'){
+            rows.push([{text:'PQ Question (ENG)',bold:true,fillColor:'#f1f5f9'},fullTextForPdf(qEn||'-')]);
+            rows.push([{text:'Finding (ENG)',bold:true,fillColor:'#f1f5f9'},fullTextForPdf(fEn||'-')]);
+        }
+        if(mode==='tr'||mode==='both'){
+            rows.push([{text:'PQ Sorusu (TR)',bold:true,fillColor:'#f1f5f9'},fullTextForPdf(qTr||qEn||'-')+(qTr?'':'  [TR çeviri yok — ENG gösteriliyor]')]);
+            rows.push([{text:'Bulgu (TR)',bold:true,fillColor:'#f1f5f9'},fullTextForPdf(fTr||fEn||'-')+(fTr?'':'  [TR çeviri yok — ENG gösteriliyor]')]);
+        }
+        return rows;
     }
     function icaoValidationPdfPaletteFromLabel(label){
         const normalized=String(label||'').trim();
@@ -6011,7 +6109,7 @@
         const palette=icaoValidationPdfPaletteFromLabel(row['ICAO / ICVM Sonucu']);
         const rows=[
             [{text:`${index+1}. PQ ${row['PQ']} — ${row['Alan']} — ${row['ICAO / ICVM Sonucu']}`,colSpan:2,bold:true,fontSize:9,color:palette.text,fillColor:palette.fill,margin:[5,4,5,4]},{}],
-            [{text:'Bulgu / PQ',bold:true,fillColor:'#f1f5f9'},fullTextForPdf(row['Bulgu / PQ Bilgisi']||'-')],
+            ...icaoPqTextPdfRows(row,detailed),
             [{text:'Sonuç tarihi',bold:true,fillColor:'#f1f5f9'},row['Sonuç Tarihi']||'-'],
             [{text:detailed?'Sunulan ek/özel kanıt':'Kanıt',bold:true,fillColor:'#f1f5f9'},fullTextForPdf(row['ICAO’ya Sunulan Kanıt / Uygulama Kanıtı']||'-')],
             [{text:'ICAO görüşü',bold:true,fillColor:'#f1f5f9'},fullTextForPdf(row['ICAO Görüşü / Ziyaret Notu']||'-')],
@@ -6167,7 +6265,7 @@
         const content=[
             {text:'ICAO Resmî Ziyareti / ICVM',style:'header'},
             {text:`${visit.visitName||'-'} | ${formatVisitDateRange(visit.plannedStart,visit.plannedEnd)} | Alanlar: ${visitArrayValue(visit.areas).join(', ')||'-'}`,style:'subheader'},
-            {text:`Aktif ekran filtresi: Alan ${areaFilter} | ${statusFilter}${searchText?` | Arama: ${searchText}`:''} | Görünen PQ: ${rows.length}`,fontSize:8,color:'#64748b',margin:[0,0,0,10]}
+            {text:`Aktif ekran filtresi: Alan ${areaFilter} | ${statusFilter}${searchText?` | Arama: ${searchText}`:''} | Görünen PQ: ${rows.length} | PQ metin dili: ${getIcaoPqTextLanguage()==='both'?'ENG + TR':getIcaoPqTextLanguage().toUpperCase()}`,fontSize:8,color:'#64748b',margin:[0,0,0,10]}
         ];
 
         // SAYFA 1: Aktif Kapsam Durum Özeti + Denetim Alanı Bazında Son Durum
@@ -6225,7 +6323,7 @@
     function exportIcaoOfficialVisitDetailedExcel(){
         const visit=getActiveIcaoOfficialVisitRecord();
         if(!visit)return alert('Önce ICAO Resmî Ziyareti ekranından bir ziyaret kaydı seçiniz.');
-        const rows=buildIcaoOfficialVisitDetailedExportRows(visit), eiRows=buildIcaoOfficialVisitEiExportRows(visit), stepRows=buildIcaoOfficialVisitDetailedStepExportRows(visit), statusRows=buildIcaoOfficialVisitStatusSummaryRows(visit);
+        const rows=buildIcaoOfficialVisitDetailedExportRows(visit), detailedRows=rows.map(r=>{const x={...r};delete x['Bulgu / PQ Bilgisi'];return x;}), eiRows=buildIcaoOfficialVisitEiExportRows(visit), stepRows=buildIcaoOfficialVisitDetailedStepExportRows(visit), statusRows=buildIcaoOfficialVisitStatusSummaryRows(visit);
         const wb=createReportWorkbook({title:'ICAO Resmî Ziyareti / ICVM — Detaylı Rapor',subject:'Denetim alanı kapsamlı detaylı rapor'});
         addJsonSheet(wb,'Rapor_Baglamı',[
             {'Başlık':'Rapor türü','Değer':'Detaylı rapor'},
@@ -6235,11 +6333,12 @@
             {'Başlık':'Planlanan tarih','Değer':formatVisitDateRange(visit.plannedStart,visit.plannedEnd)},
             {'Başlık':'Denetim alanı filtresi','Değer':icaoOfficialVisitAreaLabel()},
             {'Başlık':'Rapor kapsamındaki PQ','Değer':rows.length},
+            {'Başlık':'PQ metin dili','Değer':'ENG + TR (detaylı raporda her iki dil ayrı alanlarda gösterilir)'},
             {'Başlık':'Not','Değer':'Bu detaylı rapor ekran araması ve sonuç filtresinden bağımsızdır; seçili denetim alanı filtresini esas alır.'}
         ]);
         addJsonSheet(wb,'ICVM_EI_Ozeti',eiRows);
         addJsonSheet(wb,'Durum_Ozeti',statusRows);
-        addJsonSheet(wb,'PQ_CAP_Detay',rows);
+        addJsonSheet(wb,'PQ_CAP_Detay',detailedRows);
         addJsonSheet(wb,'CAP_Stepleri_Detay',stepRows);
         addJsonSheet(wb,'Ek_Kanit_Talepleri',rows.filter(r=>String(r['Ek Kanıt / Açıklama Talebi']||'').trim()).map(r=>({
             'PQ':r['PQ'],'Alan':r['Alan'],'ICAO / ICVM Sonucu':r['ICAO / ICVM Sonucu'],'Ek Kanıt / Açıklama Talebi':r['Ek Kanıt / Açıklama Talebi'],'Sorumlu SHGM Birimi':r['Sorumlu SHGM Birimi'],'Takip Tarihi':r['Takip Tarihi']
@@ -6321,7 +6420,7 @@
     }
 
     window.runIcaoOfficialVisitSelfCheck=function(){const result={tab:!!document.getElementById('tab-icao-visit-validation'),visitType:!!document.getElementById('visitType'),scopePool:!!document.getElementById('visitScopePoolFilter'),status:Object.keys(ICAO_VALIDATION_STATUSES).length,baseEiAreas:Object.keys(baseEIData||{}).length,functions:['renderIcaoOfficialVisitModule','saveIcaoValidationRecord','getIcaoOfficialVisitImpactModel'].every(n=>typeof window[n]==='function'||typeof eval(n)==='function'),evidenceAutofill:false,stepEvidenceReadOnly:true,internalWorkspaceSeparated:typeof getInternalWorkflowVisitRecords==='function'};result.passed=result.tab&&result.visitType&&result.status===6;console.log('ICAO resmî ziyaret öz denetimi:',result);return result;};
-    window.handleIcaoVisitAreaFilterChange=handleIcaoVisitAreaFilterChange;window.renderIcaoOfficialVisitModule=renderIcaoOfficialVisitModule;window.loadIcaoOfficialVisit=loadIcaoOfficialVisit;window.openIcaoOfficialVisitValidation=openIcaoOfficialVisitValidation;window.openIcaoOfficialVisitForm=openIcaoOfficialVisitForm;window.openSelectedIcaoVisitScope=openSelectedIcaoVisitScope;window.renderIcaoOfficialVisitPqList=renderIcaoOfficialVisitPqList;window.selectIcaoValidationPq=selectIcaoValidationPq;window.resetIcaoValidationForm=resetIcaoValidationForm;window.saveIcaoValidationRecord=saveIcaoValidationRecord;window.toggleVisitTypeFields=toggleVisitTypeFields;window.exportIcaoOfficialVisitExcel=exportIcaoOfficialVisitExcel;window.exportIcaoOfficialVisitPDF=exportIcaoOfficialVisitPDF;window.exportIcaoOfficialVisitDetailedExcel=exportIcaoOfficialVisitDetailedExcel;window.exportIcaoOfficialVisitDetailedPDF=exportIcaoOfficialVisitDetailedPDF;window.getVisibleIcaoOfficialVisitPqs=getVisibleIcaoOfficialVisitPqs;
+    window.handleIcaoVisitAreaFilterChange=handleIcaoVisitAreaFilterChange;window.handleIcaoVisitLanguageChange=handleIcaoVisitLanguageChange;window.renderIcaoOfficialVisitModule=renderIcaoOfficialVisitModule;window.loadIcaoOfficialVisit=loadIcaoOfficialVisit;window.openIcaoOfficialVisitValidation=openIcaoOfficialVisitValidation;window.openIcaoOfficialVisitForm=openIcaoOfficialVisitForm;window.openSelectedIcaoVisitScope=openSelectedIcaoVisitScope;window.renderIcaoOfficialVisitPqList=renderIcaoOfficialVisitPqList;window.selectIcaoValidationPq=selectIcaoValidationPq;window.resetIcaoValidationForm=resetIcaoValidationForm;window.saveIcaoValidationRecord=saveIcaoValidationRecord;window.toggleVisitTypeFields=toggleVisitTypeFields;window.exportIcaoOfficialVisitExcel=exportIcaoOfficialVisitExcel;window.exportIcaoOfficialVisitPDF=exportIcaoOfficialVisitPDF;window.exportIcaoOfficialVisitDetailedExcel=exportIcaoOfficialVisitDetailedExcel;window.exportIcaoOfficialVisitDetailedPDF=exportIcaoOfficialVisitDetailedPDF;window.getVisibleIcaoOfficialVisitPqs=getVisibleIcaoOfficialVisitPqs;
 
 
     // ZİYARET VE İÇ DENETİM - PAKET 2: KAPSAM VE HAZIRLIK
@@ -6365,7 +6464,9 @@
             candidates.push({
                 pq, master, area, statusCode:pqStatus.code, statusLabel:pqStatus.label,
                 question:visitScopeMasterText(master,['soru','question','pqQuestion']),
+                questionTr:visitScopeMasterText(master,['soruTr','questionTr','pqQuestionTr']),
                 finding:visitScopeMasterText(master,['bulgu','finding','description']),
+                findingTr:visitScopeMasterText(master,['bulguTr','findingTr','descriptionTr']),
                 reviewEvidence:visitScopeMasterText(master,['reviewEvidence','incelenecekKanitlar','evidence']),
                 ce:master.ce || '', responsible:master.sorumlu || '', verificationType:master.tur || '',
                 actionItems, lateSteps:actionItems.filter(a => a.statusCode === COMMON_ACTION_STATUS.LATE.code).length,
@@ -6568,7 +6669,7 @@
     }
     function buildVisitScopeSnapshots() {
         const visit=getVisitScopeRecord(); const candidates=(visit&&isIcaoOfficialVisit(visit))?getVisitScopePoolCandidates(visit):buildVisitScopeCandidates(); const now=new Date().toISOString();
-        const pqs=candidates.filter(x=>visitScopeSelectedPqs.has(x.pq)).map(x=>({pq:x.pq,area:x.area,ce:x.ce,responsible:x.responsible,verificationType:x.verificationType,question:x.question,finding:x.finding,reviewEvidence:x.reviewEvidence,statusCode:x.statusCode,statusLabel:x.statusLabel,sourceReportDate:window_loadedReportDate?window_loadedReportDate.toISOString():null,snapshotAt:now}));
+        const pqs=candidates.filter(x=>visitScopeSelectedPqs.has(x.pq)).map(x=>({pq:x.pq,area:x.area,ce:x.ce,responsible:x.responsible,verificationType:x.verificationType,question:x.question,questionTr:x.questionTr||'',finding:x.finding,findingTr:x.findingTr||'',reviewEvidence:x.reviewEvidence,statusCode:x.statusCode,statusLabel:x.statusLabel,sourceReportDate:window_loadedReportDate?window_loadedReportDate.toISOString():null,snapshotAt:now}));
         const steps=candidates.flatMap(x=>x.actionItems.map(a=>({x,a}))).filter(z=>visitScopeSelectedSteps.has(z.a.key)).map(({x,a})=>({key:a.key,pq:x.pq,step:a.step,action:a.action,office:a.office,evidenceReference:a.evidenceReference||'',estDate:a.estDate,progress:a.progress,statusCode:a.statusCode,statusLabel:a.statusLabel,delayDays:a.delayDays||0,sourceFile:a.sourceFile||'',sourceReportDate:window_loadedReportDate?window_loadedReportDate.toISOString():null,snapshotAt:now}));
         return {pqs,steps};
     }
@@ -6648,7 +6749,7 @@
         const visit=getVisitScopeRecord();if(!visit)return null;
         return {visit,scope:visit.scope||{pqs:[],steps:[]},general:((visit.preparation||{}).general)||{},records:getVisitPreparationRecords(visit)};
     }
-    function buildVisitScopePqExportRows(bundle) {return visitArrayValue((bundle.scope||{}).pqs).map(x=>({'PQ':x.pq||'','Denetim Alanı':x.area||'','CE':x.ce||'','PQ Sorumlusu':x.responsible||'','Doğrulama Türü':x.verificationType||'','Standart Durum':x.statusLabel||'','PQ Sorusu':fullTextForExcel(x.question||''),'ICAO Bulgusu':fullTextForExcel(x.finding||''),'İncelenecek Kanıtlar':fullTextForExcel(x.reviewEvidence||''),'Kaynak Rapor Tarihi':x.sourceReportDate||'','Anlık Görüntü Tarihi':x.snapshotAt||''}));}
+    function buildVisitScopePqExportRows(bundle) {return visitArrayValue((bundle.scope||{}).pqs).map(x=>({'PQ':x.pq||'','Denetim Alanı':x.area||'','CE':x.ce||'','PQ Sorumlusu':x.responsible||'','Doğrulama Türü':x.verificationType||'','Standart Durum':x.statusLabel||'','PQ Sorusu (ENG)':fullTextForExcel(x.question||''),'PQ Sorusu (TR)':fullTextForExcel(x.questionTr||(pqMasterData[x.pq]||{}).soruTr||''),'ICAO Bulgusu (ENG)':fullTextForExcel(x.finding||''),'ICAO Bulgusu (TR)':fullTextForExcel(x.findingTr||(pqMasterData[x.pq]||{}).bulguTr||''),'İncelenecek Kanıtlar':fullTextForExcel(x.reviewEvidence||''),'Kaynak Rapor Tarihi':x.sourceReportDate||'','Anlık Görüntü Tarihi':x.snapshotAt||''}));}
     function buildVisitScopeStepExportRows(bundle) {return visitArrayValue((bundle.scope||{}).steps).map(x=>({'PQ':x.pq||'','Step':x.step||'','CAP Eylemi':fullTextForExcel(x.action||''),'Sorumlu Ofis':x.office||'','EVIDENCE REFERENCE':fullTextForExcel(x.evidenceReference||''),'Hedef Tarih':x.estDate||'','İlerleme':x.progress||'','Standart Durum':x.statusLabel||'','Gecikme Günü':x.delayDays||0,'Kaynak Dosya':x.sourceFile||'','Kaynak Rapor Tarihi':x.sourceReportDate||'','Anlık Görüntü Tarihi':x.snapshotAt||''}));}
     function buildVisitPreparationExportRows(bundle) {return (bundle.records||[]).map(x=>({'Hedef Türü':x.targetType==='step'?'CAP Adımı':x.targetType==='pq'?'PQ':'Ziyaret Geneli','Hedef':x.targetLabel||'','PQ':x.pq||'','Step':x.step||'','Sorulacak Sorular':fullTextForExcel(x.questions||''),'Talep/İncelenecek Kanıtlar':fullTextForExcel(x.evidenceRequests||''),'Görüşülecek Kişi/Danışılacak Makam':fullTextForExcel(x.personsAuthorities||''),'Doğrulanacak Hususlar':fullTextForExcel(x.verificationPoints||''),'Ön Değerlendirme':fullTextForExcel(x.preliminaryAssessment||''),'Riskli Konular':fullTextForExcel(x.risks||''),'Ziyaret Öncesi Not':fullTextForExcel(x.notes||''),'Son Güncelleme':x.updatedAt||''}));}
     function exportVisitScopeExcel() {
@@ -12418,7 +12519,7 @@ Mevcut: ${issue.currentValue || 'Boş'}`), fontSize:8},
                 const cls=classifyCommonActionStatus(row,{projectionDate:projectionDate||null});
                 return {...row,statusCode:cls.code,statusLabel:cls.label,delayDays:cls.delayDays||0,daysLeft:cls.daysLeft,dueByProjection:!!cls.dueByProjection,parsedDate:cls.parsedDate||null,key:visitScopeStableStepKey(row),stableKey:visitScopeStableStepKey(row),legacyKey:visitScopeLegacyKey(row)};
             }).sort((a,b)=>String(a.step||'').localeCompare(String(b.step||''),'tr',{numeric:true}));
-            candidates.push({pq,master,area,statusCode:pqStatus.code,statusLabel:pqStatus.label,question:visitScopeMasterText(master,['soru','question','pqQuestion']),finding:visitScopeMasterText(master,['bulgu','finding','description']),reviewEvidence:visitScopeMasterText(master,['reviewEvidence','incelenecekKanitlar','evidence']),ce:master.ce||'',responsible:master.sorumlu||'',verificationType:master.tur||'',actionItems,lateSteps:actionItems.filter(a=>a.statusCode===COMMON_ACTION_STATUS.LATE.code).length,dateRiskSteps:actionItems.filter(a=>a.statusCode===COMMON_ACTION_STATUS.DATE_RISK.code).length,openSteps:actionItems.filter(a=>a.statusCode!==COMMON_ACTION_STATUS.COMPLETED.code).length});
+            candidates.push({pq,master,area,statusCode:pqStatus.code,statusLabel:pqStatus.label,question:visitScopeMasterText(master,['soru','question','pqQuestion']),questionTr:visitScopeMasterText(master,['soruTr','questionTr','pqQuestionTr']),finding:visitScopeMasterText(master,['bulgu','finding','description']),findingTr:visitScopeMasterText(master,['bulguTr','findingTr','descriptionTr']),reviewEvidence:visitScopeMasterText(master,['reviewEvidence','incelenecekKanitlar','evidence']),ce:master.ce||'',responsible:master.sorumlu||'',verificationType:master.tur||'',actionItems,lateSteps:actionItems.filter(a=>a.statusCode===COMMON_ACTION_STATUS.LATE.code).length,dateRiskSteps:actionItems.filter(a=>a.statusCode===COMMON_ACTION_STATUS.DATE_RISK.code).length,openSteps:actionItems.filter(a=>a.statusCode!==COMMON_ACTION_STATUS.COMPLETED.code).length});
         });
         return candidates.sort((a,b)=>sortAreas(a.area,b.area)||sortPQs(a.pq,b.pq));
     };
@@ -12576,7 +12677,7 @@ Mevcut: ${issue.currentValue || 'Boş'}`), fontSize:8},
     window.editVisitPreparationRecord=function(id){const record=getVisitPreparationRecords(getVisitScopeRecord()).find(r=>r.id===id);if(!record)return;const set=(field,val)=>{const el=document.getElementById(field);if(el)el.value=val||'';};set('visitPrepRecordId',record.id);set('visitPrepQuestions',record.questions);set('visitPrepEvidence',record.evidenceRequests);set('visitPrepAuthorities',record.personsAuthorities);set('visitPrepVerification',record.verificationPoints);set('visitPrepAssessment',record.preliminaryAssessment);set('visitPrepRisks',record.risks);set('visitPrepNotes',record.notes);renderVisitPreparationTargetOptions();const target=document.getElementById('visitPrepTarget');if(target){if(record.targetType==='pq')target.value='pq::'+record.pq;else if(record.targetType==='step')target.value='step::'+encodeURIComponent(visitScopeStableStepKey(record));else target.value='visit';}};
 
     window.buildVisitScopeExportBundle=function(){const visit=getVisitScopeRecord();if(!visit)return null;return {visit,scope:{...(visit.scope||{}),pqs:getVisitScopeWorkingPqs(visit),steps:getVisitScopeWorkingSteps(visit)},historicalScope:visit.scope||{},general:((visit.preparation||{}).general)||{},records:getVisitPreparationRecords(visit)};};
-    window.buildVisitScopePqExportRows=function(bundle){return visitArrayValue((bundle.scope||{}).pqs).map(x=>({'PQ':x.pq||'','Denetim Alanı':x.area||'','CE':x.ce||'','PQ Sorumlusu':x.responsible||'','Doğrulama Türü':x.verificationType||'','Standart Durum':x.statusLabel||'','Kaynak Eşleşme Durumu':x.sourceStateLabel||x.sourceState||'','Değişen Alanlar':visitArrayValue(x.sourceChanges).map(c=>c.label).join(', '),'PQ Sorusu':fullTextForExcel(x.question||''),'ICAO Bulgusu':fullTextForExcel(x.finding||''),'İncelenecek Kanıtlar':fullTextForExcel(x.reviewEvidence||''),'Kaynak Rapor Tarihi':x.sourceReportDate||'','Anlık Görüntü Tarihi':x.snapshotAt||''}));};
+    window.buildVisitScopePqExportRows=function(bundle){return visitArrayValue((bundle.scope||{}).pqs).map(x=>({'PQ':x.pq||'','Denetim Alanı':x.area||'','CE':x.ce||'','PQ Sorumlusu':x.responsible||'','Doğrulama Türü':x.verificationType||'','Standart Durum':x.statusLabel||'','Kaynak Eşleşme Durumu':x.sourceStateLabel||x.sourceState||'','Değişen Alanlar':visitArrayValue(x.sourceChanges).map(c=>c.label).join(', '),'PQ Sorusu (ENG)':fullTextForExcel(x.question||''),'PQ Sorusu (TR)':fullTextForExcel(x.questionTr||(pqMasterData[x.pq]||{}).soruTr||''),'ICAO Bulgusu (ENG)':fullTextForExcel(x.finding||''),'ICAO Bulgusu (TR)':fullTextForExcel(x.findingTr||(pqMasterData[x.pq]||{}).bulguTr||''),'İncelenecek Kanıtlar':fullTextForExcel(x.reviewEvidence||''),'Kaynak Rapor Tarihi':x.sourceReportDate||'','Anlık Görüntü Tarihi':x.snapshotAt||''}));};
     window.buildVisitScopeStepExportRows=function(bundle){return visitArrayValue((bundle.scope||{}).steps).map(x=>({'PQ':x.pq||'','Step':x.step||'','CAP Eylemi':fullTextForExcel(x.action||''),'Sorumlu Ofis':x.office||'','EVIDENCE REFERENCE':fullTextForExcel(x.evidenceReference||''),'Hedef Tarih':x.estDate||'','İlerleme':x.progress||'','Standart Durum':x.statusLabel||'','Kaynak Eşleşme Durumu':x.sourceStateLabel||x.sourceState||'','Değişen Alanlar':visitArrayValue(x.sourceChanges).map(c=>c.label).join(', '),'Önceki CAP Metni':fullTextForExcel((((x.storedSnapshot||{}).action)||'')),'Önceki Hedef Tarih':((x.storedSnapshot||{}).estDate)||'','Gecikme Günü':x.delayDays||0,'Kaynak Dosya':x.sourceFile||'','Kaynak Rapor Tarihi':x.sourceReportDate||'','Anlık Görüntü Tarihi':x.snapshotAt||''}));};
     window.visitReportGetScopePqs=function(visits){return (visits||[]).flatMap(v=>getVisitScopeWorkingPqs(v).map(p=>({...p,visitId:v.id,visitName:v.visitName||'Adsız ziyaret',visitAreas:visitArrayValue(v.areas),visitUnits:getVisitUnits(v)})));};
     window.visitReportGetScopeSteps=function(visits){return (visits||[]).flatMap(v=>getVisitScopeWorkingSteps(v).map(s=>({...s,visitId:v.id,visitName:v.visitName||'Adsız ziyaret',visitAreas:visitArrayValue(v.areas),visitUnits:getVisitUnits(v)})));};
