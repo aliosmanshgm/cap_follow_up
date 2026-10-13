@@ -397,6 +397,12 @@
 .icao-translation-status .ok{color:var(--ok);font-weight:800}.icao-translation-status .warn{color:var(--warn);font-weight:800}
 .icao-pq-text-block{margin-top:7px;padding:8px 9px;border:1px solid var(--border);border-radius:8px;background:var(--card)}
 .icao-pq-text-block:first-child{margin-top:0}.icao-pq-text-label{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:9px;font-weight:900;color:var(--muted);text-transform:uppercase;margin-bottom:4px}.icao-pq-text-body{font-size:11px;color:var(--text);line-height:1.5;white-space:pre-wrap}.icao-pq-text-missing{display:inline-flex;padding:2px 6px;border-radius:999px;background:#fff7ed;color:#9a3412;border:1px solid #fed7aa;font-size:8px;font-weight:900;text-transform:none}
+.icao-language-toggle{display:flex;align-items:center;gap:4px;border:1px solid var(--border);border-radius:8px;padding:3px;background:var(--bg);min-height:36px}
+.icao-language-toggle button{appearance:none;border:0;background:transparent;color:var(--muted);font-size:10px;font-weight:800;padding:7px 9px;border-radius:6px;cursor:pointer;white-space:nowrap}
+.icao-language-toggle button:hover{background:rgba(37,99,235,.07);color:var(--primary)}
+.icao-language-toggle button.active{background:var(--primary);color:#fff;box-shadow:0 1px 2px rgba(15,23,42,.12)}
+.icao-language-toggle .sep{width:1px;height:18px;background:var(--border)}
+
 @media(max-width:900px){#tab-icao-visit-validation .icao-visit-filter-grid{grid-template-columns:1fr;}#tab-icao-visit-validation .icao-visit-filter-grid .icao-visit-filter-search{grid-column:auto;}}
 </style>
 
@@ -1934,7 +1940,14 @@
                             <input id="icaoVisitSearch" class="icao-visit-filter-search" type="text" placeholder="PQ, alan, CE veya doğrulama türü ara..." oninput="renderIcaoOfficialVisitPqList()">
                             <select id="icaoVisitAreaFilter" onchange="handleIcaoVisitAreaFilterChange()" title="Ziyaret kapsamındaki denetim alanına göre filtrele"><option value="all">Tüm alanlar</option></select>
                             <select id="icaoVisitStatusFilter" onchange="renderIcaoOfficialVisitPqList()"><option value="all">Tüm sonuçlar</option><option value="not_evaluated">Değerlendirilmedi</option><option value="under_review">İnceleniyor</option><option value="additional_evidence">Ek kanıt talebi</option><option value="open">CAP açık kaldı</option><option value="validated">CAP kapatıldı</option><option value="post_visit">Ziyaret sonrası takip</option></select>
-                            <select id="icaoVisitTextLanguage" onchange="handleIcaoVisitLanguageChange()" title="PQ sorusu ve bulgu metinlerinin görüntüleme dili"><option value="both">PQ Metin Dili: ENG + TR</option><option value="en">PQ Metin Dili: ENG</option><option value="tr">PQ Metin Dili: TR</option></select>
+                            <div class="icao-language-toggle" id="icaoVisitLanguageToggle" title="PQ sorusu ve bulgu metinlerinin görüntüleme dili">
+                                <button type="button" data-lang="en" onclick="setIcaoPqTextLanguage('en')">ENG</button>
+                                <span class="sep"></span>
+                                <button type="button" data-lang="tr" onclick="setIcaoPqTextLanguage('tr')">TR</button>
+                                <span class="sep"></span>
+                                <button type="button" data-lang="both" onclick="setIcaoPqTextLanguage('both')">ENG + TR</button>
+                            </div>
+                            <select id="icaoVisitTextLanguage" style="display:none" aria-hidden="true"><option value="both">ENG + TR</option><option value="en">ENG</option><option value="tr">TR</option></select>
                         </div>
                         <div id="icaoVisitTranslationStatus" class="icao-translation-status">Türkçe PQ metinleri Excel master yüklendiğinde burada kontrol edilir.</div>
                         <div id="icaoOfficialVisitPqList" class="icao-visit-list"><div class="icao-visit-empty">Ziyaret seçildiğinde kapsamdaki PQ'lar burada gösterilecektir.</div></div>
@@ -5781,15 +5794,39 @@
         const el=document.getElementById('icaoVisitTextLanguage');
         return (el&&el.value)||localStorage.getItem(ICAO_PQ_TEXT_LANGUAGE_KEY)||'both';
     }
+    function updateIcaoPqLanguageButtons(mode){
+        document.querySelectorAll('#icaoVisitLanguageToggle [data-lang]').forEach(btn=>{
+            const active=btn.getAttribute('data-lang')===mode;
+            btn.classList.toggle('active',active);
+            btn.setAttribute('aria-pressed',active?'true':'false');
+        });
+    }
     function initializeIcaoPqTextLanguage(){
         const el=document.getElementById('icaoVisitTextLanguage');if(!el)return;
         const saved=localStorage.getItem(ICAO_PQ_TEXT_LANGUAGE_KEY)||'both';
-        if(Array.from(el.options).some(o=>o.value===saved))el.value=saved;else el.value='both';
+        const mode=Array.from(el.options).some(o=>o.value===saved)?saved:'both';
+        el.value=mode;
+        updateIcaoPqLanguageButtons(mode);
+    }
+    function renderActiveIcaoPqTextSummary(){
+        if(!activeIcaoValidationPq)return;
+        const visit=getActiveIcaoOfficialVisitRecord();if(!visit)return;
+        const pq=String(activeIcaoValidationPq);
+        const scope=getIcaoVisitScopePqs(visit).find(p=>String(p.pq)===pq);if(!scope)return;
+        const m=pqMasterData[pq]||{},summary=document.getElementById('icaoValidationSummary');if(!summary)return;
+        const mode=getIcaoPqTextLanguage();
+        summary.innerHTML=`<div style="display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:7px"><b>PQ ${escapeHtml(pq)} — ${escapeHtml(scope.area||m.alan||'-')}</b><span style="font-size:9px;color:var(--muted)">${mode==='both'?'ENG + TR':mode.toUpperCase()}</span></div>${buildIcaoPqTextSummaryHtml(pq,scope)}<div style="color:var(--muted);margin-top:7px">Mevcut CAP adımları aşağıda yalnızca bilgi amaçlı gösterilir. Validasyon sonucu PQ/CAP seviyesinde kaydedilir.</div>`;
+    }
+    function setIcaoPqTextLanguage(mode){
+        if(!['en','tr','both'].includes(mode))mode='both';
+        const el=document.getElementById('icaoVisitTextLanguage');if(el)el.value=mode;
+        localStorage.setItem(ICAO_PQ_TEXT_LANGUAGE_KEY,mode);
+        updateIcaoPqLanguageButtons(mode);
+        renderActiveIcaoPqTextSummary();
+        showAppRuntimeToast(`PQ metin dili: ${mode==='both'?'ENG + TR':mode.toUpperCase()}`,'info');
     }
     function handleIcaoVisitLanguageChange(){
-        const mode=getIcaoPqTextLanguage();localStorage.setItem(ICAO_PQ_TEXT_LANGUAGE_KEY,mode);
-        renderIcaoOfficialVisitPqList();
-        if(activeIcaoValidationPq)selectIcaoValidationPq(activeIcaoValidationPq);
+        setIcaoPqTextLanguage(getIcaoPqTextLanguage());
     }
     function getIcaoPqBilingualTexts(pq,scope={}){
         const m=pqMasterData[pq]||{};
@@ -5941,7 +5978,7 @@
         set('icaoValidationStatus',r.status||'not_evaluated');set('icaoValidationResultDate',r.resultDate);set('icaoValidationEvidence',evidenceValue);set('icaoValidationComment',r.icaoComment);set('icaoValidationAdditionalRequest',r.additionalRequest);set('icaoValidationResponsibleUnit',r.responsibleUnit);set('icaoValidationFollowUpDate',r.followUpDate);set('icaoValidationNotes',r.notes);
         updateIcaoValidationDraftInfo('Metin alanlarındaki değişiklikler tarayıcıda taslak olarak korunur.');restoreIcaoValidationTextDraft(r);refreshIcaoValidationTextareas();
         const evidenceInfo=document.getElementById('icaoValidationEvidenceAutoInfo');if(evidenceInfo)evidenceInfo.textContent='Step bazlı EVIDENCE REFERENCE bilgileri aşağıdaki salt okunur CAP Step bölümünde gösterilir. Bu alan otomatik doldurulmaz.';
-        const summary=document.getElementById('icaoValidationSummary');if(summary)summary.innerHTML=`<div style="display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:7px"><b>PQ ${escapeHtml(pq)} — ${escapeHtml(scope.area||m.alan||'-')}</b><span style="font-size:9px;color:var(--muted)">${getIcaoPqTextLanguage()==='both'?'ENG + TR':getIcaoPqTextLanguage().toUpperCase()}</span></div>${buildIcaoPqTextSummaryHtml(pq,scope)}<div style="color:var(--muted);margin-top:7px">Mevcut CAP adımları aşağıda yalnızca bilgi amaçlı gösterilir. Validasyon sonucu PQ/CAP seviyesinde kaydedilir.</div>`;
+        renderActiveIcaoPqTextSummary();
         const steps=getIcaoVisitPqSteps(visit,pq),stepEl=document.getElementById('icaoValidationSteps');if(stepEl)stepEl.innerHTML=steps.length?steps.map(s=>`<div class="icao-valid-step"><b>Step ${escapeHtml(s.step||'-')}</b> — ${escapeHtml(s.action||s.capText||s.description||'-')}<br><span style="color:var(--muted)">${escapeHtml(s.office||'-')} | ${escapeHtml(s.estDate||'-')} | ${escapeHtml(s.statusLabel||s.progress||'')}</span>${s.evidenceReference?`<br><span style="color:var(--text)"><b>📎 EVIDENCE REFERENCE:</b> ${escapeHtml(s.evidenceReference)}</span>`:''}</div>`).join(''):'<div class="icao-valid-step">Bu PQ için gösterilecek CAP Step kaydı bulunamadı.</div>';
         renderIcaoValidationImpactForPq(visit,pq);renderIcaoOfficialVisitPqList();
     }
@@ -6420,7 +6457,7 @@
     }
 
     window.runIcaoOfficialVisitSelfCheck=function(){const result={tab:!!document.getElementById('tab-icao-visit-validation'),visitType:!!document.getElementById('visitType'),scopePool:!!document.getElementById('visitScopePoolFilter'),status:Object.keys(ICAO_VALIDATION_STATUSES).length,baseEiAreas:Object.keys(baseEIData||{}).length,functions:['renderIcaoOfficialVisitModule','saveIcaoValidationRecord','getIcaoOfficialVisitImpactModel'].every(n=>typeof window[n]==='function'||typeof eval(n)==='function'),evidenceAutofill:false,stepEvidenceReadOnly:true,internalWorkspaceSeparated:typeof getInternalWorkflowVisitRecords==='function'};result.passed=result.tab&&result.visitType&&result.status===6;console.log('ICAO resmî ziyaret öz denetimi:',result);return result;};
-    window.handleIcaoVisitAreaFilterChange=handleIcaoVisitAreaFilterChange;window.handleIcaoVisitLanguageChange=handleIcaoVisitLanguageChange;window.renderIcaoOfficialVisitModule=renderIcaoOfficialVisitModule;window.loadIcaoOfficialVisit=loadIcaoOfficialVisit;window.openIcaoOfficialVisitValidation=openIcaoOfficialVisitValidation;window.openIcaoOfficialVisitForm=openIcaoOfficialVisitForm;window.openSelectedIcaoVisitScope=openSelectedIcaoVisitScope;window.renderIcaoOfficialVisitPqList=renderIcaoOfficialVisitPqList;window.selectIcaoValidationPq=selectIcaoValidationPq;window.resetIcaoValidationForm=resetIcaoValidationForm;window.saveIcaoValidationRecord=saveIcaoValidationRecord;window.toggleVisitTypeFields=toggleVisitTypeFields;window.exportIcaoOfficialVisitExcel=exportIcaoOfficialVisitExcel;window.exportIcaoOfficialVisitPDF=exportIcaoOfficialVisitPDF;window.exportIcaoOfficialVisitDetailedExcel=exportIcaoOfficialVisitDetailedExcel;window.exportIcaoOfficialVisitDetailedPDF=exportIcaoOfficialVisitDetailedPDF;window.getVisibleIcaoOfficialVisitPqs=getVisibleIcaoOfficialVisitPqs;
+    window.handleIcaoVisitAreaFilterChange=handleIcaoVisitAreaFilterChange;window.handleIcaoVisitLanguageChange=handleIcaoVisitLanguageChange;window.setIcaoPqTextLanguage=setIcaoPqTextLanguage;window.renderIcaoOfficialVisitModule=renderIcaoOfficialVisitModule;window.loadIcaoOfficialVisit=loadIcaoOfficialVisit;window.openIcaoOfficialVisitValidation=openIcaoOfficialVisitValidation;window.openIcaoOfficialVisitForm=openIcaoOfficialVisitForm;window.openSelectedIcaoVisitScope=openSelectedIcaoVisitScope;window.renderIcaoOfficialVisitPqList=renderIcaoOfficialVisitPqList;window.selectIcaoValidationPq=selectIcaoValidationPq;window.resetIcaoValidationForm=resetIcaoValidationForm;window.saveIcaoValidationRecord=saveIcaoValidationRecord;window.toggleVisitTypeFields=toggleVisitTypeFields;window.exportIcaoOfficialVisitExcel=exportIcaoOfficialVisitExcel;window.exportIcaoOfficialVisitPDF=exportIcaoOfficialVisitPDF;window.exportIcaoOfficialVisitDetailedExcel=exportIcaoOfficialVisitDetailedExcel;window.exportIcaoOfficialVisitDetailedPDF=exportIcaoOfficialVisitDetailedPDF;window.getVisibleIcaoOfficialVisitPqs=getVisibleIcaoOfficialVisitPqs;
 
 
     // ZİYARET VE İÇ DENETİM - PAKET 2: KAPSAM VE HAZIRLIK
