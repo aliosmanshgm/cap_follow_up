@@ -733,7 +733,7 @@
                         <button onclick="openDataManagement(); closeMoreActions();">📂 Veri Yönetimi</button>
                         <button type="button" onclick="openSystemHealthModal(); closeMoreActions();">🩺 Sistem Kontrolü</button>
                         <button onclick="archiveCurrentState(); closeMoreActions();">💾 Anlık Arşivle</button>
-                        <button onclick="toggleLang(); closeMoreActions();">🌐 TR/EN</button>
+                        <button id="globalLangToggleBtn" onclick="toggleLang(); closeMoreActions();">🌐 PQ Metni: TR</button>
                         <button onclick="document.body.classList.toggle('dark-mode'); closeMoreActions();">🌓 Tema</button>
                         <button onclick="clearAllData(); closeMoreActions();">🗑️ Verileri Temizle</button>
                         <button onclick="firebase.auth().signOut(); closeMoreActions();" class="danger-menu-action">🚪 Çıkış</button>
@@ -2373,6 +2373,23 @@
         const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
         return `${months[dt.getMonth()]} ${dt.getDate()}, ${dt.getFullYear()}`;
     }
+    function getLocalizedPqQuestion(master = {}) {
+        const en = String(master.soru || master.question || '').trim();
+        const tr = String(master.soruTr || master.questionTr || '').trim();
+        return currentUiLang === 'tr' ? (tr || en) : (en || tr);
+    }
+    function getLocalizedPqFinding(master = {}) {
+        const en = String(master.bulgu || master.finding || '').trim();
+        const tr = String(master.bulguTr || master.findingTr || '').trim();
+        return currentUiLang === 'tr' ? (tr || en) : (en || tr);
+    }
+    function getLoadedPqTranslationStats() {
+        const rows = Object.values(pqMasterData || {});
+        const q = rows.filter(m => String((m || {}).soruTr || '').trim()).length;
+        const f = rows.filter(m => String((m || {}).bulguTr || '').trim()).length;
+        const both = rows.filter(m => String((m || {}).soruTr || '').trim() && String((m || {}).bulguTr || '').trim()).length;
+        return { total: rows.length, questionTr: q, findingTr: f, both };
+    }
     function applyLanguage() {
         document.documentElement.lang = currentUiLang;
         document.querySelectorAll('[data-i18n]').forEach(el => {
@@ -2380,14 +2397,34 @@
             const value = t(key);
             if (value && value !== key) el.textContent = value;
         });
+        const langBtn = document.getElementById('globalLangToggleBtn');
+        if (langBtn) langBtn.textContent = currentUiLang === 'tr' ? '🌐 PQ Metni: TR' : '🌐 PQ Text: EN';
         updateDynamicSubtitle();
+    }
+    function refreshPqLanguageSensitiveViews() {
+        try { if (typeof render === 'function') render(); } catch (e) { console.warn('Dil sonrası ana görünüm yenilenemedi:', e); }
+        try { if (typeof renderIcaoClosedList === 'function') renderIcaoClosedList(); } catch (e) {}
+        try {
+            if (typeof setIcaoPqTextLanguage === 'function') setIcaoPqTextLanguage(currentUiLang === 'tr' ? 'tr' : 'en');
+            else if (typeof renderActiveIcaoPqTextSummary === 'function') renderActiveIcaoPqTextSummary();
+        } catch (e) { console.warn('Dil sonrası ICVM PQ görünümü yenilenemedi:', e); }
+        try { if (typeof renderVisitScopeCandidates === 'function' && document.getElementById('tab-visit-scope')?.classList.contains('active')) renderVisitScopeCandidates(); } catch (e) {}
     }
     function toggleLang() {
         currentUiLang = currentUiLang === 'tr' ? 'en' : 'tr';
         localStorage.setItem('usoapUiLang', currentUiLang);
         applyLanguage();
+        refreshPqLanguageSensitiveViews();
+        const s = getLoadedPqTranslationStats();
+        const msg = currentUiLang === 'tr'
+            ? `PQ metin dili TR. Türkçe veri: soru ${s.questionTr}/${s.total}, bulgu ${s.findingTr}/${s.total}.`
+            : `PQ text language EN. Master PQ: ${s.total}.`;
+        if (typeof showAppRuntimeToast === 'function') showAppRuntimeToast(msg, currentUiLang === 'tr' && s.both === 0 ? 'warn' : 'info');
     }
     window.toggleLang = toggleLang;
+    window.getLocalizedPqQuestion = getLocalizedPqQuestion;
+    window.getLocalizedPqFinding = getLocalizedPqFinding;
+    window.getLoadedPqTranslationStats = getLoadedPqTranslationStats;
 
     // Değişkenler
     window.toggleFiltersPanel = function() { document.getElementById('rightFiltersPanel').classList.toggle('open'); };
@@ -3906,7 +3943,7 @@
             html += `<div style="margin-bottom:15px; border:1px solid #fde047; border-radius:6px; overflow:hidden;"><div style="background:#fef9c3; padding:8px 15px; font-weight:bold; color:#a16207; font-size:13px; border-bottom:1px solid #fde047;">📋 ${area} Alanı (${grouped[area].length} PQ)</div>`;
             grouped[area].sort((a,b) => sortPQs(a.pq, b.pq)).forEach(item => {
                 html += `<div style="padding:10px 15px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; background:var(--card);">
-                    <div><b style="color:var(--text); font-size:14px;">PQ ${item.pq}</b><span style="font-size:10px; background:#e0f2fe; color:#0369a1; padding:2px 6px; border-radius:4px; margin-left:5px; border:1px solid #bae6fd;">${item.validasyonGorevi || "GÖREV BİLİNMİYOR"}</span><br><span style="font-size:11px; color:var(--muted);">${item.bulgu || 'Bulgu detayı yok'}</span></div>
+                    <div><b style="color:var(--text); font-size:14px;">PQ ${item.pq}</b><span style="font-size:10px; background:#e0f2fe; color:#0369a1; padding:2px 6px; border-radius:4px; margin-left:5px; border:1px solid #bae6fd;">${item.validasyonGorevi || "GÖREV BİLİNMİYOR"}</span><br><span style="font-size:11px; color:var(--muted);">${escapeHtml(getLocalizedPqFinding(item) || (currentUiLang==='tr'?'Bulgu detayı yok':'Finding detail unavailable'))}</span></div>
                     <span style="color:#ca8a04; font-weight:bold; font-size:11px; white-space:nowrap; background:rgba(234, 179, 8, 0.1); padding:4px 8px; border-radius:4px;">🏆 OLF KAPALI</span>
                 </div>`;
             });
@@ -3997,7 +4034,7 @@
 
             html += `<div onclick="openDataQualityIssue('${String(pq).replace(/'/g, "\'")}')" style="padding:12px 14px; border:1px solid var(--border); background:var(--card); margin-bottom:10px; border-left:4px solid var(--danger); border-radius:6px; cursor:pointer;">
                 <div style="display:flex; justify-content:space-between; gap:10px; align-items:flex-start;">
-                    <div><b style="color:var(--text); font-size:14px;">PQ ${escapeHtml(pq)}</b><span style="font-size:10px; background:#fee2e2; color:var(--danger); padding:2px 6px; border-radius:4px; margin-left:5px;">${escapeHtml(area)}</span>${headerNote}<div style="font-size:11px; color:var(--muted); margin-top:4px;">${escapeHtml(master.bulgu || 'Bulgu detayı yok')}</div></div>
+                    <div><b style="color:var(--text); font-size:14px;">PQ ${escapeHtml(pq)}</b><span style="font-size:10px; background:#fee2e2; color:var(--danger); padding:2px 6px; border-radius:4px; margin-left:5px;">${escapeHtml(area)}</span>${headerNote}<div style="font-size:11px; color:var(--muted); margin-top:4px;">${escapeHtml(getLocalizedPqFinding(master) || (currentUiLang==='tr'?'Bulgu detayı yok':'Finding detail unavailable'))}</div></div>
                     <span style="color:var(--danger); font-weight:bold; font-size:11px; background:rgba(239,68,68,0.1); padding:4px 8px; border-radius:4px; white-space:nowrap;">${pqIssues.length} EKSİKLİK</span>
                 </div>
                 ${issueHtml}
@@ -4037,7 +4074,7 @@
         
         return rawData.filter(d => { 
             const excel = pqMasterData[d.pq] || {}; const statType = getStatus(d).type; 
-            const matchSearch = d.pq.includes(search) || d.action.toLowerCase().includes(search) || d.office.toLowerCase().includes(search) || (excel.bulgu && excel.bulgu.toLowerCase().includes(search)) || (excel.sorumlu && excel.sorumlu.toLowerCase().includes(search)) || (excel.ce && excel.ce.toLowerCase().includes(search)) || (d.note && d.note.toLowerCase().includes(search)); 
+            const matchSearch = d.pq.includes(search) || d.action.toLowerCase().includes(search) || d.office.toLowerCase().includes(search) || (excel.bulgu && excel.bulgu.toLowerCase().includes(search)) || (excel.bulguTr && String(excel.bulguTr).toLocaleLowerCase('tr-TR').includes(search)) || (excel.soru && String(excel.soru).toLowerCase().includes(search)) || (excel.soruTr && String(excel.soruTr).toLocaleLowerCase('tr-TR').includes(search)) || (excel.sorumlu && excel.sorumlu.toLowerCase().includes(search)) || (excel.ce && excel.ce.toLowerCase().includes(search)) || (d.note && d.note.toLowerCase().includes(search)); 
             const matchStatus = statusVals.includes('all') || statusVals.includes(statType); 
             let matchPqStatus = pqStatusVals.includes('all'); if (!matchPqStatus) { if (pqStatusVals.includes('pq-done') && pqCompletionMap[d.pq]) matchPqStatus = true; if (pqStatusVals.includes('pq-open') && !pqCompletionMap[d.pq]) matchPqStatus = true; }
             let matchIcaoValidation = true; if (!icaoValidationVals.includes('all') && icaoValidationVals.includes('icao-closed')) { if (!excel.isIcaoClosed) matchIcaoValidation = false; }
@@ -5973,11 +6010,12 @@
         const result={latestImport:window.lastPqTranslationImportDiagnostic||null,pq:key||null,questionTr:String(m.soruTr||''),findingTr:String(m.bulguTr||''),questionEn:String(m.soru||''),findingEn:String(m.bulgu||''),masterCount:Object.keys(pqMasterData||{}).length,trQuestionCount:Object.values(pqMasterData||{}).filter(x=>String((x||{}).soruTr||'').trim()).length,trFindingCount:Object.values(pqMasterData||{}).filter(x=>String((x||{}).bulguTr||'').trim()).length};console.log('PQ TR import kontrolü:',result);return result;};
     function getIcaoPqBilingualTexts(pq,scope={}){
         const m=pqMasterData[pq]||{};
+        const masterQuestionTr=String(m.soruTr||'').trim(), masterFindingTr=String(m.bulguTr||'').trim();
         return {
-            questionEn:String(scope.question||m.soru||'').trim(),
-            questionTr:String(scope.questionTr||m.soruTr||'').trim(),
-            findingEn:String(scope.finding||m.bulgu||'').trim(),
-            findingTr:String(scope.findingTr||m.bulguTr||'').trim()
+            questionEn:String(m.soru||scope.question||'').trim(),
+            questionTr:masterQuestionTr || String(scope.questionTr||'').trim(),
+            findingEn:String(m.bulgu||scope.finding||'').trim(),
+            findingTr:masterFindingTr || String(scope.findingTr||'').trim()
         };
     }
     function buildIcaoPqTextSummaryHtml(pq,scope={}){
@@ -5997,7 +6035,7 @@
         const el=document.getElementById('icaoVisitTranslationStatus');if(!el)return;
         if(!visit){el.textContent='Türkçe PQ metinleri Excel master yüklendiğinde burada kontrol edilir.';return;}
         const pqs=getIcaoVisitAreaScopedPqs(visit);let qOk=0,fOk=0,both=0;
-        pqs.forEach(p=>{const m=pqMasterData[String(p.pq||'')]||{},q=String(m.soruTr||'').trim(),f=String(m.bulguTr||'').trim();if(q)qOk++;if(f)fOk++;if(q&&f)both++;});
+        pqs.forEach(p=>{const m=pqMasterData[String(p.pq||'')]||{},q=String(m.soruTr||p.questionTr||'').trim(),f=String(m.bulguTr||p.findingTr||'').trim();if(q)qOk++;if(f)fOk++;if(q&&f)both++;});
         const total=pqs.length,pct=total?((both/total)*100).toFixed(1).replace('.',','):'0,0';
         el.innerHTML=`TR çeviri durumu: <span class="${both===total&&total?'ok':'warn'}">${both}/${total} PQ tam (%${pct})</span> · PQ Sorusu (TR): ${qOk}/${total} · Bulgu (TR): ${fOk}/${total}`;
     }
@@ -8160,17 +8198,19 @@
         let sortedPQs = Object.keys(groups).sort(sortPQs);
         sortedPQs.forEach(pq => {
             const items = groups[pq]; const excel = pqMasterData[pq] || {}; const safeId = pq.replace(/\./g, '-');
+            const localizedQuestion = getLocalizedPqQuestion(excel);
+            const localizedFinding = getLocalizedPqFinding(excel);
             const totalItems = items.length; const doneItems = items.filter(i => getStatus(i).type === 'done').length; const pct = Math.round((doneItems / totalItems) * 100);
             const isAllDone = pct === 100; const pqStatusText = isAllDone ? `<br><span class="badge badge-pq-done">✅ PQ TAMAMLANDI</span>` : '';
             
             let html = `<tr id="head-${safeId}" class="pq-group-row" onclick="togglePQ('${safeId}')">
                 <td><b>PQ ${pq}</b><br><span class="badge badge-extra" style="margin-top:5px;">${excel.alan || 'N/A'}</span></td>
                 <td><div style="font-size:12px; font-weight:600; margin-bottom:4px; display:flex; justify-content:space-between;"><span>${doneItems} / ${totalItems} Eylem Tamamlandı</span><span>%${pct}</span></div><div class="pq-progress-container"><div class="pq-progress-fill ${isAllDone ? 'done' : ''}" style="width:${pct}%"></div></div>${pqStatusText}</td>
-                <td style="font-size:12px; color:var(--muted); line-height:1.5;">${excel.bulgu ? `<div class="truncate"><b>Bulgu:</b> ${excel.bulgu}</div>` : ''}<b>Tür:</b> ${excel.tur || 'N/A'} | <b>Personel:</b> ${excel.sorumlu || 'N/A'}<br><b>ICAO Durum:</b> ${excel.degerlendirme || 'N/A'}</td>
+                <td style="font-size:12px; color:var(--muted); line-height:1.5;">${localizedFinding ? `<div class="truncate"><b>${currentUiLang==='tr'?'Bulgu':'Finding'}:</b> ${escapeHtml(localizedFinding)}</div>` : ''}<b>Tür:</b> ${excel.tur || 'N/A'} | <b>Personel:</b> ${excel.sorumlu || 'N/A'}<br><b>ICAO Durum:</b> ${excel.degerlendirme || 'N/A'}</td>
                 <td style="text-align:center; font-size:18px; color:var(--primary);">➕</td></tr>`;
             
             let detailHtml = `<tr id="detail-${safeId}" class="pq-detail-row"><td colspan="4"><div class="detail-container">`;
-            detailHtml += `<div class="finding-box"><div class="finding-meta"><span><b>Alan:</b> ${excel.alan || '-'}</span><span><b>CE:</b> ${excel.ce || '-'}</span><span><b>Tür:</b> ${excel.tur || '-'}</span><span><b>Personel:</b> ${excel.sorumlu || '-'}</span><span><b>ICAO:</b> ${excel.degerlendirme || '-'}</span></div><b>📝 İlgili ICAO Bulgusu:</b><br>${excel.bulgu || '<i>Excel eşleşmesi yok.</i>'}</div>`;
+            detailHtml += `<div class="finding-box"><div class="finding-meta"><span><b>Alan:</b> ${excel.alan || '-'}</span><span><b>CE:</b> ${excel.ce || '-'}</span><span><b>Tür:</b> ${excel.tur || '-'}</span><span><b>Personel:</b> ${excel.sorumlu || '-'}</span><span><b>ICAO:</b> ${excel.degerlendirme || '-'}</span></div>${localizedQuestion?`<b>❓ ${currentUiLang==='tr'?'PQ Sorusu':'PQ Question'}:</b><br>${escapeHtml(localizedQuestion)}<br><br>`:''}<b>📝 ${currentUiLang==='tr'?'İlgili ICAO Bulgusu':'Related ICAO Finding'}:</b><br>${localizedFinding?escapeHtml(localizedFinding):'<i>Excel eşleşmesi yok.</i>'}</div>`;
             detailHtml += `<div style="margin-top: 15px; background: white; padding: 10px; border-radius: 8px; border: 1px solid #e2e8f0; display:flex; gap:10px; align-items:center;">
                 <label style="display:flex; align-items:center; gap:8px; font-weight:bold; font-size:13px; color:#0f5132; background:#d1e7dd; padding:6px 12px; border-radius:6px; cursor:pointer;"><input type="checkbox" style="width:16px; height:16px; accent-color:#198754;" ${dailyReviewedPQs.has(pq) ? 'checked' : ''} onchange="toggleDailyReportPQ('${pq}', this.checked); event.stopPropagation();"> GÜNLÜK RAPORA EKLE (TÜM PQ)</label>
                 <input type="text" class="note-input" style="flex:1; min-height:auto;" placeholder="Bu PQ için yönetici özetine eklenecek genel not..." value="${dailyPQNotes[pq] || ''}" oninput="updatePQNote('${pq}', this.value)" onclick="event.stopPropagation();">
@@ -9712,7 +9752,7 @@
             const pqNote = dailyPQNotes[pq] || '';
             html += `<div class="review-card" style="border-left-color:${isDone ? 'var(--ok)' : 'var(--warn)'};"><div class="review-card-header"><span style="font-size:15px;">PQ ${escapeHtml(pq)} ${isDone ? '✅' : '⏳'}</span><span class="badge badge-extra">${escapeHtml(m.alan || 'N/A')}</span></div><div style="font-size:12px; color:var(--muted); margin-bottom:10px;"><b>CE:</b> ${escapeHtml(m.ce || '-')} | <b>Tür:</b> ${escapeHtml(m.tur || '-')} | <b>Sorumlu:</b> ${escapeHtml(m.sorumlu || '-')}</div>`;
             if (pqNote.trim()) html += `<div style="background:rgba(245,158,11,0.1);border-left:3px solid var(--warn);padding:8px 12px;margin-bottom:12px;font-size:13px;color:#92400e;border-radius:4px;"><b>📝 PQ Notu:</b> ${escapeHtml(pqNote).replace(/\n/g, '<br>')}</div>`;
-            html += `<div style="background:var(--bg);padding:10px;border-radius:6px;font-size:12px;margin-bottom:10px;"><b>İlgili Bulgu:</b> ${escapeHtml(m.bulgu || 'Belirtilmemiş')}</div>`;
+            html += `<div style="background:var(--bg);padding:10px;border-radius:6px;font-size:12px;margin-bottom:10px;"><b>İlgili Bulgu:</b> ${escapeHtml(getLocalizedPqFinding(m) || (currentUiLang==='tr'?'Belirtilmemiş':'Not specified'))}</div>`;
             items.forEach(item => {
                 const st = getStatus(item);
                 html += `<div style="margin-bottom:8px;padding-bottom:8px;border-bottom:1px dashed var(--border);font-size:13px;"><div style="display:flex;justify-content:space-between;margin-bottom:4px;"><b>Adım ${escapeHtml(item.step)}</b><span style="color:var(--${st.color});font-weight:bold;font-size:11px;">${escapeHtml(st.label)}</span></div><div style="margin-bottom:4px;color:var(--text);">${escapeHtml(item.action || '')}</div><div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);"><span>🏢 ${escapeHtml(item.office || '-')}</span><span>📅 Hedef: ${escapeHtml(item.estDate || '-')}</span></div>`;
