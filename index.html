@@ -3191,6 +3191,98 @@
     
     function removeWordFile(fileName) { loadedFiles.delete(fileName); rawData = rawData.filter(d => d.sourceFile !== fileName); recalculateGlobalStateFromFiles(); refreshAllFilters(); saveToLocalStorage(); renderFileList(); render(); }
     function removeExcelFile() { loadedExcelFile = null; pqMasterData = {}; baseEIData = {}; document.getElementById('eiOverallProgressPanel').style.display = "none"; document.getElementById('eiChartPanel').style.display = "none"; rawData = rawData.filter(d => d.sourceFile !== "Excel Kapanış Arşivi" && d.sourceFile !== "Excel Master"); refreshAllFilters(); saveToLocalStorage(); renderFileList(); render(); }
+
+
+    function downloadTemplate() {
+        try {
+            if (typeof XLSX === 'undefined') throw new Error('Excel kütüphanesi yüklenemedi.');
+
+            const headers = [
+                'PQ No', 'Denetim Alanı', 'CE', 'PQ Sorusu', 'Bulgu',
+                'Doğrulama Türü', 'ICAO Değerlendirmesi', 'Sorumlu',
+                'GÜNLÜK RAPORA EKLE', 'RAPOR NOTU', 'ICAO KAPATTI MI',
+                'VALIDASYON GÖREVİ', 'PQ Sorusu (TR)', 'Bulgu (TR)'
+            ];
+
+            const pqKeys = Object.keys(pqMasterData || {}).sort((a, b) => {
+                if (typeof sortPQs === 'function') return sortPQs(a, b);
+                return String(a).localeCompare(String(b), 'tr', { numeric: true, sensitivity: 'base' });
+            });
+
+            const excelRows = [headers];
+            pqKeys.forEach(pq => {
+                const m = pqMasterData[pq] || {};
+                excelRows.push([
+                    pq,
+                    m.alan || '',
+                    m.ce || '',
+                    m.soru || '',
+                    m.bulgu || '',
+                    m.tur || '',
+                    m.degerlendirme || '',
+                    m.sorumlu || '',
+                    (typeof dailyReviewedPQs !== 'undefined' && dailyReviewedPQs.has(pq)) ? 'EVET' : '',
+                    (typeof dailyPQNotes !== 'undefined' && dailyPQNotes[pq]) ? dailyPQNotes[pq] : '',
+                    m.isIcaoClosed ? 'EVET' : '',
+                    m.validasyonGorevi || '',
+                    m.soruTr || '',
+                    m.bulguTr || ''
+                ]);
+            });
+
+            const wb = XLSX.utils.book_new();
+            const wsMaster = XLSX.utils.aoa_to_sheet(excelRows);
+            wsMaster['!cols'] = [
+                {wch:12},{wch:18},{wch:10},{wch:55},{wch:70},{wch:20},{wch:24},
+                {wch:24},{wch:20},{wch:45},{wch:18},{wch:24},{wch:55},{wch:70}
+            ];
+            wsMaster['!freeze'] = { xSplit: 0, ySplit: 1 };
+            if (excelRows.length > 1) wsMaster['!autofilter'] = { ref: `A1:N${excelRows.length}` };
+            XLSX.utils.book_append_sheet(wb, wsMaster, 'Excel_Veri');
+
+            const defaultAreas = ['LEG','ORG','PEL','OPS','AIR','AIG','ANS','AGA'];
+            const areaKeys = Object.keys(baseEIData || {});
+            const areas = (areaKeys.length ? areaKeys : defaultAreas).slice().sort((a,b) => {
+                if (typeof sortAreas === 'function') return sortAreas(a,b);
+                return defaultAreas.indexOf(a) - defaultAreas.indexOf(b);
+            });
+            const eiRows = [['DENETİM ALANI','UYGULANABİLİR TOPLAM PQ','MEVCUT SATISFACTORY','AFTER VALIDASYON']];
+            areas.forEach((area, idx) => {
+                const b = (baseEIData || {})[area] || {};
+                const rowNo = idx + 2;
+                eiRows.push([
+                    area,
+                    Number.isFinite(Number(b.total)) && Number(b.total) > 0 ? Number(b.total) : '',
+                    Number.isFinite(Number(b.sat)) && Number(b.sat) >= 0 ? Number(b.sat) : '',
+                    { f: `C${rowNo}+(COUNTIFS(Excel_Veri!B:B,EI_Referans!A${rowNo},Excel_Veri!K:K,"EVET"))` }
+                ]);
+            });
+            const wsEi = XLSX.utils.aoa_to_sheet(eiRows);
+            wsEi['!cols'] = [{wch:20},{wch:26},{wch:24},{wch:22}];
+            wsEi['!freeze'] = { xSplit: 0, ySplit: 1 };
+            XLSX.utils.book_append_sheet(wb, wsEi, 'EI_Referans');
+
+            const infoRows = [
+                ['PQ Excel Master Şablonu'],
+                ['Kullanım', 'Excel_Veri sayfasındaki satırları güncelleyip uygulamaya tekrar yükleyebilirsiniz.'],
+                ['TR alanları', 'PQ Sorusu (TR) ve Bulgu (TR) sütunları Türkçe karşılıklar içindir.'],
+                ['Önemli', 'ICAO KAPATTI MI sütununda EVET yazılan PQ, EI_Referans validasyon hesabına dahil edilir.'],
+                ['Not', pqKeys.length ? 'Bu dosya uygulamada mevcut olan Master verinin dışa aktarılmış kopyasıdır.' : 'Master veri yüklü olmadığı için boş şablon oluşturulmuştur.']
+            ];
+            const wsInfo = XLSX.utils.aoa_to_sheet(infoRows);
+            wsInfo['!cols'] = [{wch:24},{wch:95}];
+            XLSX.utils.book_append_sheet(wb, wsInfo, 'Kullanım');
+
+            XLSX.writeFile(wb, 'PQ_Excel_Master_Sablonu_TR_Ekli.xlsx');
+            if (typeof showAppRuntimeToast === 'function') {
+                showAppRuntimeToast(pqKeys.length ? `Excel Master dışa aktarıldı: ${pqKeys.length} PQ.` : 'Boş Excel Master şablonu indirildi.', 'success');
+            }
+        } catch (err) {
+            console.error('Excel Master şablon dışa aktarma hatası:', err);
+            alert('Excel Master şablonu oluşturulamadı: ' + (err.message || err));
+        }
+    }
+    window.downloadTemplate = downloadTemplate;
     function clearAllData() { if(confirm("Tüm bulut verileri silinecek. Emin misiniz?")) { db.ref('icao_system').remove().then(() => { location.reload(); }); } }
     function updateDynamicSubtitle() {
         const subEl = document.getElementById('mainSubtitle');
