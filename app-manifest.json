@@ -1,0 +1,15 @@
+{
+  "app": "ICAO CAP İzleme",
+  "phase": "1",
+  "architecture": "modular-static",
+  "dataEmbedded": false,
+  "pqSeedEmbedded": false,
+  "entry": "index.html",
+  "scripts": [
+    "js/config/firebase-config.js",
+    "js/app.js",
+    "js/modules/visit-sync.js",
+    "js/modules/official-ei-management.js",
+    "js/modules/pq-library.js"
+  ]
+}
