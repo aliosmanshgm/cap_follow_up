@@ -1,5 +1,5 @@
 // ICAO PQ DOCX parser. Saf kaynak belgeyi yapilandirilmis PQ verisine donusturur.
-// Faz 2.2: namespace bagimsiz tablo okuma + baslik adina gore kolon esleme.
+// Faz 2.4: namespace bagimsiz tablo okuma + sdt ile sarilmis hucre destegi + baslik adina gore kolon esleme.
 (function(){
   'use strict';
 
@@ -44,8 +44,23 @@
     return m?m[1]:'';
   }
   function paragraphTextFromNode(p){
-    const ts=descendantsByLocalName(p,'t');
-    return ts.map(t=>t.textContent||'').join('').trim();
+    // Metin akisini belge sirasinda oku; Word'ün w:br / w:tab elemanlarini kaybetme.
+    const parts=[];
+    function walk(node){
+      const children=node&&node.childNodes?Array.from(node.childNodes):[];
+      for(const child of children){
+        if(!child)continue;
+        if(child.nodeType===3){continue;}
+        if(child.nodeType!==1)continue;
+        const ln=localNameOf(child);
+        if(ln==='t'){parts.push(child.textContent||'');continue;}
+        if(ln==='br'||ln==='cr'){parts.push('\n');continue;}
+        if(ln==='tab'){parts.push('\t');continue;}
+        walk(child);
+      }
+    }
+    walk(p);
+    return parts.join('').replace(/[ \t]+\n/g,'\n').replace(/\n[ \t]+/g,'\n').trim();
   }
   function cellParagraphText(cell){
     if(!cell)return'';
@@ -53,7 +68,25 @@
     if(!ps.length)return normalizeSpace(cell.textContent||'');
     return ps.map(paragraphTextFromNode).filter(Boolean).join('\n').trim();
   }
-  function rowCells(tr){return directChildrenByLocalName(tr,'tc');}
+  // Word bazı ICAO PQ dokümanlarında (örn. AGA) tablo hücrelerini doğrudan
+  // <w:tc> yerine <w:sdt><w:sdtContent><w:tc>...</w:tc></w:sdtContent></w:sdt>
+  // biçiminde saklar. Satırın mantıksal hücre sırasını koruyarak her iki yapıyı da oku.
+  function rowCells(tr){
+    const out=[];
+    function walk(node){
+      const children=node&&node.childNodes?Array.from(node.childNodes).filter(n=>n&&n.nodeType===1):[];
+      for(const child of children){
+        const ln=localNameOf(child);
+        if(ln==='tc'){out.push(child);continue;}
+        // İç içe tablo/satırların hücrelerini mevcut satıra karıştırma.
+        if(ln==='tbl'||ln==='tr')continue;
+        // sdt/customXml/ins/del vb. Word sarmalayıcılarının içinden hücreyi bul.
+        walk(child);
+      }
+    }
+    walk(tr);
+    return out;
+  }
   function tableRows(table){return descendantsByLocalName(table,'tr').filter(tr=>{
     // nested table varsa yalnizca en yakin ust tbl bu tablo olsun
     let p=tr.parentNode;

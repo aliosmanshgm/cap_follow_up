@@ -1,3 +1,9 @@
+# Faz 2.4 — ICAO PQ DOCX Wrapped Cell Compatibility
+
+Bu sürüm, bazı ICAO PQ Word dokümanlarında (özellikle AGA) Protocol Question / Guidance / ICAO References hücrelerinin `w:sdt` içerisine sarılı olmasını destekler. Satır içindeki mantıksal 6 hücre sırası korunur ve Word satır kırımları (`w:br`) metin içinde saklanır.
+
+AGA 2024 Revision 2 doğrulaması: 153 PQ; Protocol Question eksik 0; Guidance eksik 0; ICAO References eksik 0; CE eksik 0.
+
 # ICAO CAP İzleme — Faz 2: PQ Library + Firebase
 
 Bu paket Faz 1 modüler yapının devamıdır. PQ içerikleri kaynak koda gömülü değildir.
