@@ -214,9 +214,15 @@
     pqs=pqs.map(p=>{const a=byNew.get(p.pq);return a?{...p,previousPq:a.oldPq||'',changeType:a.type||'',changeDescription:a.description||''}:p;});
 
     if(!pqs.length){
-      const seen=diagnostics.headers.filter(Boolean).slice(0,4).join(' || ');
+      const headers=diagnostics.headers.filter(Boolean);
+      const seen=headers.slice(0,4).join(' || ');
+      const joined=headers.join(' | ').toLowerCase();
+      const looksLikeCap=joined.includes('protocol finding') && joined.includes('status') && joined.includes('icao ref');
       const suffix=` Tanılama: ${diagnostics.tableCount} tablo bulundu${seen?`; ilk başlıklar: ${seen}`:''}.`;
-      throw new Error('ICAO PQ tablosu bulunamadı. “Protocol Question / Guidance for Review of Evidence / ICAO References / PPQ / CE” sütunları bekleniyor.'+suffix);
+      if(looksLikeCap){
+        throw new Error(`Seçilen dosya bir ICAO PQ Edition dokümanı değil; CAP / Findings export dokümanı olarak algılandı (${fileName||'DOCX'}). Bu menüde 2024 AIR örneğindeki gibi “PQ No. / Protocol Question / Guidance for Review of Evidence / ICAO References / PPQ / CE” tablosunu içeren ICAO PQ Word dosyasını seçin.`+suffix);
+      }
+      throw new Error(`ICAO PQ tablosu bulunamadı (${fileName||'DOCX'}). “Protocol Question / Guidance for Review of Evidence / ICAO References / PPQ / CE” sütunları bekleniyor.`+suffix);
     }
     return{meta,amendmentMeta,pqs,amendments,diagnostics};
   }

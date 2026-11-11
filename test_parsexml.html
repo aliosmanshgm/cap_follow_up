@@ -1,0 +1,5 @@
+<!doctype html><html><body><pre id="out">starting</pre>
+<script src="./js/parsers/pq-docx-parser.js"></script>
+<script>
+(async()=>{try{const xml=await (await fetch('./document.xml')).text(); const doc=new DOMParser().parseFromString(xml,'text/xml'); const p=PQDocxParser.parseXml(doc,'AIR_2024.docx'); document.getElementById('out').textContent=JSON.stringify({meta:p.meta,n:p.pqs.length,a:p.amendments.length,on:p.pqs.filter(x=>x.onSite).length,off:p.pqs.filter(x=>!x.onSite).length,ppq:p.pqs.filter(x=>x.ppq).length,notes:p.pqs.filter(x=>x.auditorNote).length},null,2);}catch(e){document.getElementById('out').textContent='ERR '+(e.stack||e)}})();
+</script></body></html>

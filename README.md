@@ -97,3 +97,6 @@ Not: Cloud Storage erişimi projenin planına, bucket yapılandırmasına ve Sto
 - `CE` ve `PPQ` gibi kısa başlıklarda tam eşleşme zorunlu; Guidance metniyle yanlış eşleşme engellendi.
 - Parser hata mesajına bulunan tablo sayısı ve başlık tanılaması eklendi.
 - Aynı PQ birden fazla tablo parçasında görünürse kayıtlar birleştiriliyor.
+
+## Faz 2.3 - DOCX turu korumasi
+PQ Library yukleyicisi artik CAP/Findings export DOCX dosyalarini icerik tabanli olarak ayirt eder. `PROTOCOL FINDING`, `Status`, `ICAO ref.` gibi CAP tablo basliklari gorulurse genel 'PQ tablosu bulunamadi' hatasi yerine dosyanin CAP dokumani oldugu acikca bildirilir. PQ Edition yukleyicisinde `PQ No. / Protocol Question / Guidance for Review of Evidence / ICAO References / PPQ / CE` tablosunu iceren ICAO PQ dokumani secilmelidir.

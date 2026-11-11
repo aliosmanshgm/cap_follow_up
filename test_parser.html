@@ -1,0 +1,6 @@
+<!doctype html><html><body><pre id="out">starting</pre>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="./js/parsers/pq-docx-parser.js"></script>
+<script>
+(async()=>{try{const b=await (await fetch('./sample.docx')).blob(); const f=new File([b],'AIR_2024.docx',{type:b.type}); const p=await PQDocxParser.parseFile(f); document.getElementById('out').textContent=JSON.stringify({meta:p.meta,n:p.pqs.length,a:p.amendments.length,on:p.pqs.filter(x=>x.onSite).length,ppq:p.pqs.filter(x=>x.ppq).length},null,2);}catch(e){document.getElementById('out').textContent='ERR '+(e.stack||e)}})();
+</script></body></html>
