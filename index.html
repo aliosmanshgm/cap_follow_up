@@ -1682,16 +1682,16 @@
                 <section id="pqDbViewCatalog" class="pqdb-view">
                     <div class="pqdb-toolbar">
                         <div><label>Sürüm</label><select id="pqDbCatalogEdition" onchange="pqDbCatalogEditionChanged()"></select></div>
-                        <div><label>Alan</label><select id="pqDbCatalogArea" onchange="renderPqDbCatalog()"></select></div>
+                        <div><label>Alan</label><select id="pqDbCatalogArea" onchange="pqDbCatalogEditionChanged()"></select></div>
                         <div><label>Değerlendirme</label><select id="pqDbCatalogMode" onchange="renderPqDbCatalog()"><option value="all">Tümü</option><option value="On-site">On-site</option><option value="Off-site">Off-site</option></select></div>
-                        <div><label>CE</label><select id="pqDbCatalogCe" onchange="renderPqDbCatalog()"><option value="all">Tüm CE'ler</option></select></div>
+                        <div><label>CE / SSP Bileşeni</label><select id="pqDbCatalogCe" onchange="renderPqDbCatalog()"><option value="all">Tümü</option></select></div>
                         <div><label>PPQ</label><select id="pqDbCatalogPpq" onchange="renderPqDbCatalog()"><option value="all">Tümü</option><option value="yes">Yalnız PPQ</option><option value="no">PPQ olmayan</option></select></div>
                         <div><label>Arama</label><input id="pqDbCatalogSearch" type="text" placeholder="PQ no, soru, guidance, note, referans..." oninput="renderPqDbCatalog()"></div>
                     </div>
                     <div class="pqdb-catalog-layout">
                         <div class="pqdb-panel">
                             <div class="pqdb-panel-head"><h4>PQ Listesi</h4><span id="pqDbCatalogCount" class="smart-scope">0 PQ</span></div>
-                            <div class="pqdb-table-wrap"><table class="pqdb-table"><thead><tr><th>PQ</th><th>Tür</th><th>CE</th><th>PPQ</th><th>Değişiklik</th></tr></thead><tbody id="pqDbCatalogBody"></tbody></table></div>
+                            <div class="pqdb-table-wrap"><table class="pqdb-table"><thead><tr><th>PQ</th><th>Tür</th><th>CE / SSP Bileşeni</th><th>PPQ</th><th>Değişiklik</th></tr></thead><tbody id="pqDbCatalogBody"></tbody></table></div>
                         </div>
                         <div class="pqdb-panel">
                             <div class="pqdb-panel-head"><h4>PQ Ayrıntısı</h4><span id="pqDbDetailEdition" class="smart-scope">-</span></div>
@@ -1716,7 +1716,7 @@
                     </div>
                     <div class="pqdb-panel">
                         <div class="pqdb-panel-head"><h4>Sürüm Değişiklikleri</h4><span id="pqDbCompareSummary" class="smart-scope">-</span></div>
-                        <div class="pqdb-table-wrap"><table class="pqdb-table"><thead><tr><th>Önceki PQ</th><th>Yeni PQ</th><th>Değişiklik</th><th>On/Off-site</th><th>CE</th><th>Açıklama / Değişen Alanlar</th></tr></thead><tbody id="pqDbCompareBody"></tbody></table></div>
+                        <div class="pqdb-table-wrap"><table class="pqdb-table"><thead><tr><th>Önceki PQ</th><th>Yeni PQ</th><th>Değişiklik</th><th>On/Off-site</th><th>CE / SSP Bileşeni</th><th>Açıklama / Değişen Alanlar</th></tr></thead><tbody id="pqDbCompareBody"></tbody></table></div>
                     </div>
                 </section>
             </div>

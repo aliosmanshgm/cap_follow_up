@@ -106,3 +106,13 @@ Not: Cloud Storage erişimi projenin planına, bucket yapılandırmasına ve Sto
 
 ## Faz 2.3 - DOCX turu korumasi
 PQ Library yukleyicisi artik CAP/Findings export DOCX dosyalarini icerik tabanli olarak ayirt eder. `PROTOCOL FINDING`, `Status`, `ICAO ref.` gibi CAP tablo basliklari gorulurse genel 'PQ tablosu bulunamadi' hatasi yerine dosyanin CAP dokumani oldugu acikca bildirilir. PQ Edition yukleyicisinde `PQ No. / Protocol Question / Guidance for Review of Evidence / ICAO References / PPQ / CE` tablosunu iceren ICAO PQ dokumani secilmelidir.
+
+
+## Faz 2.5 - SSP Component destegi
+
+SSP PQ dokumanlari klasik safety oversight alanlarindan farkli olarak `CE` yerine `SSP Component` sutununu kullanir. Parser her iki semayi da destekler:
+
+- LEG/ORG/PEL/OPS/AIR/AIG/ANS/AGA: `CE`
+- SSP: `SSP Component`
+
+SSP kayitlarinda `ce` bos birakilir ve kaynak dokumandaki deger `sspComponent` alaninda aynen saklanir. Katalog, surum kiyaslama, ziyaret PQ referansi ve Excel export bu alani destekler.

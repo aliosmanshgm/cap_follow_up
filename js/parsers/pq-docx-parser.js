@@ -184,7 +184,8 @@
   function parsePqTable(table,meta){
     const trs=tableRows(table),rows=trs.map(rowTexts);
     if(!rows.length)return null;
-    const hi=findHeaderRow(rows,[['pq no','pq no.'],['protocol question'],['guidance for review of evidence'],['icao references'],['ppq'],['ce']],10);
+    // SSP, klasik CE sütunu yerine SSP Component kullanır. Her iki resmi ICAO şemasını kabul et.
+    const hi=findHeaderRow(rows,[['pq no','pq no.'],['protocol question'],['guidance for review of evidence'],['icao references'],['ppq'],['ce','ssp component']],10);
     if(hi<0)return null;
     const h=rows[hi];
     const cols={
@@ -193,24 +194,28 @@
       guidance:findColumn(h,['guidance for review of evidence']),
       refs:findColumn(h,['icao references']),
       ppq:findColumn(h,['ppq']),
-      ce:findColumn(h,['ce'])
+      ce:findColumn(h,['ce']),
+      sspComponent:findColumn(h,['ssp component'])
     };
-    if(Object.values(cols).some(v=>v<0))return null;
+    if([cols.pq,cols.question,cols.guidance,cols.refs,cols.ppq].some(v=>v<0))return null;
+    if(cols.ce<0&&cols.sspComponent<0)return null;
     const out=[];
     for(let i=hi+1;i<rows.length;i++){
       const r=rows[i],tr=trs[i];
       const pq=normalizePQ(r[cols.pq]||'');
       if(!pq)continue;
       const split=splitGuidance(r[cols.guidance]||''),onSite=rowIsOnsite(tr);
-      const ceRaw=String(r[cols.ce]||'').trim();
+      const ceRaw=cols.ce>=0?String(r[cols.ce]||'').trim():'';
       const ceMatch=ceRaw.match(/\bCE\s*-?\s*([1-8])\b/i);
+      const sspComponent=cols.sspComponent>=0?String(r[cols.sspComponent]||'').trim():'';
       out.push({
         pq,area:meta.area,
         question:String(r[cols.question]||'').trim(),
         guidance:split.guidance,auditorNote:split.auditorNote,
         references:String(r[cols.refs]||'').trim(),
         ppq:/\byes\b/i.test(String(r[cols.ppq]||'')),
-        ce:ceMatch?`CE-${ceMatch[1]}`:ceRaw.split('\n')[0].trim(),
+        ce:ceMatch?`CE-${ceMatch[1]}`:(ceRaw?ceRaw.split('\n')[0].trim():''),
+        sspComponent,
         assessmentMode:onSite?'On-site':'Off-site',onSite
       });
     }
@@ -237,7 +242,7 @@
     for(const p of pqs){
       if(!dedup.has(p.pq)){dedup.set(p.pq,p);continue;}
       const old=dedup.get(p.pq),merged={...old};
-      for(const k of ['question','guidance','auditorNote','references','ce'])if(!merged[k]&&p[k])merged[k]=p[k];
+      for(const k of ['question','guidance','auditorNote','references','ce','sspComponent'])if(!merged[k]&&p[k])merged[k]=p[k];
       merged.ppq=!!(old.ppq||p.ppq);merged.onSite=!!(old.onSite||p.onSite);merged.assessmentMode=merged.onSite?'On-site':'Off-site';
       dedup.set(p.pq,merged);
     }
@@ -255,7 +260,7 @@
       if(looksLikeCap){
         throw new Error(`Seçilen dosya bir ICAO PQ Edition dokümanı değil; CAP / Findings export dokümanı olarak algılandı (${fileName||'DOCX'}). Bu menüde 2024 AIR örneğindeki gibi “PQ No. / Protocol Question / Guidance for Review of Evidence / ICAO References / PPQ / CE” tablosunu içeren ICAO PQ Word dosyasını seçin.`+suffix);
       }
-      throw new Error(`ICAO PQ tablosu bulunamadı (${fileName||'DOCX'}). “Protocol Question / Guidance for Review of Evidence / ICAO References / PPQ / CE” sütunları bekleniyor.`+suffix);
+      throw new Error(`ICAO PQ tablosu bulunamadı (${fileName||'DOCX'}). Klasik alanlarda “Protocol Question / Guidance for Review of Evidence / ICAO References / PPQ / CE”; SSP alanında ise son sütun olarak “SSP Component” bekleniyor.`+suffix);
     }
     return{meta,amendmentMeta,pqs,amendments,diagnostics};
   }
@@ -281,13 +286,17 @@
     if(!pqs.length)errors.push('PQ kaydı bulunamadı.');
     const ids=pqs.map(p=>p.pq),dup=[...new Set(ids.filter((x,i)=>ids.indexOf(x)!==i))];
     if(dup.length)errors.push(`Mükerrer PQ numarası: ${dup.slice(0,8).join(', ')}${dup.length>8?'…':''}`);
-    const missingQuestion=pqs.filter(p=>!p.question).length,missingGuidance=pqs.filter(p=>!p.guidance).length,missingRefs=pqs.filter(p=>!p.references).length,missingCe=pqs.filter(p=>!/^CE-\d$/i.test(String(p.ce||''))).length;
+    const missingQuestion=pqs.filter(p=>!p.question).length,missingGuidance=pqs.filter(p=>!p.guidance).length,missingRefs=pqs.filter(p=>!p.references).length;
+    const isSsp=String(meta.area||'').toUpperCase()==='SSP';
+    const missingCe=isSsp?0:pqs.filter(p=>!/^CE-\d$/i.test(String(p.ce||''))).length;
+    const missingSspComponent=isSsp?pqs.filter(p=>!String(p.sspComponent||'').trim()).length:0;
     if(missingQuestion)warnings.push(`${missingQuestion} PQ'da Protocol Question boş.`);
     if(missingGuidance)warnings.push(`${missingGuidance} PQ'da Guidance boş.`);
     if(missingRefs)warnings.push(`${missingRefs} PQ'da ICAO References boş.`);
     if(missingCe)warnings.push(`${missingCe} PQ'da CE boş veya beklenen CE-1…CE-8 formatında değil.`);
+    if(missingSspComponent)warnings.push(`${missingSspComponent} SSP PQ'sunda SSP Component boş.`);
     if(!amendments.length)warnings.push('Summary of Amendments tablosu bulunmadı veya boş.');
-    const metrics={pqCount:pqs.length,onSite:pqs.filter(p=>p.onSite).length,offSite:pqs.filter(p=>!p.onSite).length,ppq:pqs.filter(p=>p.ppq).length,auditorNotes:pqs.filter(p=>p.auditorNote).length,amendments:amendments.length,missingQuestion,missingGuidance,missingRefs,missingCe};
+    const metrics={pqCount:pqs.length,onSite:pqs.filter(p=>p.onSite).length,offSite:pqs.filter(p=>!p.onSite).length,ppq:pqs.filter(p=>p.ppq).length,auditorNotes:pqs.filter(p=>p.auditorNote).length,amendments:amendments.length,missingQuestion,missingGuidance,missingRefs,missingCe,missingSspComponent};
     return{valid:errors.length===0,errors,warnings,metrics};
   }
   window.PQDocxParser={parseFile,parseXml,validate,normalizePQ};
