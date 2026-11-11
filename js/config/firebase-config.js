@@ -10,3 +10,4 @@ const firebaseConfig = {
 };
 if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
+const storage = (firebase.storage ? firebase.storage() : null);

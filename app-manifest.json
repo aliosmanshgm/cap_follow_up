@@ -1,15 +1,19 @@
 {
   "app": "ICAO CAP İzleme",
-  "phase": "1",
+  "phase": "2",
   "architecture": "modular-static",
   "dataEmbedded": false,
   "pqSeedEmbedded": false,
+  "pqLibraryPrimaryStore": "firebase-realtime-database",
+  "pqDocumentStore": "firebase-storage-best-effort",
   "entry": "index.html",
   "scripts": [
     "js/config/firebase-config.js",
     "js/app.js",
     "js/modules/visit-sync.js",
     "js/modules/official-ei-management.js",
+    "js/parsers/pq-docx-parser.js",
+    "js/services/pq-repository.js",
     "js/modules/pq-library.js"
   ]
 }
