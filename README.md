@@ -90,3 +90,10 @@ PQ DOCX kaydında Realtime Database ana kayıt, Storage ise ikincil/best-effort 
 - Kayıt sırasında ekranda aktif aşama gösterilir: bağlantı, mevcut kayıt kontrolü, database yazımı, doğrulama, Storage yüklemesi.
 
 Not: Cloud Storage erişimi projenin planına, bucket yapılandırmasına ve Storage Rules'a bağlıdır. Storage başarısızlığı PQ verisinin Realtime Database'e kaydedilmesini artık engellemez.
+
+## Faz 2.2 - DOCX parser dayanıklılık düzeltmesi
+- Word XML namespace bağımlılığı kaldırıldı; tablolar `localName` üzerinden okunuyor.
+- PQ sütunları sabit indeks yerine başlık adına göre eşleştiriliyor.
+- `CE` ve `PPQ` gibi kısa başlıklarda tam eşleşme zorunlu; Guidance metniyle yanlış eşleşme engellendi.
+- Parser hata mesajına bulunan tablo sayısı ve başlık tanılaması eklendi.
+- Aynı PQ birden fazla tablo parçasında görünürse kayıtlar birleştiriliyor.

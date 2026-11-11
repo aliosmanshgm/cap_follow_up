@@ -1,43 +1,89 @@
 // ICAO PQ DOCX parser. Saf kaynak belgeyi yapilandirilmis PQ verisine donusturur.
+// Faz 2.2: namespace bagimsiz tablo okuma + baslik adina gore kolon esleme.
 (function(){
   'use strict';
-  const WNS='http://schemas.openxmlformats.org/wordprocessingml/2006/main';
+
   const AREAS=['LEG','ORG','PEL','OPS','AIR','AIG','ANS','AGA','SSP'];
 
+  function localNameOf(node){
+    return String((node&&node.localName)||((node&&node.nodeName)||'').split(':').pop()||'').toLowerCase();
+  }
+  function directChildrenByLocalName(node,name){
+    name=String(name||'').toLowerCase();
+    if(!node)return[];
+    const src=node.children?Array.from(node.children):Array.from(node.childNodes||[]).filter(n=>n&&n.nodeType===1);
+    return src.filter(n=>localNameOf(n)===name);
+  }
+  function descendantsByLocalName(node,name){
+    name=String(name||'').toLowerCase();
+    if(!node)return[];
+    const out=[];
+    const all=node.getElementsByTagName?Array.from(node.getElementsByTagName('*')):[];
+    for(const el of all)if(localNameOf(el)===name)out.push(el);
+    return out;
+  }
+  function firstDescendantByLocalName(node,name){
+    const a=descendantsByLocalName(node,name);return a.length?a[0]:null;
+  }
+  function attrByLocalName(node,name){
+    if(!node||!node.attributes)return'';
+    name=String(name||'').toLowerCase();
+    for(const a of Array.from(node.attributes||[])){
+      const n=String(a.localName||a.name||'').split(':').pop().toLowerCase();
+      if(n===name)return String(a.value||'');
+    }
+    return'';
+  }
+  function normalizeSpace(v){return String(v||'').replace(/\u00a0/g,' ').replace(/[ \t]+/g,' ').replace(/\s*\n\s*/g,'\n').trim();}
+  function normalizeHeader(v){
+    return String(v||'').replace(/\u00a0/g,' ').replace(/[\r\n]+/g,' ').replace(/\s+/g,' ').trim().toLowerCase();
+  }
   function normalizePQ(v){
     const s=String(v||'').trim().replace(/,/g,'.');
     const m=s.match(/\b(\d{1,2}\.\d{3})\b/);
     return m?m[1]:'';
   }
+  function paragraphTextFromNode(p){
+    const ts=descendantsByLocalName(p,'t');
+    return ts.map(t=>t.textContent||'').join('').trim();
+  }
   function cellParagraphText(cell){
     if(!cell)return'';
-    const ps=[...cell.getElementsByTagNameNS(WNS,'p')];
-    return ps.map(p=>[...p.getElementsByTagNameNS(WNS,'t')].map(t=>t.textContent||'').join('').trim()).filter(Boolean).join('\n').trim();
+    const ps=descendantsByLocalName(cell,'p');
+    if(!ps.length)return normalizeSpace(cell.textContent||'');
+    return ps.map(paragraphTextFromNode).filter(Boolean).join('\n').trim();
   }
+  function rowCells(tr){return directChildrenByLocalName(tr,'tc');}
+  function tableRows(table){return descendantsByLocalName(table,'tr').filter(tr=>{
+    // nested table varsa yalnizca en yakin ust tbl bu tablo olsun
+    let p=tr.parentNode;
+    while(p&&p!==table&&localNameOf(p)!=='tbl')p=p.parentNode;
+    return p===table;
+  });}
+  function rowTexts(tr){return rowCells(tr).map(cellParagraphText);}
   function cellFill(cell){
     if(!cell)return'';
-    const shd=cell.getElementsByTagNameNS(WNS,'shd')[0];
-    if(!shd)return'';
-    return String(shd.getAttributeNS(WNS,'fill')||shd.getAttribute('w:fill')||shd.getAttribute('fill')||'').toUpperCase();
+    const shd=firstDescendantByLocalName(cell,'shd');
+    return String(attrByLocalName(shd,'fill')||'').toUpperCase();
   }
   function rowIsOnsite(tr){
-    const cells=[...tr.children].filter(n=>n.localName==='tc');
-    return cells.some(c=>{const f=cellFill(c);return f&&!['FFFFFF','AUTO','000000',''].includes(f);});
+    const neutral=new Set(['FFFFFF','AUTO','000000','']);
+    return rowCells(tr).some(c=>{const f=cellFill(c);return !!f&&!neutral.has(f);});
   }
   function splitGuidance(raw){
     const text=String(raw||'').trim();
-    const m=text.match(/\bNotes? to the auditor\s*:\s*/i);
+    const m=text.match(/\bNotes?\s+to\s+the\s+auditor\s*:\s*/i);
     if(!m)return{guidance:text,auditorNote:''};
     const i=m.index||0;
     return{guidance:text.slice(0,i).trim(),auditorNote:text.slice(i+m[0].length).trim()};
   }
   function paragraphText(xmlDoc){
-    return [...xmlDoc.getElementsByTagNameNS(WNS,'p')].map(p=>[...p.getElementsByTagNameNS(WNS,'t')].map(t=>t.textContent||'').join('').trim()).filter(Boolean);
+    return descendantsByLocalName(xmlDoc,'p').map(paragraphTextFromNode).filter(Boolean);
   }
   function detectMetadata(xmlDoc,fileName){
     const paras=paragraphText(xmlDoc),text=paras.join('\n');
     let year='',area='',revision='',publicationDate='';
-    let m=text.match(/USOAP\s+CMA\s+(20\d{2})\s+Protocol Questions\s*[—–-]\s*([A-Z]{3})/i);
+    let m=text.match(/USOAP\s+CMA\s+(20\d{2})\s+Protocol\s+Questions\s*[—–-]\s*([A-Z]{3})/i);
     if(m){year=m[1];area=m[2].toUpperCase();}
     if(!area){m=String(fileName||'').match(/(?:^|[_+\-\s])(LEG|ORG|PEL|OPS|AIR|AIG|ANS|AGA|SSP)(?:[_+\-\s]|$)/i);if(m)area=m[1].toUpperCase();}
     m=text.match(/\(([^()]*20\d{2}[^()]*)\)\s*[—–-]\s*Revision\s*([A-Za-z0-9.]+)/i);
@@ -46,64 +92,143 @@
     if(!year){m=String(fileName||'').match(/(20\d{2})/);if(m)year=m[1];}
     return{year:year||'',area:AREAS.includes(area)?area:'',revision:revision||'',publicationDate,sourceFile:fileName||'',title:`USOAP CMA ${year||''} Protocol Questions — ${area||''}`.trim()};
   }
-  function amendmentType(row){
-    const names=['New','Revised','Deleted','Merged','No change'];
-    for(let j=0;j<5;j++){if(/[✔✓x]/i.test(row[2+j]||''))return names[j];}
-    const desc=String(row[7]||'');
-    if(/no change/i.test(desc))return'No change';
+
+  function findHeaderRow(rows,requiredGroups,maxScan){
+    const limit=Math.min(rows.length,maxScan||8);
+    for(let i=0;i<limit;i++){
+      const norm=rows[i].map(normalizeHeader);
+      const ok=requiredGroups.every(group=>group.some(token=>norm.some(h=>h.includes(token))));
+      if(ok)return i;
+    }
+    return-1;
+  }
+  function findColumn(row,aliases){
+    const norm=row.map(normalizeHeader),aNorm=aliases.map(normalizeHeader);
+    // Once tam eslesme: ozellikle CE gibi kisa basliklar Guidance kelimesinin icinden yanlis eslesmesin.
+    for(let i=0;i<norm.length;i++)if(aNorm.some(a=>norm[i]===a))return i;
+    // Sonra yalnizca yeterince uzun alias'larda kontrollu icerme eslesmesi.
+    for(let i=0;i<norm.length;i++)if(aNorm.some(a=>a.length>=4&&norm[i].includes(a)))return i;
+    return-1;
+  }
+  function amendmentTypeFromColumns(row,cols,description){
+    const tests=[['New',cols.new],['Revised',cols.revised],['Deleted',cols.deleted],['Merged',cols.merged],['No change',cols.noChange]];
+    for(const [name,idx] of tests){if(idx>=0&&/[✔✓xX]/.test(String(row[idx]||'')))return name;}
+    const desc=String(description||'');
+    if(/\bno change\b/i.test(desc))return'No change';
     if(/deleted and merged/i.test(desc))return'Deleted';
-    if(/new pq/i.test(desc))return'New';
+    if(/\bnew pq\b/i.test(desc))return'New';
     if(/merged with/i.test(desc))return'Merged';
+    if(/deleted/i.test(desc))return'Deleted';
     return'Revised';
   }
-  function parseXml(xmlDoc,fileName){
-    const meta=detectMetadata(xmlDoc,fileName),tables=[...xmlDoc.getElementsByTagNameNS(WNS,'tbl')];
-    let amendments=[],pqs=[];
-    const amendmentMeta={previousYear:'',currentYear:String(meta.year||'')};
-    for(const table of tables){
-      const trs=[...table.getElementsByTagNameNS(WNS,'tr')];
-      const rows=trs.map(tr=>[...tr.children].filter(n=>n.localName==='tc').map(cellParagraphText));
-      const head=rows.slice(0,3).flat().join(' | ');
-      if(/Type of Amendment/i.test(head)&&/Description of Amendments/i.test(head)){
-        let hi=rows.findIndex(r=>r.join(' ').includes('New')&&r.join(' ').includes('Revised')&&r.join(' ').includes('Deleted')&&r.join(' ').includes('Merged'));
-        if(hi<0)hi=1;
-        const versionHeader=rows.slice(0,Math.max(hi+1,2)).flat();
-        const years=versionHeader.flatMap(x=>[...String(x||'').matchAll(/(20\d{2})/g)].map(m=>m[1]));
-        if(years[0])amendmentMeta.previousYear=years[0];
-        if(years[1])amendmentMeta.currentYear=years[1];
-        rows.slice(hi+1).forEach((r,i)=>{
-          if(r.length<8)return;
-          const oldPq=normalizePQ(r[0]||''),newPq=normalizePQ(r[1]||'');
-          if(!oldPq&&!newPq)return;
-          amendments.push({id:String(i+1),oldPq,newPq,type:amendmentType(r),description:String(r[7]||'').trim()});
-        });
-      }
-      if(/Protocol Question/i.test(head)&&/Guidance for Review of Evidence/i.test(head)&&/ICAO References/i.test(head)){
-        let hi=rows.findIndex(r=>r.some(x=>/Protocol Question/i.test(x))&&r.some(x=>/Guidance for Review of Evidence/i.test(x)));
-        if(hi<0)hi=0;
-        for(let i=hi+1;i<rows.length;i++){
-          const r=rows[i],tr=trs[i];
-          if(r.length<6)continue;
-          const pq=normalizePQ(r[0]||'');
-          if(!pq)continue;
-          const split=splitGuidance(r[2]||''),onSite=rowIsOnsite(tr);
-          pqs.push({pq,area:meta.area,question:String(r[1]||'').trim(),guidance:split.guidance,auditorNote:split.auditorNote,references:String(r[3]||'').trim(),ppq:/\byes\b/i.test(r[4]||''),ce:String(r[5]||'').split('\n')[0].trim(),assessmentMode:onSite?'On-site':'Off-site',onSite});
-        }
-      }
+  function parseAmendmentTable(table,meta){
+    const trs=tableRows(table),rows=trs.map(rowTexts);
+    if(!rows.length)return null;
+    const flatHead=rows.slice(0,4).flat().map(normalizeHeader).join(' | ');
+    if(!flatHead.includes('type of amendment')||!flatHead.includes('description of amendments'))return null;
+
+    const typeRow=findHeaderRow(rows,[[ 'new' ],[ 'revised' ],[ 'deleted' ],[ 'merged' ]],6);
+    if(typeRow<0)return{records:[],meta:{previousYear:'',currentYear:String(meta.year||'')}};
+    const typeHeaders=rows[typeRow];
+    const cols={
+      new:findColumn(typeHeaders,['new']),revised:findColumn(typeHeaders,['revised']),deleted:findColumn(typeHeaders,['deleted']),merged:findColumn(typeHeaders,['merged']),noChange:findColumn(typeHeaders,['no change'])
+    };
+    // Veri satirlarinda ilk iki kolon eski/yeni PQ; son kolon aciklamadir. Bu, ICAO matbu tablosunun stabil yapisidir.
+    const headerText=rows.slice(0,typeRow+1).flat().join(' ');
+    const years=[...headerText.matchAll(/(20\d{2})/g)].map(m=>m[1]);
+    const ameta={previousYear:years[0]||'',currentYear:years[1]||String(meta.year||'')};
+    const records=[];
+    for(let i=typeRow+1;i<rows.length;i++){
+      const r=rows[i];
+      if(r.length<3)continue;
+      const oldPq=normalizePQ(r[0]||''),newPq=normalizePQ(r[1]||'');
+      if(!oldPq&&!newPq)continue;
+      const descIndex=r.length-1,description=String(r[descIndex]||'').trim();
+      records.push({id:String(records.length+1),oldPq,newPq,type:amendmentTypeFromColumns(r,cols,description),description});
     }
+    return{records,meta:ameta};
+  }
+  function parsePqTable(table,meta){
+    const trs=tableRows(table),rows=trs.map(rowTexts);
+    if(!rows.length)return null;
+    const hi=findHeaderRow(rows,[['pq no','pq no.'],['protocol question'],['guidance for review of evidence'],['icao references'],['ppq'],['ce']],10);
+    if(hi<0)return null;
+    const h=rows[hi];
+    const cols={
+      pq:findColumn(h,['pq no.','pq no']),
+      question:findColumn(h,['protocol question']),
+      guidance:findColumn(h,['guidance for review of evidence']),
+      refs:findColumn(h,['icao references']),
+      ppq:findColumn(h,['ppq']),
+      ce:findColumn(h,['ce'])
+    };
+    if(Object.values(cols).some(v=>v<0))return null;
+    const out=[];
+    for(let i=hi+1;i<rows.length;i++){
+      const r=rows[i],tr=trs[i];
+      const pq=normalizePQ(r[cols.pq]||'');
+      if(!pq)continue;
+      const split=splitGuidance(r[cols.guidance]||''),onSite=rowIsOnsite(tr);
+      const ceRaw=String(r[cols.ce]||'').trim();
+      const ceMatch=ceRaw.match(/\bCE\s*-?\s*([1-8])\b/i);
+      out.push({
+        pq,area:meta.area,
+        question:String(r[cols.question]||'').trim(),
+        guidance:split.guidance,auditorNote:split.auditorNote,
+        references:String(r[cols.refs]||'').trim(),
+        ppq:/\byes\b/i.test(String(r[cols.ppq]||'')),
+        ce:ceMatch?`CE-${ceMatch[1]}`:ceRaw.split('\n')[0].trim(),
+        assessmentMode:onSite?'On-site':'Off-site',onSite
+      });
+    }
+    return{records:out,headerIndex:hi,columns:cols};
+  }
+
+  function parseXml(xmlDoc,fileName){
+    const meta=detectMetadata(xmlDoc,fileName),tables=descendantsByLocalName(xmlDoc,'tbl');
+    let amendments=[],pqs=[];
+    let amendmentMeta={previousYear:'',currentYear:String(meta.year||'')};
+    const diagnostics={tableCount:tables.length,pqTableCandidates:0,amendmentTableCandidates:0,headers:[]};
+
+    for(const table of tables){
+      const rows=tableRows(table).map(rowTexts);
+      diagnostics.headers.push(rows.slice(0,2).flat().join(' | ').slice(0,500));
+      const a=parseAmendmentTable(table,meta);
+      if(a){diagnostics.amendmentTableCandidates++;amendments.push(...a.records);if(a.meta.previousYear||a.meta.currentYear)amendmentMeta=a.meta;}
+      const q=parsePqTable(table,meta);
+      if(q){diagnostics.pqTableCandidates++;pqs.push(...q.records);}
+    }
+
+    // Ayni PQ birden fazla tablo/parca icinde gorunurse ilk dolu kaydi koru, eksik alanlari sonraki kayittan tamamla.
+    const dedup=new Map();
+    for(const p of pqs){
+      if(!dedup.has(p.pq)){dedup.set(p.pq,p);continue;}
+      const old=dedup.get(p.pq),merged={...old};
+      for(const k of ['question','guidance','auditorNote','references','ce'])if(!merged[k]&&p[k])merged[k]=p[k];
+      merged.ppq=!!(old.ppq||p.ppq);merged.onSite=!!(old.onSite||p.onSite);merged.assessmentMode=merged.onSite?'On-site':'Off-site';
+      dedup.set(p.pq,merged);
+    }
+    pqs=[...dedup.values()];
+
     const byNew=new Map(amendments.filter(a=>a.newPq).map(a=>[a.newPq,a]));
     pqs=pqs.map(p=>{const a=byNew.get(p.pq);return a?{...p,previousPq:a.oldPq||'',changeType:a.type||'',changeDescription:a.description||''}:p;});
-    if(!pqs.length)throw new Error('ICAO PQ tablosu bulunamadı. “Protocol Question / Guidance for Review of Evidence / ICAO References / PPQ / CE” sütunları bekleniyor.');
-    return{meta,amendmentMeta,pqs,amendments};
+
+    if(!pqs.length){
+      const seen=diagnostics.headers.filter(Boolean).slice(0,4).join(' || ');
+      const suffix=` Tanılama: ${diagnostics.tableCount} tablo bulundu${seen?`; ilk başlıklar: ${seen}`:''}.`;
+      throw new Error('ICAO PQ tablosu bulunamadı. “Protocol Question / Guidance for Review of Evidence / ICAO References / PPQ / CE” sütunları bekleniyor.'+suffix);
+    }
+    return{meta,amendmentMeta,pqs,amendments,diagnostics};
   }
+
   async function parseFile(file){
     if(!file)throw new Error('DOCX dosyası seçilmedi.');
     if(!/\.docx$/i.test(file.name||''))throw new Error(`${file.name||'Dosya'}: yalnız .docx destekleniyor.`);
-    if(typeof JSZip==='undefined')throw new Error('JSZip yüklenemedi; DOCX okunamıyor.');
+    if(typeof JSZip==='undefined')throw new Error('JSZip yüklenemedi; DOCX okunamıyor. Sayfayı yenileyip tekrar deneyin.');
     const zip=await JSZip.loadAsync(file),docFile=zip.file('word/document.xml');
     if(!docFile)throw new Error(`${file.name}: word/document.xml bulunamadı.`);
-    const xml=await docFile.async('string'),xmlDoc=new DOMParser().parseFromString(xml,'text/xml');
-    const parserError=xmlDoc.getElementsByTagName('parsererror')[0];
+    const xml=await docFile.async('string'),xmlDoc=new DOMParser().parseFromString(xml,'application/xml');
+    const parserError=Array.from(xmlDoc.getElementsByTagName('*')).find(n=>localNameOf(n)==='parsererror');
     if(parserError)throw new Error(`${file.name}: document.xml ayrıştırılamadı.`);
     return parseXml(xmlDoc,file.name);
   }
