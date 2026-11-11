@@ -77,3 +77,16 @@ Klasör yapısını bozmadan repository köküne yükleyin. `index.html`, `css/`
 
 ## Önemli
 Firebase Realtime Database ve Storage kuralları mevcut SHGM/uygulama rol modelinize göre güncellenmelidir. `firebase/README_PQ_LIBRARY_RULES.md` yalnız entegrasyon notudur; mevcut rules dosyanızı otomatik olarak değiştirmez.
+
+## Faz 2.1 - Firebase kayıt bekleme düzeltmesi
+
+PQ DOCX kaydında Realtime Database ana kayıt, Storage ise ikincil/best-effort kayıt olarak ayrılmıştır.
+
+- Realtime Database bağlantısı `.info/connected` üzerinden kontrol edilir.
+- Realtime Database okuma/yazma/doğrulama işlemlerinde süre sınırı vardır; sonsuz bekleme oluşmaz.
+- PQ yapılandırılmış verisi önce Realtime Database'e kaydedilir ve doğrulanır.
+- Kaynak DOCX daha sonra Firebase Storage'a yüklenir.
+- Storage yüklemesi 12 saniye içinde sonuçlanmazsa iptal edilir ve `timeout` durumuyla devam edilir; PQ verisi kaybolmaz.
+- Kayıt sırasında ekranda aktif aşama gösterilir: bağlantı, mevcut kayıt kontrolü, database yazımı, doğrulama, Storage yüklemesi.
+
+Not: Cloud Storage erişimi projenin planına, bucket yapılandırmasına ve Storage Rules'a bağlıdır. Storage başarısızlığı PQ verisinin Realtime Database'e kaydedilmesini artık engellemez.

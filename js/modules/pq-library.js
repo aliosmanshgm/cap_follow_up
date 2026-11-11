@@ -213,7 +213,17 @@
         try{
             for(const item of selected){
                 if(note)note.textContent=`Firebase’e kaydediliyor: ${item.file.name}`;
-                const result=await window.PQRepository.saveParsedDocument({file:item.file,parsed:item.parsed,editionKey:item.editionKey,overwrite:!!item.existing});done++;
+                const result=await window.PQRepository.saveParsedDocument({
+                    file:item.file,
+                    parsed:item.parsed,
+                    editionKey:item.editionKey,
+                    overwrite:!!item.existing,
+                    onProgress:progress=>{
+                        const msg=progress&&progress.message?progress.message:'Firebase işlemi sürüyor…';
+                        if(note)note.textContent=`${item.file.name} · ${msg}`;
+                        try{showLoading('PQ verileri Firebase’e kaydediliyor...',`${done+1}/${selected.length} · ${msg}`);}catch(_){}
+                    }
+                });done++;
                 if(result.sourceDocument&&result.sourceDocument.status!=='stored')storageWarnings.push(`${item.file.name}: kaynak DOCX Storage'a alınamadı (${result.sourceDocument.status}${result.sourceDocument.error?` – ${result.sourceDocument.error}`:''}).`);
                 if(!pqDbActiveEdition())localStorage.setItem(PQDB_ACTIVE_EDITION_KEY,item.editionKey);
             }
