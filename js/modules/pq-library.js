@@ -7,7 +7,10 @@
     let pqDbSelectedPq='';
     let pqDbLoaded=false;
     const PQDB_STORAGE_KEY='icao_pq_library_v1';
-    const PQDB_ACTIVE_EDITION_KEY='icao_pq_library_active_edition';
+    const PQDB_ACTIVE_EDITION_KEY='icao_pq_library_active_edition'; // legacy fallback
+    const PQDB_AREAS=['LEG','ORG','PEL','OPS','AIR','AIG','ANS','AGA'];
+    function pqDbNormalizeRevision(v){v=String(v||'').trim();if(!v||/^(ilk\s*yay[ıi]n|initial\s*(issue|release)|original)$/i.test(v))return'0';const m=v.match(/(?:rev(?:ision)?\.?|revizyon)\s*(?:no\.?|#)?\s*[:\-]?\s*([A-Za-z0-9._-]+)/i);return m?m[1]:v;}
+    function pqDbRevisionLabel(v){v=String(v??'').trim();return(!v||v==='0')?'İlk Yayın':`Revizyon ${v}`;}
 
     function setIcaoVisitWorkspaceMode(mode){
         icaoOfficialWorkspaceMode=['validation','reference','impact'].includes(mode)?mode:'validation';
@@ -39,7 +42,10 @@
 
     function pqDbSafeKey(v){return String(v||'').trim().replace(/[.#$\[\]\/]/g,'_').replace(/\s+/g,'_');}
     function pqDbNormalizeLibrary(raw){
-        const lib=raw&&typeof raw==='object'?raw:{editions:{}};if(!lib.editions||typeof lib.editions!=='object')lib.editions={};return lib;
+        const lib=raw&&typeof raw==='object'?raw:{editions:{},activeByArea:{}};
+        if(!lib.editions||typeof lib.editions!=='object')lib.editions={};
+        if(!lib.activeByArea||typeof lib.activeByArea!=='object')lib.activeByArea={};
+        return lib;
     }
     function pqDbRemoveLegacyEmbeddedSeed(lib){
         let changed=false;
@@ -58,7 +64,8 @@
 
     function pqDbSaveLocal(){try{localStorage.setItem(PQDB_STORAGE_KEY,JSON.stringify(icaoPqLibrary));}catch(e){console.warn('PQ DB local save',e);}}
     function pqDbActiveEdition(){return localStorage.getItem(PQDB_ACTIVE_EDITION_KEY)||'';}
-    function setPqDbActiveEdition(key){if(key)localStorage.setItem(PQDB_ACTIVE_EDITION_KEY,key);else localStorage.removeItem(PQDB_ACTIVE_EDITION_KEY);renderPqDbVersions();renderPqDbKpis();showAppRuntimeToast(key?`Aktif PQ referans sürümü: ${key}`:'Aktif PQ sürümü temizlendi.','success');}
+    function pqDbActiveAreaRecord(area){area=String(area||'').trim().toUpperCase();const direct=(icaoPqLibrary.activeByArea||{})[area];if(direct&&direct.editionKey)return direct;const legacy=pqDbActiveEdition();return legacy&&(((icaoPqLibrary.editions||{})[legacy]||{}).areas||{})[area]?{editionKey:legacy,area}:null;}
+    function setPqDbActiveEdition(key){if(key)localStorage.setItem(PQDB_ACTIVE_EDITION_KEY,key);else localStorage.removeItem(PQDB_ACTIVE_EDITION_KEY);renderPqDbVersions();renderPqDbKpis();showAppRuntimeToast(key?`Eski uyumluluk için aktif PQ referansı: ${key}`:'Eski aktif PQ referansı temizlendi.','success');}
     window.setPqDbActiveEdition=setPqDbActiveEdition;
 
     async function loadIcaoPqLibrary(force=false){
@@ -81,12 +88,13 @@
     window.loadIcaoPqLibrary=loadIcaoPqLibrary;
 
     function pqDbEditionEntries(){
-        return Object.entries((icaoPqLibrary&&icaoPqLibrary.editions)||{}).map(([key,v])=>({key,...(v||{})})).sort((a,b)=>{const ay=Number(a.year||0),by=Number(b.year||0);if(by!==ay)return by-ay;return Number(b.revision||0)-Number(a.revision||0);});
+        return Object.entries((icaoPqLibrary&&icaoPqLibrary.editions)||{}).map(([key,v])=>({key,...(v||{})})).sort((a,b)=>String(b.year||'').localeCompare(String(a.year||''),undefined,{numeric:true})||String(b.revision||'').localeCompare(String(a.revision||''),undefined,{numeric:true}));
     }
-    function pqDbAreaEntries(edition){return Object.entries((edition&&edition.areas)||{}).map(([area,v])=>({area,...(v||{})})).sort((a,b)=>a.area.localeCompare(b.area));}
+    function pqDbAreaEntries(edition){return Object.entries((edition&&edition.areas)||{}).map(([area,v])=>({area,...(v||{})})).sort((a,b)=>{const ai=PQDB_AREAS.indexOf(a.area),bi=PQDB_AREAS.indexOf(b.area);if(ai>=0||bi>=0)return(ai<0?999:ai)-(bi<0?999:bi);return a.area.localeCompare(b.area);});}
     function pqDbPqList(areaData){return Object.values((areaData&&areaData.pqs)||{}).filter(Boolean).sort((a,b)=>String(a.pq||'').localeCompare(String(b.pq||''),undefined,{numeric:true}));}
     function pqDbAmendments(areaData){return Object.values((areaData&&areaData.amendments)||{}).filter(Boolean);}
-    function pqDbEditionLabel(e){return e?`${e.year||'?'} Edition${String(e.revision||'').trim()?` · Revision ${e.revision}`:''}`:'-';}
+    function pqDbEditionLabel(e){return e?`Sürüm ${e.year||'?'} · ${pqDbRevisionLabel(e.revision)}`:'-';}
+    function pqDbFlattenRecords(){const out=[];pqDbEditionEntries().forEach(e=>pqDbAreaEntries(e).forEach(a=>out.push({editionKey:e.key,edition:e,area:a.area,areaData:a})));return out;}
     function pqDbChangeClass(v){const x=String(v||'').toLowerCase();if(x==='no change')return'no-change';return x.replace(/\s+/g,'-');}
     function pqDbControlValue(p){return String((p&&p.ce)||(p&&p.sspComponent)||'').trim();}
     function pqDbControlLabel(p){return String((p&&p.sspComponent)?'SSP Component':'CE');}
@@ -96,15 +104,30 @@
         const vals={pqDbKpiEditions:eds.length,pqDbKpiAreas:areas.length,pqDbKpiPqs:pqs.length,pqDbKpiOnsite:pqs.filter(p=>p.assessmentMode==='On-site').length,pqDbKpiPpq:pqs.filter(p=>p.ppq).length,pqDbKpiChanges:changes.length};Object.entries(vals).forEach(([id,v])=>{const e=document.getElementById(id);if(e)e.textContent=String(v);});
     }
     function renderPqDbVersions(){
-        const grid=document.getElementById('pqDbVersionGrid');if(!grid)return;const eds=pqDbEditionEntries(),active=pqDbActiveEdition();
-        if(!eds.length){grid.innerHTML='<div class="pqdb-empty">Henüz ICAO PQ sürümü yüklenmedi. “ICAO PQ DOCX Yükle” ile ilk dokümanı ekleyebilirsiniz.</div>';return;}
-        grid.innerHTML=eds.map(e=>{
-            const areas=pqDbAreaEntries(e),pqCount=areas.reduce((n,a)=>n+pqDbPqList(a).length,0),changeCount=areas.reduce((n,a)=>n+pqDbAmendments(a).length,0),sourceDates=[...new Set(areas.map(a=>a.publicationDate).filter(Boolean))];
-            const areaChips=areas.map(a=>{const sd=a.sourceDocument||{},cloud=sd.status==='stored'?'☁️':sd.status&&sd.status!=='stored'?'⚠️':'🗄️';return `<span class="pqdb-area-chip" title="${escapeHtml(a.sourceFile||'Kaynak dosya bilgisi yok')}">${escapeHtml(a.area)} · ${pqDbPqList(a).length} PQ · ${cloud}</span>`;}).join('');
-            return `<article class="pqdb-version-card ${active===e.key?'active-edition':''}"><div><h4>${escapeHtml(pqDbEditionLabel(e))}</h4><div class="pqdb-version-meta">${pqCount} PQ · ${areas.length} alan · ${changeCount} amendment satırı${sourceDates.length?` · ${escapeHtml(sourceDates.join(', '))}`:''}</div></div><div class="pqdb-area-chips">${areaChips}</div><div class="pqdb-version-actions"><button type="button" class="btn-outline" onclick="openPqDbEdition('${escapeHtml(e.key)}')">📋 Kataloğu Aç</button><button type="button" class="btn-outline" onclick="setPqDbActiveEdition('${escapeHtml(e.key)}')">${active===e.key?'✓ Aktif Referans':'Aktif Referans Yap'}</button></div></article>`;
+        const grid=document.getElementById('pqDbVersionGrid');if(!grid)return;
+        const records=pqDbFlattenRecords();
+        const extraAreas=[...new Set(records.map(r=>r.area).filter(a=>!PQDB_AREAS.includes(a)))].sort();
+        const areas=[...PQDB_AREAS,...extraAreas];
+        grid.innerHTML=areas.map(area=>{
+            const rows=records.filter(r=>r.area===area).sort((a,b)=>String(b.edition.year||'').localeCompare(String(a.edition.year||''),undefined,{numeric:true})||String(b.edition.revision||'').localeCompare(String(a.edition.revision||''),undefined,{numeric:true}));
+            const active=pqDbActiveAreaRecord(area);
+            const activeLabel=active?(()=>{const e=((icaoPqLibrary.editions||{})[active.editionKey])||{};return `${e.year||'?'} / ${pqDbRevisionLabel(e.revision)}`;})():'-';
+            let body='';
+            if(!rows.length)body=`<div class="pqdb-empty">${escapeHtml(area)} alanı için henüz ICAO PQ Word belgesi kaydedilmedi.</div>`;
+            else{
+                const versions={};rows.forEach(r=>{const v=String(r.edition.year||'?');(versions[v]||(versions[v]=[])).push(r);});
+                body=Object.keys(versions).sort((a,b)=>String(b).localeCompare(String(a),undefined,{numeric:true})).map(version=>{
+                    const revRows=versions[version].sort((a,b)=>String(b.edition.revision||'').localeCompare(String(a.edition.revision||''),undefined,{numeric:true}));
+                    return `<div class="pqdb-version-section"><div class="pqdb-version-title"><span>Sürüm: <b>${escapeHtml(version)}</b></span><span>${revRows.length} revizyon/kayıt</span></div><div class="pqdb-revision-list">${revRows.map(r=>{
+                        const a=r.areaData||{},sd=a.sourceDocument||{},isActive=!!(active&&active.editionKey===r.editionKey),pqCount=pqDbPqList(a).length,cloud=sd.status==='stored'?'☁️ Kaynak DOCX':'🗄️ Yapılandırılmış veri';
+                        return `<div class="pqdb-revision-row ${isActive?'active-record':''}"><div class="pqdb-revision-main"><div class="pqdb-revision-heading"><b>${escapeHtml(pqDbRevisionLabel(r.edition.revision))}</b>${isActive?'<span class="pqdb-badge new">AKTİF</span>':''}</div><div class="pqdb-revision-file">${escapeHtml(a.sourceFile||'-')}</div>${a.note?`<div class="pqdb-revision-note">${escapeHtml(a.note)}</div>`:''}</div><div class="pqdb-revision-meta"><span><b>${pqCount}</b> PQ</span><span>Belge tarihi: <b>${escapeHtml(a.publicationDate||'-')}</b></span><span>${escapeHtml(cloud)}</span></div><div class="pqdb-version-actions"><button type="button" class="btn-outline" onclick="openPqDbEdition('${escapeHtml(r.editionKey)}','${escapeHtml(area)}')">📋 Kataloğu Aç</button><button type="button" class="btn-outline" onclick="openPqDbMetadataEdit('${escapeHtml(r.editionKey)}','${escapeHtml(area)}')">✏️ Düzenle</button>${isActive?'':`<button type="button" class="btn-outline pqdb-active-btn" onclick="setPqDbActiveAreaRecord('${escapeHtml(r.editionKey)}','${escapeHtml(area)}')">✓ Aktif Yap</button>`}</div></div>`;
+                    }).join('')}</div></div>`;
+                }).join('');
+            }
+            return `<details class="pqdb-area-group" open><summary><span class="pqdb-area-title">✈️ ${escapeHtml(area)}</span><span class="pqdb-area-summary">${rows.length} kayıt · Aktif: ${escapeHtml(activeLabel)}</span></summary><div class="pqdb-area-body">${body}</div></details>`;
         }).join('');
     }
-    function openPqDbEdition(key){setPqDbView('catalog');const sel=document.getElementById('pqDbCatalogEdition');if(sel)sel.value=key;pqDbCatalogEditionChanged();}
+    function openPqDbEdition(key,area){setPqDbView('catalog');const sel=document.getElementById('pqDbCatalogEdition');if(sel)sel.value=key;pqDbCatalogEditionChanged(false);const areaSel=document.getElementById('pqDbCatalogArea');if(areaSel&&area&&[...areaSel.options].some(o=>o.value===area))areaSel.value=area;pqDbCatalogEditionChanged();}
     window.openPqDbEdition=openPqDbEdition;
 
     function setPqDbView(view){pqDbView=['versions','catalog','compare'].includes(view)?view:'versions';document.querySelectorAll('#pqDbModebar [data-pqdb-view]').forEach(b=>b.classList.toggle('active',b.dataset.pqdbView===pqDbView));['versions','catalog','compare'].forEach(v=>{const e=document.getElementById('pqDbView'+v.charAt(0).toUpperCase()+v.slice(1));if(e)e.classList.toggle('active',v===pqDbView);});if(view==='catalog')renderPqDbCatalog();if(view==='compare')renderPqDbComparison();}
@@ -160,7 +183,7 @@
 
     let pqDbPendingImports=[];
 
-    function pqDbEditionKey(meta){return pqDbSafeKey(`${meta.year}_R${meta.revision||'0'}`);}
+    function pqDbEditionKey(meta){return pqDbSafeKey(`${String(meta.year||'').trim()}_R${pqDbNormalizeRevision(meta.revision)}`);}
     function pqDbExistingArea(editionKey,area){return (((icaoPqLibrary.editions||{})[editionKey]||{}).areas||{})[area]||null;}
     function pqDbImportSelectedItems(){
         return pqDbPendingImports.filter((item,i)=>{const cb=document.getElementById(`pqDbImportSelect_${i}`);return item.validation.valid&&(!cb||cb.checked);});
@@ -169,26 +192,22 @@
     window.closePqDbImportPreview=closePqDbImportPreview;
 
     function renderPqDbImportPreview(){
-        const modal=document.getElementById('pqDbImportModal'),body=document.getElementById('pqDbImportBody'),summary=document.getElementById('pqDbImportSummary'),save=document.getElementById('pqDbImportSaveBtn');
+        const modal=document.getElementById('pqDbImportModal'),body=document.getElementById('pqDbImportBody'),summary=document.getElementById('pqDbImportSummary');
         if(!modal||!body)return;
-        const valid=pqDbPendingImports.filter(x=>x.validation.valid).length,invalid=pqDbPendingImports.length-valid,replacements=pqDbPendingImports.filter(x=>x.existing).length,totalPqs=pqDbPendingImports.reduce((n,x)=>n+(x.validation.metrics.pqCount||0),0);
+        const valid=pqDbPendingImports.filter(x=>x.validation.valid).length,invalid=pqDbPendingImports.length-valid,replacements=pqDbPendingImports.filter(x=>x.existing).length,totalPqs=pqDbPendingImports.reduce((n,x)=>n+((x.validation.metrics||{}).pqCount||0),0);
         if(summary)summary.innerHTML=`<div><strong>${pqDbPendingImports.length}</strong><span>DOCX</span></div><div><strong>${valid}</strong><span>Geçerli</span></div><div><strong>${invalid}</strong><span>Hatalı</span></div><div><strong>${replacements}</strong><span>Güncelleme</span></div><div><strong>${totalPqs}</strong><span>PQ</span></div>`;
         body.innerHTML=pqDbPendingImports.map((item,i)=>{
-            const p=item.parsed||{},m=p.meta||{},v=item.validation||{errors:[],warnings:[],metrics:{}},x=v.metrics||{},sample=(p.pqs||[]).slice(0,5);
-            return `<article class="pqdb-import-card ${v.valid?'valid':'invalid'}">
-                <div class="pqdb-import-card-head">
-                    <label class="pqdb-import-select"><input id="pqDbImportSelect_${i}" type="checkbox" ${v.valid?'checked':'disabled'} onchange="updatePqDbImportSaveState()"><span></span></label>
-                    <div><h4>${escapeHtml(item.file.name)}</h4><div class="pqdb-import-meta">${escapeHtml(m.year||'?')} Edition · Revision ${escapeHtml(m.revision||'?')} · ${escapeHtml(m.area||'?')} ${item.existing?'<b class="pqdb-replace-tag">MEVCUT KAYIT GÜNCELLENECEK</b>':'<b class="pqdb-new-tag">YENİ KAYIT</b>'}</div></div>
-                    <span class="${v.valid?'pqdb-valid-tag':'pqdb-error-tag'}">${v.valid?'✓ Doğrulandı':'✕ Hatalı'}</span>
-                </div>
-                <div class="pqdb-import-metrics"><span><b>${x.pqCount||0}</b> PQ</span><span><b>${x.onSite||0}</b> On-site</span><span><b>${x.offSite||0}</b> Off-site</span><span><b>${x.ppq||0}</b> PPQ</span><span><b>${x.auditorNotes||0}</b> Auditor note</span><span><b>${x.amendments||0}</b> Amendment</span></div>
-                ${v.errors.length?`<div class="pqdb-import-messages error">${v.errors.map(e=>`<div>⛔ ${escapeHtml(e)}</div>`).join('')}</div>`:''}
-                ${v.warnings.length?`<div class="pqdb-import-messages warn">${v.warnings.map(e=>`<div>⚠️ ${escapeHtml(e)}</div>`).join('')}</div>`:''}
-                <details class="pqdb-import-sample"><summary>Örnek PQ kayıtlarını göster</summary><table><thead><tr><th>PQ</th><th>Tür</th><th>CE / SSP Bileşeni</th><th>PPQ</th><th>Protocol Question</th></tr></thead><tbody>${sample.map(q=>`<tr><td>${escapeHtml(q.pq)}</td><td>${escapeHtml(q.assessmentMode)}</td><td>${escapeHtml(pqDbControlValue(q)||'-')}</td><td>${q.ppq?'Yes':'-'}</td><td>${escapeHtml(q.question||'-')}</td></tr>`).join('')}</tbody></table></details>
-            </article>`;
+            const p=item.parsed||{},meta=p.meta||{},v=item.validation||{errors:[],warnings:[],metrics:{}},x=v.metrics||{},sample=(p.pqs||[]).slice(0,5),active=meta.active!==false;
+            const areaOptions=[...PQDB_AREAS,...(!PQDB_AREAS.includes(meta.area)&&meta.area?[meta.area]:[])].map(a=>`<option value="${escapeHtml(a)}" ${a===meta.area?'selected':''}>${escapeHtml(a)}</option>`).join('');
+            return `<article class="pqdb-import-card ${v.valid?'valid':'invalid'}"><div class="pqdb-import-card-head"><label class="pqdb-import-select"><input id="pqDbImportSelect_${i}" type="checkbox" ${v.valid?'checked':'disabled'} onchange="updatePqDbImportSaveState()"><span></span></label><div><h4>${escapeHtml(item.file.name)}</h4><div class="pqdb-import-meta">Alan: ${escapeHtml(meta.area||'?')} · Sürüm: ${escapeHtml(meta.year||'?')} · ${escapeHtml(pqDbRevisionLabel(meta.revision))} ${item.existing?'<b class="pqdb-replace-tag">MEVCUT KAYIT GÜNCELLENECEK</b>':'<b class="pqdb-new-tag">YENİ KAYIT</b>'}</div></div><span class="${v.valid?'pqdb-valid-tag':'pqdb-error-tag'}">${v.valid?'✓ Doğrulandı':'✕ Düzeltme Gerekli'}</span></div>
+                <div class="pqdb-import-meta-edit"><div><label>Denetim Alanı</label><select id="pqDbImportArea_${i}">${areaOptions}</select></div><div><label>Sürüm</label><input id="pqDbImportYear_${i}" type="text" value="${escapeHtml(meta.year||'')}" placeholder="2024"></div><div><label>Revizyon</label><input id="pqDbImportRevision_${i}" type="text" value="${escapeHtml(meta.revision||'')}" placeholder="2 / İlk Yayın"></div><div><label>Kaynak Belge Tarihi</label><input id="pqDbImportDate_${i}" type="date" value="${/^\d{4}-\d{2}-\d{2}$/.test(meta.publicationDate||'')?escapeHtml(meta.publicationDate):''}"></div><div class="wide"><label>Açıklama / Not</label><input id="pqDbImportNote_${i}" type="text" value="${escapeHtml(meta.note||'')}" placeholder="İsteğe bağlı not"></div><label class="pqdb-import-active"><input id="pqDbImportActive_${i}" type="checkbox" ${active?'checked':''}> Bu alanın aktif kaydı</label><button type="button" class="btn-outline" onclick="revalidatePqDbPendingImport(${i})">↻ Bilgileri Uygula / Yeniden Doğrula</button></div>
+                <div class="pqdb-import-metrics"><span><b>${x.pqCount||0}</b> PQ</span><span><b>${x.onSite||0}</b> On-site</span><span><b>${x.offSite||0}</b> Off-site</span><span><b>${x.ppq||0}</b> PPQ</span><span><b>${x.auditorNotes||0}</b> Auditor note</span><span><b>${x.amendments||0}</b> Amendment</span></div>${v.errors.length?`<div class="pqdb-import-messages error">${v.errors.map(e=>`<div>⛔ ${escapeHtml(e)}</div>`).join('')}</div>`:''}${v.warnings.length?`<div class="pqdb-import-messages warn">${v.warnings.map(e=>`<div>⚠️ ${escapeHtml(e)}</div>`).join('')}</div>`:''}<details class="pqdb-import-sample"><summary>Örnek PQ kayıtlarını göster</summary><table><thead><tr><th>PQ</th><th>Tür</th><th>CE / SSP Bileşeni</th><th>PPQ</th><th>Protocol Question</th></tr></thead><tbody>${sample.map(q=>`<tr><td>${escapeHtml(q.pq)}</td><td>${escapeHtml(q.assessmentMode)}</td><td>${escapeHtml(pqDbControlValue(q)||'-')}</td><td>${q.ppq?'Yes':'-'}</td><td>${escapeHtml(q.question||'-')}</td></tr>`).join('')}</tbody></table></details></article>`;
         }).join('');
         modal.style.display='flex';updatePqDbImportSaveState();
     }
+    function syncPqDbPendingMetadataFromInputs(i){const item=pqDbPendingImports[i];if(!item||!item.parsed)return item;const meta=item.parsed.meta||(item.parsed.meta={});const read=id=>((document.getElementById(id)||{}).value||'').trim();meta.area=read(`pqDbImportArea_${i}`).toUpperCase();meta.year=read(`pqDbImportYear_${i}`);meta.revision=pqDbNormalizeRevision(read(`pqDbImportRevision_${i}`));meta.publicationDate=read(`pqDbImportDate_${i}`);meta.note=read(`pqDbImportNote_${i}`);meta.active=!!((document.getElementById(`pqDbImportActive_${i}`)||{}).checked);item.validation=window.PQDocxParser.validate(item.parsed);item.editionKey=pqDbEditionKey(meta);item.existing=pqDbExistingArea(item.editionKey,meta.area);const cb=document.getElementById(`pqDbImportSelect_${i}`);if(cb){if(item.validation.valid&&cb.disabled){cb.disabled=false;cb.checked=true;}else if(!item.validation.valid){cb.checked=false;cb.disabled=true;}}return item;}
+    function revalidatePqDbPendingImport(i){syncPqDbPendingMetadataFromInputs(i);renderPqDbImportPreview();}
+    window.revalidatePqDbPendingImport=revalidatePqDbPendingImport;
     function updatePqDbImportSaveState(){const btn=document.getElementById('pqDbImportSaveBtn'),selected=pqDbImportSelectedItems();if(btn){btn.disabled=!selected.length;btn.textContent=selected.length?`☁️ Firebase’e Kaydet (${selected.length})`:'☁️ Firebase’e Kaydet';}}
     window.updatePqDbImportSaveState=updatePqDbImportSaveState;
 
@@ -201,7 +220,7 @@
             for(const file of files){
                 if(note)note.textContent=`Analiz ediliyor: ${file.name}`;
                 try{
-                    const parsed=await window.PQDocxParser.parseFile(file),validation=window.PQDocxParser.validate(parsed),editionKey=pqDbEditionKey(parsed.meta),existing=pqDbExistingArea(editionKey,parsed.meta.area);
+                    const parsed=await window.PQDocxParser.parseFile(file);parsed.meta=parsed.meta||{};parsed.meta.revision=pqDbNormalizeRevision(parsed.meta.revision);parsed.meta.active=true;parsed.meta.note=parsed.meta.note||'';const validation=window.PQDocxParser.validate(parsed),editionKey=pqDbEditionKey(parsed.meta),existing=pqDbExistingArea(editionKey,parsed.meta.area);
                     pqDbPendingImports.push({file,parsed,validation,editionKey,existing});
                 }catch(err){pqDbPendingImports.push({file,parsed:null,validation:{valid:false,errors:[String(err.message||err)],warnings:[],metrics:{}},editionKey:'',existing:null});}
             }
@@ -213,6 +232,7 @@
     window.importIcaoPqDocuments=prepareIcaoPqDocuments;
 
     async function commitPqDbPendingImports(){
+        pqDbPendingImports.forEach((_,i)=>syncPqDbPendingMetadataFromInputs(i));
         const selected=pqDbImportSelectedItems();if(!selected.length)return;
         if(!window.PQRepository)return alert('PQ repository servisi yüklenemedi.');
         try{if(!navigator.onLine)return alert('Firebase kaydı için çevrim içi bağlantı gerekir.');}catch(_){ }
@@ -246,11 +266,34 @@
     }
     window.commitPqDbPendingImports=commitPqDbPendingImports;
 
+    function openPqDbMetadataEdit(editionKey,area){
+        const edition=((icaoPqLibrary.editions||{})[editionKey])||{},rec=((edition.areas||{})[area])||null;if(!rec)return alert('PQ sürüm kaydı bulunamadı.');
+        const active=pqDbActiveAreaRecord(area),isActive=!!(active&&active.editionKey===editionKey);
+        const val=(id,v)=>{const el=document.getElementById(id);if(el)el.value=v??'';};
+        val('pqDbMetadataSourceEdition',editionKey);val('pqDbMetadataSourceArea',area);val('pqDbMetadataArea',area);val('pqDbMetadataVersion',edition.year||rec.year||'');val('pqDbMetadataRevision',String(edition.revision??rec.revision??''));val('pqDbMetadataPublicationDate',/^\d{4}-\d{2}-\d{2}$/.test(rec.publicationDate||'')?rec.publicationDate:'');val('pqDbMetadataNote',rec.note||'');
+        const ck=document.getElementById('pqDbMetadataActive');if(ck)ck.checked=isActive;const file=document.getElementById('pqDbMetadataEditFile');if(file)file.textContent=rec.sourceFile||'';const info=document.getElementById('pqDbMetadataEditInfo');if(info)info.innerHTML=`PQ: <b>${pqDbPqList(rec).length}</b> · Kaynak: <b>${escapeHtml(rec.sourceFile||'-')}</b><br>Sürüm veya alan değişirse kayıt PQ içerikleri korunarak Firebase'de yeni konuma taşınır.`;const modal=document.getElementById('pqDbMetadataEditModal');if(modal)modal.style.display='block';
+    }
+    window.openPqDbMetadataEdit=openPqDbMetadataEdit;
+    function closePqDbMetadataEditModal(){const m=document.getElementById('pqDbMetadataEditModal');if(m)m.style.display='none';}
+    window.closePqDbMetadataEditModal=closePqDbMetadataEditModal;
+    async function savePqDbMetadataEdit(){
+        if(!window.PQRepository||typeof window.PQRepository.updateMetadata!=='function')return alert('PQ repository metadata güncelleme servisi yüklenemedi.');
+        const read=id=>((document.getElementById(id)||{}).value||'').trim(),sourceEditionKey=read('pqDbMetadataSourceEdition'),sourceArea=read('pqDbMetadataSourceArea'),area=read('pqDbMetadataArea').toUpperCase(),year=read('pqDbMetadataVersion'),revision=pqDbNormalizeRevision(read('pqDbMetadataRevision')),publicationDate=read('pqDbMetadataPublicationDate'),note=read('pqDbMetadataNote'),active=!!((document.getElementById('pqDbMetadataActive')||{}).checked);
+        if(!PQDB_AREAS.includes(area))return alert('Denetim alanı LEG, ORG, PEL, OPS, AIR, AIG, ANS veya AGA olmalıdır.');if(!/^20\d{2}$/.test(year))return alert('Sürüm 4 haneli yıl olarak girilmelidir. Örn: 2024');
+        try{showLoading('PQ sürüm/revizyon bilgileri güncelleniyor...',`${sourceArea} → ${area}`);await window.PQRepository.updateMetadata({sourceEditionKey,sourceArea,meta:{area,year,revision,publicationDate,note,active}});closePqDbMetadataEditModal();pqDbLoaded=false;await loadIcaoPqLibrary(true);setPqDbView('versions');showAppRuntimeToast('PQ sürüm/revizyon bilgileri Firebase’de güncellendi.','success');}catch(err){console.error(err);alert('PQ sürüm/revizyon bilgileri güncellenemedi: '+(err.message||err));}finally{hideLoading();}
+    }
+    window.savePqDbMetadataEdit=savePqDbMetadataEdit;
+    async function setPqDbActiveAreaRecord(editionKey,area){
+        if(!window.PQRepository||typeof window.PQRepository.setActiveAreaRecord!=='function')return alert('Aktif PQ sürümü servisi yüklenemedi.');
+        try{showLoading('Aktif PQ referansı güncelleniyor...',`${area} · ${editionKey}`);await window.PQRepository.setActiveAreaRecord({editionKey,area});pqDbLoaded=false;await loadIcaoPqLibrary(true);showAppRuntimeToast(`${area} için aktif PQ sürümü güncellendi.`,'success');}catch(err){console.error(err);alert('Aktif PQ sürümü güncellenemedi: '+(err.message||err));}finally{hideLoading();}
+    }
+    window.setPqDbActiveAreaRecord=setPqDbActiveAreaRecord;
+
     function renderIcaoPqLibraryModule(){if(!pqDbLoaded){loadIcaoPqLibrary();return;}renderPqDbKpis();renderPqDbVersions();populatePqDbSelectors();if(pqDbView==='catalog')renderPqDbCatalog();if(pqDbView==='compare')renderPqDbComparison();}
     window.renderIcaoPqLibraryModule=renderIcaoPqLibraryModule;
 
     function findPqLibraryReference(pq,area){
-        pq=normalizePQ(pq||'');area=normalizeAreaKey(area||'');if(!pq)return null;const active=pqDbActiveEdition(),eds=pqDbEditionEntries(),ordered=active?[...eds.filter(e=>e.key===active),...eds.filter(e=>e.key!==active)]:eds;for(const e of ordered){const areas=pqDbAreaEntries(e).filter(a=>!area||a.area===area);for(const a of areas){const rec=(a.pqs||{})[pqDbSafeKey(pq)]||pqDbPqList(a).find(x=>x.pq===pq);if(rec)return{edition:e,areaData:a,pq:rec};}}return null;
+        pq=normalizePQ(pq||'');area=normalizeAreaKey(area||'');if(!pq)return null;const eds=pqDbEditionEntries();let ordered=eds;if(area){const active=pqDbActiveAreaRecord(area);if(active)ordered=[...eds.filter(e=>e.key===active.editionKey),...eds.filter(e=>e.key!==active.editionKey)];}else{const legacy=pqDbActiveEdition();if(legacy)ordered=[...eds.filter(e=>e.key===legacy),...eds.filter(e=>e.key!==legacy)];}for(const e of ordered){const areas=pqDbAreaEntries(e).filter(a=>!area||a.area===area);for(const a of areas){const rec=(a.pqs||{})[pqDbSafeKey(pq)]||pqDbPqList(a).find(x=>x.pq===pq);if(rec)return{edition:e,areaData:a,pq:rec};}}return null;
     }
     function renderVisitPqReferenceHtml(pq,area,contextFinding){const ref=findPqLibraryReference(pq,area);if(!ref)return `<div class="pqdb-empty">PQ ${escapeHtml(pq||'-')} için PQ Veri Tabanında eşleşen resmî ICAO sürümü bulunamadı.<br><br><button type="button" onclick="switchTab('pq-library');setPqDbView('versions')">📚 PQ Veri Tabanını Aç</button></div>`;const p=ref.pq,e=ref.edition,a=ref.areaData,m=pqMasterData[p.pq]||{};return `<div class="visit-pq-ref-head"><div><div class="visit-pq-ref-title">PQ ${escapeHtml(p.pq)} · ${escapeHtml(p.area||a.area||'-')}</div><div class="visit-pq-ref-chips"><span class="visit-pq-ref-chip">${escapeHtml(pqDbEditionLabel(e))}</span><span class="visit-pq-ref-chip">${escapeHtml(p.assessmentMode||'-')}</span><span class="visit-pq-ref-chip">${escapeHtml(pqDbControlValue(p)||'-')}</span><span class="visit-pq-ref-chip">PPQ: ${p.ppq?'Yes':'No'}</span>${p.changeType?`<span class="pqdb-badge ${pqDbChangeClass(p.changeType)}">${escapeHtml(p.changeType)}</span>`:''}</div></div><button type="button" class="btn-outline" onclick="openPqDbEdition('${escapeHtml(e.key)}');setTimeout(()=>{const a=document.getElementById('pqDbCatalogArea');if(a)a.value='${escapeHtml(a.area)}';pqDbSelectedPq='${escapeHtml(p.pq)}';renderPqDbCatalog();},0)">Veri tabanında aç</button></div><div class="visit-pq-ref-block"><h5>Protocol Question (ICAO)</h5><div class="body">${escapeHtml(p.question||'-')}</div>${m.soruTr?`<div class="body" style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border)"><b>TR:</b> ${escapeHtml(m.soruTr)}</div>`:''}</div><div class="visit-pq-ref-block"><h5>Guidance for Review of Evidence</h5><div class="body">${escapeHtml(p.guidance||'-')}</div></div>${p.auditorNote?`<div class="visit-pq-ref-block note"><h5>⚠️ Note(s) to the auditor</h5><div class="body">${escapeHtml(p.auditorNote)}</div></div>`:''}<div class="visit-pq-ref-block"><h5>ICAO References</h5><div class="body">${escapeHtml(p.references||'-')}</div></div>${p.changeType||p.changeDescription?`<div class="visit-pq-ref-block change"><h5>🔀 Sürüm Değişikliği</h5><div class="body">${escapeHtml([p.previousPq?`Önceki PQ: ${p.previousPq}`:'',p.changeType||'',p.changeDescription||''].filter(Boolean).join('\n'))}</div></div>`:''}${contextFinding||m.bulgu?`<div class="visit-pq-ref-block"><h5>Türkiye / mevcut CAP bulgusu</h5><div class="body">${escapeHtml(contextFinding||m.bulgu||'-')}</div>${m.bulguTr?`<div class="body" style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border)"><b>TR:</b> ${escapeHtml(m.bulguTr)}</div>`:''}</div>`:''}`;}
     function renderIcaoPqReferencePanel(){const el=document.getElementById('icaoPqReferencePanel');if(!el)return;const visit=getActiveIcaoOfficialVisitRecord?getActiveIcaoOfficialVisitRecord():null,pq=activeIcaoValidationPq;if(!pq){el.innerHTML='<div class="icao-visit-empty">PQ referansı için soldan bir PQ seçiniz.</div>';return;}const scope=visit?getIcaoVisitScopePqs(visit).find(x=>String(x.pq)===String(pq)):null,m=pqMasterData[pq]||{};el.innerHTML=renderVisitPqReferenceHtml(pq,(scope&&scope.area)||m.alan,(scope&&scope.finding)||m.bulgu||'');}

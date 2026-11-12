@@ -339,7 +339,7 @@ const I18N = {
             if(tabId === 'smart') updateSmartManagementPanel(getFilteredData(), window.currentAnalyticsModel || null);
             if(tabId === 'quality') updateDataQualityCenter(getFilteredData());
             if(tabId === 'pq-library') {
-                if (typeof renderIcaoPqLibraryModule === 'function') renderIcaoPqLibraryModule();
+                if (typeof window.renderIcaoPqLibraryModule === 'function') window.renderIcaoPqLibraryModule();
                 else showAppRuntimeToast('PQ Veri Tabanı modülü yüklenemedi.', 'error');
             }
             if(tabId === 'visits') renderVisitModule();
@@ -853,6 +853,9 @@ const I18N = {
         const main = document.querySelector('.main-content') || document.querySelector('main');
         if (!main) return false;
         let tab = document.getElementById('tab-pq-library');
+        // Modüler PQ Library arayüzü index.html içinde hazırsa bu eski/V2 fallback ekranı
+        // içeriği ezmemelidir. Asıl veri tabanı js/modules/pq-library.js + repository üzerinden çalışır.
+        if (tab && tab.dataset.pqLibraryModule === '1') return true;
         if (!tab) {
             tab = document.createElement('div');
             tab.id = 'tab-pq-library';

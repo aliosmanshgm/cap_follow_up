@@ -8,7 +8,7 @@
 
   function safeKey(v){return String(v||'').trim().replace(/[.#$\[\]\/]/g,'_').replace(/\s+/g,'_');}
   function cleanFileName(v){return String(v||'document.docx').replace(/[^A-Za-z0-9._-]+/g,'_').slice(0,140);}
-  function normalize(raw){const lib=raw&&typeof raw==='object'?raw:{editions:{}};if(!lib.editions||typeof lib.editions!=='object')lib.editions={};return lib;}
+  function normalize(raw){const lib=raw&&typeof raw==='object'?raw:{editions:{},activeByArea:{}};if(!lib.editions||typeof lib.editions!=='object')lib.editions={};if(!lib.activeByArea||typeof lib.activeByArea!=='object')lib.activeByArea={};return lib;}
   function readLocal(){try{return normalize(JSON.parse(localStorage.getItem(LOCAL_KEY)||'null'));}catch(_){return{editions:{}};}}
   function writeLocal(lib){try{localStorage.setItem(LOCAL_KEY,JSON.stringify(normalize(lib)));}catch(e){console.warn('PQ local cache yazılamadı',e);}}
   function authUser(){try{return firebase.auth().currentUser||null;}catch(_){return null;}}
@@ -51,10 +51,10 @@
     const local=readLocal();
     if(typeof db==='undefined'||!db||!isOnline())return{library:local,source:'local',message:'Çevrimdışı mod: yerel PQ cache kullanılıyor.'};
     try{
-      const snap=await withTimeout(db.ref('icao_pq_library/editions').once('value'),DB_TIMEOUT_MS,'Firebase PQ veri tabanı okuması');
-      const library=normalize({editions:snap.exists()?snap.val():{}});
+      const snap=await withTimeout(db.ref('icao_pq_library').once('value'),DB_TIMEOUT_MS,'Firebase PQ veri tabanı okuması');
+      const library=normalize(snap.exists()?snap.val():{});
       writeLocal(library);
-      return{library,source:'firebase',message:snap.exists()?'PQ veri tabanı Firebase üzerinden güncellendi.':'Firebase PQ veri tabanı henüz boş.'};
+      return{library,source:'firebase',message:(library.editions&&Object.keys(library.editions).length)?'PQ veri tabanı Firebase üzerinden güncellendi.':'Firebase PQ veri tabanı henüz boş.'};
     }catch(err){
       return{library:local,source:'local-fallback',message:`Firebase PQ veri tabanı okunamadı; yerel cache kullanılıyor. ${err.message||err}`,error:err};
     }
@@ -93,11 +93,13 @@
     }
   }
 
-  function buildAreaData(parsed,file,sourceDocument,user){
+  function makeDocumentId(){return 'pqdoc_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,9);}
+  function buildAreaData(parsed,file,sourceDocument,user,existingData){
+    existingData=existingData&&typeof existingData==='object'?existingData:{};
     const pqsObj={};parsed.pqs.forEach(p=>pqsObj[safeKey(p.pq)]=p);
     const amendmentsObj={};parsed.amendments.forEach((a,i)=>amendmentsObj[String(i+1).padStart(4,'0')]=a);
     const m=window.PQDocxParser?window.PQDocxParser.validate(parsed).metrics:{};
-    return{area:parsed.meta.area,year:parsed.meta.year,revision:parsed.meta.revision,publicationDate:parsed.meta.publicationDate||'',sourceFile:file.name,sourceDocument,importedAt:new Date().toISOString(),importedBy:user&&((user.displayName||user.email||user.uid))||'',amendmentMeta:parsed.amendmentMeta||{},pqs:pqsObj,amendments:amendmentsObj,stats:{pqCount:m.pqCount||parsed.pqs.length,onSite:m.onSite||0,offSite:m.offSite||0,ppq:m.ppq||0,auditorNotes:m.auditorNotes||0,amendments:m.amendments||parsed.amendments.length}};
+    return{documentId:existingData.documentId||makeDocumentId(),area:parsed.meta.area,year:String(parsed.meta.year||''),revision:String(parsed.meta.revision||''),publicationDate:parsed.meta.publicationDate||'',note:String(parsed.meta.note||existingData.note||''),active:parsed.meta.active!==false,sourceFile:file.name,sourceDocument,importedAt:existingData.importedAt||new Date().toISOString(),importedBy:existingData.importedBy||user&&((user.displayName||user.email||user.uid))||'',metadataUpdatedAt:new Date().toISOString(),metadataHistory:existingData.metadataHistory||{},amendmentMeta:parsed.amendmentMeta||{},pqs:pqsObj,amendments:amendmentsObj,stats:{pqCount:m.pqCount||parsed.pqs.length,onSite:m.onSite||0,offSite:m.offSite||0,ppq:m.ppq||0,auditorNotes:m.auditorNotes||0,amendments:m.amendments||parsed.amendments.length}};
   }
 
   async function saveParsedDocument({file,parsed,editionKey,overwrite=false,onProgress}){
@@ -109,19 +111,20 @@
     if(!connected)throw new Error('Firebase Realtime Database bağlantısı kurulamadı. İnternet bağlantısını, databaseURL ayarını ve Firebase erişimini kontrol edin.');
 
     const area=parsed.meta.area,editionPath=`icao_pq_library/editions/${editionKey}`,areaPath=`${editionPath}/areas/${safeKey(area)}`;
-    let editionExisting,existing;
+    let editionExisting,existing,activeExisting;
     emit(onProgress,'check','Mevcut sürüm/alan kaydı kontrol ediliyor…');
     try{
-      [editionExisting,existing]=await Promise.all([
+      [editionExisting,existing,activeExisting]=await Promise.all([
         withTimeout(db.ref(editionPath).once('value'),DB_TIMEOUT_MS,'Firebase sürüm kontrolü'),
-        withTimeout(db.ref(areaPath).once('value'),DB_TIMEOUT_MS,'Firebase alan kontrolü')
+        withTimeout(db.ref(areaPath).once('value'),DB_TIMEOUT_MS,'Firebase alan kontrolü'),
+        withTimeout(db.ref(`icao_pq_library/activeByArea/${safeKey(area)}`).once('value'),DB_TIMEOUT_MS,'Firebase aktif PQ sürümü kontrolü')
       ]);
     }catch(err){throw friendlyDbError(err);}
     if(existing.exists()&&!overwrite)throw new Error(`${editionKey} / ${area} zaten kayıtlı. Güncelleme onayı gerekir.`);
 
     // Storage, ana veritabanı kaydını artık bloke etmez. Önce yapılandırılmış PQ verisi yazılır.
     const baseSourceDocument={status:'pending',name:file&&file.name||'',size:file&&file.size||0,type:file&&file.type||'',sha256:await sha256(file),storagePath:'',downloadURL:''};
-    const areaData=buildAreaData(parsed,file,baseSourceDocument,user),now=new Date().toISOString(),importId=`imp_${Date.now()}_${Math.random().toString(36).slice(2,8)}`;
+    const areaData=buildAreaData(parsed,file,baseSourceDocument,user,existing.exists()?existing.val():null),now=new Date().toISOString(),importId=`imp_${Date.now()}_${Math.random().toString(36).slice(2,8)}`;
     const editionMeta={year:parsed.meta.year,revision:parsed.meta.revision,label:`${parsed.meta.year} Edition${parsed.meta.revision?` · Revision ${parsed.meta.revision}`:''}`,updatedAt:now};
     if(!editionExisting.exists())editionMeta.createdAt=now;
     const importData={importId,editionKey,area,fileName:file.name,fileSize:file.size||0,sha256:baseSourceDocument.sha256||'',sourceDocument:baseSourceDocument,stats:areaData.stats,importedAt:now,importedBy:areaData.importedBy,mode:existing.exists()?'replace':'create'};
@@ -133,6 +136,16 @@
     if(editionMeta.createdAt)updates[`icao_pq_library/editions/${editionKey}/createdAt`]=editionMeta.createdAt;
     updates[areaPath]=areaData;
     updates[`icao_pq_library/imports/${importId}`]=importData;
+    const activePath=`icao_pq_library/activeByArea/${safeKey(area)}`;
+    const previousActive=activeExisting&&activeExisting.exists()?activeExisting.val():null;
+    if(areaData.active){
+      if(previousActive&&previousActive.editionKey&&previousActive.editionKey!==editionKey){
+        updates[`icao_pq_library/editions/${safeKey(previousActive.editionKey)}/areas/${safeKey(area)}/active`]=false;
+      }
+      updates[activePath]={editionKey,area,year:areaData.year,revision:areaData.revision,documentId:areaData.documentId,updatedAt:now};
+    }else if(previousActive&&previousActive.editionKey===editionKey){
+      updates[activePath]=null;
+    }
 
     emit(onProgress,'database-write','PQ verileri Firebase Realtime Database’e yazılıyor…');
     try{await withTimeout(db.ref().update(firebaseValue(updates)),DB_TIMEOUT_MS,'Firebase PQ veri yazımı');}catch(err){throw friendlyDbError(err);}
@@ -163,10 +176,93 @@
     local.editions[editionKey].areas=local.editions[editionKey].areas||{};
     local.editions[editionKey].areas[area]=areaData;
     local.editions[editionKey].updatedAt=now;
+    local.activeByArea=local.activeByArea||{};
+    if(areaData.active)local.activeByArea[area]={editionKey,area,year:areaData.year,revision:areaData.revision,documentId:areaData.documentId,updatedAt:now};
+    else if(local.activeByArea[area]&&local.activeByArea[area].editionKey===editionKey)delete local.activeByArea[area];
     writeLocal(local);
     emit(onProgress,'done','PQ verisi Firebase’e kaydedildi.',sourceDocument.status);
     return{editionKey,area,areaData,sourceDocument,replaced:existing.exists(),importId};
   }
 
-  window.PQRepository={load,saveParsedDocument,readLocal,writeLocal,safeKey,waitForDbConnection};
+
+  async function setActiveAreaRecord({editionKey,area,onProgress}){
+    if(typeof db==='undefined'||!db)throw new Error('Firebase Realtime Database bağlantısı bulunamadı.');
+    if(!isOnline())throw new Error('Firebase kaydı için çevrim içi bağlantı gerekir.');
+    if(!authUser())throw new Error('Firebase kaydı için yetkili kullanıcı girişi gerekir.');
+    editionKey=String(editionKey||'').trim();area=String(area||'').trim().toUpperCase();
+    if(!editionKey||!area)throw new Error('Aktif kayıt için sürüm ve denetim alanı zorunludur.');
+    emit(onProgress,'connect','Aktif PQ sürümü güncelleniyor…');
+    const connected=await waitForDbConnection();if(!connected)throw new Error('Firebase Realtime Database bağlantısı kurulamadı.');
+    const targetPath=`icao_pq_library/editions/${safeKey(editionKey)}/areas/${safeKey(area)}`;
+    const activePath=`icao_pq_library/activeByArea/${safeKey(area)}`;
+    let target,previous;
+    try{[target,previous]=await Promise.all([withTimeout(db.ref(targetPath).once('value'),DB_TIMEOUT_MS,'Aktif PQ hedef kaydı'),withTimeout(db.ref(activePath).once('value'),DB_TIMEOUT_MS,'Aktif PQ mevcut kaydı')]);}catch(err){throw friendlyDbError(err);}
+    if(!target.exists())throw new Error('Aktif yapılacak PQ sürüm kaydı bulunamadı.');
+    const data=target.val()||{},now=new Date().toISOString(),updates={};
+    const prev=previous.exists()?previous.val():null;
+    if(prev&&prev.editionKey&&prev.editionKey!==editionKey)updates[`icao_pq_library/editions/${safeKey(prev.editionKey)}/areas/${safeKey(area)}/active`]=false;
+    updates[`${targetPath}/active`]=true;
+    updates[`${targetPath}/metadataUpdatedAt`]=now;
+    updates[activePath]={editionKey,area,year:String(data.year||''),revision:String(data.revision||''),documentId:data.documentId||'',updatedAt:now};
+    try{await withTimeout(db.ref().update(firebaseValue(updates)),DB_TIMEOUT_MS,'Aktif PQ sürümü yazımı');}catch(err){throw friendlyDbError(err);}
+    return{editionKey,area,active:true};
+  }
+
+  async function updateMetadata({sourceEditionKey,sourceArea,meta,onProgress}){
+    if(typeof db==='undefined'||!db)throw new Error('Firebase Realtime Database bağlantısı bulunamadı.');
+    if(!isOnline())throw new Error('Firebase kaydı için çevrim içi bağlantı gerekir.');
+    if(!authUser())throw new Error('Firebase kaydı için yetkili kullanıcı girişi gerekir.');
+    sourceEditionKey=String(sourceEditionKey||'').trim();sourceArea=String(sourceArea||'').trim().toUpperCase();meta=meta||{};
+    const targetArea=String(meta.area||'').trim().toUpperCase(),year=String(meta.year||'').trim(),revision=String(meta.revision||'').trim();
+    if(!sourceEditionKey||!sourceArea)throw new Error('Kaynak PQ sürüm kaydı tanımlanamadı.');
+    if(!targetArea||!year)throw new Error('Denetim alanı ve sürüm zorunludur.');
+    const targetEditionKey=safeKey(`${year}_R${revision||'0'}`);
+    const sourceEditionPath=`icao_pq_library/editions/${safeKey(sourceEditionKey)}`;
+    const sourcePath=`${sourceEditionPath}/areas/${safeKey(sourceArea)}`;
+    const targetEditionPath=`icao_pq_library/editions/${targetEditionKey}`;
+    const targetPath=`${targetEditionPath}/areas/${safeKey(targetArea)}`;
+    emit(onProgress,'connect','PQ metadata güncellemesi için Firebase bağlantısı kontrol ediliyor…');
+    const connected=await waitForDbConnection();if(!connected)throw new Error('Firebase Realtime Database bağlantısı kurulamadı.');
+    let sourceRec,targetRec,sourceEdition,sourceActive,targetActive,targetEdition;
+    try{
+      [sourceRec,targetRec,sourceEdition,sourceActive,targetActive,targetEdition]=await Promise.all([
+        withTimeout(db.ref(sourcePath).once('value'),DB_TIMEOUT_MS,'Kaynak PQ kaydı'),
+        withTimeout(db.ref(targetPath).once('value'),DB_TIMEOUT_MS,'Hedef PQ kaydı'),
+        withTimeout(db.ref(sourceEditionPath).once('value'),DB_TIMEOUT_MS,'Kaynak sürüm kaydı'),
+        withTimeout(db.ref(`icao_pq_library/activeByArea/${safeKey(sourceArea)}`).once('value'),DB_TIMEOUT_MS,'Kaynak aktif PQ kaydı'),
+        withTimeout(db.ref(`icao_pq_library/activeByArea/${safeKey(targetArea)}`).once('value'),DB_TIMEOUT_MS,'Hedef aktif PQ kaydı'),
+        withTimeout(db.ref(targetEditionPath).once('value'),DB_TIMEOUT_MS,'Hedef sürüm kaydı')
+      ]);
+    }catch(err){throw friendlyDbError(err);}
+    if(!sourceRec.exists())throw new Error('Güncellenecek PQ sürüm kaydı Firebase’de bulunamadı.');
+    const samePath=sourceEditionKey===targetEditionKey&&sourceArea===targetArea;
+    if(!samePath&&targetRec.exists())throw new Error(`${targetArea} / ${year} / Revision ${revision||'0'} için zaten bir kayıt var. Önce hedef kaydı kontrol edin.`);
+    const now=new Date().toISOString(),current=sourceRec.val()||{},documentId=current.documentId||makeDocumentId();
+    const next={...current,documentId,area:targetArea,year,revision,publicationDate:String(meta.publicationDate||''),note:String(meta.note||''),active:meta.active===true,metadataUpdatedAt:now};
+    const history={...(current.metadataHistory||{})};
+    const historyKey=`chg_${Date.now()}_${Math.random().toString(36).slice(2,7)}`;
+    history[historyKey]={at:now,from:{area:sourceArea,year:String(current.year||''),revision:String(current.revision||''),publicationDate:String(current.publicationDate||''),note:String(current.note||''),active:current.active===true},to:{area:targetArea,year,revision,publicationDate:next.publicationDate,note:next.note,active:next.active},actor:(authUser()&&((authUser().displayName||authUser().email||authUser().uid)))||''};
+    next.metadataHistory=history;
+    const updates={};
+    updates[`${targetEditionPath}/year`]=year;updates[`${targetEditionPath}/revision`]=revision;updates[`${targetEditionPath}/label`]=`${year} Edition${revision?` · Revision ${revision}`:''}`;updates[`${targetEditionPath}/updatedAt`]=now;
+    if(!targetEdition.exists())updates[`${targetEditionPath}/createdAt`]=now;
+    updates[targetPath]=next;
+    if(!samePath){
+      const sourceAreas=((sourceEdition.val()||{}).areas)||{};
+      const otherAreas=Object.keys(sourceAreas).filter(a=>a!==sourceArea);
+      if(targetEditionKey!==sourceEditionKey&&otherAreas.length===0)updates[sourceEditionPath]=null;else updates[sourcePath]=null;
+    }
+    const srcActive=sourceActive.exists()?sourceActive.val():null,tgtActive=targetActive.exists()?targetActive.val():null;
+    const sourcePointerPath=`icao_pq_library/activeByArea/${safeKey(sourceArea)}`,targetPointerPath=`icao_pq_library/activeByArea/${safeKey(targetArea)}`;
+    if(srcActive&&srcActive.editionKey===sourceEditionKey&&(!samePath||!next.active))updates[sourcePointerPath]=null;
+    if(next.active){
+      if(tgtActive&&tgtActive.editionKey&&tgtActive.editionKey!==targetEditionKey&&!(tgtActive.editionKey===sourceEditionKey&&targetArea===sourceArea))updates[`icao_pq_library/editions/${safeKey(tgtActive.editionKey)}/areas/${safeKey(targetArea)}/active`]=false;
+      updates[targetPointerPath]={editionKey:targetEditionKey,area:targetArea,year,revision,documentId,updatedAt:now};
+    }
+    emit(onProgress,'database-write','PQ sürüm/revizyon bilgileri Firebase’de güncelleniyor…');
+    try{await withTimeout(db.ref().update(firebaseValue(updates)),DB_TIMEOUT_MS,'PQ metadata güncellemesi');}catch(err){throw friendlyDbError(err);}
+    return{sourceEditionKey,sourceArea,targetEditionKey,targetArea,record:next};
+  }
+
+  window.PQRepository={load,saveParsedDocument,updateMetadata,setActiveAreaRecord,readLocal,writeLocal,safeKey,waitForDbConnection};
 })();

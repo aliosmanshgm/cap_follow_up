@@ -1,0 +1,24 @@
+USOAP CMA CAP Follow Up - PQ Veri Tabani v2.6
+
+Bu paket yalnızca degisen dosyalari icerir.
+GitHub Desktop ile clone ettiginiz repository'nin KOK klasorune bu paketin ICERIGINI kopyalayin.
+Klasor yapisini koruyun ve ayni adli dosyalar icin Replace/Overwrite secin.
+
+Degisen dosyalar:
+- index.html
+- app-manifest.json
+- README.md
+- css/app.css
+- firebase/README_PQ_LIBRARY_RULES.md
+- js/app.js
+- js/modules/pq-library.js
+- js/services/pq-repository.js
+
+Ana gelistirmeler:
+- PQ veri tabani gruplama: Denetim Alani -> Surum -> Revizyon
+- Surum ve Revizyon ayri metadata alanlari
+- DOCX yukleme oncesi metadata dogrulama/duzeltme
+- Kayit sonrasi metadata duzenleme ve tasima
+- Alan bazinda aktif kayit
+- Detayli PQ verilerinin korunmasi
+- index.html artik moduler css/js dosyalarini gercekten yukler

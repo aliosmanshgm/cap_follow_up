@@ -1,3 +1,14 @@
+# 12.11.2026 — PQ Veri Tabanı Alan → Sürüm → Revizyon Güncellemesi
+
+Bu sürümde `📚 ICAO PQ Veri Tabanı & Sürüm Yönetimi` ekranı denetim alanı merkezli hale getirilmiştir.
+
+- Ana gruplama: `LEG → ORG → PEL → OPS → AIR → AIG → ANS → AGA`.
+- Her alan altında ayrı `Sürüm` ve `Revizyon` kayıtları gösterilir.
+- ICAO PQ DOCX okunduktan sonra Firebase kaydından önce `Denetim Alanı`, `Sürüm`, `Revizyon`, `Kaynak Belge Tarihi`, `Not` ve `Aktif kayıt` bilgileri düzenlenebilir.
+- Kayıt sonrasında `✏️ Düzenle` ile aynı metadata yeniden güncellenebilir. Alan/sürüm/revizyon değişirse PQ soruları, Guidance, CE/SSP, PPQ, amendment ve kaynak belge bilgileri korunarak Firebase kaydı yeni konuma taşınır.
+- Aktif referans artık tek bir global sürüm yerine denetim alanı bazında tutulabilir (`activeByArea`).
+- `index.html` gömülü eski CSS/JS yerine gerçek `css/app.css` ve `js/...` dosyalarını yükler; GitHub'da yapılan modüler dosya değişiklikleri artık canlı uygulamaya yansır.
+
 # Faz 2.4 — ICAO PQ DOCX Wrapped Cell Compatibility
 
 Bu sürüm, bazı ICAO PQ Word dokümanlarında (özellikle AGA) Protocol Question / Guidance / ICAO References hücrelerinin `w:sdt` içerisine sarılı olmasını destekler. Satır içindeki mantıksal 6 hücre sırası korunur ve Word satır kırımları (`w:br`) metin içinde saklanır.
