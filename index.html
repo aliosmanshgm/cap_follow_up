@@ -8,13 +8,12 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-storage-compat.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.10/pdfmake.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.10/vfs_fonts.js"></script>
-    <link rel="stylesheet" href="css/app.css?v=20261112-pq-area-version-revision">
+    <link rel="stylesheet" href="css/app.css?v=20261113-monolith-rebuild-v3">
 </head>
 <body>
 
@@ -43,42 +42,67 @@
             <p id="mainSubtitle" style="margin:5px 0 0; color: var(--muted); font-size:11px;" data-i18n="appSubtitle">Analiz için lütfen Word (.docx) belgelerini yükleyiniz.</p>
         </div>
         
-        <div class="tabs-container">
-            <button class="tab-btn active" onclick="switchTab('dashboard')" id="btn-tab-dashboard">📊 Dashboard (Genel)</button>
-            <button class="tab-btn" onclick="switchTab('milestones')" id="btn-tab-milestones">🗓️ Hedef Tabloları</button>
-            <button class="tab-btn" onclick="switchTab('summary')" id="btn-tab-summary">📈 Alan Özetleri</button>
-            <button class="tab-btn" onclick="switchTab('upcoming')" id="btn-tab-upcoming">⚠️ Yaklaşan Görevler</button>
-            <button class="tab-btn" onclick="switchTab('list')" id="btn-tab-list">📋 Detaylı CAP Listesi</button>
-            <button class="tab-btn" onclick="switchTab('kanban')" id="btn-tab-kanban">🗂️ Kanban Board</button>
-            <button class="tab-btn" onclick="switchTab('report')" id="btn-tab-report">📝 Yönetici Raporu</button>
-            <button class="tab-btn" onclick="switchTab('trend')" id="btn-tab-trend" style="color: var(--primary);">🚀 Trend & Kıyaslama</button>
-            <button class="tab-btn" onclick="switchTab('pq-library')" id="btn-tab-pq-library" style="color: var(--primary);">📚 ICAO PQ Veri Tabanı & Sürüm Yönetimi</button>
-            
-            <button class="tab-btn" onclick="switchTab('empty-caps')" id="btn-tab-empty-caps" style="color: var(--danger);">🈳 Eksik/Boş CAP'ler</button>
-            <button class="tab-btn" onclick="switchTab('icao-closed')" id="btn-tab-icao-closed" style="color: #ca8a04;">🏆 ICAO tarafından kapatılanlar</button>
+        <div class="tabs-container grouped-nav">
+            <div class="nav-group open" data-nav-group="overview">
+                <button class="nav-group-title" type="button" onclick="toggleNavGroup(this)"><span>📊 Genel Bakış</span><span class="nav-chevron">⌄</span></button>
+                <div class="nav-group-items">
+                    <button class="tab-btn active" onclick="switchTab('dashboard')" id="btn-tab-dashboard">Genel Durum</button>
+                    <button class="tab-btn" onclick="switchTab('summary')" id="btn-tab-summary">Alan Performansı</button>
+                    <button class="tab-btn" onclick="switchTab('smart')" id="btn-tab-smart">Akıllı Yönetim Özeti</button>
+                </div>
+            </div>
+            <div class="nav-group open" data-nav-group="planning">
+                <button class="nav-group-title" type="button" onclick="toggleNavGroup(this)"><span>📅 Planlama ve Projeksiyon</span><span class="nav-chevron">⌄</span></button>
+                <div class="nav-group-items">
+                    <button class="tab-btn" onclick="switchTab('milestones')" id="btn-tab-milestones">Hedefler</button>
+                    <button class="tab-btn" onclick="switchTab('strategic')" id="btn-tab-strategic">Projeksiyon Analizi</button>
+                </div>
+            </div>
+            <div class="nav-group open" data-nav-group="tasks">
+                <button class="nav-group-title" type="button" onclick="toggleNavGroup(this)"><span>📌 Görev Takibi</span><span class="nav-chevron">⌄</span></button>
+                <div class="nav-group-items">
+                    <button class="tab-btn" onclick="switchTab('upcoming')" id="btn-tab-upcoming">Yaklaşan</button>
+                    <button class="tab-btn" onclick="switchTab('past')" id="btn-tab-past">Geciken</button>
+                    <button class="tab-btn" onclick="switchTab('kanban')" id="btn-tab-kanban">Kanban</button>
+                </div>
+            </div>
+
+            <div class="nav-group open" data-nav-group="visits">
+                <button class="nav-group-title" type="button" onclick="toggleNavGroup(this)"><span>🧭 Ziyaret ve İç Denetim</span><span class="nav-chevron">⌄</span></button>
+                <div class="nav-group-items">
+                    <button class="tab-btn" onclick="switchTab('visits')" id="btn-tab-visits">Ziyaret Planı</button>
+                    <button class="tab-btn" onclick="switchTab('visit-scope')" id="btn-tab-visit-scope">Kapsam ve Hazırlık</button>
+                    <button class="tab-btn" onclick="switchTab('icao-visit-validation')" id="btn-tab-icao-visit-validation">ICAO Resmî Ziyareti</button>
+                    <button class="tab-btn" onclick="switchTab('visit-workspace')" id="btn-tab-visit-workspace">Ziyaret Çalışma Alanı</button>
+                    <button class="tab-btn" onclick="switchTab('visit-followup')" id="btn-tab-visit-followup">Takip Yönetimi</button>
+                    <button class="tab-btn" onclick="switchTab('visit-consultation')" id="btn-tab-visit-consultation">Danışma Yönetimi</button>
+                    <button class="tab-btn" onclick="switchTab('visit-reports')" id="btn-tab-visit-reports">Ziyaret Raporları</button>
+                    <button class="tab-btn" onclick="switchTab('visit-management')" id="btn-tab-visit-management">Yönetim Paneli ve Takvim</button>
+                    <button class="tab-btn" onclick="switchTab('visit-analysis')" id="btn-tab-visit-analysis">PQ/CAP Geçmişi ve Analiz</button>
+                    <button class="tab-btn" onclick="switchTab('visit-audit')" id="btn-tab-visit-audit">Değişiklik Geçmişi</button>
+                </div>
+            </div>
+            <div class="nav-group open" data-nav-group="records">
+                <button class="nav-group-title" type="button" onclick="toggleNavGroup(this)"><span>📋 PQ ve CAP Kayıtları</span><span class="nav-chevron">⌄</span></button>
+                <div class="nav-group-items">
+                    <button class="tab-btn" onclick="switchTab('list')" id="btn-tab-list">Tüm PQ ve CAP'ler</button>
+                    <button class="tab-btn" onclick="switchTab('pq-library')" id="btn-tab-pq-library">📚 ICAO PQ Veri Tabanı &amp; Sürüm Yönetimi</button>
+                    <button class="tab-btn" onclick="switchTab('quality')" id="btn-tab-quality">Veri Kalitesi Merkezi</button>
+                    <button class="tab-btn" onclick="switchTab('empty-caps')" id="btn-tab-empty-caps">CAP Eksiklikleri</button>
+                    <button class="tab-btn" onclick="switchTab('icao-closed')" id="btn-tab-icao-closed">ICAO Kapatılanlar</button>
+                </div>
+            </div>
+            <div class="nav-group open" data-nav-group="reports">
+                <button class="nav-group-title" type="button" onclick="toggleNavGroup(this)"><span>📑 Yönetim Raporları</span><span class="nav-chevron">⌄</span></button>
+                <div class="nav-group-items">
+                    <button class="tab-btn" onclick="switchTab('report')" id="btn-tab-report">Yönetici Raporu</button>
+                    <button class="tab-btn" onclick="switchTab('trend')" id="btn-tab-trend">Trend ve Kıyaslama</button>
+                </div>
+            </div>
         </div>
 
-        <div style="margin-top: auto; display: flex; flex-direction: column;">
-            <div style="padding: 15px 20px; border-top: 1px solid var(--border); background: var(--card);">
-                <h4 style="font-size:12px; margin:0 0 10px 0; color:var(--text);">📂 Dosya Yüklemeleri</h4>
-                <label style="font-size:11px; color:var(--muted); font-weight:600; display:block; margin-bottom:4px;" data-i18n="lblWord">1️⃣ Orijinal Word Dosyaları (.docx)</label>
-                <input type="file" id="docxInput" multiple accept=".docx">
-                <div id="wordFileList" class="file-list-container"></div>
-                
-                <label style="font-size:11px; color:var(--muted); font-weight:600; display:block; margin-top:10px; margin-bottom:4px;" data-i18n="lblExcel">2️⃣ Excel Master Veri (.xlsx)</label>
-                <div style="display: flex; gap: 5px; align-items: center;">
-                    <input type="file" id="excelInput" accept=".xlsx, .xls">
-                    <button onclick="downloadTemplate()" class="btn-outline" style="padding: 4px; font-size:11px;" title="Excel Şablon İndir">📄</button>
-                </div>
-                <div id="excelFileList" class="file-list-container"></div>
-                <div id="eiStatusTxt" style="margin-top: 4px; font-size: 10px; display: none;"></div>
-            </div>
-
-            <div style="padding: 15px 20px; border-top: 1px solid var(--border); background: var(--kanban-bg);">
-                <h4 style="margin:0 0 10px 0; font-size:11px; color:var(--text); text-transform:uppercase;">💾 Arşivden Geri Yükle</h4>
-                <select id="sidebarArchiveSelect" style="width:100%; padding:8px; font-size:11px; margin-bottom:10px; border-radius:6px; border:1px solid var(--border); background: var(--card); color:var(--text);"></select>
-                <button onclick="restoreSelectedArchive('sidebarArchiveSelect')" style="width:100%; justify-content:center; background:var(--warn); padding:8px; font-size:12px; color:white;">🔄 Ekrana Al</button>
-            </div>
+        <div class="sidebar-footer-action">
+            <button onclick="openDataManagement()" class="btn-outline data-management-btn">📂 Veri Yönetimi</button>
         </div>
     </aside>
 
@@ -86,18 +110,137 @@
         
         <div class="header">
             <div></div>
-            <div style="display:flex; gap:8px; flex-wrap:wrap; justify-content: flex-end;">
-                <button onclick="toggleFiltersPanel()" class="btn-outline" style="border-color: var(--primary); color: var(--primary);">
-                    ⚙️ Gelişmiş Filtreler
-                </button>
-                <div style="width: 1px; background: var(--border); margin: 0 5px;"></div>
-                <button class="btn-outline" onclick="toggleLang()">🌐 TR/EN</button>
-                <button class="btn-outline" onclick="document.body.classList.toggle('dark-mode')">🌓 Tema</button>
-                <button onclick="archiveCurrentState()" style="background: var(--warn); color: white;" title="Mevcut durumu ileride kıyaslamak için veritabanına kaydeder.">💾 Anlık Arşivle</button>
-                <button onclick="exportExcel()" style="background: #059669;">📊 Excel</button>
-                <button onclick="exportPDF()" style="background: #dc2626;">📄 PDF</button> 
-                <button onclick="clearAllData()" style="background: var(--border); color: var(--text);">🗑️ Temizle</button>
-                <button class="btn-outline" onclick="firebase.auth().signOut()" style="border-color: var(--danger); color: var(--danger);">🚪 Çıkış</button>
+            <div class="header-actions">
+                <button onclick="toggleFiltersPanel()" class="btn-outline header-primary-action">🔎 Filtreler</button>
+                <button type="button" id="activeScreenPdfBtn" onclick="exportPDF()" style="background:#dc2626;" title="Aktif ekranı PDF olarak dışa aktar">📄 Ekran PDF</button>
+                <button id="activeScreenExcelBtn" onclick="exportExcel()" style="background:#059669;" title="Aktif ekranı Excel olarak dışa aktar">📊 Ekran Excel</button>
+                <button type="button" id="systemConnectionBadge" class="system-connection-badge checking" onclick="openSystemHealthModal()" title="Sistem bağlantı ve kayıt durumunu görüntüle">⚪ Kontrol ediliyor</button>
+                <div class="more-actions-wrap">
+                    <button class="btn-outline" onclick="toggleMoreActions(event)">⚙️ Diğer <span style="font-size:10px;">▼</span></button>
+                    <div id="moreActionsMenu" class="more-actions-menu">
+                        <button onclick="openDataManagement(); closeMoreActions();">📂 Veri Yönetimi</button>
+                        <button type="button" onclick="openSystemHealthModal(); closeMoreActions();">🩺 Sistem Kontrolü</button>
+                        <button onclick="archiveCurrentState(); closeMoreActions();">💾 Anlık Arşivle</button>
+                        <button id="globalLangToggleBtn" onclick="toggleLang(); closeMoreActions();">🌐 PQ Metni: TR</button>
+                        <button onclick="document.body.classList.toggle('dark-mode'); closeMoreActions();">🌓 Tema</button>
+                        <button onclick="clearAllData(); closeMoreActions();">🗑️ Verileri Temizle</button>
+                        <button onclick="firebase.auth().signOut(); closeMoreActions();" class="danger-menu-action">🚪 Çıkış</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="dataManagementModal" class="modal data-management-modal" onclick="if(event.target===this) closeDataManagement()">
+            <div class="modal-content data-management-content">
+                <div class="modal-header">
+                    <div>
+                        <h3 style="margin:0;color:var(--primary);">📂 Veri Yönetimi</h3>
+                        <div style="font-size:12px;color:var(--muted);margin-top:4px;">Dosya yükleme, arşiv ve veri işlemleri</div>
+                    </div>
+                    <button class="btn-outline" onclick="closeDataManagement()">✖</button>
+                </div>
+                <div class="data-management-grid">
+                    <section class="data-panel-card">
+                        <h4>1️⃣ Word CAP Raporları</h4>
+                        <label class="data-label" data-i18n="lblWord">Orijinal Word Dosyaları (.docx)</label>
+                        <input type="file" id="docxInput" multiple accept=".docx">
+                        <div id="wordFileList" class="file-list-container"></div>
+                    </section>
+                    <section class="data-panel-card">
+                        <h4>2️⃣ Excel Master Veri</h4>
+                        <label class="data-label" data-i18n="lblExcel">Excel Master Veri (.xlsx)</label>
+                        <div style="display:flex;gap:6px;align-items:center;">
+                            <input type="file" id="excelInput" accept=".xlsx, .xls">
+                            <button onclick="downloadTemplate()" class="btn-outline" title="Excel Şablon İndir">📄 Şablon</button>
+                        </div>
+                        <div id="excelFileList" class="file-list-container"></div>
+                        <div id="eiStatusTxt" style="margin-top:6px;font-size:11px;display:none;"></div>
+                    </section>
+                    <section class="data-panel-card">
+                        <h4>💾 Arşiv İşlemleri</h4>
+                        <select id="sidebarArchiveSelect" style="margin-bottom:10px;"></select>
+                        <div class="data-action-row">
+                            <button onclick="restoreSelectedArchive('sidebarArchiveSelect')" style="background:var(--warn);">🔄 Arşivi Ekrana Al</button>
+                            <button onclick="archiveCurrentState()">💾 Anlık Arşivle</button>
+                        </div>
+                    </section>
+                    <section class="data-panel-card">
+                        <h4>🌐 ICAO Resmî EI Verileri</h4>
+                        <p style="font-size:11px;color:var(--muted);line-height:1.45;margin:0 0 10px;">CMAA, OSVA, ICVM ve diğer resmî ICAO değerlendirmelerinin Overall ve alan bazlı EI oranlarını yönetir.</p>
+                        <button type="button" onclick="openIcaoOfficialEiManager()" style="width:100%;justify-content:center;">📊 Resmî EI Verilerini Yönet</button>
+                        <div id="icaoOfficialEiStatusTxt" class="icao-ei-status">Resmî EI kayıtları yükleniyor...</div>
+                    </section>
+                    <section class="data-panel-card danger-zone-card">
+                        <h4>⚠️ Veri İşlemleri</h4>
+                        <p>Yüklenen verileri temizleme işlemi mevcut çalışma verilerini sıfırlar.</p>
+                        <button onclick="clearAllData()" style="background:var(--danger);">🗑️ Verileri Temizle</button>
+                    </section>
+                </div>
+            </div>
+        </div>
+
+        <div id="icaoOfficialEiModal" class="modal" onclick="if(event.target===this) closeIcaoOfficialEiManager()">
+            <div class="modal-content icao-official-ei-content">
+                <div class="modal-header">
+                    <div>
+                        <h3 style="margin:0;color:var(--primary);">🌐 ICAO Resmî EI Veri Yönetimi</h3>
+                        <div style="font-size:12px;color:var(--muted);margin-top:4px;">Resmî ICAO değerlendirme dönemlerini ve alan bazlı EI oranlarını Firebase üzerinde saklar.</div>
+                    </div>
+                    <button type="button" class="btn-outline" onclick="closeIcaoOfficialEiManager()">✖</button>
+                </div>
+                <div class="icao-ei-manager-grid">
+                    <section class="data-panel-card">
+                        <div style="display:flex;justify-content:space-between;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap;">
+                            <div><h4 style="margin:0;">Kayıtlı Değerlendirmeler</h4><div id="icaoOfficialEiListSummary" class="icao-ei-status"></div></div>
+                            <button type="button" class="btn-outline" onclick="resetIcaoOfficialEiForm()">➕ Yeni Kayıt</button>
+                        </div>
+                        <div id="icaoOfficialEiRecordList" class="icao-ei-record-list"></div>
+                        <input id="icaoEiExcelInput" type="file" accept=".xlsx,.xls" style="display:none" onchange="importIcaoOfficialEiExcel(event)">
+                        <div class="icao-ei-actions">
+                            <button type="button" class="btn-outline" onclick="downloadIcaoOfficialEiExcelTemplate()">📄 Excel Şablonu</button>
+                            <button type="button" class="btn-outline" onclick="document.getElementById('icaoEiExcelInput').click()">📥 Excel'den İçe Aktar</button>
+                            <button type="button" class="btn-outline" onclick="exportIcaoOfficialEiExcel()">📤 Excel'e Dışa Aktar</button>
+                            <button type="button" class="btn-outline" onclick="seedDefaultIcaoOfficialEiData()">🧩 Mevcut İki Dönemi Firebase'e Aktar</button>
+                        </div>
+                        <div id="icaoEiExcelStatus" class="icao-ei-status" aria-live="polite"></div>
+                    </section>
+                    <section class="icao-ei-form-card">
+                        <form id="icaoOfficialEiForm" onsubmit="saveIcaoOfficialEiRecord(event)">
+                            <input type="hidden" id="icaoEiRecordId">
+                            <div class="icao-ei-form-grid">
+                                <div><label>Değerlendirme adı *</label><input id="icaoEiName" required placeholder="Örn: Virtual OSVA"></div>
+                                <div><label>Değerlendirme türü</label><select id="icaoEiType"><option value="CMAA">CMAA</option><option value="OSVA">OSVA</option><option value="ICVM">ICVM</option><option value="AUDIT">Denetim</option><option value="OTHER">Diğer</option></select></div>
+                                <div><label>Değerlendirme tarihi *</label><input type="date" id="icaoEiAssessmentDate" required></div>
+                                <div><label>Raporun alındığı tarih</label><input type="date" id="icaoEiReportDate"></div>
+                                <div><label>Overall EI (%)</label><input type="number" id="icaoEiOverall" min="0" max="100" step="0.01" placeholder="Örn: 55,28"></div>
+                                <div><label>Durum</label><label style="display:flex;align-items:center;gap:8px;margin-top:8px;font-weight:700;"><input type="checkbox" id="icaoEiActive" checked style="width:17px;height:17px;"> Dashboard karşılaştırmalarında aktif kullan</label></div>
+                                <div class="full"><label>Kaynak / referans</label><input id="icaoEiSource" placeholder="Örn: ICAO USOAP OLF resmî sonuç raporu"></div>
+                                <div class="full"><label>Açıklama / not</label><textarea id="icaoEiNotes" rows="3" placeholder="Değerlendirmeye ilişkin açıklama..."></textarea></div>
+                            </div>
+                            <div style="margin-top:14px;border-top:1px solid var(--border);padding-top:12px;">
+                                <h4 style="margin:0 0 5px;">Alan Bazlı Resmî EI Oranları (%)</h4>
+                                <div style="font-size:11px;color:var(--muted);">Değerleri 0–100 arasında, virgülden sonra iki hane hassasiyetle giriniz.</div>
+                                <div class="icao-ei-area-grid">
+                                    <label>LEG<input type="number" id="icaoEiAreaLEG" min="0" max="100" step="0.01"></label>
+                                    <label>ORG<input type="number" id="icaoEiAreaORG" min="0" max="100" step="0.01"></label>
+                                    <label>PEL<input type="number" id="icaoEiAreaPEL" min="0" max="100" step="0.01"></label>
+                                    <label>OPS<input type="number" id="icaoEiAreaOPS" min="0" max="100" step="0.01"></label>
+                                    <label>AIR<input type="number" id="icaoEiAreaAIR" min="0" max="100" step="0.01"></label>
+                                    <label>AIG<input type="number" id="icaoEiAreaAIG" min="0" max="100" step="0.01"></label>
+                                    <label>ANS<input type="number" id="icaoEiAreaANS" min="0" max="100" step="0.01"></label>
+                                    <label>AGA<input type="number" id="icaoEiAreaAGA" min="0" max="100" step="0.01"></label>
+                                </div>
+                            </div>
+                            <div id="icaoEiFormAudit" class="icao-ei-status"></div>
+                            <div id="icaoEiFormMessage" class="icao-ei-status" aria-live="polite"></div>
+                            <div class="icao-ei-actions">
+                                <button type="submit">💾 Kaydet / Güncelle</button>
+                                <button type="button" class="btn-outline" onclick="resetIcaoOfficialEiForm()">Temizle</button>
+                                <button type="button" id="icaoEiDeleteBtn" style="background:var(--danger);display:none;" onclick="deleteIcaoOfficialEiRecord()">🗑️ Pasife Al / Sil</button>
+                            </div>
+                        </form>
+                    </section>
+                </div>
             </div>
         </div>
 
@@ -108,6 +251,25 @@
             </div>
             
             <button onclick="clearFilters()" class="btn-outline" style="width:100%; margin-bottom:15px; border-color:var(--danger); color:var(--danger); justify-content:center;">🗑️ Filtreleri Temizle</button>
+
+
+            <div class="control-group ready-filter-section" id="readyFiltersGroup">
+                <label class="ready-filter-title"><span>⚡ Hazır Filtreler</span><span class="control-hint">Tek seçim</span></label>
+                <div class="ready-filter-grid" id="readyFilterGrid">
+                    <button type="button" class="ready-filter-btn" data-ready-filter="late" onclick="applyReadyFilter('late')"><span class="ready-filter-icon">🔴</span><span>Gecikmiş Adımlar</span></button>
+                    <button type="button" class="ready-filter-btn" data-ready-filter="upcoming_30" onclick="applyReadyFilter('upcoming_30')"><span class="ready-filter-icon">🟠</span><span>Yaklaşan 30 Gün</span></button>
+                    <button type="button" class="ready-filter-btn" data-ready-filter="date_risk" onclick="applyReadyFilter('date_risk')"><span class="ready-filter-icon">⚠️</span><span>Tarih Riski / Eksik Tarih</span></button>
+                    <button type="button" class="ready-filter-btn" data-ready-filter="pq_completed" onclick="applyReadyFilter('pq_completed')"><span class="ready-filter-icon">✅</span><span>Tüm Adımları Tamamlanan PQ</span></button>
+                    <button type="button" class="ready-filter-btn" data-ready-filter="pq_open" onclick="applyReadyFilter('pq_open')"><span class="ready-filter-icon">⏳</span><span>Açık PQ'lar</span></button>
+                    <button type="button" class="ready-filter-btn" data-ready-filter="closable_month" onclick="applyReadyFilter('closable_month')"><span class="ready-filter-icon">📅</span><span id="readyFilterMonthLabel">Ay Sonuna Kadar Kapanabilir</span></button>
+                    <button type="button" class="ready-filter-btn" data-ready-filter="evidence_waiting" onclick="applyReadyFilter('evidence_waiting')"><span class="ready-filter-icon">📎</span><span>Kanıt Bekleyenler</span></button>
+                    <button type="button" class="ready-filter-btn" data-ready-filter="empty_cap" onclick="applyReadyFilter('empty_cap')"><span class="ready-filter-icon">🕳️</span><span>CAP Yok / Eylem Boş</span></button>
+                    <button type="button" class="ready-filter-btn" data-ready-filter="missing_office" onclick="applyReadyFilter('missing_office')"><span class="ready-filter-icon">🏢</span><span>Sorumlu Ofisi Eksik</span></button>
+                    <button type="button" class="ready-filter-btn navigation" data-ready-action="official_closed" onclick="applyReadyFilter('official_closed')"><span class="ready-filter-icon">🏆</span><span>ICAO Kapatılanlar</span></button>
+                </div>
+                <div id="activeReadyFilterInfo" class="active-ready-filter-info"></div>
+                <p class="ready-filter-help">Hazır filtre, alan, CE, ofis, personel, doğrulama türü ve arama seçimleriyle birlikte çalışır. Yeni bir hazır filtre seçildiğinde yalnızca çakışabilecek durum ve tarih seçimleri temizlenir.</p>
+            </div>
 
             <div class="control-group" id="activeTagsGroup" style="display: none; background: rgba(37,99,235,0.05); padding: 10px; border-radius: 8px; border: 1px dashed var(--primary);">
                 <label style="color: var(--primary);">🎯 Aktif Akıllı Etiketler <span class="control-hint">(OR mantığı ile çalışır)</span></label>
@@ -189,7 +351,7 @@
                         </div>
                         <div class="ei-stats-text">
                             <div><span><i class="dot" style="background:#64748b;"></i> <b>CMAA EI (%):</b></span> <span id="lblBase">%0.00</span></div>
-                            <div><span><i class="dot" style="background:var(--icao-blue);"></i> <b>OSVA EI (%):</b></span> <span id="lblIcao" style="color:var(--icao-blue);">%0.00</span></div>
+                            <div><span><i class="dot" style="background:var(--icao-blue);"></i> <b>ICAO Validasyonları EI (%):</b></span> <span id="lblIcao" style="color:var(--icao-blue);">%0.00</span></div>
                             <div><span><i class="dot" style="background:var(--ok);"></i> <b>CAP Adımları Tamamlanmışlar Dahil EI (%):</b></span> <span id="lblLocal" style="color:var(--ok);">%0.00</span></div>
                             <div style="border-left: 4px solid var(--warn);"><span><i class="dot" style="background:var(--warn);"></i> <b>Tüm CAP'ler Tamamlanmışlar Dahil EI (%):</b></span> <span id="lblProj" style="color:var(--warn); font-size: 16px;">%0.00</span></div>
                         </div>
@@ -212,10 +374,119 @@
                 <div><canvas id="eiChartCanvas" style="min-height: 280px;"></canvas></div>
             </div>
 
+            <div class="ei-panel" id="icaoOfficialChartPanel" style="grid-template-columns: 1fr; padding: 20px; margin-top: 20px;">
+                <div style="display:flex; justify-content:space-between; gap:12px; align-items:flex-start; flex-wrap:wrap; margin-bottom:12px;">
+                    <div>
+                        <h3 style="margin: 0 0 5px 0; color: var(--primary);">🌐 ICAO Resmî EI Karşılaştırma Grafiği</h3>
+                        <p style="margin:0; font-size:13px; color:var(--muted);">Veri Yönetimi bölümündeki aktif resmî ICAO değerlendirmelerinden seçilen dönemlerin Overall ve alan bazlı EI oranlarını karşılaştırır. Kayıt sayısı sınırsızdır; grafikte okunabilirlik için aynı anda en fazla dört dönem gösterilir.</p>
+                    </div>
+                    <div id="icaoOfficialPeriodSummary" style="font-size:12px; color:var(--muted); background: rgba(37,99,235,0.06); padding: 8px 12px; border-radius: 8px; border: 1px solid rgba(37,99,235,0.12);">
+                        Gösterilen dönemler: <b id="icaoOfficialSelectedPeriodSummary">Yükleniyor...</b>
+                    </div>
+                </div>
+
+                <div id="icaoOfficialOverallCardsSection" style="margin-bottom:14px;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px;">
+                        <h4 style="margin:0;color:var(--text);">Overall EI Kartları</h4>
+                        <span id="icaoOfficialOverallCardsHint" style="font-size:11px;color:var(--muted);">Seçilen resmî değerlendirmelerin Overall EI değerleri</span>
+                    </div>
+                    <div id="icaoOfficialOverallCards" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(205px,1fr));gap:10px;"></div>
+                </div>
+
+                <div id="icaoOfficialComparisonControls" style="display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap;margin-bottom:14px;padding:14px;border:1px solid var(--border);border-radius:10px;background:rgba(148,163,184,0.05);">
+                    <div style="flex:1;min-width:310px;">
+                        <label style="display:block;font-size:12px;font-weight:700;margin-bottom:7px;">Grafikte gösterilecek dönemler <span style="font-weight:400;color:var(--muted);">(en fazla 4)</span></label>
+                        <div id="icaoOfficialPeriodSelector" style="display:flex;gap:8px;flex-wrap:wrap;min-height:38px;align-items:center;color:var(--muted);font-size:12px;">Dönemler yükleniyor...</div>
+                    </div>
+                    <div style="min-width:290px;max-width:420px;flex:0 1 380px;">
+                        <label for="icaoOfficialReferenceSelect" style="display:block;font-size:12px;font-weight:700;margin-bottom:7px;">Değişim hesabı için referans dönem</label>
+                        <select id="icaoOfficialReferenceSelect" onchange="changeIcaoOfficialReferencePeriod(this.value)" style="width:100%;margin-bottom:8px;"><option value="">Dönem seçiniz</option></select>
+                        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                            <button type="button" class="btn-outline" onclick="selectIcaoOfficialPeriodPreset('firstLast')" style="padding:6px 9px;font-size:11px;">İlk + Son</button>
+                            <button type="button" class="btn-outline" onclick="selectIcaoOfficialPeriodPreset('latestTwo')" style="padding:6px 9px;font-size:11px;">Son 2</button>
+                            <button type="button" class="btn-outline" onclick="selectIcaoOfficialPeriodPreset('all')" style="padding:6px 9px;font-size:11px;">Tümü / En Uygun 4</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="icaoOfficialChartEmptyState" style="display:none;min-height:180px;align-items:center;justify-content:center;text-align:center;color:var(--muted);background:rgba(148,163,184,0.06);border:1px dashed var(--border);border-radius:10px;padding:24px;"></div>
+                <div id="icaoOfficialChartCanvasWrap" style="height: 410px;"><canvas id="icaoOfficialChartCanvas"></canvas></div>
+                <div id="icaoOfficialChangeSummary" style="margin-top:16px;"></div>
+            </div>
+
+            <div class="ei-panel" id="icaoOfficialTrendPanel" style="grid-template-columns:1fr;padding:20px;margin-top:20px;">
+                <div style="display:flex;justify-content:space-between;gap:14px;align-items:flex-start;flex-wrap:wrap;margin-bottom:14px;">
+                    <div>
+                        <h3 style="margin:0 0 5px 0;color:var(--primary);">📈 ICAO Resmî EI Geçmiş Değerlendirmeler Trendi</h3>
+                        <p style="margin:0;font-size:13px;color:var(--muted);">Firebase’de kayıtlı resmî değerlendirmelerin tamamını kronolojik sırada gösterir. Overall veya bir denetim alanı seçilerek gelişim izlenebilir.</p>
+                    </div>
+                    <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;">
+                        <div>
+                            <label for="icaoOfficialTrendMetric" style="display:block;font-size:11px;font-weight:700;margin-bottom:5px;">Gösterilecek EI</label>
+                            <select id="icaoOfficialTrendMetric" onchange="changeIcaoOfficialTrendMetric(this.value)" style="min-width:155px;">
+                                <option value="Overall">Overall EI</option>
+                                <option value="LEG">LEG</option><option value="ORG">ORG</option><option value="PEL">PEL</option><option value="OPS">OPS</option>
+                                <option value="AIR">AIR</option><option value="AIG">AIG</option><option value="ANS">ANS</option><option value="AGA">AGA</option>
+                            </select>
+                        </div>
+                        <label style="display:flex;align-items:center;gap:7px;padding:8px 10px;border:1px solid var(--border);border-radius:8px;background:var(--card);font-size:11px;font-weight:700;cursor:pointer;">
+                            <input id="icaoOfficialTrendIncludePassive" type="checkbox" onchange="changeIcaoOfficialTrendIncludePassive(this.checked)"> Pasif kayıtları dahil et
+                        </label>
+                    </div>
+                </div>
+                <div id="icaoOfficialTrendKpis" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(175px,1fr));gap:10px;margin-bottom:14px;"></div>
+                <div id="icaoOfficialTrendEmptyState" style="display:none;min-height:170px;align-items:center;justify-content:center;text-align:center;color:var(--muted);background:rgba(148,163,184,0.06);border:1px dashed var(--border);border-radius:10px;padding:24px;"></div>
+                <div id="icaoOfficialTrendCanvasWrap" style="height:370px;"><canvas id="icaoOfficialTrendCanvas"></canvas></div>
+                <div id="icaoOfficialTrendTable" style="margin-top:16px;overflow-x:auto;"></div>
+            </div>
+
             <div class="visual-area">
                 <div class="stat-card"><canvas id="statusChart"></canvas></div>
                 <div class="stat-card"><canvas id="delayChart"></canvas></div>
                 <div class="stat-card"><canvas id="officeChart"></canvas></div>
+            </div>
+        </div>
+
+
+        <div id="tab-smart" class="tab-content">
+            <div class="smart-management-shell">
+                <div class="smart-management-header">
+                    <div>
+                        <h3>🧠 Akıllı Yönetim Özeti</h3>
+                        <p>Kural bazlı karar destek görünümüdür. Aktif filtre kapsamındaki PQ ve CAP adımlarını; gecikme, tarih riski, tamamlanma seviyesi, EI katkısı ve sorumlu ofis yoğunluğuna göre önceliklendirir.</p>
+                    </div>
+                    <div class="smart-management-actions">
+                        <button class="btn-outline" onclick="switchTab('past')">⏳ Gecikenlere Git</button>
+                        <button class="btn-outline" onclick="switchTab('strategic')">🎯 Projeksiyon</button>
+                        <button onclick="switchTab('report')">📑 Yönetici Raporu</button>
+                    </div>
+                </div>
+                <div id="smartManagementScope" class="smart-scope">Aktif filtre kapsamı hazırlanıyor...</div>
+                <div id="smartManagementBriefing" class="smart-briefing">Veri yüklendiğinde otomatik yönetim değerlendirmesi burada gösterilecektir.</div>
+                <div class="smart-kpi-grid">
+                    <div class="smart-kpi danger"><strong id="smartCriticalCount">0</strong><span>Yüksek öncelikli açık PQ</span></div>
+                    <div class="smart-kpi warn"><strong id="smartLateActionCount">0</strong><span>Gecikmiş CAP adımı</span></div>
+                    <div class="smart-kpi ok"><strong id="smartQuickWinCount">0</strong><span>Hızlı kazanım adayı PQ</span></div>
+                    <div class="smart-kpi info"><strong id="smartRecentCompletedCount">0</strong><span>Son 30 günde CAP'leri tamamlanan PQ</span></div>
+                </div>
+                <div class="smart-grid">
+                    <section class="smart-panel-card">
+                        <div class="smart-panel-title"><h4>🔴 Öncelikli Takip Edilecek PQ'lar</h4><small>Risk skoru yüksekten düşüğe</small></div>
+                        <div id="smartCriticalList" class="smart-list"></div>
+                    </section>
+                    <section class="smart-panel-card">
+                        <div class="smart-panel-title"><h4>⏳ En Fazla Geciken CAP Adımları</h4><small>Geçen gün sayısına göre</small></div>
+                        <div id="smartDelayList" class="smart-list"></div>
+                    </section>
+                    <section class="smart-panel-card">
+                        <div class="smart-panel-title"><h4>⚡ Hızlı EI Kazanımı Adayları</h4><small>Az kalan adım / yüksek ilerleme</small></div>
+                        <div id="smartQuickWinList" class="smart-list"></div>
+                    </section>
+                    <section class="smart-panel-card">
+                        <div class="smart-panel-title"><h4>🏢 Sorumlu Ofis Darboğazları</h4><small>Gecikme ve iş yükü yoğunluğu</small></div>
+                        <div id="smartOfficeList" class="smart-list"></div>
+                    </section>
+                </div>
             </div>
         </div>
 
@@ -225,21 +496,24 @@
                     <span>🗓️ Genel ve Alan Bazında Hedef Tablosu</span>
                     <button onclick="showGapReport()" style="background: var(--danger); font-size: 11px; padding: 4px 10px; border-radius: 6px;">🔍 Kök Neden: Neden Ulaşılamıyor?</button>
                 </h4>
-                <p style="font-size:12px; color:var(--muted); margin-top:0;">Ekranda filtrelenen eylemlerin başarıyla tamamlanması durumunda hedeflenen oranlara ne zaman ulaşılacağını gösterir.</p>
-                <table class="milestone-table">
-                    <thead><tr><th style="text-align: left;">Denetim Alanı / Kapsam</th><th>CMAA (Başlangıç)</th><th>%60 Hedefi</th><th>%70 Hedefi</th><th>%80 Hedefi</th><th>%90 Hedefi</th><th>%100 Hedefi</th></tr></thead>
-                    <tbody id="milestoneTableBody"></tbody>
-                </table>
+                <p style="font-size:12px; color:var(--muted); margin-top:0;">Hesaplama PQ bazındadır: bir PQ, ancak o PQ'ya ait tüm dolu CAP adımları tamamlandığında EI projeksiyonuna eklenir. Tarih, ilgili PQ'nun tüm adımları içindeki en geç hedef/tamamlanma tarihidir.</p>
+                <div style="overflow-x:auto;">
+                    <table id="milestoneTable" class="milestone-table" style="min-width: 1120px;">
+                        <thead><tr id="milestoneHeaderRow"><th style="text-align: left; width: 18%;">Denetim Alanı / Kapsam</th><th>CMAA (Başlangıç)</th><th>ICAO Validasyonu</th><th>Mevcut EI</th><th>%60 Hedefi</th><th>%70 Hedefi</th><th>%80 Hedefi</th><th>%90 Hedefi</th><th>%100 Hedefi</th></tr></thead>
+                        <tbody id="milestoneTableBody"></tbody>
+                    </table>
+                </div>
             </div>
 
             <div class="table-wrapper" style="padding: 20px; background: var(--card); margin-top: 20px;">
                 <h4 style="margin: 0 0 15px 0; color: var(--primary);">🎯 Hedef Simülatörü</h4>
-                <div style="display:flex; gap:10px; align-items:flex-end;">
-                    <div style="flex:1;">
+                <p style="font-size:12px; color:var(--muted); margin-top:-8px;">Seçilen hedef orana ulaşmak için mevcut CAP havuzunun yeterli olup olmadığını ve yeterliyse hangi tarihte yakalanabileceğini hesaplar.</p>
+                <div style="display:flex; gap:10px; align-items:flex-end; flex-wrap:wrap;">
+                    <div style="flex:1; min-width:220px;">
                         <label style="font-size:11px; font-weight:bold; color:var(--muted);">Denetim Alanı</label>
                         <select id="simAreaSelect" style="width:100%;"></select>
                     </div>
-                    <div style="flex:1;">
+                    <div style="flex:1; min-width:180px;">
                         <label style="font-size:11px; font-weight:bold; color:var(--muted);">Hedef Oran (%)</label>
                         <select id="simTargetSelect" style="width:100%;">
                             <option value="60">%60</option>
@@ -255,6 +529,25 @@
                     </div>
                 </div>
                 <div id="simResult" style="margin-top:15px; font-size:14px; font-weight:600; color:var(--text); padding:15px; background:var(--kanban-bg); border-radius:6px; border:1px dashed var(--border); display:none;"></div>
+            </div>
+
+            <div class="table-wrapper" style="padding: 20px; background: var(--card); margin-top: 20px; border-color: rgba(16,185,129,0.35);">
+                <h4 style="margin: 0 0 15px 0; color: var(--ok);">📅 Tarih Bazlı EI Projeksiyon Simülatörü</h4>
+                <p style="font-size:12px; color:var(--muted); margin-top:-8px;">Örnek: <b>31.12.2026</b> girildiğinde, o tarihe kadar hedef tarihi gelen tüm açık CAP adımlarının tamamlanacağı olumlu varsayımıyla EI oranını hesaplar.</p>
+                <div style="display:flex; gap:10px; align-items:flex-end; flex-wrap:wrap;">
+                    <div style="flex:1; min-width:220px;">
+                        <label style="font-size:11px; font-weight:bold; color:var(--muted);">Denetim Alanı</label>
+                        <select id="dateSimAreaSelect" style="width:100%;"></select>
+                    </div>
+                    <div style="flex:1; min-width:180px;">
+                        <label style="font-size:11px; font-weight:bold; color:var(--muted);">Projeksiyon Tarihi</label>
+                        <input type="text" id="dateSimTargetDate" placeholder="31.12.2026" value="31.12.2026" style="width:100%;">
+                    </div>
+                    <div>
+                        <button onclick="runDateSimulator()" style="background:var(--ok);">Tarihe Göre Hesapla</button>
+                    </div>
+                </div>
+                <div id="dateSimResult" style="margin-top:15px; font-size:14px; font-weight:600; color:var(--text); padding:15px; background:var(--kanban-bg); border-radius:6px; border:1px dashed var(--border); display:none;"></div>
             </div>
         </div>
 
@@ -281,6 +574,469 @@
             </div>
         </div>
 
+        <div id="tab-past" class="tab-content">
+            <div class="warning-panel past-panel" id="pastTasksPanel" style="margin-top: 0;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap:wrap; gap:10px;">
+                    <div>
+                        <h4 style="margin: 0; display: flex; align-items: center; gap: 8px; font-size: 15px;">⏳ Geçmiş Görevler / Tarihi Geçmiş Açık Eylemler</h4>
+                        <p style="font-size:12px; color:var(--muted); margin:4px 0 0 0;">Tamamlanmamış ve hedef tarihi bugün itibarıyla geçmiş CAP adımlarını listeler.</p>
+                    </div>
+                    <div style="display: flex; gap: 10px; font-size: 11px; font-weight: 600; background: var(--card); padding: 4px 10px; border-radius: 6px; border: 1px solid var(--border); align-items:center; flex-wrap:wrap;">
+                        <select id="pastRangeSelect" onchange="render()" style="width:auto; min-width:130px; padding:5px; font-size:11px;">
+                            <option value="all">Tüm geçmiş</option>
+                            <option value="30">Son 30 gün</option>
+                            <option value="90">Son 90 gün</option>
+                            <option value="180">Son 180 gün</option>
+                        </select>
+                        <label style="cursor:pointer; display:flex; align-items:center; gap:5px;"><input type="radio" name="pastView" value="list" checked onchange="render()" style="margin:0; width:auto; height:auto;"> ⏱️ Tarihe Göre</label>
+                        <label style="cursor:pointer; display:flex; align-items:center; gap:5px;"><input type="radio" name="pastView" value="group" onchange="render()" style="margin:0; width:auto; height:auto;"> 🗂️ Alana Göre</label>
+                    </div>
+                </div>
+                <div id="pastTasksSummary"></div>
+                <div id="pastTasksList"></div>
+            </div>
+        </div>
+
+        
+
+        <!-- ZİYARET VE İÇ DENETİM - PAKET 4A: TAKİP YÖNETİMİ -->
+        <div id="tab-visit-followup" class="tab-content">
+            <div class="visit-follow-shell">
+                <div class="visit-follow-header">
+                    <div>
+                        <h3>⏱️ Takip Yönetimi</h3>
+                        <p>SHGM Ziyaret Çalışma Alanı'nda “Takip gerekli” olarak işaretlenen hususları yönetin. ICAO resmî ziyaretleri bu modüle dahil edilmez. Takip tarihi, sorumlu, beklenen çıktı, alınan kanıt, sonuç ve kapanış kararı ayrı bir takip kaydı olarak saklanır; saha notu değişmeden korunur.</p>
+                    </div>
+                    <div class="visit-follow-actions">
+                        <button type="button" class="btn-outline" onclick="renderVisitFollowUpModule(true)">🔄 Yenile</button>
+                        <button type="button" class="btn-outline" onclick="exportVisitFollowUpPDF()">📄 Takip PDF</button>
+                        <button type="button" class="btn-outline" onclick="exportVisitFollowUpExcel()">📊 Takip Excel</button>
+                    </div>
+                </div>
+
+                <div class="visit-follow-kpis">
+                    <div class="visit-follow-kpi info"><strong id="visitFollowKpiTotal">0</strong><span>Toplam takip</span></div>
+                    <div class="visit-follow-kpi danger"><strong id="visitFollowKpiOverdue">0</strong><span>Geciken</span></div>
+                    <div class="visit-follow-kpi warn"><strong id="visitFollowKpiWeek">0</strong><span>7 gün içinde</span></div>
+                    <div class="visit-follow-kpi"><strong id="visitFollowKpiEvidence">0</strong><span>Kanıt bekleyen</span></div>
+                    <div class="visit-follow-kpi"><strong id="visitFollowKpiRevisit">0</strong><span>Takip ziyareti</span></div>
+                    <div class="visit-follow-kpi ok"><strong id="visitFollowKpiCompleted">0</strong><span>Tamamlanan</span></div>
+                </div>
+
+                <div class="visit-follow-toolbar">
+                    <div><label>Ziyaret</label><select id="visitFollowVisitFilter" onchange="renderVisitFollowUpList()"><option value="all">Tüm ziyaretler</option></select></div>
+                    <div><label>Zaman görünümü</label><select id="visitFollowTimingFilter" onchange="renderVisitFollowUpList()"><option value="all">Tümü</option><option value="overdue">Gecikenler</option><option value="today">Bugün</option><option value="next7">Önümüzdeki 7 gün</option><option value="next30">Önümüzdeki 30 gün</option><option value="date_risk">Tarihi eksik</option><option value="completed">Tamamlananlar</option></select></div>
+                    <div><label>Takip durumu</label><select id="visitFollowStatusFilter" onchange="renderVisitFollowUpList()"><option value="all">Tüm durumlar</option></select></div>
+                    <div><label>Öncelik</label><select id="visitFollowPriorityFilter" onchange="renderVisitFollowUpList()"><option value="all">Tümü</option><option value="critical">Kritik</option><option value="high">Yüksek</option><option value="medium">Orta</option><option value="low">Düşük</option><option value="info">Bilgi amaçlı</option></select></div>
+                    <div><label>Arama</label><input id="visitFollowSearch" type="text" placeholder="Ziyaret, PQ, Step, not, sorumlu..." oninput="renderVisitFollowUpList()"></div>
+                    <button type="button" class="btn-outline" onclick="clearVisitFollowUpFilters()">Temizle</button>
+                </div>
+
+                <div class="visit-follow-layout">
+                    <section class="visit-follow-panel">
+                        <div class="visit-follow-panel-head"><h4>Takip Kayıtları</h4><span id="visitFollowListCount" class="smart-scope">0 kayıt</span></div>
+                        <div id="visitFollowList" class="visit-follow-list"><div class="visit-follow-empty">Takip kaydı bulunamadı.</div></div>
+                    </section>
+                    <section class="visit-follow-panel">
+                        <div class="visit-follow-panel-head"><h4>Takip Değerlendirmesi</h4><button type="button" class="btn-outline" onclick="openSelectedFollowUpInWorkspace()">Kaynak Saha Kaydını Aç</button></div>
+                        <div class="visit-follow-content">
+                            <div id="visitFollowSource" class="visit-follow-source"><div class="visit-follow-empty">Soldan bir takip kaydı seçiniz.</div></div>
+                            <form class="visit-follow-form" onsubmit="event.preventDefault();saveVisitFollowUpRecord()">
+                                <div class="visit-follow-grid">
+                                    <div class="visit-follow-field"><label>Takip durumu</label><select id="visitFollowStatus" onchange="updateVisitFollowConsultationLinkState()"></select></div>
+                                    <div class="visit-follow-field"><label>Öncelik</label><select id="visitFollowPriority"><option value="critical">Kritik</option><option value="high">Yüksek</option><option value="medium">Orta</option><option value="low">Düşük</option><option value="info">Bilgi amaçlı</option></select></div>
+                                    <div class="visit-follow-field"><label>Takip tarihi</label><input id="visitFollowDate" type="date"></div>
+                                    <div class="visit-follow-field"><label>Aksiyon sorumlusu</label><input id="visitFollowOwner" type="text"></div>
+                                    <div class="visit-follow-field full"><label>Beklenen çıktı / kanıt</label><textarea id="visitFollowExpectedOutput"></textarea></div>
+                                    <div class="visit-follow-field full"><label>Alınan bilgi veya kanıt</label><textarea id="visitFollowEvidenceReceived"></textarea></div>
+                                    <div class="visit-follow-field full"><label>Takip değerlendirmesi / sonuç notu</label><textarea id="visitFollowResultNote"></textarea></div>
+                                </div>
+                                <div class="visit-process-link-panel" id="visitFollowConsultLinkPanel">
+                                    <h5>Danışma Bağlantısı <span class="visit-process-link-optional">İsteğe bağlı</span></h5>
+                                    <p>Bu takip kaydı bir danışma sürecine bağlıysa mevcut danışma kaydını seçebilir veya aynı saha kaydından yeni danışma kaydı oluşturabilirsiniz. <b>Takip durumu “Danışma bekleniyor” ise bağlantı zorunludur.</b></p>
+                                    <div class="visit-follow-grid">
+                                        <div class="visit-follow-field full"><label>Bağlı danışma kaydı</label><select id="visitFollowLinkedConsultation" onchange="updateVisitFollowConsultationLinkState()"><option value="">Bağlantı yok</option></select></div>
+                                    </div>
+                                    <div id="visitFollowConsultLinkInfo" class="visit-process-link-info">Bağlı danışma kaydı bulunmuyor.</div>
+                                    <div class="visit-process-link-actions">
+                                        <button type="button" class="btn-outline" onclick="createConsultationFromSelectedFollowUp()">➕ Danışma Kaydı Oluştur</button>
+                                        <button type="button" class="btn-outline" id="visitFollowOpenConsultBtn" onclick="openLinkedConsultationFromFollowUp()" disabled>🏛️ Bağlı Danışmayı Aç</button>
+                                    </div>
+                                </div>
+                                <div class="visit-follow-closure">
+                                    <h5>Kapanış Bilgileri</h5>
+                                    <div class="visit-follow-grid">
+                                        <div class="visit-follow-field"><label>Kapanış kararı</label><select id="visitFollowClosureDecision"><option value="">Seçiniz...</option></select></div>
+                                        <div class="visit-follow-field"><label>Kapanış tarihi</label><input id="visitFollowClosureDate" type="date"></div>
+                                    </div>
+                                </div>
+                                <div class="visit-follow-form-actions"><button type="button" class="btn-outline" onclick="resetVisitFollowUpForm()">Formu Temizle</button><button type="submit">💾 Takip Kaydını Güncelle</button></div>
+                            </form>
+                        </div>
+                    </section>
+                </div>
+            </div>
+        </div>
+
+
+
+        <!-- ZİYARET VE İÇ DENETİM - PAKET 4B: DANIŞMA YÖNETİMİ -->
+        <div id="tab-visit-consultation" class="tab-content">
+            <div class="visit-consult-shell">
+                <div class="visit-consult-header">
+                    <div>
+                        <h3>🏛️ Danışma Yönetimi</h3>
+                        <p>SHGM Ziyaret Çalışma Alanı'nda danışılacak makam veya danışma konusu girilen saha kayıtlarını yönetin. ICAO resmî ziyaretleri bu modüle dahil edilmez. Danışma yöntemi, talep ve cevap tarihleri, gelen cevap, alınan karar ve kararın PQ/CAP'a etkisi saha notundan ayrı olarak izlenir.</p>
+                    </div>
+                    <div class="visit-consult-actions">
+                        <button type="button" class="btn-outline" onclick="renderVisitConsultationModule(true)">🔄 Yenile</button>
+                        <button type="button" class="btn-outline" onclick="exportVisitConsultationPDF()">📄 Danışma PDF</button>
+                        <button type="button" class="btn-outline" onclick="exportVisitConsultationExcel()">📊 Danışma Excel</button>
+                    </div>
+                </div>
+
+                <div class="visit-consult-kpis">
+                    <div class="visit-consult-kpi info"><strong id="visitConsultKpiTotal">0</strong><span>Toplam danışma</span></div>
+                    <div class="visit-consult-kpi danger"><strong id="visitConsultKpiOverdue">0</strong><span>Cevabı geciken</span></div>
+                    <div class="visit-consult-kpi warn"><strong id="visitConsultKpiWaiting">0</strong><span>Cevap bekleyen</span></div>
+                    <div class="visit-consult-kpi"><strong id="visitConsultKpiResponse">0</strong><span>Cevap alınan</span></div>
+                    <div class="visit-consult-kpi purple"><strong id="visitConsultKpiDecision">0</strong><span>Karar gereken</span></div>
+                    <div class="visit-consult-kpi ok"><strong id="visitConsultKpiCompleted">0</strong><span>Tamamlanan</span></div>
+                </div>
+
+                <div class="visit-consult-toolbar">
+                    <div><label>Ziyaret</label><select id="visitConsultVisitFilter" onchange="renderVisitConsultationList()"><option value="all">Tüm ziyaretler</option></select></div>
+                    <div><label>Zaman görünümü</label><select id="visitConsultTimingFilter" onchange="renderVisitConsultationList()"><option value="all">Tümü</option><option value="overdue">Cevabı geciken</option><option value="today">Bugün</option><option value="next7">7 gün içinde</option><option value="next30">30 gün içinde</option><option value="date_risk">Cevap tarihi eksik</option><option value="completed">Tamamlanan</option></select></div>
+                    <div><label>Danışma durumu</label><select id="visitConsultStatusFilter" onchange="renderVisitConsultationList()"><option value="all">Tüm durumlar</option></select></div>
+                    <div><label>Danışılacak makam</label><select id="visitConsultAuthorityFilter" onchange="renderVisitConsultationList()"><option value="all">Tüm makamlar</option></select></div>
+                    <div><label>Arama</label><input id="visitConsultSearch" type="text" placeholder="Ziyaret, PQ, Step, makam, konu..." oninput="renderVisitConsultationList()"></div>
+                    <button type="button" class="btn-outline" onclick="clearVisitConsultationFilters()">Temizle</button>
+                </div>
+
+                <div class="visit-consult-layout">
+                    <section class="visit-consult-panel">
+                        <div class="visit-consult-panel-head"><h4>Danışma Kayıtları</h4><span id="visitConsultListCount" class="smart-scope">0 kayıt</span></div>
+                        <div id="visitConsultList" class="visit-consult-list"><div class="visit-consult-empty">Danışma kaydı bulunamadı.</div></div>
+                    </section>
+                    <section class="visit-consult-panel">
+                        <div class="visit-consult-panel-head"><h4>Danışma Süreci</h4><button type="button" class="btn-outline" onclick="openSelectedConsultationInWorkspace()">Kaynak Saha Kaydını Aç</button></div>
+                        <div class="visit-consult-content">
+                            <div id="visitConsultSource" class="visit-consult-source"><div class="visit-consult-empty">Soldan bir danışma kaydı seçiniz.</div></div>
+                            <form class="visit-consult-form" onsubmit="event.preventDefault();saveVisitConsultationRecord()">
+                                <div class="visit-consult-grid">
+                                    <div class="visit-consult-field"><label>Danışma durumu</label><select id="visitConsultStatus" onchange="updateVisitConsultationFollowLinkState()"></select></div>
+                                    <div class="visit-consult-field"><label>Öncelik</label><select id="visitConsultPriority"><option value="critical">Kritik</option><option value="high">Yüksek</option><option value="medium">Orta</option><option value="low">Düşük</option><option value="info">Bilgi amaçlı</option></select></div>
+                                    <div class="visit-consult-field"><label>Danışılacak makam</label><input id="visitConsultAuthority" type="text" list="visitConsultManagementAuthorityList" placeholder="Makam veya birim"><datalist id="visitConsultManagementAuthorityList"><option>Genel Müdür</option><option>Genel Müdür Yardımcısı</option><option>Daire Başkanı</option><option>Koordinatörlük</option><option>Hukuk Müşavirliği</option><option>İlgili Bakanlık Birimi</option><option>Diğer Kamu Kurumu</option><option>TSIC</option><option>ICAO</option><option>Diğer</option></datalist></div>
+                                    <div class="visit-consult-field"><label>Süreç sorumlusu</label><input id="visitConsultResponsible" type="text" placeholder="Takip edecek kişi/birim"></div>
+                                    <div class="visit-consult-field full"><label>Danışma konusu</label><textarea id="visitConsultTopic" placeholder="Karar veya görüş alınacak konu"></textarea></div>
+                                    <div class="visit-consult-field full"><label>Sorulacak soru / görüş talebi</label><textarea id="visitConsultQuestion" placeholder="Makamdan açık ve somut olarak ne talep ediliyor?"></textarea></div>
+                                    <div class="visit-consult-field"><label>Danışma yöntemi</label><select id="visitConsultMethod"></select></div>
+                                    <div class="visit-consult-field"><label>Talep tarihi</label><input id="visitConsultRequestDate" type="date"></div>
+                                    <div class="visit-consult-field"><label>Yazı / kayıt referansı</label><input id="visitConsultReferenceNo" type="text" placeholder="Sayı, e-posta konusu, toplantı no..."></div>
+                                    <div class="visit-consult-field"><label>Cevap beklenen tarih</label><input id="visitConsultExpectedResponseDate" type="date"></div>
+                                    <div class="visit-consult-field"><label>Sonraki işlem / takip tarihi</label><input id="visitConsultNextActionDate" type="date"></div>
+                                </div>
+                                <div class="visit-process-link-panel" id="visitConsultFollowLinkPanel">
+                                    <h5>Takip Bağlantısı <span class="visit-process-link-optional">İsteğe bağlı</span></h5>
+                                    <p>Danışma kaydını mevcut bir takip kaydıyla ilişkilendirebilirsiniz. Danışma sonucu alındığında bağlı takip kaydı otomatik kapatılmaz; istenirse “Değerlendirmede” durumuna alınır.</p>
+                                    <div class="visit-consult-grid">
+                                        <div class="visit-consult-field full"><label>Bağlı takip kaydı</label><select id="visitConsultLinkedFollowUp" onchange="updateVisitConsultationFollowLinkState()"><option value="">Bağlantı yok</option></select></div>
+                                    </div>
+                                    <div id="visitConsultFollowLinkInfo" class="visit-process-link-info">Bağlı takip kaydı bulunmuyor.</div>
+                                    <div class="visit-process-link-actions">
+                                        <button type="button" class="btn-outline" id="visitConsultOpenFollowBtn" onclick="openLinkedFollowUpFromConsultation()" disabled>⏱️ Bağlı Takibi Aç</button>
+                                        <button type="button" class="btn-outline" id="visitConsultEvaluateFollowBtn" onclick="moveLinkedFollowUpToEvaluation()" disabled>✅ Bağlı Takibi Değerlendirmeye Al</button>
+                                    </div>
+                                </div>
+                                <div class="visit-consult-response">
+                                    <h5>Gelen Cevap</h5>
+                                    <div class="visit-consult-grid">
+                                        <div class="visit-consult-field"><label>Cevap tarihi</label><input id="visitConsultResponseDate" type="date"></div>
+                                        <div class="visit-consult-field full"><label>Gelen cevap / görüş</label><textarea id="visitConsultResponseText" oninput="updateVisitConsultationFollowLinkState()" placeholder="Makamın cevabı veya toplantıda bildirilen görüş"></textarea></div>
+                                    </div>
+                                </div>
+                                <div class="visit-consult-decision">
+                                    <h5>Karar ve CAP Etkisi</h5>
+                                    <div class="visit-consult-grid">
+                                        <div class="visit-consult-field"><label>Kararın PQ/CAP'a etkisi</label><select id="visitConsultCapImpact"></select></div>
+                                        <div class="visit-consult-field"><label>Kapanış tarihi</label><input id="visitConsultClosureDate" type="date"></div>
+                                        <div class="visit-consult-field full"><label>Alınan karar / uygulanacak işlem</label><textarea id="visitConsultDecision" placeholder="Cevap sonrasında alınan karar ve yapılacak işlem"></textarea></div>
+                                    </div>
+                                </div>
+                                <div class="visit-consult-form-actions"><button type="button" class="btn-outline" onclick="resetVisitConsultationForm()">Formu Temizle</button><button type="submit">💾 Danışma Kaydını Güncelle</button></div>
+                            </form>
+                        </div>
+                    </section>
+                </div>
+            </div>
+        </div>
+
+
+
+        <!-- ZİYARET VE İÇ DENETİM - PAKET 5: ZİYARET RAPORLARI -->
+        <div id="tab-visit-reports" class="tab-content">
+            <div class="visit-report-shell">
+                <div class="visit-report-header">
+                    <div>
+                        <h3>📑 Ziyaret Raporları</h3>
+                        <p>SHGM ziyaretlerinin plan, kapsam, saha kaydı, takip ve danışma verilerini tek merkezden raporlayın. ICAO resmî ziyaretleri bu rapor modülüne dahil edilmez. Bir ziyaret, birden fazla ziyaret, belirli alan veya bütün ziyaretler için yönetici özeti, sonuç raporu ya da tam ziyaret dosyası oluşturabilirsiniz.</p>
+                    </div>
+                    <div class="visit-report-actions">
+                        <button type="button" class="btn-outline" onclick="renderVisitReportsModule()">🔄 Yenile</button>
+                        <button type="button" class="btn-outline" onclick="exportVisitReportsPDF()">📄 Rapor PDF</button>
+                        <button type="button" class="btn-outline" onclick="exportVisitReportsExcel()">📊 Rapor Excel</button>
+                    </div>
+                </div>
+
+                <div class="visit-report-toolbar">
+                    <div><label>Ziyaret kapsamı</label><select id="visitReportVisitFilter" onchange="renderVisitReportsPreview()"><option value="all">Tüm ziyaretler</option></select></div>
+                    <div><label>Rapor türü</label><select id="visitReportType" onchange="setVisitReportType(this.value)"></select></div>
+                    <div><label>Denetim alanı</label><select id="visitReportAreaFilter" onchange="renderVisitReportsPreview()"><option value="all">Tüm alanlar</option></select></div>
+                    <div><label>Ziyaret durumu</label><select id="visitReportStatusFilter" onchange="renderVisitReportsPreview()"><option value="all">Tüm durumlar</option></select></div>
+                    <div><label>Arama</label><input id="visitReportSearch" type="text" placeholder="Ziyaret, birim, PQ..." oninput="renderVisitReportsPreview()"></div>
+                    <button type="button" class="btn-outline" onclick="clearVisitReportFilters()">Temizle</button>
+                </div>
+
+                <div class="visit-report-kpis">
+                    <div class="visit-report-kpi info"><strong id="visitReportKpiVisits">0</strong><span>Ziyaret</span></div>
+                    <div class="visit-report-kpi"><strong id="visitReportKpiPqs">0</strong><span>Kapsamdaki PQ</span></div>
+                    <div class="visit-report-kpi"><strong id="visitReportKpiSteps">0</strong><span>CAP adımı</span></div>
+                    <div class="visit-report-kpi"><strong id="visitReportKpiFieldwork">0</strong><span>Saha kaydı</span></div>
+                    <div class="visit-report-kpi danger"><strong id="visitReportKpiOpenFollow">0</strong><span>Açık takip</span></div>
+                    <div class="visit-report-kpi warn"><strong id="visitReportKpiOverdue">0</strong><span>Geciken takip</span></div>
+                    <div class="visit-report-kpi purple"><strong id="visitReportKpiConsult">0</strong><span>Açık danışma</span></div>
+                    <div class="visit-report-kpi ok"><strong id="visitReportKpiEvidence">0</strong><span>Yeterli kanıt</span></div>
+                </div>
+
+                <div class="visit-report-layout">
+                    <section class="visit-report-panel">
+                        <div class="visit-report-panel-head"><h4>Rapor Şablonları</h4><span class="visit-report-context" id="visitReportTemplateContext">-</span></div>
+                        <div id="visitReportTemplateList" class="visit-report-template-list"></div>
+                    </section>
+                    <section class="visit-report-panel">
+                        <div class="visit-report-panel-head"><h4>Rapor Önizleme</h4><span class="visit-report-context" id="visitReportScopeContext">0 ziyaret</span></div>
+                        <div id="visitReportPreview" class="visit-report-preview"><div class="visit-report-empty">Rapor kapsamını ve türünü seçiniz.</div></div>
+                    </section>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- ZİYARET VE İÇ DENETİM - PAKET 6C: PQ/CAP GEÇMİŞİ, KARŞILAŞTIRMA VE TEKRAR ANALİZİ -->
+        <div id="tab-visit-analysis" class="tab-content">
+            <div class="visit-analysis-shell">
+                <div class="visit-analysis-header">
+                    <div>
+                        <h3>🧩 PQ/CAP Geçmişi, Karşılaştırma ve Tekrarlanan Sorun Analizi</h3>
+                        <p>Bir PQ veya CAP adımının ziyaret geçmişini zaman çizelgesinde inceleyin, iki ziyareti karşılaştırın ve birden fazla ziyarette tekrar eden sorunları alan, birim, PQ ve Step bazında görün.</p>
+                    </div>
+                    <div class="visit-analysis-actions">
+                        <button type="button" class="btn-outline" onclick="renderVisitAnalysisModule()">🔄 Yenile</button>
+                        <button type="button" class="btn-outline" onclick="exportVisitAnalysisPDF()">📄 PDF</button>
+                        <button type="button" class="btn-outline" onclick="exportVisitAnalysisExcel()">📊 Excel</button>
+                    </div>
+                </div>
+
+                <div class="visit-analysis-modebar">
+                    <button type="button" id="visitAnalysisModeHistory" class="visit-analysis-mode-btn active" onclick="setVisitAnalysisMode('history')">PQ/CAP Zaman Çizelgesi</button>
+                    <button type="button" id="visitAnalysisModeCompare" class="visit-analysis-mode-btn" onclick="setVisitAnalysisMode('comparison')">Ziyaret Karşılaştırma</button>
+                    <button type="button" id="visitAnalysisModeRepeat" class="visit-analysis-mode-btn" onclick="setVisitAnalysisMode('repeated')">Tekrarlanan Sorunlar</button>
+                </div>
+
+                <section id="visitAnalysisHistorySection" class="visit-analysis-section active">
+                    <div class="visit-analysis-toolbar">
+                        <div><label>Denetim alanı</label><select id="visitAnalysisArea" onchange="visitAnalysisFilterChanged()"><option value="all">Tüm alanlar</option></select></div>
+                        <div><label>PQ</label><select id="visitAnalysisPQ" onchange="visitAnalysisPqChanged()"><option value="">PQ seçiniz...</option></select></div>
+                        <div><label>CAP adımı</label><select id="visitAnalysisStep" onchange="renderVisitAnalysisHistory()"><option value="all">PQ geneli / tüm adımlar</option></select></div>
+                        <div><label>Ziyaret</label><select id="visitAnalysisVisit" onchange="renderVisitAnalysisHistory()"><option value="all">Tüm ziyaretler</option></select></div>
+                        <div><label>Kayıt türü</label><select id="visitAnalysisEventType" onchange="renderVisitAnalysisHistory()"><option value="all">Tüm kayıt türleri</option><option value="scope">Kapsam</option><option value="preparation">Hazırlık</option><option value="fieldwork">Saha kaydı</option><option value="followup">Takip</option><option value="consultation">Danışma</option><option value="audit">Değişiklik geçmişi</option></select></div>
+                        <button type="button" class="btn-outline" onclick="clearVisitAnalysisHistoryFilters()">Temizle</button>
+                    </div>
+                    <div class="visit-analysis-kpis">
+                        <div class="visit-analysis-kpi"><strong id="visitAnalysisHistoryVisits">0</strong><span>İncelendiği Ziyaret</span></div>
+                        <div class="visit-analysis-kpi"><strong id="visitAnalysisHistoryEvents">0</strong><span>Zaman Çizelgesi Kaydı</span></div>
+                        <div class="visit-analysis-kpi danger"><strong id="visitAnalysisHistoryFindings">0</strong><span>Bulgu / Risk</span></div>
+                        <div class="visit-analysis-kpi warn"><strong id="visitAnalysisHistoryOpenFollow">0</strong><span>Açık Takip</span></div>
+                        <div class="visit-analysis-kpi purple"><strong id="visitAnalysisHistoryConsult">0</strong><span>Danışma</span></div>
+                        <div class="visit-analysis-kpi ok"><strong id="visitAnalysisHistoryEvidence">0</strong><span>Yeterli Kanıt</span></div>
+                    </div>
+                    <section class="visit-analysis-panel">
+                        <div class="visit-analysis-panel-head"><h4 id="visitAnalysisTimelineTitle">PQ/CAP Zaman Çizelgesi</h4><span id="visitAnalysisTimelineCount" class="visit-analysis-count">0 kayıt</span></div>
+                        <div class="visit-analysis-panel-body"><div id="visitAnalysisTimeline" class="visit-analysis-timeline"><div class="visit-analysis-empty">Bir PQ seçiniz.</div></div></div>
+                    </section>
+                </section>
+
+                <section id="visitAnalysisComparisonSection" class="visit-analysis-section">
+                    <div class="visit-analysis-toolbar">
+                        <div><label>Denetim alanı</label><select id="visitCompareArea" onchange="populateVisitComparisonSelectors()"><option value="all">Tüm alanlar</option></select></div>
+                        <div><label>Birim</label><select id="visitCompareUnit" onchange="populateVisitComparisonSelectors()"><option value="all">Tüm birimler</option></select></div>
+                        <div><label>Önceki ziyaret</label><select id="visitCompareA" onchange="renderVisitComparison()"><option value="">Ziyaret seçiniz...</option></select></div>
+                        <div><label>Sonraki ziyaret</label><select id="visitCompareB" onchange="renderVisitComparison()"><option value="">Ziyaret seçiniz...</option></select></div>
+                        <div><label>Karşılaştırma odağı</label><select id="visitCompareFocus" onchange="renderVisitComparison()"><option value="all">Tüm göstergeler</option><option value="scope">Kapsam</option><option value="findings">Bulgular ve kanıt</option><option value="followup">Takipler</option><option value="consultation">Danışmalar</option></select></div>
+                        <button type="button" class="btn-outline" onclick="autoSelectVisitComparison()">En Son İki Ziyaret</button>
+                    </div>
+                    <div class="visit-analysis-compare-grid">
+                        <div id="visitComparisonSummaryA" class="visit-analysis-summary">Önceki ziyaret seçilmedi.</div>
+                        <div id="visitComparisonSummaryB" class="visit-analysis-summary">Sonraki ziyaret seçilmedi.</div>
+                    </div>
+                    <section class="visit-analysis-panel">
+                        <div class="visit-analysis-panel-head"><h4>Ziyaret Karşılaştırma Tablosu</h4><span id="visitComparisonContext" class="visit-analysis-count">-</span></div>
+                        <div class="visit-analysis-table-wrap"><table class="visit-analysis-table"><thead><tr><th>Gösterge</th><th>Önceki Ziyaret</th><th>Sonraki Ziyaret</th><th>Değişim</th><th>Değerlendirme</th></tr></thead><tbody id="visitComparisonTableBody"><tr><td colspan="5" class="visit-analysis-empty">İki ziyaret seçiniz.</td></tr></tbody></table></div>
+                    </section>
+                    <section class="visit-analysis-panel">
+                        <div class="visit-analysis-panel-head"><h4>Kapsam Değişiklikleri</h4></div>
+                        <div id="visitComparisonScopeChanges" class="visit-analysis-panel-body"><div class="visit-analysis-empty">Karşılaştırma bekleniyor.</div></div>
+                    </section>
+                </section>
+
+                <section id="visitAnalysisRepeatedSection" class="visit-analysis-section">
+                    <div class="visit-analysis-toolbar">
+                        <div><label>Denetim alanı</label><select id="visitRepeatArea" onchange="renderVisitRepeatedIssues()"><option value="all">Tüm alanlar</option></select></div>
+                        <div><label>Birim</label><select id="visitRepeatUnit" onchange="renderVisitRepeatedIssues()"><option value="all">Tüm birimler</option></select></div>
+                        <div><label>En az ziyaret sayısı</label><select id="visitRepeatMinVisits" onchange="renderVisitRepeatedIssues()"><option value="2">2 ziyaret</option><option value="3">3 ziyaret</option><option value="4">4 ziyaret</option></select></div>
+                        <div><label>Sorun türü</label><select id="visitRepeatType" onchange="renderVisitRepeatedIssues()"><option value="all">Tüm türler</option><option value="target">Aynı PQ / Step</option><option value="unit_category">Birim + sorun kategorisi</option><option value="evidence">Tekrarlanan kanıt sorunu</option><option value="open">Birden fazla ziyarette açık kalan</option><option value="text">Aynı / çok benzer tespit</option></select></div>
+                        <div><label>Arama</label><input id="visitRepeatSearch" type="text" placeholder="PQ, Step, birim, konu..." oninput="renderVisitRepeatedIssues()"></div>
+                        <button type="button" class="btn-outline" onclick="clearVisitRepeatedFilters()">Temizle</button>
+                    </div>
+                    <div class="visit-analysis-kpis">
+                        <div class="visit-analysis-kpi danger"><strong id="visitRepeatKpiPatterns">0</strong><span>Tekrarlanan Örüntü</span></div>
+                        <div class="visit-analysis-kpi"><strong id="visitRepeatKpiVisits">0</strong><span>Etkilenen Ziyaret</span></div>
+                        <div class="visit-analysis-kpi"><strong id="visitRepeatKpiPqs">0</strong><span>Etkilenen PQ</span></div>
+                        <div class="visit-analysis-kpi warn"><strong id="visitRepeatKpiOpen">0</strong><span>Açık Kalan Örüntü</span></div>
+                        <div class="visit-analysis-kpi purple"><strong id="visitRepeatKpiEvidence">0</strong><span>Kanıt Sorunu Örüntüsü</span></div>
+                        <div class="visit-analysis-kpi ok"><strong id="visitRepeatKpiResolved">0</strong><span>Son Ziyarette İyileşen</span></div>
+                    </div>
+                    <section class="visit-analysis-panel">
+                        <div class="visit-analysis-panel-head"><h4>Tekrarlanan Sorun ve Eğilimler</h4><span id="visitRepeatCount" class="visit-analysis-count">0 örüntü</span></div>
+                        <div class="visit-analysis-panel-body"><div id="visitRepeatList" class="visit-analysis-repeat-list"><div class="visit-analysis-empty">Yeterli sayıda ziyaret kaydı bulunmuyor.</div></div></div>
+                    </section>
+                </section>
+            </div>
+        </div>
+
+
+        <!-- ZİYARET VE İÇ DENETİM - PAKET 6B: KPI, TAKVİM VE YÖNETİM PANELİ -->
+        <div id="tab-visit-management" class="tab-content">
+            <div class="visit-mgmt-shell">
+                <div class="visit-mgmt-header">
+                    <div>
+                        <h3>📊 Ziyaret Yönetim Paneli ve Takvim</h3>
+                        <p>Ziyaretler, takip tarihleri, danışma cevap tarihleri ve ziyaret kapsamındaki CAP hedef tarihlerini tek yönetim ekranında izleyin. Gecikmeler, yaklaşan işler, kanıt sorunları ve birim/alan darboğazları otomatik özetlenir.</p>
+                    </div>
+                    <div class="visit-mgmt-actions">
+                        <button type="button" class="btn-outline" onclick="renderVisitManagementDashboard()">🔄 Yenile</button>
+                        <button type="button" class="btn-outline" onclick="exportVisitManagementPDF()">📄 PDF</button>
+                        <button type="button" class="btn-outline" onclick="exportVisitManagementExcel()">📊 Excel</button>
+                    </div>
+                </div>
+
+                <div class="visit-mgmt-toolbar">
+                    <div><label>Hızlı dönem</label><select id="visitMgmtPeriod" onchange="applyVisitManagementPeriod(this.value)"><option value="all">Tüm dönem</option><option value="this_month">Bu ay</option><option value="next30">Önümüzdeki 30 gün</option><option value="this_year">Bu yıl</option><option value="custom">Özel tarih</option></select></div>
+                    <div><label>Başlangıç</label><input id="visitMgmtStartDate" type="date" onchange="visitManagementFilterChanged()"></div>
+                    <div><label>Bitiş</label><input id="visitMgmtEndDate" type="date" onchange="visitManagementFilterChanged()"></div>
+                    <div><label>Alan</label><select id="visitMgmtArea" onchange="renderVisitManagementDashboard()"><option value="all">Tüm alanlar</option></select></div>
+                    <div><label>Ziyaret edilen birim</label><select id="visitMgmtUnit" onchange="renderVisitManagementDashboard()"><option value="all">Tüm birimler</option></select></div>
+                    <div><label>Ziyaret durumu</label><select id="visitMgmtStatus" onchange="renderVisitManagementDashboard()"><option value="all">Tüm durumlar</option></select></div>
+                    <button type="button" class="btn-outline" onclick="clearVisitManagementFilters()">Temizle</button>
+                </div>
+
+                <div class="visit-mgmt-kpis">
+                    <div class="visit-mgmt-kpi info"><strong id="visitMgmtKpiVisits">0</strong><span>Ziyaret</span></div>
+                    <div class="visit-mgmt-kpi"><strong id="visitMgmtKpiUpcoming">0</strong><span>30 Gün İçinde Ziyaret</span></div>
+                    <div class="visit-mgmt-kpi danger"><strong id="visitMgmtKpiOverdueVisits">0</strong><span>Geciken Ziyaret</span></div>
+                    <div class="visit-mgmt-kpi"><strong id="visitMgmtKpiOpenFollow">0</strong><span>Açık Takip</span></div>
+                    <div class="visit-mgmt-kpi danger"><strong id="visitMgmtKpiOverdueFollow">0</strong><span>Geciken Takip</span></div>
+                    <div class="visit-mgmt-kpi purple"><strong id="visitMgmtKpiOpenConsult">0</strong><span>Açık Danışma</span></div>
+                    <div class="visit-mgmt-kpi danger"><strong id="visitMgmtKpiOverdueConsult">0</strong><span>Geciken Danışma</span></div>
+                    <div class="visit-mgmt-kpi warn"><strong id="visitMgmtKpiEvidence">0</strong><span>Kanıt Sorunu</span></div>
+                    <div class="visit-mgmt-kpi danger"><strong id="visitMgmtKpiCritical">0</strong><span>Kritik Açık Kayıt</span></div>
+                    <div class="visit-mgmt-kpi ok"><strong id="visitMgmtKpiCompletion">0%</strong><span>Ziyaret Tamamlanma</span></div>
+                </div>
+
+                <div id="visitMgmtExecutiveSummary" class="visit-mgmt-summary">Yönetim özeti hazırlanıyor...</div>
+
+                <div class="visit-mgmt-main">
+                    <section class="visit-mgmt-panel">
+                        <div class="visit-mgmt-panel-head">
+                            <h4>📅 Birleşik Takvim</h4>
+                            <div class="visit-mgmt-calendar-nav">
+                                <button type="button" class="btn-outline" onclick="changeVisitManagementMonth(-1)">‹</button>
+                                <button type="button" class="btn-outline" onclick="goVisitManagementToday()">Bugün</button>
+                                <span id="visitMgmtCalendarLabel" class="visit-mgmt-calendar-label">-</span>
+                                <button type="button" class="btn-outline" onclick="changeVisitManagementMonth(1)">›</button>
+                                <input id="visitMgmtCalendarMonth" type="month" onchange="renderVisitManagementDashboard()" style="width:145px">
+                            </div>
+                        </div>
+                        <div class="visit-mgmt-panel-body calendar-scroll">
+                            <div class="visit-mgmt-calendar-legend">
+                                <span class="visit-mgmt-legend-dot"><i style="background:#2563eb"></i>Ziyaret</span>
+                                <span class="visit-mgmt-legend-dot"><i style="background:#dc2626"></i>Takip</span>
+                                <span class="visit-mgmt-legend-dot"><i style="background:#7c3aed"></i>Danışma</span>
+                                <span class="visit-mgmt-legend-dot"><i style="background:#d97706"></i>CAP hedef tarihi</span>
+                            </div>
+                            <div id="visitMgmtCalendar" class="visit-mgmt-calendar"></div>
+                        </div>
+                    </section>
+                    <section class="visit-mgmt-panel">
+                        <div class="visit-mgmt-panel-head"><h4>Takvim Olayları</h4><span id="visitMgmtCalendarCount" class="visit-mgmt-chip visit">0 olay</span></div>
+                        <div class="visit-mgmt-panel-body"><div id="visitMgmtCalendarEvents" class="visit-mgmt-calendar-events"></div></div>
+                    </section>
+                </div>
+
+                <div class="visit-mgmt-critical-grid">
+                    <section class="visit-mgmt-panel"><div class="visit-mgmt-panel-head"><h4>🔴 Geciken Takipler</h4><span id="visitMgmtOverdueFollowCount" class="visit-mgmt-chip followup">0</span></div><div class="visit-mgmt-panel-body"><div id="visitMgmtOverdueFollowList" class="visit-mgmt-list"></div></div></section>
+                    <section class="visit-mgmt-panel"><div class="visit-mgmt-panel-head"><h4>🟣 Geciken / Cevap Bekleyen Danışmalar</h4><span id="visitMgmtOverdueConsultCount" class="visit-mgmt-chip consultation">0</span></div><div class="visit-mgmt-panel-body"><div id="visitMgmtOverdueConsultList" class="visit-mgmt-list"></div></div></section>
+                    <section class="visit-mgmt-panel"><div class="visit-mgmt-panel-head"><h4>🗓️ Yaklaşan Ziyaretler</h4><span id="visitMgmtUpcomingVisitCount" class="visit-mgmt-chip visit">0</span></div><div class="visit-mgmt-panel-body"><div id="visitMgmtUpcomingVisitList" class="visit-mgmt-list"></div></div></section>
+                    <section class="visit-mgmt-panel"><div class="visit-mgmt-panel-head"><h4>⚠️ Kanıt ve Kritik Kayıtlar</h4><span id="visitMgmtEvidenceCount" class="visit-mgmt-chip cap">0</span></div><div class="visit-mgmt-panel-body"><div id="visitMgmtEvidenceList" class="visit-mgmt-list"></div></div></section>
+                </div>
+
+                <div class="visit-mgmt-score-grid">
+                    <section class="visit-mgmt-panel"><div class="visit-mgmt-panel-head"><h4>Alan Bazlı Ziyaret Karnesi</h4></div><div class="visit-mgmt-table-wrap"><table class="visit-mgmt-table"><thead><tr><th>Alan</th><th>Ziyaret</th><th>Tamamlanan</th><th>Açık Takip</th><th>Geciken</th><th>Kanıt Sorunu</th></tr></thead><tbody id="visitMgmtAreaTable"></tbody></table></div></section>
+                    <section class="visit-mgmt-panel"><div class="visit-mgmt-panel-head"><h4>Birim Bazlı Ziyaret Karnesi</h4></div><div class="visit-mgmt-table-wrap"><table class="visit-mgmt-table"><thead><tr><th>Birim</th><th>Ziyaret</th><th>Tamamlanan</th><th>Açık Takip</th><th>Geciken</th><th>Açık Danışma</th></tr></thead><tbody id="visitMgmtUnitTable"></tbody></table></div></section>
+                </div>
+            </div>
+        </div>
+
+        <div id="tab-visit-audit" class="tab-content">
+            <div class="visit-audit-shell">
+                <div class="visit-audit-header">
+                    <div>
+                        <h3>🧾 Değişiklik Geçmişi ve Denetim İzi</h3>
+                        <p>Ziyaret, kapsam/hazırlık, saha kaydı, takip ve danışma işlemlerinde kim tarafından, ne zaman ve hangi alanlarda değişiklik yapıldığını gösterir. Paket 6A sonrası yapılan işlemler otomatik kaydedilir.</p>
+                    </div>
+                    <div class="visit-audit-actions">
+                        <button type="button" class="btn-outline" onclick="renderVisitAuditTrail()">🔄 Yenile</button>
+                        <button type="button" class="btn-outline" onclick="exportVisitAuditPDF()">📄 PDF</button>
+                        <button type="button" class="btn-outline" onclick="exportVisitAuditExcel()">📊 Excel</button>
+                    </div>
+                </div>
+                <div class="visit-audit-kpis">
+                    <div class="visit-audit-kpi"><strong id="visitAuditKpiTotal">0</strong><span>Toplam İşlem</span></div>
+                    <div class="visit-audit-kpi create"><strong id="visitAuditKpiCreate">0</strong><span>Oluşturma</span></div>
+                    <div class="visit-audit-kpi update"><strong id="visitAuditKpiUpdate">0</strong><span>Güncelleme</span></div>
+                    <div class="visit-audit-kpi delete"><strong id="visitAuditKpiDelete">0</strong><span>Silme / İptal</span></div>
+                    <div class="visit-audit-kpi user"><strong id="visitAuditKpiUsers">0</strong><span>İşlem Yapan Kullanıcı</span></div>
+                </div>
+                <div class="visit-audit-toolbar">
+                    <div><label>Ziyaret</label><select id="visitAuditVisitFilter" onchange="renderVisitAuditTrail()"><option value="all">Tüm ziyaretler</option></select></div>
+                    <div><label>Kayıt türü</label><select id="visitAuditEntityFilter" onchange="renderVisitAuditTrail()"><option value="all">Tüm kayıt türleri</option></select></div>
+                    <div><label>İşlem</label><select id="visitAuditActionFilter" onchange="renderVisitAuditTrail()"><option value="all">Tüm işlemler</option></select></div>
+                    <div><label>Kullanıcı</label><select id="visitAuditUserFilter" onchange="renderVisitAuditTrail()"><option value="all">Tüm kullanıcılar</option></select></div>
+                    <div><label>Başlangıç</label><input id="visitAuditStartDate" type="date" onchange="renderVisitAuditTrail()"></div>
+                    <div><label>Bitiş</label><input id="visitAuditEndDate" type="date" onchange="renderVisitAuditTrail()"></div>
+                    <div><label>Arama</label><input id="visitAuditSearch" type="text" placeholder="Ziyaret, PQ, Step, kullanıcı, alan veya değişiklik..." oninput="renderVisitAuditTrail()"></div>
+                    <button type="button" class="btn-outline" onclick="clearVisitAuditFilters()">Temizle</button>
+                </div>
+                <div class="visit-audit-note">Not: Paket 6A'dan önce oluşturulan kayıtların yalnızca mevcut oluşturma/güncelleme zamanları görülebilir; alan bazlı ayrıntılı değişiklik geçmişi Paket 6A sonrası işlemler için oluşur.</div>
+                <div class="visit-audit-table-wrap">
+                    <table class="visit-audit-table">
+                        <thead><tr><th>Tarih / Saat</th><th>Ziyaret</th><th>Kayıt Türü</th><th>İşlem</th><th>Kullanıcı</th><th>İlgili PQ / Step</th><th>Özet</th><th>Değişiklikler</th></tr></thead>
+                        <tbody id="visitAuditTableBody"><tr><td colspan="8" class="visit-audit-empty">Henüz denetim izi kaydı bulunmuyor.</td></tr></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
         <div id="tab-list" class="tab-content">
             <div class="table-wrapper">
                 <table id="capTable">
@@ -293,21 +1049,36 @@
         </div>
 
         <div id="tab-kanban" class="tab-content">
-            <div style="display:flex; justify-content:space-between; margin-bottom:15px; background:var(--card); padding:15px; border-radius:12px; border:1px solid var(--border);">
-                <h3 style="margin:0; color:var(--text);">🗂️ Eylem (CAP) Kanban Panosu</h3>
-                <span style="font-size:12px; color:var(--muted); font-style:italic;">*Sağ üstteki filtreler bu panoyu da anında etkiler. Detaylar için kartlara tıklayın.</span>
+            <div class="kanban-toolbar">
+                <div>
+                    <h3 style="margin:0; color:var(--text);">🗂️ EI Odaklı CAP Kanban Panosu</h3>
+                    <span style="font-size:12px; color:var(--muted); font-style:italic;">*Sağ üstteki filtreler bu panoyu da etkiler. Kartlar gecikme, tarih riski ve EI katkısı dikkate alınarak sıralanır.</span>
+                </div>
+                <div class="kanban-toolbar-controls">
+                    <label>Görünüm</label>
+                    <select id="kanbanViewMode" onchange="render()" style="width:auto; min-width:155px; padding:6px; font-size:11px;">
+                        <option value="step">CAP Adımı Bazlı</option>
+                        <option value="pq">PQ Bazlı Yönetici Görünümü</option>
+                    </select>
+                    <span class="kb-risk-chip danger">🔴 En kritik üstte</span>
+                </div>
             </div>
+            <div id="kbSummary" class="kanban-summary-grid"></div>
             <div class="kanban-board">
                 <div class="kanban-column" style="border-top: 4px solid var(--danger);">
-                    <div class="kanban-column-header"><h4>🔴 Gecikmiş Eylemler</h4><span class="kanban-count" id="kb-late-count">0</span></div>
+                    <div class="kanban-column-header"><h4>🔴 Gecikmiş</h4><span class="kanban-count" id="kb-late-count">0</span></div>
                     <div id="kb-late" class="kanban-cards"></div>
+                </div>
+                <div class="kanban-column" style="border-top: 4px solid #991b1b;">
+                    <div class="kanban-column-header"><h4>⚫ Tarih Yok / Planlama Riski</h4><span class="kanban-count" id="kb-missing-count">0</span></div>
+                    <div id="kb-missing" class="kanban-cards"></div>
                 </div>
                 <div class="kanban-column" style="border-top: 4px solid var(--warn);">
                     <div class="kanban-column-header"><h4>🟡 Bekleyen / Devam Eden</h4><span class="kanban-count" id="kb-pending-count">0</span></div>
                     <div id="kb-pending" class="kanban-cards"></div>
                 </div>
                 <div class="kanban-column" style="border-top: 4px solid var(--ok);">
-                    <div class="kanban-column-header"><h4>🟢 Tamamlanan Eylemler</h4><span class="kanban-count" id="kb-done-count">0</span></div>
+                    <div class="kanban-column-header"><h4>🟢 Tamamlanan</h4><span class="kanban-count" id="kb-done-count">0</span></div>
                     <div id="kb-done" class="kanban-cards"></div>
                 </div>
             </div>
@@ -317,25 +1088,37 @@
             <div class="report-layout">
                 <div>
                     <div style="background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
-                        <h3 style="margin: 0 0 15px 0; color: var(--primary); font-size: 16px;">📝 Yönetici Özeti</h3>
-                        <p style="font-size: 11px; color: var(--muted); margin-top: 0; margin-bottom: 15px;">Aşağıdaki alana genel değerlendirmelerinizi yazın. Seçtiğiniz <b>PQ'lar</b> sağdaki rapora eklenecektir.</p>
-                        <textarea id="managementNotes" class="report-textarea" placeholder="Örn: Bugünkü toplantıda..." oninput="updateReportPreview(); saveToLocalStorage();"></textarea>
+                        <h3 style="margin: 0 0 15px 0; color: var(--primary); font-size: 16px;">📝 Yönetici Raporu</h3>
+                        <p style="font-size: 11px; color: var(--muted); margin-top: 0; margin-bottom: 12px;">Bu ekran artık seçim yapılmasa bile otomatik yönetici brifingi üretir. Seçili PQ'lar varsa ayrıca detay bölümü eklenir.</p>
+                        <div class="manager-mode-tabs">
+                            <label><input type="radio" name="reportMode" value="auto" checked onchange="updateReportPreview()"><span>Otomatik Yönetici Özeti<small>EI, gecikme, kritik yol, darboğaz ve hızlı kazanım listesi.</small></span></label>
+                            <label><input type="radio" name="reportMode" value="selected" onchange="updateReportPreview()"><span>Seçili PQ Raporu<small>Detaylı CAP Listesi veya Excel'de rapora eklenen PQ'lar.</small></span></label>
+                            <label><input type="radio" name="reportMode" value="combined" onchange="updateReportPreview()"><span>Birleşik Rapor<small>Otomatik brifing + seçili PQ detayları birlikte.</small></span></label>
+                        </div>
+                        <textarea id="managementNotes" class="report-textarea" placeholder="Yönetici değerlendirmesi / toplantı notu..." oninput="updateReportPreview(); saveToLocalStorage();"></textarea>
                         <button onclick="copyReportToClipboard()" style="width: 100%; justify-content: center; margin-top: 10px; background: #059669; font-size: 14px; padding: 10px;">📋 Raporu Panoya Kopyala</button>
+                    </div>
+                    <div style="background: var(--card); border: 1px dashed var(--border); border-radius: 12px; padding: 14px; margin-top: 12px; font-size: 11px; color: var(--muted); line-height:1.5;">
+                        <b style="color:var(--text);">Not:</b> Seçili PQ raporu için Detaylı CAP Listesi'nde “GÜNLÜK RAPORA EKLE” kutusunu işaretleyebilir veya Excel'deki RAPORA EKLE kolonu üzerinden otomatik seçim yapabilirsin.
                     </div>
                 </div>
                 <div>
-                    <div class="report-stat-row">
+                    <div class="report-stat-row" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));">
                         <div class="report-stat-mini">
-                            <h4 id="repTotal">0</h4><p>Toplam Kapsam (PQ)</p>
-                            <div id="repTotalSub" style="font-size:11px; font-weight:600; color:var(--muted); margin-top:5px;"></div>
+                            <h4 id="repCmaaFindings">0</h4><p>CMAA Bulgusu</p>
+                            <div id="repCmaaSub" style="font-size:11px; font-weight:600; color:var(--muted); margin-top:5px;"></div>
+                        </div>
+                        <div class="report-stat-mini" style="border-bottom:4px solid var(--icao-blue);">
+                            <h4 id="repOfficialFindings" style="color: var(--icao-blue);">0</h4><p>Resmi Açık Bulgu</p>
+                            <div id="repOfficialSub" style="font-size:11px; font-weight:600; color:var(--muted); margin-top:5px;"></div>
                         </div>
                         <div class="report-stat-mini done">
-                            <h4 id="repDone" style="color: var(--ok);">0</h4><p>Tamamlanan</p>
-                            <div id="repDoneSub" style="font-size:11px; font-weight:600; color:var(--muted); margin-top:5px;"></div>
+                            <h4 id="repLocalFindings" style="color: var(--ok);">0</h4><p>Kapatılması Beklenen Bulgu</p>
+                            <div id="repLocalSub" style="font-size:11px; font-weight:600; color:var(--muted); margin-top:5px;"></div>
                         </div>
                         <div class="report-stat-mini pending">
-                            <h4 id="repPending" style="color: var(--warn);">0</h4><p>Değerlendirmesi Süren</p>
-                            <div id="repPendingSub" style="font-size:11px; font-weight:600; color:var(--muted); margin-top:5px;"></div>
+                            <h4 id="repProjectedEi" style="color: var(--warn);">%0.00</h4><p>Tüm CAP Potansiyeli</p>
+                            <div id="repProjectedSub" style="font-size:11px; font-weight:600; color:var(--muted); margin-top:5px;"></div>
                         </div>
                     </div>
                     <div class="report-preview-box" id="reportPreview"></div>
@@ -343,11 +1126,45 @@
             </div>
         </div>
 
+        <div id="tab-strategic" class="tab-content">
+            <div class="table-wrapper" style="padding:20px; margin-bottom:20px;">
+                <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:15px; flex-wrap:wrap;">
+                    <div>
+                        <h3 style="margin:0 0 6px 0; color:var(--primary); font-size:16px;">📑 Filtre Bazlı Stratejik Rapor</h3>
+                        <p style="font-size:12px; color:var(--muted); margin:0;">Aktif filtreleri dikkate alarak Türkiye geneli ve/veya alan özelinde PQ, CAP adımı, seçili tarih projeksiyonu, EI etkisi ve gecikme detaylarını üretir.</p>
+                    </div>
+                    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                        <button type="button" onclick="exportStrategicReportPDF()" style="background:#dc2626;">📄 Özel PDF</button>
+                        <button onclick="exportStrategicReportExcel()" style="background:#059669;">📊 Özel Excel</button>
+                    </div>
+                </div>
+                <div style="display:grid; grid-template-columns: 1fr 1fr 1.2fr; gap:14px; margin-top:18px;">
+                    <div>
+                        <label style="font-size:11px; font-weight:bold; color:var(--muted);">Kapsam / Alan Seçimi <span style="font-weight:normal;">(çoklu seçim)</span></label>
+                        <div id="strategicScopeCheckboxList" class="checkbox-list" style="min-height:92px; max-height:150px;"></div>
+                    </div>
+                    <div>
+                        <label style="font-size:11px; font-weight:bold; color:var(--muted);">Projeksiyon Tarihi</label>
+                        <input type="date" id="strategicTargetDate" onchange="renderStrategicReportPreview()">
+                    </div>
+                    <div>
+                        <label style="font-size:11px; font-weight:bold; color:var(--muted);">Rapor Notu</label>
+                        <input type="text" id="strategicReportNote" placeholder="Örn: ICVM öncesi filtre bazlı durum" oninput="renderStrategicReportPreview()">
+                    </div>
+                </div>
+                <div style="margin-top:12px; padding:10px 12px; background:rgba(37,99,235,0.05); border:1px dashed var(--primary); border-radius:8px; font-size:12px; color:var(--muted);">
+                    <b>Not:</b> Bu rapor sağ üstteki gelişmiş filtreleri kullanır. Filtreye takılan PQ’lar için kapanış hesabı yapılırken ilgili PQ’nun tüm CAP adımları dikkate alınır; böylece sadece görünen adımlar üzerinden yanlış kapanış hesabı yapılmaz.
+                </div>
+            </div>
+
+            <div id="strategicReportPreview" class="report-preview-box" style="max-height:none;"></div>
+        </div>
+
         <div id="tab-trend" class="tab-content">
             <div class="table-wrapper" style="margin-bottom: 25px; padding: 20px;">
-                <h3 style="margin-top:0; color:var(--primary); font-size: 15px;">📈 Arşivlere Göre Zaman İçindeki Gelişim (Tarihsel Trend)</h3>
-                <p style="font-size: 12px; color: var(--muted); margin-top: 0;">Geçmişten günümüze "Türkiye Geneli EI Oranı" ve "Toplam Tamamlanan Eylem Sayısı" gelişimi.</p>
-                <div style="height: 300px; width: 100%;"><canvas id="historicalTrendChartCanvas"></canvas></div>
+                <h3 style="margin-top:0; color:var(--primary); font-size: 15px;">🧭 EI Yol Haritası (Arşiv Bazlı Katmanlı Görünüm)</h3>
+                <p style="font-size: 12px; color: var(--muted); margin-top: 0;">Önceki çizgi grafik, yüzde ve eylem adedini aynı anda gösterdiği için karar desteği açısından zayıf kalıyordu. Bu grafik artık her arşivde CMAA başlangıç, ICAO validasyon katkısı, tamamlanmış CAP katkısı ve açık CAP potansiyelini aynı EI ölçeğinde gösterir.</p>
+                <div style="height: 320px; width: 100%;"><canvas id="historicalTrendChartCanvas"></canvas></div>
             </div>
 
             <div class="controls" style="margin-bottom: 25px; padding: 25px; background: var(--card); border: 1px solid var(--border); border-radius: 12px;">
@@ -371,9 +1188,13 @@
             </div>
 
             <div id="trendResultsArea" style="display: none;">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 15px;">
+                <div id="trendInsightBox" class="trend-insight-box"></div>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 15px; gap:10px; flex-wrap:wrap;">
                     <h3 style="margin:0; color:var(--text); font-size: 16px;">📊 Fark Analizi (Delta) Özeti</h3>
-                    <button onclick="exportTrendPDF()" style="background: #dc2626; color:white;">📄 Kıyaslama Raporu (PDF)</button>
+                    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                        <button onclick="exportTrendExcel()" style="background:#059669; color:white;">📊 Kıyaslama Excel</button>
+                        <button type="button" onclick="exportTrendPDF()" style="background: #dc2626; color:white;">📄 Kıyaslama Raporu (PDF)</button>
+                    </div>
                 </div>
                 
                 <div class="visual-area" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
@@ -397,92 +1218,559 @@
                     <h4 style="margin: 0; padding: 15px; background: rgba(16, 185, 129, 0.1); border-bottom: 2px solid #10b981; color: #047857; font-size: 14px;">✅ İki Tarih Arasında Başarıyla Kapatılan Yeni PQ'lar</h4>
                     <div style="padding: 15px;" id="trendNewClosedList"></div>
                 </div>
+
+                <div class="table-wrapper" style="margin-top: 25px; padding: 20px;">
+                    <h3 style="margin:0 0 6px 0; color:var(--primary); font-size: 15px;">🧠 Sonraki Aşama: Önceliklendirme, Darboğaz ve Yönetici Brifingi</h3>
+                    <p style="font-size:12px; color:var(--muted); margin:0 0 10px 0;">Bu bölüm, seçtiğiniz yeni tarih/güncel durum verisine göre hangi PQ'ların EI hedefini kilitlediğini, hangi sorumlu birimlerde darboğaz oluştuğunu ve hangi PQ'ların en hızlı EI katkısı sağlayabileceğini gösterir.</p>
+                    <div id="trendExecutiveBriefing" class="trend-briefing-box"></div>
+                    <div class="priority-grid">
+                        <div class="priority-card">
+                            <h4>🛣️ Kritik Yol / Hedefi Kilitleyen PQ'lar</h4>
+                            <p class="hint">Kapanış tarihi en ileri olan, tarihi eksik olan veya gecikmiş adımı bulunan açık PQ'lar.</p>
+                            <div id="trendCriticalPathList" class="priority-list"></div>
+                        </div>
+                        <div class="priority-card">
+                            <h4>🏢 Sorumlu Birim Performans Karnesi</h4>
+                            <p class="hint">Eylem adedi, tamamlanma oranı ve gecikmiş adım yüküne göre sorumlu ofis görünümü.</p>
+                            <div id="trendOfficeScorecard"></div>
+                        </div>
+                        <div class="priority-card">
+                            <h4>🚀 En Hızlı EI Katkısı Sağlayabilecek PQ'lar</h4>
+                            <p class="hint">Alan EI katkısı yüksek, kalan adımı az veya tamamlanmaya yakın açık PQ'lar.</p>
+                            <div id="trendTopEIPQList" class="priority-list"></div>
+                        </div>
+                        <div class="priority-card">
+                            <h4>🔥 Yüksek Risk / Yüksek Etki PQ'lar</h4>
+                            <p class="hint">EI katkısı olan ancak gecikme, eksik tarih veya düşük ilerleme nedeniyle risk üreten PQ'lar.</p>
+                            <div id="trendRiskImpactList" class="priority-list"></div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
-        <div id="tab-pq-library" class="tab-content" data-pq-library-module="1">
-            <div class="pqdb-shell">
-                <div class="pqdb-header">
+
+
+        <!-- ZİYARET VE İÇ DENETİM - PAKET 1 -->
+        <div id="tab-visits" class="tab-content">
+            <div class="visit-shell">
+                <div class="visit-header">
                     <div>
-                        <h3>📚 ICAO PQ Veri Tabanı &amp; Sürüm Yönetimi</h3>
-                        <p>Kayıtlar <b>Denetim Alanı → Sürüm → Revizyon</b> hiyerarşisinde gösterilir. Word dokümanı okunduktan sonra Denetim Alanı, Sürüm, Revizyon ve kaynak belge tarihi kayıttan önce doğrulanabilir; kayıt sonrasında da güncellenebilir.</p>
+                        <h3>🧭 Ziyaret ve İç Denetim</h3>
+                        <p>Denetim alanı özelindeki birim ziyaretlerini planlayın, ziyaret üst bilgilerini yönetin ve kayıtları Firebase üzerinde tarihçeli kullanıcı bilgileriyle saklayın. PQ/CAP kapsam seçimi ve saha notları sonraki paketlerde bu ziyaret kaydına bağlanacaktır.</p>
                     </div>
-                    <div class="pqdb-actions">
-                        <input id="pqDbDocxInput" type="file" accept=".docx" multiple hidden onchange="prepareIcaoPqDocuments(event)">
-                        <button type="button" onclick="document.getElementById('pqDbDocxInput').click()">📄 ICAO PQ DOCX Yükle</button>
-                        <button type="button" class="btn-outline" onclick="loadIcaoPqLibrary(true)">↻ Firebase'den Yenile</button>
-                        <button type="button" class="btn-outline" onclick="exportIcaoPqLibraryExcel()">📊 Excel</button>
-                    </div>
-                </div>
-                <div id="pqDbSyncNote" class="pqdb-sync">PQ veri tabanı açıldığında Firebase kayıtları okunacaktır.</div>
-                <div class="pqdb-kpis">
-                    <div class="pqdb-kpi"><strong id="pqDbKpiEditions">0</strong><span>Sürüm / Revizyon</span></div>
-                    <div class="pqdb-kpi ok"><strong id="pqDbKpiAreas">0</strong><span>Alan Kaydı</span></div>
-                    <div class="pqdb-kpi"><strong id="pqDbKpiPqs">0</strong><span>Toplam PQ</span></div>
-                    <div class="pqdb-kpi"><strong id="pqDbKpiOnsite">0</strong><span>On-site</span></div>
-                    <div class="pqdb-kpi purple"><strong id="pqDbKpiPpq">0</strong><span>PPQ</span></div>
-                    <div class="pqdb-kpi warn"><strong id="pqDbKpiChanges">0</strong><span>Amendment</span></div>
-                </div>
-                <div id="pqDbModebar" class="pqdb-modebar">
-                    <button type="button" class="active" data-pqdb-view="versions" onclick="setPqDbView('versions')">🗂️ Alan / Sürüm / Revizyon</button>
-                    <button type="button" data-pqdb-view="catalog" onclick="setPqDbView('catalog')">📋 PQ Kataloğu</button>
-                    <button type="button" data-pqdb-view="compare" onclick="setPqDbView('compare')">🔀 Sürüm Kıyaslama</button>
-                </div>
-
-                <div id="pqDbViewVersions" class="pqdb-view active">
-                    <div id="pqDbVersionGrid" class="pqdb-area-tree"></div>
-                </div>
-
-                <div id="pqDbViewCatalog" class="pqdb-view">
-                    <div class="pqdb-toolbar">
-                        <div><label>Sürüm / Revizyon</label><select id="pqDbCatalogEdition" onchange="pqDbCatalogEditionChanged()"></select></div>
-                        <div><label>Denetim Alanı</label><select id="pqDbCatalogArea" onchange="pqDbCatalogEditionChanged()"></select></div>
-                        <div><label>Değerlendirme Türü</label><select id="pqDbCatalogMode" onchange="renderIcaoPqLibraryModule()"><option value="all">Tümü</option><option value="On-site">On-site</option><option value="Off-site">Off-site</option></select></div>
-                        <div><label>CE</label><select id="pqDbCatalogCe" onchange="renderIcaoPqLibraryModule()"><option value="all">Tüm CE'ler</option></select></div>
-                        <div><label>PPQ</label><select id="pqDbCatalogPpq" onchange="renderIcaoPqLibraryModule()"><option value="all">Tümü</option><option value="yes">PPQ</option><option value="no">PPQ Değil</option></select></div>
-                        <div><label>Ara</label><input id="pqDbCatalogSearch" type="text" placeholder="PQ, soru, guidance, referans..." oninput="renderIcaoPqLibraryModule()"></div>
-                    </div>
-                    <div class="pqdb-catalog-layout">
-                        <div class="pqdb-panel">
-                            <div class="pqdb-panel-head"><h4>PQ Listesi</h4><span id="pqDbCatalogCount">0 PQ</span></div>
-                            <div class="pqdb-table-wrap"><table class="pqdb-table"><thead><tr><th>PQ</th><th>Tür</th><th>CE / SSP</th><th>PPQ</th><th>Değişiklik</th></tr></thead><tbody id="pqDbCatalogBody"></tbody></table></div>
-                        </div>
-                        <div class="pqdb-panel">
-                            <div class="pqdb-panel-head"><h4>PQ Ayrıntısı</h4><span id="pqDbDetailEdition"></span></div>
-                            <div id="pqDbDetail" class="pqdb-panel-body"></div>
-                        </div>
+                    <div class="visit-header-actions">
+                        <button class="btn-outline" onclick="refreshVisitModule()">🔄 Yenile</button>
+                        <button type="button" class="btn-outline" onclick="exportVisitsPDF()">📄 PDF</button>
+                        <button type="button" class="btn-outline" onclick="exportVisitsExcel()">📊 Excel</button>
+                        <button onclick="openVisitForm()">➕ Yeni Ziyaret</button>
                     </div>
                 </div>
-
-                <div id="pqDbViewCompare" class="pqdb-view">
-                    <div class="pqdb-compare-head">
-                        <div><label>Hedef Sürüm</label><select id="pqDbCompareTarget" onchange="pqDbCompareTargetChanged()"></select></div>
-                        <div><label>Referans / Önceki Sürüm</label><select id="pqDbCompareBase" onchange="renderIcaoPqLibraryModule()"></select></div>
-                        <div><label>Denetim Alanı</label><select id="pqDbCompareArea" onchange="pqDbCompareTargetChanged()"></select></div>
-                        <button type="button" onclick="renderIcaoPqLibraryModule()">Kıyasla</button>
-                    </div>
-                    <div class="pqdb-change-kpis">
-                        <div class="pqdb-change-kpi"><strong id="pqDbChangeNew">0</strong><span>New</span></div>
-                        <div class="pqdb-change-kpi"><strong id="pqDbChangeRevised">0</strong><span>Revised</span></div>
-                        <div class="pqdb-change-kpi"><strong id="pqDbChangeDeleted">0</strong><span>Deleted</span></div>
-                        <div class="pqdb-change-kpi"><strong id="pqDbChangeMerged">0</strong><span>Merged</span></div>
-                        <div class="pqdb-change-kpi"><strong id="pqDbChangeNoChange">0</strong><span>No change</span></div>
-                    </div>
-                    <div class="pqdb-panel">
-                        <div class="pqdb-panel-head"><h4>Değişiklik Matrisi</h4><span id="pqDbCompareSummary">-</span></div>
-                        <div class="pqdb-table-wrap"><table class="pqdb-table"><thead><tr><th>Önceki PQ</th><th>Yeni PQ</th><th>Tür</th><th>On/Off-site</th><th>CE / SSP</th><th>Açıklama</th></tr></thead><tbody id="pqDbCompareBody"></tbody></table></div>
-                    </div>
+                <div id="visitSyncNote" class="visit-sync-note">Firebase ziyaret kayıtları yükleniyor...</div>
+                <div class="visit-kpi-grid">
+                    <div class="visit-kpi info"><strong id="visitKpiTotal">0</strong><span>Toplam ziyaret</span></div>
+                    <div class="visit-kpi"><strong id="visitKpiPlanned">0</strong><span>Planlanan / hazırlık</span></div>
+                    <div class="visit-kpi warn"><strong id="visitKpiActive">0</strong><span>Devam eden</span></div>
+                    <div class="visit-kpi danger"><strong id="visitKpiFollowUp">0</strong><span>Takipte</span></div>
+                    <div class="visit-kpi ok"><strong id="visitKpiCompleted">0</strong><span>Tamamlanan</span></div>
+                </div>
+                <div class="visit-toolbar">
+                    <div><label>Durum</label><select id="visitStatusFilter" onchange="renderVisitModule()"><option value="all">Tüm durumlar</option></select></div>
+                    <div><label>Denetim alanı</label><select id="visitAreaFilter" onchange="renderVisitModule()"><option value="all">Tüm alanlar</option></select></div>
+                    <div><label>Arama</label><input id="visitSearchInput" type="text" placeholder="Ziyaret adı, birim, yer, katılımcı veya amaç ara..." oninput="renderVisitModule()"></div>
+                    <button class="btn-outline" onclick="clearVisitFilters()">✖ Filtreleri temizle</button>
+                </div>
+                <div class="visit-table-wrap">
+                    <table class="visit-table">
+                        <thead><tr><th>Ziyaret / Durum</th><th>Alan</th><th>Birim / Yer</th><th>Planlanan Tarih</th><th>Katılımcılar / Muhataplar</th><th>Amaç / Yöntem</th><th>Güncelleme</th><th>İşlemler</th></tr></thead>
+                        <tbody id="visitTableBody"><tr><td colspan="8" class="visit-empty">Ziyaret kayıtları yükleniyor...</td></tr></tbody>
+                    </table>
                 </div>
             </div>
         </div>
 
-        <!-- YENİ EKLENEN EKRAN 1: BOŞ CAP LİSTESİ -->
+
+        <!-- ICAO RESMİ ZİYARETİ / ICVM - PQ/CAP MERKEZLİ VALIDASYON -->
+        <div id="tab-icao-visit-validation" class="tab-content">
+            <div class="icao-visit-shell">
+                <div class="icao-visit-header">
+                    <div>
+                        <h3>🌐 ICAO Resmî Ziyareti / ICVM</h3>
+                        <p>ICAO validasyon ziyaretlerinde değerlendirme PQ/CAP seviyesinde yürütülür. CAP Step'leri, CAP'in uygulanma sürecini göstermek üzere yalnızca bilgi amaçlı sunulur; Step bazında ayrı ICAO kabul sonucu tutulmaz. EI etkisi yalnızca ilgili PQ/CAP için “CAP Kapatıldı / Validated” sonucu kaydedildiğinde geçici olarak hesaplanır.</p>
+                    </div>
+                    <div class="icao-visit-actions">
+                        <button type="button" class="btn-outline" onclick="renderIcaoOfficialVisitModule(true)">🔄 Yenile</button>
+                        <button type="button" class="btn-outline" onclick="openIcaoOfficialVisitForm()">➕ Resmî Ziyaret Oluştur</button>
+                        <button type="button" class="btn-outline" onclick="exportIcaoOfficialVisitDetailedPDF()" title="Seçili denetim alanı filtresindeki tüm PQ/CAP kapsamını ayrıntılı PDF olarak dışa aktar">📄 Detaylı PDF</button>
+                        <button type="button" class="btn-outline" onclick="exportIcaoOfficialVisitDetailedExcel()" title="Seçili denetim alanı filtresindeki tüm PQ/CAP kapsamını ayrıntılı Excel olarak dışa aktar">📊 Detaylı Excel</button>
+                    </div>
+                </div>
+                <div class="icao-visit-selectbar">
+                    <div><label>ICAO resmî ziyaret kaydı</label><select id="icaoOfficialVisitSelect" onchange="loadIcaoOfficialVisit(this.value)"><option value="">Bir ICAO resmî ziyareti seçiniz...</option></select></div>
+                    <div><button type="button" class="btn-outline" onclick="openSelectedIcaoVisitScope()">🗂️ Kapsamı Aç</button></div>
+                </div>
+                <div id="icaoOfficialVisitNote" class="visit-sync-note">ICAO resmî ziyaret kaydı seçiniz.</div>
+                <div class="visit-subnav" id="icaoVisitSubnav">
+                    <button type="button" class="active" data-icao-mode="validation" onclick="setIcaoVisitWorkspaceMode('validation')">✅ Validasyon Çalışması</button>
+                    <button type="button" data-icao-mode="reference" onclick="setIcaoVisitWorkspaceMode('reference')">📚 PQ Referansı</button>
+                    <button type="button" data-icao-mode="impact" onclick="setIcaoVisitWorkspaceMode('impact')">📈 EI &amp; Son Durum</button>
+                </div>
+                <div class="icao-visit-kpis">
+                    <div class="icao-visit-kpi"><strong id="icaoVisitKpiPq">0</strong><span>Kapsamdaki açık PQ</span></div>
+                    <div class="icao-visit-kpi ok"><strong id="icaoVisitKpiValidated">0</strong><span>CAP kapatıldı</span></div>
+                    <div class="icao-visit-kpi danger"><strong id="icaoVisitKpiOpen">0</strong><span>CAP açık kaldı</span></div>
+                    <div class="icao-visit-kpi warn"><strong id="icaoVisitKpiEvidence">0</strong><span>Ek kanıt / takip</span></div>
+                    <div class="icao-visit-kpi ok"><strong id="icaoVisitKpiEi">+0</strong><span>EI'ye yeni PQ etkisi</span></div>
+                </div>
+                <div class="icao-visit-layout">
+                    <section class="icao-visit-panel">
+                        <div class="icao-visit-panel-head"><h4>PQ / CAP Validasyon Listesi</h4><span id="icaoVisitListCount" class="smart-scope">0 PQ</span></div>
+                        <div class="icao-visit-filter-grid">
+                            <input id="icaoVisitSearch" class="icao-visit-filter-search" type="text" placeholder="PQ, alan, CE veya doğrulama türü ara..." oninput="renderIcaoOfficialVisitPqList()">
+                            <select id="icaoVisitAreaFilter" onchange="handleIcaoVisitAreaFilterChange()" title="Ziyaret kapsamındaki denetim alanına göre filtrele"><option value="all">Tüm alanlar</option></select>
+                            <select id="icaoVisitStatusFilter" onchange="renderIcaoOfficialVisitPqList()"><option value="all">Tüm sonuçlar</option><option value="not_evaluated">Değerlendirilmedi</option><option value="under_review">İnceleniyor</option><option value="additional_evidence">Ek kanıt talebi</option><option value="open">CAP açık kaldı</option><option value="validated">CAP kapatıldı</option><option value="post_visit">Ziyaret sonrası takip</option></select>
+                            <div class="icao-language-toggle" id="icaoVisitLanguageToggle" title="PQ sorusu ve bulgu metinlerinin görüntüleme dili">
+                                <button type="button" data-lang="en" onclick="setIcaoPqTextLanguage('en')">ENG</button>
+                                <span class="sep"></span>
+                                <button type="button" data-lang="tr" onclick="setIcaoPqTextLanguage('tr')">TR</button>
+                                <span class="sep"></span>
+                                <button type="button" data-lang="both" onclick="setIcaoPqTextLanguage('both')">ENG + TR</button>
+                            </div>
+                            <select id="icaoVisitTextLanguage" style="display:none" aria-hidden="true"><option value="both">ENG + TR</option><option value="en">ENG</option><option value="tr">TR</option></select>
+                        </div>
+                        <div id="icaoVisitTranslationStatus" class="icao-translation-status">Türkçe PQ metinleri Excel master yüklendiğinde burada kontrol edilir.</div>
+                        <div id="icaoOfficialVisitPqList" class="icao-visit-list"><div class="icao-visit-empty">Ziyaret seçildiğinde kapsamdaki PQ'lar burada gösterilecektir.</div></div>
+                    </section>
+                    <section class="icao-visit-panel">
+                        <div class="icao-visit-panel-head"><h4>CAP Validasyon Değerlendirmesi</h4><span class="smart-scope">PQ/CAP seviyesi</span></div>
+                        <div id="icaoValidationEmpty" class="icao-visit-empty">Değerlendirme yapmak için soldan bir PQ seçiniz.</div>
+                        <div id="icaoPqReferencePanel" class="visit-pq-reference" style="display:none"><div class="icao-visit-empty">PQ referansı için soldan bir PQ seçiniz.</div></div>
+                        <form id="icaoValidationForm" style="display:none" onsubmit="saveIcaoValidationRecord(event)">
+                            <input type="hidden" id="icaoValidationPq">
+                            <div id="icaoValidationSummary" class="icao-valid-summary"></div>
+                            <div class="icao-valid-grid">
+                                <div class="icao-valid-field"><label>ICVM / ICAO sonucu</label><select id="icaoValidationStatus" required></select></div>
+                                <div class="icao-valid-field"><label>Sonuç tarihi</label><input id="icaoValidationResultDate" type="date"></div>
+                                <div class="icao-valid-field full"><label>ICAO'ya sunulan kanıt / uygulama kanıtı</label><div class="icvm-textarea-wrap" data-textarea-wrap="icaoValidationEvidence"><textarea id="icaoValidationEvidence" placeholder="Ziyaret sırasında fiilen sunulan ek/özel kanıt veya uygulama kanıtı varsa manuel olarak giriniz." oninput="handleIcaoValidationTextInput(this)"></textarea><div class="icvm-textarea-toolbar"><button type="button" onclick="icaoValidationTextAction('icaoValidationEvidence','timestamp')">🕒 Zaman</button><button type="button" onclick="icaoValidationTextAction('icaoValidationEvidence','copy')">📋 Kopyala</button><button type="button" onclick="icaoValidationTextAction('icaoValidationEvidence','expand')">⛶ Büyüt</button><button type="button" onclick="icaoValidationTextAction('icaoValidationEvidence','clear')">🧹 Temizle</button><span class="icvm-textarea-meta" id="icaoValidationEvidenceCount">0 karakter</span></div></div><div style="margin-top:5px"><span id="icaoValidationEvidenceAutoInfo" style="font-size:9px;color:var(--muted)">Step bazlı EVIDENCE REFERENCE bilgileri aşağıdaki salt okunur CAP Step bölümünde gösterilir. Bu alan otomatik doldurulmaz.</span></div></div>
+                                <div class="icao-valid-field full"><label>ICAO görüşü / ziyaret notu</label><div class="icvm-textarea-wrap" data-textarea-wrap="icaoValidationComment"><textarea id="icaoValidationComment" placeholder="ICAO uzmanının değerlendirmesi, görüşme notu veya teyit edilen husus" oninput="handleIcaoValidationTextInput(this)"></textarea><div class="icvm-textarea-toolbar"><button type="button" onclick="icaoValidationTextAction('icaoValidationComment','timestamp')">🕒 Zaman</button><button type="button" onclick="icaoValidationTextAction('icaoValidationComment','copy')">📋 Kopyala</button><button type="button" onclick="icaoValidationTextAction('icaoValidationComment','expand')">⛶ Büyüt</button><button type="button" onclick="icaoValidationTextAction('icaoValidationComment','clear')">🧹 Temizle</button><span class="icvm-textarea-meta" id="icaoValidationCommentCount">0 karakter</span></div></div></div>
+                                <div class="icao-valid-field full"><label>Ek kanıt / açıklama talebi</label><div class="icvm-textarea-wrap" data-textarea-wrap="icaoValidationAdditionalRequest"><textarea id="icaoValidationAdditionalRequest" placeholder="İlave belge, açıklama veya ziyaret sonrası talep" oninput="handleIcaoValidationTextInput(this)"></textarea><div class="icvm-textarea-toolbar"><button type="button" onclick="icaoValidationTextAction('icaoValidationAdditionalRequest','timestamp')">🕒 Zaman</button><button type="button" onclick="icaoValidationTextAction('icaoValidationAdditionalRequest','copy')">📋 Kopyala</button><button type="button" onclick="icaoValidationTextAction('icaoValidationAdditionalRequest','expand')">⛶ Büyüt</button><button type="button" onclick="icaoValidationTextAction('icaoValidationAdditionalRequest','clear')">🧹 Temizle</button><span class="icvm-textarea-meta" id="icaoValidationAdditionalRequestCount">0 karakter</span></div></div></div>
+                                <div class="icao-valid-field"><label>Sorumlu SHGM birimi</label><input id="icaoValidationResponsibleUnit" type="text" placeholder="Birim / koordinatörlük"></div>
+                                <div class="icao-valid-field"><label>Sonraki işlem / takip tarihi</label><input id="icaoValidationFollowUpDate" type="date"></div>
+                                <div class="icao-valid-field full"><label>İç not</label><div class="icvm-textarea-wrap" data-textarea-wrap="icaoValidationNotes"><textarea id="icaoValidationNotes" placeholder="SHGM iç kullanım notu" oninput="handleIcaoValidationTextInput(this)"></textarea><div class="icvm-textarea-toolbar"><button type="button" onclick="icaoValidationTextAction('icaoValidationNotes','timestamp')">🕒 Zaman</button><button type="button" onclick="icaoValidationTextAction('icaoValidationNotes','copy')">📋 Kopyala</button><button type="button" onclick="icaoValidationTextAction('icaoValidationNotes','expand')">⛶ Büyüt</button><button type="button" onclick="icaoValidationTextAction('icaoValidationNotes','clear')">🧹 Temizle</button><span class="icvm-textarea-meta" id="icaoValidationNotesCount">0 karakter</span></div></div></div>
+                            </div>
+                            <div style="margin-top:12px"><b style="font-size:11px;color:var(--muted)">CAP Step'leri — bilgi amaçlı</b><div id="icaoValidationSteps" class="icao-valid-steps"></div></div>
+                            <div id="icaoValidationEiImpact" class="icao-ei-impact"></div>
+                            <div class="icao-valid-actions"><span id="icaoValidationDraftInfo" class="icvm-draft-info">Metin alanlarındaki değişiklikler tarayıcıda taslak olarak korunur.</span><button type="button" class="btn-outline" onclick="resetIcaoValidationForm()">Formu Temizle</button><button type="submit" id="icaoValidationSaveButton">💾 CAP Sonucunu Kaydet</button></div>
+                        </form>
+                    </section>
+                </div>
+                <section id="icaoOfficialVisitEiSection" class="icao-visit-panel">
+                    <div class="icao-visit-panel-head"><h4>ICVM Geçici EI Etki Özeti</h4><span class="smart-scope">Resmî sonuç kesinleşene kadar geçici</span></div>
+                    <div id="icaoOfficialVisitEiSummary"><div class="icao-visit-empty">Ziyaret seçildiğinde alan ve Overall EI etkisi hesaplanacaktır.</div></div>
+                </section>
+            </div>
+        </div>
+
+
+
+        <!-- ZİYARET VE İÇ DENETİM - PAKET 2: KAPSAM VE HAZIRLIK -->
+        <div id="tab-visit-scope" class="tab-content">
+            <div class="visit-scope-shell">
+                <div class="visit-scope-header">
+                    <div>
+                        <h3>🗂️ Ziyaret Kapsamı ve Hazırlık</h3>
+                        <p>Planlanan ziyareti seçin; ziyaret kapsamındaki PQ ve CAP adımlarını belirleyin, ziyaret öncesi soruları ve kanıt taleplerini kaydedin. Çalışma ekranlarında en güncel Word/CAP verisi esas alınır; önceki anlık görüntüler değişiklik geçmişi olarak korunur.</p>
+                    </div>
+                    <div class="visit-scope-actions">
+                        <button type="button" class="btn-outline" onclick="renderVisitScopeModule(true)">🔄 Yenile</button>
+                        <button type="button" id="visitScopeSyncButton" class="btn-outline" onclick="syncVisitScopeWithCurrentSource()">🔁 Güncel Kaynakla Senkronize Et</button>
+                        <button type="button" class="btn-outline" onclick="exportVisitScopePDF()">📄 Çalışma Kâğıdı PDF</button>
+                        <button type="button" class="btn-outline" onclick="exportVisitScopeExcel()">📊 Çalışma Kâğıdı Excel</button>
+                    </div>
+                </div>
+
+                <div class="visit-scope-selectbar">
+                    <div><label>Ziyaret kaydı</label><select id="visitScopeVisitSelect" onchange="loadVisitScopeSelection(this.value)"><option value="">Bir ziyaret seçiniz...</option></select></div>
+                    <div><label>Projeksiyon / kapsam tarihi</label><input id="visitScopeDueDate" type="date" onchange="renderVisitScopeCandidates()"></div>
+                    <button type="button" onclick="openVisitForm()">➕ Yeni Ziyaret</button>
+                </div>
+                <div id="visitScopeSyncNote" class="visit-sync-note">Kapsam çalışması için bir ziyaret seçiniz.</div>
+                <div id="visitScopeSourceSyncPanel" class="visit-source-sync-panel" style="display:none"></div>
+
+                <div class="visit-scope-kpis">
+                    <div class="visit-scope-kpi"><strong id="visitScopeKpiEligible">0</strong><span>Uygun PQ</span></div>
+                    <div class="visit-scope-kpi ok"><strong id="visitScopeKpiSelectedPq">0</strong><span>Seçilen PQ</span></div>
+                    <div class="visit-scope-kpi"><strong id="visitScopeKpiSelectedStep">0</strong><span>Seçilen adım</span></div>
+                    <div class="visit-scope-kpi danger"><strong id="visitScopeKpiLate">0</strong><span>Gecikmiş adım</span></div>
+                    <div class="visit-scope-kpi warn"><strong id="visitScopeKpiPrep">0</strong><span>Hazırlık kaydı</span></div>
+                </div>
+
+                <div class="visit-scope-preset">
+                    <b style="font-size:11px;align-self:center;color:var(--muted)">Hazır kapsam:</b>
+                    <button type="button" class="btn-outline" onclick="selectVisitScopePreset('all_open')">Tüm Açık PQ'lar</button>
+                    <button type="button" class="btn-outline" onclick="selectVisitScopePreset('late')">Gecikmiş Adımı Olanlar</button>
+                    <button type="button" class="btn-outline" onclick="selectVisitScopePreset('date_risk')">Tarih Riski Olanlar</button>
+                    <button type="button" class="btn-outline" onclick="selectVisitScopePreset('cap_completed')">CAP Tamam / Validasyon Bekliyor</button>
+                    <button type="button" class="btn-outline" onclick="selectVisitScopePreset('due_date')">Seçilen Tarihe Kadar Vadesi Gelenler</button>
+                    <button type="button" class="btn-outline" onclick="clearVisitScopeSelection()">Seçimi Temizle</button>
+                </div>
+
+                <div class="visit-scope-toolbar">
+                    <div><label>PQ / bulgu / CAP / ofis ara</label><input id="visitScopeSearch" type="text" placeholder="PQ, soru, bulgu, eylem veya ofis..." oninput="renderVisitScopeCandidates()"></div>
+                    <div><label>Kapsam havuzu</label><select id="visitScopePoolFilter" onchange="renderVisitScopeCandidates()"><option value="auto">Otomatik (ziyaret türüne göre)</option><option value="open_cap">Yalnız ICAO açık CAP'ler</option><option value="nonvalidated">Tüm ICAO valide edilmemiş PQ'lar</option><option value="all">Tüm uygun PQ'lar</option></select></div>
+                    <div><label>Durum görünümü</label><select id="visitScopeStatusFilter" onchange="renderVisitScopeCandidates()"><option value="all">Tüm durumlar</option><option value="open">Açık PQ'lar</option><option value="late">Gecikmiş adımı olanlar</option><option value="date_risk">Tarih riski olanlar</option><option value="cap_completed">CAP tamamlandı</option><option value="official">ICAO kapattı</option><option value="no_cap">CAP yok / boş</option></select></div>
+                    <div><label>Adım görünümü</label><select id="visitScopeStepFilter" onchange="renderVisitScopeCandidates()"><option value="all">Tüm adımlar</option><option value="open">Yalnız açık</option><option value="late">Yalnız gecikmiş</option><option value="date_risk">Yalnız tarih riski</option><option value="done">Yalnız tamamlanan</option></select></div>
+                    <button type="button" class="btn-outline" onclick="clearVisitScopeLocalFilters()">✖ Görünüm filtrelerini temizle</button>
+                </div>
+
+                <div class="visit-scope-layout">
+                    <section class="visit-scope-panel">
+                        <div class="visit-scope-panel-head"><h4>PQ ve CAP Adımı Seçimi</h4><span id="visitScopeListCount" class="smart-scope">0 PQ</span></div>
+                        <div id="visitScopePqList" class="visit-scope-list"><div class="visit-scope-empty">Kapsam oluşturmak için bir ziyaret seçiniz.</div></div>
+                    </section>
+
+                    <section class="visit-scope-panel">
+                        <div class="visit-scope-panel-head"><h4>Hazırlık Çalışması</h4><span class="smart-scope">Ziyaret / PQ / Step</span></div>
+                        <div class="visit-prep-wrap">
+                            <div class="visit-prep-section">
+                                <h4>Ziyaret Geneli Hazırlık Notları</h4>
+                                <div class="visit-prep-grid">
+                                    <div class="visit-prep-field full"><label>Gündem / çalışma planı</label><textarea id="visitPrepGeneralAgenda" placeholder="Ziyaret akışı, toplantı sırası ve çalışma gündemi"></textarea></div>
+                                    <div class="visit-prep-field"><label>Genel sorular</label><textarea id="visitPrepGeneralQuestions" placeholder="Ziyaret genelinde sorulacak sorular"></textarea></div>
+                                    <div class="visit-prep-field"><label>Genel kanıt / belge talepleri</label><textarea id="visitPrepGeneralEvidence" placeholder="Önceden veya ziyarette talep edilecek belgeler"></textarea></div>
+                                    <div class="visit-prep-field"><label>Görüşülecek kişi / makamlar</label><textarea id="visitPrepGeneralAuthorities" placeholder="Birim muhatapları, yönetim veya danışılacak makamlar"></textarea></div>
+                                    <div class="visit-prep-field"><label>Genel riskler / kritik hususlar</label><textarea id="visitPrepGeneralRisks" placeholder="Öncelikli kontrol ve risk noktaları"></textarea></div>
+                                    <div class="visit-prep-field full"><label>Diğer hazırlık notları</label><textarea id="visitPrepGeneralNotes" placeholder="Ziyaret öncesi diğer notlar"></textarea></div>
+                                </div>
+                            </div>
+
+                            <div class="visit-prep-section">
+                                <h4>PQ / CAP Adımı Özelinde Hazırlık Kaydı</h4>
+                                <input id="visitPrepRecordId" type="hidden">
+                                <div class="visit-prep-target-grid">
+                                    <div class="visit-prep-field full"><label>Kayıt hedefi</label><select id="visitPrepTarget"><option value="visit">Ziyaret geneli</option></select></div>
+                                    <div class="visit-prep-field"><label>Sorulacak sorular</label><textarea id="visitPrepQuestions"></textarea></div>
+                                    <div class="visit-prep-field"><label>Talep / inceleme yapılacak kanıtlar</label><textarea id="visitPrepEvidence"></textarea></div>
+                                    <div class="visit-prep-field"><label>Görüşülecek kişi / danışılacak makam</label><textarea id="visitPrepAuthorities"></textarea></div>
+                                    <div class="visit-prep-field"><label>Doğrulanacak hususlar</label><textarea id="visitPrepVerification"></textarea></div>
+                                    <div class="visit-prep-field"><label>Ön değerlendirme</label><textarea id="visitPrepAssessment"></textarea></div>
+                                    <div class="visit-prep-field"><label>Riskli görülen konular</label><textarea id="visitPrepRisks"></textarea></div>
+                                    <div class="visit-prep-field full"><label>Ziyaret öncesi not</label><textarea id="visitPrepNotes"></textarea></div>
+                                </div>
+                                <div class="visit-prep-actions"><button type="button" class="btn-outline" onclick="resetVisitPreparationForm()">Temizle</button><button type="button" onclick="saveVisitPreparationRecord()">💾 Hazırlık Kaydını Ekle / Güncelle</button></div>
+                            </div>
+
+                            <div class="visit-prep-section">
+                                <h4>Kaydedilen Hazırlık Kayıtları</h4>
+                                <div id="visitPreparationList" class="visit-prep-records"><div class="visit-scope-empty">Henüz hazırlık kaydı yok.</div></div>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+
+                <div class="visit-scope-savebar">
+                    <div id="visitScopeSelectedSummary" class="visit-scope-selected-summary">Henüz ziyaret seçilmedi.</div>
+                    <button type="button" id="visitScopeSaveButton" onclick="saveVisitScopeAndGeneralPreparation()">💾 Kapsamı ve Genel Hazırlığı Kaydet</button>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- ZİYARET VE İÇ DENETİM - PAKET 3: ZİYARET ÇALIŞMA ALANI -->
+        <div id="tab-visit-workspace" class="tab-content">
+            <div class="visit-work-shell">
+                <div class="visit-work-header">
+                    <div>
+                        <h3>📝 Ziyaret Çalışma Alanı</h3><p style="margin:5px 0 0;color:var(--muted);font-size:11px">Bu çalışma alanı SHGM ziyaretleri / iç denetimler içindir. ICAO resmî ziyaretleri ayrı “ICAO Resmî Ziyareti” ekranından yönetilir.</p>
+                        <p>Ziyaret sırasında ziyaret geneli, PQ veya CAP adımı seviyesinde saha notu kaydedin; incelenen kanıtı değerlendirin, takip ihtiyacını ve danışılacak makamı belirleyin. Ekranda en güncel Word/CAP verisi gösterilir; notun oluşturulduğu andaki kaynak görüntüsü ayrıca denetim izi olarak saklanır.</p>
+                    </div>
+                    <div class="visit-work-actions">
+                        <button type="button" class="btn-outline" onclick="renderVisitWorkspaceModule(true)">🔄 Yenile</button>
+                        <button type="button" class="btn-outline" onclick="syncActiveVisitWorkspaceSource()">🔁 Güncel Kaynakla Senkronize Et</button>
+                        <button type="button" class="btn-outline" onclick="exportVisitWorkspacePDF()">📄 Saha Kayıtları PDF</button>
+                        <button type="button" class="btn-outline" onclick="exportVisitWorkspaceExcel()">📊 Saha Kayıtları Excel</button>
+                    </div>
+                </div>
+
+                <div class="visit-work-selectbar">
+                    <div><label>Ziyaret kaydı</label><select id="visitWorkspaceVisitSelect" onchange="loadVisitWorkspaceSelection(this.value)"><option value="">Bir ziyaret seçiniz...</option></select></div>
+                    <div><label>Hızlı kayıt görünümü</label><select id="visitWorkspaceViewFilter" onchange="renderVisitWorkspaceRecords()"><option value="all">Tüm kayıtlar</option><option value="follow_up">Takip gerekenler</option><option value="consultation">Danışılacak konular</option><option value="evidence_issue">Kanıt sorunu bulunanlar</option><option value="open">Açık kayıtlar</option></select></div>
+                    <button type="button" onclick="openVisitScopeForVisit(activeVisitWorkspaceId)">🗂️ Kapsam ve Hazırlık</button>
+                </div>
+                <div id="visitWorkspaceSyncNote" class="visit-sync-note">Çalışma alanını kullanmak için bir ziyaret seçiniz.</div>
+                <div class="visit-subnav" id="visitWorkspaceSubnav">
+                    <button type="button" class="active" data-work-mode="fieldwork" onclick="setVisitWorkspaceMode('fieldwork')">📝 Saha Kaydı</button>
+                    <button type="button" data-work-mode="reference" onclick="setVisitWorkspaceMode('reference')">📚 PQ Referansı</button>
+                    <button type="button" data-work-mode="records" onclick="setVisitWorkspaceMode('records')">🗃️ Kaydedilen Kayıtlar</button>
+                </div>
+                <div id="visitWorkspaceSourceSyncPanel" class="visit-source-sync-panel" style="display:none"></div>
+
+                <div class="visit-work-kpis">
+                    <div class="visit-work-kpi info"><strong id="visitWorkKpiTotal">0</strong><span>Saha kaydı</span></div>
+                    <div class="visit-work-kpi danger"><strong id="visitWorkKpiFollow">0</strong><span>Açık takip</span></div>
+                    <div class="visit-work-kpi warn"><strong id="visitWorkKpiEvidence">0</strong><span>Kanıt sorunu</span></div>
+                    <div class="visit-work-kpi"><strong id="visitWorkKpiConsult">0</strong><span>Danışma konusu</span></div>
+                    <div class="visit-work-kpi ok"><strong id="visitWorkKpiDone">0</strong><span>Tamamlanan kayıt</span></div>
+                </div>
+
+                <div class="visit-work-layout">
+                    <section class="visit-work-panel">
+                        <div class="visit-work-panel-head"><h4>Ziyaret Kapsamı</h4><span id="visitWorkspaceTargetCount" class="smart-scope">0 hedef</span></div>
+                        <div class="visit-work-target-search"><input id="visitWorkspaceTargetSearch" type="text" placeholder="PQ, Step, CAP veya ofis ara..." oninput="renderVisitWorkspaceTargets()"></div>
+                        <div id="visitWorkspaceTargetList" class="visit-work-target-list"><div class="visit-work-empty">Önce bir ziyaret seçiniz.</div></div>
+                    </section>
+
+                    <section class="visit-work-panel">
+                        <div class="visit-work-panel-head"><h4>Saha Notu ve Değerlendirme</h4><span class="smart-scope">Ziyaret / PQ / Step</span></div>
+                        <div class="visit-work-content">
+                            <div id="visitWorkspaceSelectedTarget" class="visit-work-selected"><b>Seçili hedef:</b> Ziyaret geneli</div>
+                            <div id="visitWorkspaceCurrentSourceContext" class="visit-current-source-context" style="display:none"></div>
+                            <div id="visitWorkspacePrepContext" class="visit-work-prep-context" style="display:none"></div>
+
+                            <form id="visitWorkspaceForm" class="visit-work-form" onsubmit="saveVisitWorkspaceRecord(event)" oninput="scheduleVisitWorkspaceDraftSave()" onchange="scheduleVisitWorkspaceDraftSave()">
+                                <div class="visit-work-form-title-row">
+                                    <h4>Saha Kaydı</h4>
+                                    <button type="button" class="btn-outline visit-work-jump-btn" onclick="scrollVisitWorkspaceToFollowUp()">⏰ Takip ve Danışma</button>
+                                </div>
+                                <input id="visitWorkspaceRecordId" type="hidden">
+                                <div class="visit-work-grid">
+                                    <div class="visit-work-field"><label>Not türü</label><select id="visitWorkspaceNoteType"></select></div>
+                                    <div class="visit-work-field"><label>Öncelik</label><select id="visitWorkspacePriority"></select></div>
+                                    <div class="visit-work-field"><label>Kayıt durumu</label><select id="visitWorkspaceRecordStatus"></select></div>
+                                    <div class="visit-work-field"><label>Kanıt yeterlilik durumu</label><select id="visitWorkspaceEvidenceStatus"></select></div>
+                                    <div class="visit-work-field full"><label>Not / tespit / açıklama <span class="visit-required">*</span></label><textarea id="visitWorkspaceNote" required placeholder="Ziyarette görülen, ifade edilen veya doğrulanan hususu yazınız."></textarea></div>
+                                    <div class="visit-work-field"><label>İncelenen / talep edilen kanıt</label><textarea id="visitWorkspaceEvidence" placeholder="Belge adı, sürüm, tarih, kayıt veya talep edilen kanıt"></textarea></div>
+                                    <div class="visit-work-field"><label>Değerlendirme</label><textarea id="visitWorkspaceAssessment" placeholder="Kanıtın yeterliliği, CAP'a etkisi ve iç denetim değerlendirmesi"></textarea></div>
+
+                                    <fieldset id="visitWorkspaceFollowSection" class="visit-work-section visit-work-section-follow full">
+                                        <legend>⏰ Takip ve Danışma</legend>
+                                        <div class="visit-work-section-help">Bu bölüm, ICAO CAP hedef tarihinden bağımsız olarak ziyaret sonrasında senin yeniden kontrol edeceğin iç takip kaydını oluşturur.</div>
+                                        <div class="visit-work-grid visit-work-follow-grid">
+                                            <div class="visit-work-field visit-work-follow-toggle full">
+                                                <label class="visit-work-follow-label"><input id="visitWorkspaceFollowRequired" type="checkbox" onchange="toggleVisitWorkspaceFollowDate();scheduleVisitWorkspaceDraftSave()"> <span><b>Takip gerekli</b><small>Bu hususun daha sonra yeniden kontrol edilmesi gerekiyorsa işaretleyin.</small></span></label>
+                                            </div>
+                                            <div class="visit-work-field"><label>Takip tarihi</label><input id="visitWorkspaceFollowDate" type="date" disabled><small class="visit-work-field-hint">“Takip gerekli” işaretlendiğinde tarih seçilebilir.</small></div>
+                                            <div class="visit-work-field"><label>Aksiyon sorumlusu</label><input id="visitWorkspaceOwner" type="text" placeholder="Birim veya kişi"></div>
+                                            <div class="visit-work-field full"><label>Beklenen çıktı</label><input id="visitWorkspaceExpectedOutput" type="text" placeholder="Belge, revizyon, görüş, karar, kanıt vb."></div>
+                                            <div class="visit-work-field"><label>Danışılacak makam</label><input id="visitWorkspaceConsultAuthority" type="text" list="visitConsultAuthorityList" placeholder="Makam veya birim"><datalist id="visitConsultAuthorityList"><option>Genel Müdür</option><option>Genel Müdür Yardımcısı</option><option>Daire Başkanı</option><option>Koordinatörlük</option><option>Hukuk Müşavirliği</option><option>İlgili Bakanlık Birimi</option><option>Diğer Kamu Kurumu</option><option>TSIC</option><option>ICAO</option></datalist></div>
+                                            <div class="visit-work-field"><label>Danışma konusu</label><input id="visitWorkspaceConsultTopic" type="text" placeholder="Danışılacak soru veya karar konusu"></div>
+                                        </div>
+                                    </fieldset>
+                                </div>
+                                <div class="visit-work-form-actions"><button type="button" class="btn-outline" onclick="resetVisitWorkspaceForm()">Temizle</button><button type="submit">💾 Saha Kaydını Ekle / Güncelle</button></div>
+                                <div id="visitWorkspaceSaveStatus" class="visit-work-save-status" role="status" aria-live="polite"></div>
+                                <div id="visitWorkspaceDraftNote" class="visit-work-draft-note">Bağlantı kesintisine karşı form taslağı bu tarayıcıda geçici olarak saklanır.</div>
+                            </form>
+
+                            <div id="visitWorkspacePqReferencePanel" class="visit-pq-reference" style="display:none"><div class="visit-work-empty">PQ referansı için soldan bir PQ veya CAP adımı seçiniz.</div></div>
+
+                            <div id="visitWorkspaceRecordsPanel" class="visit-work-form" style="display:none">
+                                <h4>Kaydedilen Saha Kayıtları</h4>
+                                <div class="visit-work-filterbar">
+                                    <div><label>Not türü</label><select id="visitWorkNoteTypeFilter" onchange="renderVisitWorkspaceRecords()"><option value="all">Tümü</option></select></div>
+                                    <div><label>Öncelik</label><select id="visitWorkPriorityFilter" onchange="renderVisitWorkspaceRecords()"><option value="all">Tümü</option></select></div>
+                                    <div><label>Durum</label><select id="visitWorkStatusFilter" onchange="renderVisitWorkspaceRecords()"><option value="all">Tümü</option></select></div>
+                                    <div><label>Arama</label><input id="visitWorkSearch" type="text" placeholder="Not, PQ, Step, kanıt, sorumlu veya makam..." oninput="renderVisitWorkspaceRecords()"></div>
+                                    <button type="button" class="btn-outline" onclick="clearVisitWorkspaceFilters()">✖ Temizle</button>
+                                </div>
+                                <div id="visitWorkspaceRecordList" class="visit-work-records"><div class="visit-work-empty">Henüz saha kaydı bulunmuyor.</div></div>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+            </div>
+        </div>
+
+        <div id="visitFormModal" class="modal" onclick="if(event.target===this) closeVisitForm()">
+            <div class="modal-content visit-form-content">
+                <div class="modal-header">
+                    <div><h3 id="visitFormTitle" style="margin:0;color:var(--primary);">➕ Yeni Ziyaret</h3><div style="font-size:11px;color:var(--muted);margin-top:4px;">Ziyaret üst bilgileri ve planlama kaydı</div></div>
+                    <button class="btn-outline" type="button" onclick="closeVisitForm()">✖</button>
+                </div>
+                <form id="visitForm" onsubmit="saveVisitForm(event)">
+                    <input type="hidden" id="visitRecordId">
+                    <div class="visit-form-grid">
+                        <div class="visit-field full"><label>Ziyaret adı <span class="visit-required">*</span></label><input id="visitName" type="text" maxlength="180" required placeholder="Örn. ANS CAP İlerleme ve Kanıt Doğrulama Ziyareti"></div>
+                        <div class="visit-field"><label>Ziyaret türü <span class="visit-required">*</span></label><select id="visitType" required onchange="toggleVisitTypeFields()"><option value="internal">SHGM Ziyareti / İç Denetim</option><option value="icao_official">ICAO Resmî Ziyareti</option></select></div>
+                        <div class="visit-field" id="icaoVisitTypeField" style="display:none"><label>ICAO ziyaret türü <span class="visit-required">*</span></label><select id="icaoVisitType"><option value="ICVM">ICVM</option><option value="OSVA">OSVA</option><option value="CMAA">CMAA</option><option value="OTHER">Diğer</option></select></div>
+                        <div class="visit-field full"><div id="icaoVisitTypeNote" class="icao-official-type-note">ICAO resmî ziyaretlerinde ana değerlendirme seviyesi PQ/CAP'tir. Kapsama eklenen CAP Step'leri bilgi amaçlı korunur; Step bazında ayrı ICAO sonuç kaydı oluşturulmaz.</div></div>
+                        <div class="visit-field full"><label>Denetim alanı veya alanları <span class="visit-required">*</span></label><div id="visitAreaCheckboxes" class="visit-check-grid"></div><div class="visit-form-note">En az bir denetim alanı seçilmelidir.</div></div>
+                        <div class="visit-field full"><label>Ziyaret edilecek birim veya birimler <span class="visit-required">*</span></label>
+                            <div class="visit-unit-toolbar"><input id="visitUnitSearch" type="text" placeholder="Birim listesinde ara..." oninput="filterVisitUnitOptions()"><button type="button" class="btn-outline" onclick="selectAllVisibleVisitUnits()">Görünenleri seç</button></div>
+                            <div style="display:flex;gap:8px;flex-wrap:wrap;margin:8px 0;">
+                                <button type="button" class="btn-outline" onclick="exportVisitUnitMappingTemplate()">⬇️ Birim Eşleştirme Şablonu</button>
+                                <button type="button" class="btn-outline" onclick="document.getElementById('visitUnitMappingInput').click()">⬆️ Eşleştirme Dosyası İçe Aktar</button>
+                                <input id="visitUnitMappingInput" type="file" accept=".xlsx,.xls" style="display:none" onchange="importVisitUnitMappingFile(event)">
+                            </div>
+                            <div id="visitUnitMappingStatus" class="visit-unit-summary">Kurumsal birim eşleştirmesi yüklenmedi.</div>
+                            <div id="visitUnitCheckboxes" class="visit-check-grid visit-unit-grid"></div>
+                            <div id="visitUnitSelectionSummary" class="visit-unit-summary">Henüz birim seçilmedi.</div>
+                            <div class="visit-form-note">Şablonu indirip “Kaynak Birim Adı” değerlerini kurumsal “Ana Birim Adı” ile eşleştirin; ardından aynı dosyayı içe aktarın. Eşleştirme Firebase üzerinde tüm yetkili kullanıcılar için saklanır.</div>
+                        </div>
+                        <div class="visit-field"><label>Ziyaret yeri</label><input id="visitLocation" type="text" maxlength="180" placeholder="Merkez, havalimanı, çevrim içi vb."></div>
+                        <div class="visit-field"><label>Planlanan başlangıç <span class="visit-required">*</span></label><input id="visitPlannedStart" type="date" required></div>
+                        <div class="visit-field"><label>Planlanan bitiş <span class="visit-required">*</span></label><input id="visitPlannedEnd" type="date" required></div>
+                        <div class="visit-field"><label>Gerçekleşen başlangıç</label><input id="visitActualStart" type="date"></div>
+                        <div class="visit-field"><label>Gerçekleşen bitiş</label><input id="visitActualEnd" type="date"></div>
+                        <div class="visit-field"><label>Ziyaret durumu <span class="visit-required">*</span></label><select id="visitStatus" required></select></div>
+                        <div class="visit-field"><label>Ziyaret yürüten/katılan personel</label><textarea id="visitParticipants" placeholder="Ad, unvan veya ekip bilgileri; her satıra bir kişi yazılabilir."></textarea></div>
+                        <div class="visit-field"><label>Birim tarafındaki muhataplar</label><textarea id="visitCounterparts" placeholder="Ad, unvan ve iletişim/rol bilgileri"></textarea></div>
+                        <div class="visit-field full"><label>Ziyaretin amacı <span class="visit-required">*</span></label><textarea id="visitObjective" required placeholder="Ziyaretin amacı, beklenen çıktı ve kontrol edilecek ana hususlar"></textarea></div>
+                        <div class="visit-field full"><label>Ziyaret yöntemi</label><div id="visitMethodCheckboxes" class="visit-check-grid"></div></div>
+                        <div class="visit-field full"><label>Genel açıklama / planlama notu</label><textarea id="visitGeneralNotes" placeholder="Program, koordinasyon, lojistik veya ziyaret geneline ilişkin diğer notlar"></textarea></div>
+                    </div>
+                    <div id="visitFormAuditInfo" class="visit-form-note" style="margin-top:10px;"></div>
+                    <div class="visit-form-footer"><button type="button" class="btn-outline" onclick="closeVisitForm()">Vazgeç</button><button type="submit" id="visitSaveButton">💾 Ziyareti Kaydet</button></div>
+                </form>
+            </div>
+        </div>
+
+        <div id="visitDetailModal" class="modal" onclick="if(event.target===this) closeVisitDetail()">
+            <div class="modal-content visit-form-content">
+                <div class="modal-header"><h3 style="margin:0;color:var(--primary);">🧭 Ziyaret Ayrıntısı</h3><button class="btn-outline" onclick="closeVisitDetail()">✖</button></div>
+                <div id="visitDetailBody"></div>
+            </div>
+        </div>
+
+
+        <!-- ICAO PQ VERİ TABANI & SÜRÜM YÖNETİMİ -->
+        <div id="tab-pq-library" class="tab-content" data-pq-library-module="1">
+                    <div class="pqdb-shell">
+                        <div class="pqdb-header">
+                            <div>
+                                <h3>📚 ICAO PQ Veri Tabanı &amp; Sürüm Yönetimi</h3>
+                                <p>Kayıtlar <b>Denetim Alanı → Sürüm → Revizyon</b> hiyerarşisinde gösterilir. Word dokümanı okunduktan sonra Denetim Alanı, Sürüm, Revizyon ve kaynak belge tarihi kayıttan önce doğrulanabilir; kayıt sonrasında da güncellenebilir.</p>
+                            </div>
+                            <div class="pqdb-actions">
+                                <input id="pqDbDocxInput" type="file" accept=".docx" multiple hidden onchange="prepareIcaoPqDocuments(event)">
+                                <button type="button" onclick="document.getElementById('pqDbDocxInput').click()">📄 ICAO PQ DOCX Yükle</button>
+                                <button type="button" class="btn-outline" onclick="loadIcaoPqLibrary(true)">↻ Firebase'den Yenile</button>
+                                <button type="button" class="btn-outline" onclick="exportIcaoPqLibraryExcel()">📊 Excel</button>
+                            </div>
+                        </div>
+                        <div id="pqDbSyncNote" class="pqdb-sync">PQ veri tabanı açıldığında Firebase kayıtları okunacaktır.</div>
+                        <div class="pqdb-kpis">
+                            <div class="pqdb-kpi"><strong id="pqDbKpiEditions">0</strong><span>Sürüm / Revizyon</span></div>
+                            <div class="pqdb-kpi ok"><strong id="pqDbKpiAreas">0</strong><span>Alan Kaydı</span></div>
+                            <div class="pqdb-kpi"><strong id="pqDbKpiPqs">0</strong><span>Toplam PQ</span></div>
+                            <div class="pqdb-kpi"><strong id="pqDbKpiOnsite">0</strong><span>On-site</span></div>
+                            <div class="pqdb-kpi purple"><strong id="pqDbKpiPpq">0</strong><span>PPQ</span></div>
+                            <div class="pqdb-kpi warn"><strong id="pqDbKpiChanges">0</strong><span>Amendment</span></div>
+                        </div>
+                        <div id="pqDbModebar" class="pqdb-modebar">
+                            <button type="button" class="active" data-pqdb-view="versions" onclick="setPqDbView('versions')">🗂️ Alan / Sürüm / Revizyon</button>
+                            <button type="button" data-pqdb-view="catalog" onclick="setPqDbView('catalog')">📋 PQ Kataloğu</button>
+                            <button type="button" data-pqdb-view="compare" onclick="setPqDbView('compare')">🔀 Sürüm Kıyaslama</button>
+                        </div>
+        
+                        <div id="pqDbViewVersions" class="pqdb-view active">
+                            <div id="pqDbVersionGrid" class="pqdb-area-tree"></div>
+                        </div>
+        
+                        <div id="pqDbViewCatalog" class="pqdb-view">
+                            <div class="pqdb-toolbar">
+                                <div><label>Sürüm / Revizyon</label><select id="pqDbCatalogEdition" onchange="pqDbCatalogEditionChanged()"></select></div>
+                                <div><label>Denetim Alanı</label><select id="pqDbCatalogArea" onchange="pqDbCatalogEditionChanged()"></select></div>
+                                <div><label>Değerlendirme Türü</label><select id="pqDbCatalogMode" onchange="renderIcaoPqLibraryModule()"><option value="all">Tümü</option><option value="On-site">On-site</option><option value="Off-site">Off-site</option></select></div>
+                                <div><label>CE</label><select id="pqDbCatalogCe" onchange="renderIcaoPqLibraryModule()"><option value="all">Tüm CE'ler</option></select></div>
+                                <div><label>PPQ</label><select id="pqDbCatalogPpq" onchange="renderIcaoPqLibraryModule()"><option value="all">Tümü</option><option value="yes">PPQ</option><option value="no">PPQ Değil</option></select></div>
+                                <div><label>Ara</label><input id="pqDbCatalogSearch" type="text" placeholder="PQ, soru, guidance, referans..." oninput="renderIcaoPqLibraryModule()"></div>
+                            </div>
+                            <div class="pqdb-catalog-layout">
+                                <div class="pqdb-panel">
+                                    <div class="pqdb-panel-head"><h4>PQ Listesi</h4><span id="pqDbCatalogCount">0 PQ</span></div>
+                                    <div class="pqdb-table-wrap"><table class="pqdb-table"><thead><tr><th>PQ</th><th>Tür</th><th>CE / SSP</th><th>PPQ</th><th>Değişiklik</th></tr></thead><tbody id="pqDbCatalogBody"></tbody></table></div>
+                                </div>
+                                <div class="pqdb-panel">
+                                    <div class="pqdb-panel-head"><h4>PQ Ayrıntısı</h4><span id="pqDbDetailEdition"></span></div>
+                                    <div id="pqDbDetail" class="pqdb-panel-body"></div>
+                                </div>
+                            </div>
+                        </div>
+        
+                        <div id="pqDbViewCompare" class="pqdb-view">
+                            <div class="pqdb-compare-head">
+                                <div><label>Hedef Sürüm</label><select id="pqDbCompareTarget" onchange="pqDbCompareTargetChanged()"></select></div>
+                                <div><label>Referans / Önceki Sürüm</label><select id="pqDbCompareBase" onchange="renderIcaoPqLibraryModule()"></select></div>
+                                <div><label>Denetim Alanı</label><select id="pqDbCompareArea" onchange="pqDbCompareTargetChanged()"></select></div>
+                                <button type="button" onclick="renderIcaoPqLibraryModule()">Kıyasla</button>
+                            </div>
+                            <div class="pqdb-change-kpis">
+                                <div class="pqdb-change-kpi"><strong id="pqDbChangeNew">0</strong><span>New</span></div>
+                                <div class="pqdb-change-kpi"><strong id="pqDbChangeRevised">0</strong><span>Revised</span></div>
+                                <div class="pqdb-change-kpi"><strong id="pqDbChangeDeleted">0</strong><span>Deleted</span></div>
+                                <div class="pqdb-change-kpi"><strong id="pqDbChangeMerged">0</strong><span>Merged</span></div>
+                                <div class="pqdb-change-kpi"><strong id="pqDbChangeNoChange">0</strong><span>No change</span></div>
+                            </div>
+                            <div class="pqdb-panel">
+                                <div class="pqdb-panel-head"><h4>Değişiklik Matrisi</h4><span id="pqDbCompareSummary">-</span></div>
+                                <div class="pqdb-table-wrap"><table class="pqdb-table"><thead><tr><th>Önceki PQ</th><th>Yeni PQ</th><th>Tür</th><th>On/Off-site</th><th>CE / SSP</th><th>Açıklama</th></tr></thead><tbody id="pqDbCompareBody"></tbody></table></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+        <!-- VERİ KALİTESİ MERKEZİ -->
+        <div id="tab-quality" class="tab-content">
+            <div class="dq-shell">
+                <div class="dq-header">
+                    <div>
+                        <h3>🧹 Veri Kalitesi Merkezi</h3>
+                        <p>Aktif filtre kapsamındaki Word CAP ve Excel master verilerini; eksik alanlar, geçersiz tarihler, mükerrer kayıtlar, Excel–Word eşleşme sorunları ve durum/tarih çelişkileri açısından kontrol eder.</p>
+                    </div>
+                    <div class="dq-header-actions">
+                        <button class="btn-outline" onclick="switchTab('empty-caps')">📭 CAP Eksiklikleri</button>
+                        <button class="btn-outline" onclick="switchTab('list')">📋 Tüm PQ ve CAP'ler</button>
+                        <button type="button" onclick="exportPDF()" style="background:#dc2626;">📄 Kalite PDF</button>
+                        <button onclick="exportExcel()" style="background:#059669;">📊 Kalite Excel</button>
+                    </div>
+                </div>
+                <div id="dqScope" class="dq-scope">Veri kapsamı hazırlanıyor...</div>
+                <div class="dq-kpi-grid">
+                    <div class="dq-kpi info"><strong id="dqAnalyzedPq">0</strong><span>Analiz edilen PQ</span></div>
+                    <div class="dq-kpi ok"><strong id="dqCleanPq">0</strong><span>Sorunsuz PQ</span></div>
+                    <div class="dq-kpi danger"><strong id="dqTotalIssues">0</strong><span>Toplam kalite sorunu</span></div>
+                    <div class="dq-kpi warn"><strong id="dqHighIssues">0</strong><span>Kritik / yüksek sorun</span></div>
+                    <div class="dq-kpi"><strong id="dqQualityRate">%0</strong><span>Sorunsuz PQ oranı</span></div>
+                </div>
+                <div id="dqCategoryGrid" class="dq-category-grid"></div>
+                <div class="dq-toolbar">
+                    <div><label>Önem seviyesi</label><select id="dqSeverityFilter" onchange="renderDataQualityCenter()"><option value="all">Tüm seviyeler</option><option value="critical">Kritik</option><option value="high">Yüksek</option><option value="medium">Orta</option><option value="low">Düşük / Kontrol</option></select></div>
+                    <div><label>Sorun kategorisi</label><select id="dqCategoryFilter" onchange="renderDataQualityCenter()"><option value="all">Tüm kategoriler</option></select></div>
+                    <div><label>Arama</label><input id="dqSearchInput" type="text" placeholder="PQ, alan, sorun, mevcut değer veya sorumlu ara..." oninput="renderDataQualityCenter()"></div>
+                    <button class="btn-outline" onclick="clearDataQualityLocalFilters()">✖ Yerel filtreleri temizle</button>
+                </div>
+                <div class="dq-analysis-grid">
+                    <section class="dq-panel"><h4>🗺️ Alan Bazlı Kalite Özeti</h4><div style="overflow:auto"><table class="dq-area-table"><thead><tr><th>Alan</th><th>PQ</th><th>Etkilenen PQ</th><th>Toplam Sorun</th><th>Kritik/Yüksek</th><th>Sorunsuz PQ %</th></tr></thead><tbody id="dqAreaSummaryBody"></tbody></table></div></section>
+                    <section class="dq-panel"><h4>💡 Öncelikli Düzeltme Önerileri</h4><div id="dqRecommendations"></div></section>
+                </div>
+                <div class="dq-table-wrap">
+                    <table class="dq-table"><thead><tr><th>Seviye</th><th>Kategori</th><th>PQ / Adım</th><th>Alan / CE</th><th>Kontrol Alanı</th><th>Sorun</th><th>Mevcut Değer</th><th>Düzeltme Önerisi</th></tr></thead><tbody id="dqIssueTableBody"></tbody></table>
+                    <div id="dqTableNote" class="dq-table-note"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- CAP EKSİKLİKLERİ -->
         <div id="tab-empty-caps" class="tab-content">
             <div class="table-wrapper" style="border: 1px solid var(--danger);">
                 <h4 style="margin: 0; padding: 15px; background: rgba(239, 68, 68, 0.1); border-bottom: 2px solid var(--danger); color: var(--danger); font-size: 14px;">
-                    🈳 OLF Üzerinde Eylem Adımı (CAP) Bulunmayan veya Boş Bırakılan PQ'lar
+                    ⚠️ CAP Eksiklikleri
                 </h4>
-                <p style="padding: 10px 15px 0 15px; margin:0; font-size: 12px; color: var(--muted);">Aşağıdaki PQ'lar için OLF sistemine herhangi bir adım girilmemiş veya girilen adımların içerikleri tamamen boş bırakılmıştır. Bu eylemler, geçerli bir CAP sunulmadığı için istatistiklerde mecburen %0 ilerleme olarak görünmektedir.</p>
+                <p style="padding: 10px 15px 0 15px; margin:0; font-size: 12px; color: var(--muted);">Bu ekran yalnızca CAP adımı bulunmayan kayıtları değil; uygulanabilir ve izlenebilir bir CAP olmasını engelleyen hedef tarih, sorumlu ofis ve kaynak bilgisi eksikliklerini de gösterir. Tarih riski olarak sınıflandırılan açık adımlar bu kapsamda yer alır.</p>
+                <div style="padding:12px 15px; display:flex; flex-wrap:wrap; align-items:end; gap:12px; border-bottom:1px solid var(--border);">
+                    <div style="min-width:240px;">
+                        <label style="display:block; font-size:11px; font-weight:700; color:var(--muted); margin-bottom:5px;">Eksiklik türü</label>
+                        <select id="capDeficiencyFilter" onchange="renderEmptyCapsList()" style="width:100%; padding:8px; border:1px solid var(--border); border-radius:6px; background:var(--card); color:var(--text);">
+                            <option value="all">Tüm CAP eksiklikleri</option>
+                            <option value="content">CAP yok / eylem metni boş</option>
+                            <option value="date">Hedef tarih eksik / geçersiz</option>
+                            <option value="office">Sorumlu ofis eksik</option>
+                            <option value="traceability">Kaynak / izlenebilirlik eksikliği</option>
+                        </select>
+                    </div>
+                    <div id="capDeficiencySummary" style="font-size:12px; color:var(--muted); padding:8px 10px; background:rgba(239,68,68,0.06); border:1px solid rgba(239,68,68,0.18); border-radius:6px;"></div>
+                </div>
                 <div style="padding: 15px;" id="emptyCapsListContainer"></div>
             </div>
         </div>
@@ -500,6 +1788,30 @@
 
     </main> 
 </div> 
+
+
+<div id="systemHealthModal" class="modal system-health-modal" onclick="if(event.target===this) closeSystemHealthModal()">
+    <div class="modal-content system-health-content">
+        <div class="modal-header">
+            <div>
+                <h3 style="margin:0;color:var(--primary);">🩺 Sistem Kontrolü</h3>
+                <div id="systemHealthSubtitle" class="system-health-subtitle">Bağlantı, bağımlılık, veri ve arayüz kontrolleri</div>
+            </div>
+            <button type="button" class="btn-outline" onclick="closeSystemHealthModal()">✖</button>
+        </div>
+        <div id="systemHealthSummary" class="system-health-summary"></div>
+        <div class="system-health-actions">
+            <button type="button" onclick="renderSystemHealthModal()">🔄 Kontrolü Yenile</button>
+            <button type="button" class="btn-outline" onclick="downloadSystemDiagnosticReport()">⬇️ Tanılama Raporu</button>
+            <button type="button" class="btn-outline" onclick="flushPendingSystemSave(true)">💾 Bekleyen Kaydı Gönder</button>
+        </div>
+        <div id="systemHealthChecks" class="system-health-checks"></div>
+        <details class="system-health-errors">
+            <summary>Son çalışma zamanı hataları</summary>
+            <div id="systemHealthErrorList"></div>
+        </details>
+    </div>
+</div>
 
 <div id="pqDbImportModal" class="modal pqdb-import-modal" style="z-index:12000;">
     <div class="modal-content pqdb-import-content">
@@ -556,12 +1868,12 @@
     </div>
 </div>
 
-<script src="js/config/firebase-config.js?v=20261112-pq-area-version-revision"></script>
-<script src="js/app.js?v=20261112-pq-area-version-revision"></script>
-<script src="js/modules/visit-sync.js?v=20261112-pq-area-version-revision"></script>
-<script src="js/modules/official-ei-management.js?v=20261112-pq-area-version-revision"></script>
-<script src="js/parsers/pq-docx-parser.js?v=20261112-pq-area-version-revision"></script>
-<script src="js/services/pq-repository.js?v=20261112-pq-area-version-revision"></script>
-<script src="js/modules/pq-library.js?v=20261112-pq-area-version-revision"></script>
+
+<script src="js/app.js?v=20261113-monolith-rebuild-v3"></script>
+<script src="js/modules/visit-sync.js?v=20261113-monolith-rebuild-v3"></script>
+<script src="js/modules/official-ei-management.js?v=20261113-monolith-rebuild-v3"></script>
+<script src="js/parsers/pq-docx-parser.js?v=20261113-monolith-rebuild-v3"></script>
+<script src="js/services/pq-repository.js?v=20261113-monolith-rebuild-v3"></script>
+<script src="js/modules/pq-library.js?v=20261113-monolith-rebuild-v3"></script>
 </body>
 </html>

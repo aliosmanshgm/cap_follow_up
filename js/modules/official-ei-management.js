@@ -1,4 +1,4 @@
-// ICAO Resmî EI yönetim modülü
+
 (function(){
     const AREAS=['LEG','ORG','PEL','OPS','AIR','AIG','ANS','AGA'];
     let officialEiRef=null,officialEiCallback=null;

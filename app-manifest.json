@@ -1,22 +1,20 @@
 {
-  "app": "ICAO CAP İzleme",
-  "phase": "2.6",
-  "architecture": "modular-static-active",
-  "dataEmbedded": false,
-  "pqSeedEmbedded": false,
-  "pqLibraryPrimaryStore": "firebase-realtime-database",
-  "pqDocumentStore": "firebase-storage-best-effort",
-  "entry": "index.html",
-  "scripts": [
-    "js/config/firebase-config.js",
-    "js/app.js",
-    "js/modules/visit-sync.js",
-    "js/modules/official-ei-management.js",
-    "js/parsers/pq-docx-parser.js",
-    "js/services/pq-repository.js",
-    "js/modules/pq-library.js"
-  ],
-  "pqLibraryGrouping": "area-version-revision",
-  "pqLibraryMetadataEditable": true,
-  "pqActiveReference": "per-area"
+  "app": "USOAP CMA CAP Takip",
+  "version": "3.0-monolith-rebuild",
+  "baseline": "index_visit_hub_pq_version_database(2).html",
+  "buildDate": "2026-11-13",
+  "architecture": {
+    "index": "index.html",
+    "styles": [
+      "css/app.css"
+    ],
+    "scripts": [
+      "js/app.js",
+      "js/modules/visit-sync.js",
+      "js/modules/official-ei-management.js",
+      "js/parsers/pq-docx-parser.js",
+      "js/services/pq-repository.js",
+      "js/modules/pq-library.js"
+    ]
+  }
 }

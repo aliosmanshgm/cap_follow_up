@@ -1,4 +1,3 @@
-// Ziyaret kaynak senkronizasyon modülü
 // ZIYARET MODULU - GUNCEL WORD/CAP KAYNAK SENKRONIZASYONU
 (function(){
     const VISIT_SYNC_PQ_FIELDS=['area','ce','responsible','verificationType','question','finding','reviewEvidence','statusCode','statusLabel'];
