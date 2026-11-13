@@ -510,6 +510,10 @@ const I18N = {
         add('excel', 'Excel motoru', (typeof XLSX !== 'undefined' && XLSX && XLSX.utils) ? 'ok' : 'error', (typeof XLSX !== 'undefined' && XLSX && XLSX.utils) ? 'XLSX hazır.' : 'Excel kütüphanesi yüklenemedi.');
         add('word', 'Word okuma motoru', (typeof JSZip !== 'undefined') ? 'ok' : 'error', (typeof JSZip !== 'undefined') ? 'JSZip hazır.' : 'Word ayrıştırma kütüphanesi yüklenemedi.');
         add('charts', 'Grafik motoru', (typeof Chart !== 'undefined') ? 'ok' : 'warn', (typeof Chart !== 'undefined') ? 'Chart.js hazır.' : 'Grafik kütüphanesi yüklenemedi.');
+        const assessmentReady = typeof window.runAssessmentEventSelfCheck === 'function';
+        const assessmentEvents = assessmentReady ? Object.values(window.icaoAssessmentEvents || {}).filter(x => x && !x.isDeleted).length : 0;
+        const assessmentSnapshots = assessmentReady ? Object.values(window.icaoEiSnapshots || {}).filter(x => x && !x.isDeleted).length : 0;
+        add('assessment-model', 'Assessment Event / EI Snapshot modeli', assessmentReady ? 'ok' : 'warn', assessmentReady ? `${assessmentEvents} değerlendirme olayı, ${assessmentSnapshots} EI snapshot hazır.` : 'Assessment Event modülü yüklenemedi.');
         add('duplicate-ids', 'HTML kimlik bütünlüğü', duplicateIds.length ? 'error' : 'ok', duplicateIds.length ? duplicateIds.map(x => `${x.id} (${x.count})`).join(', ') : 'Yinelenen HTML kimliği bulunmadı.');
         add('menu-tabs', 'Menü ve ekran bağlantıları', menuIssues.length ? 'error' : 'ok', menuIssues.length ? menuIssues.join(' | ') : 'Bütün menü düğmeleri ilgili ekrana bağlı.');
         const visitLevel = (visit.orphanFollow || visit.orphanConsult || visit.duplicateFieldworkIds) ? 'warn' : 'ok';
@@ -652,8 +656,8 @@ const I18N = {
         initDesktopNavFocus();
         initStabilizationPackage();
         firebase.auth().onAuthStateChanged((user) => {
-            if (user) { document.getElementById('loginOverlay').style.display = 'none'; document.getElementById('mainAppContainer').style.display = 'flex'; loadFromLocalStorage(); startVisitFirebaseListener(); startVisitUnitSettingsListener(); startIcaoOfficialEiListener(); } 
-            else { stopVisitFirebaseListener(); stopVisitUnitSettingsListener(); stopIcaoOfficialEiListener(); document.getElementById('loadingOverlay').style.display = 'none'; document.getElementById('mainAppContainer').style.display = 'none'; document.getElementById('loginOverlay').style.display = 'flex'; }
+            if (user) { document.getElementById('loginOverlay').style.display = 'none'; document.getElementById('mainAppContainer').style.display = 'flex'; loadFromLocalStorage(); startVisitFirebaseListener(); startVisitUnitSettingsListener(); if(typeof startAssessmentEventListener==='function')startAssessmentEventListener(); startIcaoOfficialEiListener(); } 
+            else { stopVisitFirebaseListener(); stopVisitUnitSettingsListener(); stopIcaoOfficialEiListener(); if(typeof stopAssessmentEventListener==='function')stopAssessmentEventListener(); document.getElementById('loadingOverlay').style.display = 'none'; document.getElementById('mainAppContainer').style.display = 'none'; document.getElementById('loginOverlay').style.display = 'flex'; }
         });
     };
     

@@ -13,7 +13,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.10/pdfmake.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.10/vfs_fonts.js"></script>
-    <link rel="stylesheet" href="css/app.css?v=20261113-monolith-rebuild-v3">
+    <link rel="stylesheet" href="css/app.css?v=20261113-phase1-assessment-v4">
 </head>
 <body>
 
@@ -167,8 +167,9 @@
                     <section class="data-panel-card">
                         <h4>🌐 ICAO Resmî EI Verileri</h4>
                         <p style="font-size:11px;color:var(--muted);line-height:1.45;margin:0 0 10px;">CMAA, OSVA, ICVM ve diğer resmî ICAO değerlendirmelerinin Overall ve alan bazlı EI oranlarını yönetir.</p>
-                        <button type="button" onclick="openIcaoOfficialEiManager()" style="width:100%;justify-content:center;">📊 Resmî EI Verilerini Yönet</button>
+                        <button type="button" onclick="openIcaoOfficialEiManager()" style="width:100%;justify-content:center;">📊 Değerlendirme &amp; Resmî EI Verilerini Yönet</button>
                         <div id="icaoOfficialEiStatusTxt" class="icao-ei-status">Resmî EI kayıtları yükleniyor...</div>
+                        <div id="assessmentModelStatusTxt" class="icao-ei-status assessment-model-status">Olay/Snapshot modeli yükleniyor...</div>
                     </section>
                     <section class="data-panel-card danger-zone-card">
                         <h4>⚠️ Veri İşlemleri</h4>
@@ -184,7 +185,7 @@
                 <div class="modal-header">
                     <div>
                         <h3 style="margin:0;color:var(--primary);">🌐 ICAO Resmî EI Veri Yönetimi</h3>
-                        <div style="font-size:12px;color:var(--muted);margin-top:4px;">Resmî ICAO değerlendirme dönemlerini ve alan bazlı EI oranlarını Firebase üzerinde saklar.</div>
+                        <div style="font-size:12px;color:var(--muted);margin-top:4px;">CMAA, OSVA, ICVM ve diğer ICAO değerlendirmelerini <b>Assessment Event + EI Snapshot</b> modeliyle saklar. Mevcut resmî EI kayıtları geriye uyumlu olarak korunur.</div>
                     </div>
                     <button type="button" class="btn-outline" onclick="closeIcaoOfficialEiManager()">✖</button>
                 </div>
@@ -200,7 +201,8 @@
                             <button type="button" class="btn-outline" onclick="downloadIcaoOfficialEiExcelTemplate()">📄 Excel Şablonu</button>
                             <button type="button" class="btn-outline" onclick="document.getElementById('icaoEiExcelInput').click()">📥 Excel'den İçe Aktar</button>
                             <button type="button" class="btn-outline" onclick="exportIcaoOfficialEiExcel()">📤 Excel'e Dışa Aktar</button>
-                            <button type="button" class="btn-outline" onclick="seedDefaultIcaoOfficialEiData()">🧩 Mevcut İki Dönemi Firebase'e Aktar</button>
+                            <button type="button" class="btn-outline" onclick="seedDefaultIcaoOfficialEiData()">🧩 Başlangıç Dönemlerini Firebase'e Aktar</button>
+                            <button type="button" class="btn-outline" onclick="syncAllOfficialEiRecordsToAssessmentModel()">🔄 Olay/Snapshot Modelini Senkronize Et</button>
                         </div>
                         <div id="icaoEiExcelStatus" class="icao-ei-status" aria-live="polite"></div>
                     </section>
@@ -210,15 +212,31 @@
                             <div class="icao-ei-form-grid">
                                 <div><label>Değerlendirme adı *</label><input id="icaoEiName" required placeholder="Örn: Virtual OSVA"></div>
                                 <div><label>Değerlendirme türü</label><select id="icaoEiType"><option value="CMAA">CMAA</option><option value="OSVA">OSVA</option><option value="ICVM">ICVM</option><option value="AUDIT">Denetim</option><option value="OTHER">Diğer</option></select></div>
-                                <div><label>Değerlendirme tarihi *</label><input type="date" id="icaoEiAssessmentDate" required></div>
+                                <div><label>Sonuç statüsü</label><select id="icaoEiResultStatus"><option value="official">Resmî / Final</option><option value="draft">Taslak</option><option value="provisional">Geçici / Provisional</option></select></div>
+                                <div><label>Ziyaret başlangıç tarihi</label><input type="date" id="icaoEiStartDate"></div>
+                                <div><label>Ziyaret bitiş tarihi</label><input type="date" id="icaoEiEndDate"></div>
+                                <div><label>Değerlendirme / sonuç tarihi *</label><input type="date" id="icaoEiAssessmentDate" required></div>
                                 <div><label>Raporun alındığı tarih</label><input type="date" id="icaoEiReportDate"></div>
+                                <div><label>PQ sürümü</label><input id="icaoEiPqVersion" placeholder="Örn: 2024"></div>
+                                <div><label>PQ revizyonu</label><input id="icaoEiPqRevision" placeholder="Örn: Rev.1"></div>
                                 <div><label>Overall EI (%)</label><input type="number" id="icaoEiOverall" min="0" max="100" step="0.01" placeholder="Örn: 55,28"></div>
+                                <div><label>Overall Satisfactory PQ</label><input type="number" id="icaoEiOverallSat" min="0" step="1" placeholder="Örn: 458"></div>
+                                <div><label>Overall Uygulanabilir PQ</label><input type="number" id="icaoEiOverallApplicable" min="1" step="1" placeholder="Örn: 720"></div>
                                 <div><label>Durum</label><label style="display:flex;align-items:center;gap:8px;margin-top:8px;font-weight:700;"><input type="checkbox" id="icaoEiActive" checked style="width:17px;height:17px;"> Dashboard karşılaştırmalarında aktif kullan</label></div>
                                 <div class="full"><label>Kaynak / referans</label><input id="icaoEiSource" placeholder="Örn: ICAO USOAP OLF resmî sonuç raporu"></div>
                                 <div class="full"><label>Açıklama / not</label><textarea id="icaoEiNotes" rows="3" placeholder="Değerlendirmeye ilişkin açıklama..."></textarea></div>
                             </div>
                             <div style="margin-top:14px;border-top:1px solid var(--border);padding-top:12px;">
-                                <h4 style="margin:0 0 5px;">Alan Bazlı Resmî EI Oranları (%)</h4>
+                                <div style="display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap;">
+                                    <div><h4 style="margin:0 0 5px;">Değerlendirme Kapsamındaki Denetim Alanları</h4><div style="font-size:11px;color:var(--muted);">Kapsam dışı alanlarda önceki EI değeri korunabilir; ancak olay etkisi hesaplanırken yalnız seçili alanlar “değerlendirildi” kabul edilir.</div></div>
+                                    <div class="icao-ei-scope-actions"><button type="button" class="btn-outline" onclick="setIcaoEiScopeAreas('all')">Tümü</button><button type="button" class="btn-outline" onclick="setIcaoEiScopeAreas('none')">Temizle</button></div>
+                                </div>
+                                <div class="icao-ei-scope-grid">
+                                    <label><input type="checkbox" class="icao-ei-scope-area" value="LEG"> LEG</label><label><input type="checkbox" class="icao-ei-scope-area" value="ORG"> ORG</label><label><input type="checkbox" class="icao-ei-scope-area" value="PEL"> PEL</label><label><input type="checkbox" class="icao-ei-scope-area" value="OPS"> OPS</label><label><input type="checkbox" class="icao-ei-scope-area" value="AIR"> AIR</label><label><input type="checkbox" class="icao-ei-scope-area" value="AIG"> AIG</label><label><input type="checkbox" class="icao-ei-scope-area" value="ANS"> ANS</label><label><input type="checkbox" class="icao-ei-scope-area" value="AGA"> AGA</label>
+                                </div>
+                            </div>
+                            <div style="margin-top:14px;border-top:1px solid var(--border);padding-top:12px;">
+                                <h4 style="margin:0 0 5px;">Alan Bazlı EI Oranları (%)</h4>
                                 <div style="font-size:11px;color:var(--muted);">Değerleri 0–100 arasında, virgülden sonra iki hane hassasiyetle giriniz.</div>
                                 <div class="icao-ei-area-grid">
                                     <label>LEG<input type="number" id="icaoEiAreaLEG" min="0" max="100" step="0.01"></label>
@@ -1869,11 +1887,12 @@
 </div>
 
 
-<script src="js/app.js?v=20261113-monolith-rebuild-v3"></script>
-<script src="js/modules/visit-sync.js?v=20261113-monolith-rebuild-v3"></script>
-<script src="js/modules/official-ei-management.js?v=20261113-monolith-rebuild-v3"></script>
-<script src="js/parsers/pq-docx-parser.js?v=20261113-monolith-rebuild-v3"></script>
-<script src="js/services/pq-repository.js?v=20261113-monolith-rebuild-v3"></script>
-<script src="js/modules/pq-library.js?v=20261113-monolith-rebuild-v3"></script>
+<script src="js/app.js?v=20261113-phase1-assessment-v4"></script>
+<script src="js/modules/visit-sync.js?v=20261113-phase1-assessment-v4"></script>
+<script src="js/modules/assessment-events.js?v=20261113-phase1-assessment-v4"></script>
+<script src="js/modules/official-ei-management.js?v=20261113-phase1-assessment-v4"></script>
+<script src="js/parsers/pq-docx-parser.js?v=20261113-phase1-assessment-v4"></script>
+<script src="js/services/pq-repository.js?v=20261113-phase1-assessment-v4"></script>
+<script src="js/modules/pq-library.js?v=20261113-phase1-assessment-v4"></script>
 </body>
 </html>

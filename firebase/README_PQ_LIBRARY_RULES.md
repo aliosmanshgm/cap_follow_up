@@ -34,3 +34,42 @@ match /icao-pq-documents/{allPaths=**} {
 ```
 
 Storage yetkisi verilmemişse uygulama yapılandırılmış PQ verisini Realtime Database'e kaydetmeye devam eder ve kaynak DOCX için uyarı gösterir.
+
+# Assessment Event + EI Snapshot yolları (Faz 1)
+
+EI/değerlendirme geçmişi artık aşağıdaki yeni Realtime Database yollarını da kullanır:
+
+- `icao_assessment_events/{eventId}` — CMAA, OSVA, ICVM ve diğer değerlendirme/ziyaret olayları
+- `icao_ei_snapshots/{snapshotId}` — ilgili olayın EI anlık görüntüsü (Overall + alan bazlı)
+
+Mevcut `icao_official_ei/{recordId}` kayıtları geriye uyumluluk için korunur. Uygulama bunları otomatik olarak yukarıdaki iki yeni yapıya senkronize eder.
+
+Örnek yetki yaklaşımı (mevcut rol/yetki yapınıza birleştirilmelidir):
+
+```json
+"icao_assessment_events": {
+  ".read": "auth != null",
+  ".write": "auth != null"
+},
+"icao_ei_snapshots": {
+  ".read": "auth != null",
+  ".write": "auth != null"
+}
+```
+
+## Assessment Event ana alanları
+- `type`: CMAA / OSVA / ICVM / AUDIT / OTHER
+- `startDate`, `endDate`, `assessmentDate`, `reportDate`
+- `resultStatus`: official / draft / provisional
+- `scopeAreas[]`: değerlendirmeye fiilen dahil edilen LEG/ORG/PEL/OPS/AIR/AIG/ANS/AGA alanları
+- `pqVersion`, `pqRevision`
+- `linkedSnapshotId`
+- `linkedOfficialEiRecordId`
+
+## EI Snapshot ana alanları
+- `eventId`, `phase`, `kind`, `resultStatus`
+- `pqVersion`, `pqRevision`, `scopeAreas[]`
+- `overall.ei`, `overall.satisfactory`, `overall.applicable`
+- `areas.{AREA}.ei`, `areas.{AREA}.satisfactory`, `areas.{AREA}.applicable`, `areas.{AREA}.inScope`
+
+Not: Eski resmî EI kayıtlarında numerator/denominator veya kapsam bilgisi yoksa bu alanlar uydurulmaz; boş/null tutulur. Dashboard dönüşümü sonraki fazda bu yeni modele bağlanacaktır.

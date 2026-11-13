@@ -232,12 +232,20 @@
             const n=Number(value),cls=n>0?'positive':n<0?'negative':'neutral',prefix=n>0?'+':'';
             return `<span class="icao-ei-change ${cls}">${prefix}${n.toLocaleString('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:2})} puan</span>`;
         };
-        el.innerHTML=`<div class="icao-ei-table-wrap"><table class="icao-ei-table"><thead><tr><th>Değerlendirme</th><th>Tür</th><th>Tarih</th><th>Overall EI (%)</th><th>Önceki Döneme Göre Değişim</th><th>Durum</th><th>Kaynak</th></tr></thead><tbody>${records.map(r=>`<tr class="${r.active!==false?'active-record':'passive-record'} ${selected===r.id?'selected':''}" data-icao-ei-id="${escapeHtml(r.id)}"><td><b>${escapeHtml(r.name||'Adsız değerlendirme')}</b></td><td>${escapeHtml(r.type||'OTHER')}</td><td>${escapeHtml(fmtDate(r.assessmentDate))}</td><td><span class="icao-ei-overall">${escapeHtml(fmt(r.overallEI))}</span></td><td>${changeHtml(changeById[r.id])}</td><td><span class="icao-ei-badge ${r.active!==false?'active':'passive'}">${r.active!==false?'Aktif':'Pasif'}</span></td><td class="icao-ei-source-cell">${escapeHtml(r.source||'Kaynak belirtilmedi')}</td></tr>`).join('')}</tbody></table></div>`;
+        el.innerHTML=`<div class="icao-ei-table-wrap"><table class="icao-ei-table"><thead><tr><th>Değerlendirme</th><th>Tür / Statü</th><th>Tarih</th><th>Kapsam</th><th>PQ Seti</th><th>Overall EI</th><th>Değişim</th><th>Durum</th><th>Kaynak</th></tr></thead><tbody>${records.map(r=>`<tr class="${r.active!==false?'active-record':'passive-record'} ${selected===r.id?'selected':''}" data-icao-ei-id="${escapeHtml(r.id)}"><td><b>${escapeHtml(r.name||'Adsız değerlendirme')}</b></td><td>${escapeHtml(r.type||'OTHER')}<br><span class="icao-ei-badge ${resultStatusClass(r.resultStatus)}">${escapeHtml(resultStatusLabel(r.resultStatus))}</span></td><td>${escapeHtml(fmtDate(r.assessmentDate))}</td><td>${escapeHtml(scopeLabel(r))}</td><td>${escapeHtml(pqSetLabel(r))}</td><td><span class="icao-ei-overall">${escapeHtml(fmt(r.overallEI))}</span>${r.overallSatisfactory!==undefined&&r.overallApplicable?`<br><small>${escapeHtml(String(r.overallSatisfactory))}/${escapeHtml(String(r.overallApplicable))}</small>`:''}</td><td>${changeHtml(changeById[r.id])}</td><td><span class="icao-ei-badge ${r.active!==false?'active':'passive'}">${r.active!==false?'Aktif':'Pasif'}</span></td><td class="icao-ei-source-cell">${escapeHtml(r.source||'Kaynak belirtilmedi')}</td></tr>`).join('')}</tbody></table></div>`;
         el.querySelectorAll('[data-icao-ei-id]').forEach(row=>row.addEventListener('click',()=>editIcaoOfficialEiRecord(row.dataset.icaoEiId)));
     }
-    function setMessage(msg,type){const el=document.getElementById('icaoEiFormMessage');if(!el)return;el.textContent=msg||'';el.style.color=type==='error'?'var(--danger)':type==='success'?'var(--ok)':'var(--muted)';}
+    function setMessage(msg,type){const el=document.getElementById('icaoEiFormMessage');if(!el)return;el.textContent=msg||'';el.style.color=type==='error'?'var(--danger)':type==='success'?'var(--ok)':type==='warn'?'var(--warn)':'var(--muted)';}
     function formValue(id){return((document.getElementById(id)||{}).value||'').trim();}
     function setValue(id,v){const el=document.getElementById(id);if(el)el.value=v===null||v===undefined?'':v;}
+    function intOrNull(v){if(v===null||v===undefined||String(v).trim()==='')return null;const n=Number(v);return Number.isFinite(n)&&n>=0?Math.round(n):null;}
+    function readScopeAreas(){return AREAS.filter(a=>{const el=document.querySelector(`.icao-ei-scope-area[value="${a}"]`);return !!(el&&el.checked);});}
+    function writeScopeAreas(list){const set=new Set((Array.isArray(list)?list:[]).map(x=>String(x||'').toUpperCase()));AREAS.forEach(a=>{const el=document.querySelector(`.icao-ei-scope-area[value="${a}"]`);if(el)el.checked=set.has(a);});}
+    window.setIcaoEiScopeAreas=function(mode){writeScopeAreas(mode==='all'?AREAS:[]);};
+    function resultStatusLabel(value){return value==='draft'?'Taslak':value==='provisional'?'Geçici':'Resmî';}
+    function resultStatusClass(value){return value==='draft'?'draft':value==='provisional'?'provisional':'official';}
+    function scopeLabel(r){const list=Array.isArray(r.scopeAreas)?r.scopeAreas:[];if(!list.length)return 'Belirtilmedi';if(list.length===AREAS.length)return 'Tüm alanlar';return list.join(', ');}
+    function pqSetLabel(r){return [r.pqVersion||'',r.pqRevision||''].filter(Boolean).join(' / ')||'-';}
 
     window.startIcaoOfficialEiListener=function(){
         stopIcaoOfficialEiListener();
@@ -252,6 +260,7 @@
             renderIcaoOfficialPeriodControls();
             if(typeof renderIcaoOfficialChart==='function')renderIcaoOfficialChart();
             renderIcaoOfficialTrend();
+            if(typeof window.syncAllOfficialEiRecordsToAssessmentModel==='function')window.syncAllOfficialEiRecordsToAssessmentModel({silent:true});
         };
         officialEiRef.on('value',officialEiCallback,err=>{
             window.icaoOfficialEiManagementLoaded=true;
@@ -271,23 +280,27 @@
     window.closeIcaoOfficialEiManager=function(){const m=document.getElementById('icaoOfficialEiModal');if(m)m.style.display='none';};
     window.resetIcaoOfficialEiForm=function(){
         const form=document.getElementById('icaoOfficialEiForm');if(form)form.reset();
-        setValue('icaoEiRecordId','');setValue('icaoEiType','CMAA');const active=document.getElementById('icaoEiActive');if(active)active.checked=true;
-        AREAS.forEach(a=>setValue('icaoEiArea'+a,''));const del=document.getElementById('icaoEiDeleteBtn');if(del)del.style.display='none';const audit=document.getElementById('icaoEiFormAudit');if(audit)audit.textContent='Yeni kayıt, kullanıcı ve zaman damgasıyla Firebase’e yazılacaktır.';setMessage('',null);renderList();
+        setValue('icaoEiRecordId','');setValue('icaoEiType','CMAA');setValue('icaoEiResultStatus','official');setValue('icaoEiStartDate','');setValue('icaoEiEndDate','');setValue('icaoEiPqVersion','');setValue('icaoEiPqRevision','');setValue('icaoEiOverallSat','');setValue('icaoEiOverallApplicable','');writeScopeAreas(AREAS);const active=document.getElementById('icaoEiActive');if(active)active.checked=true;
+        AREAS.forEach(a=>setValue('icaoEiArea'+a,''));const del=document.getElementById('icaoEiDeleteBtn');if(del)del.style.display='none';const audit=document.getElementById('icaoEiFormAudit');if(audit)audit.textContent='Yeni kayıt; resmî EI kaydı, Assessment Event ve EI Snapshot olarak birbirine bağlı biçimde Firebase’e yazılacaktır.';setMessage('',null);renderList();
     };
     window.editIcaoOfficialEiRecord=function(id){
         const r=(window.icaoOfficialEiRecords||{})[id];if(!r)return alert('Kayıt bulunamadı.');
-        setValue('icaoEiRecordId',id);setValue('icaoEiName',r.name);setValue('icaoEiType',r.type||'OTHER');setValue('icaoEiAssessmentDate',r.assessmentDate);setValue('icaoEiReportDate',r.reportDate);setValue('icaoEiOverall',r.overallEI);setValue('icaoEiSource',r.source);setValue('icaoEiNotes',r.notes);const active=document.getElementById('icaoEiActive');if(active)active.checked=r.active!==false;AREAS.forEach(a=>setValue('icaoEiArea'+a,(r.areas||{})[a]));const del=document.getElementById('icaoEiDeleteBtn');if(del)del.style.display='inline-flex';const audit=document.getElementById('icaoEiFormAudit');if(audit)audit.textContent=`Oluşturan: ${((r.createdBy||{}).displayName||(r.createdBy||{}).email||'-')} | Oluşturma: ${fmtDate(r.createdAt)} | Son güncelleme: ${fmtDate(r.updatedAt)}`;setMessage('',null);renderList();
+        setValue('icaoEiRecordId',id);setValue('icaoEiName',r.name);setValue('icaoEiType',r.type||'OTHER');setValue('icaoEiResultStatus',r.resultStatus||'official');setValue('icaoEiStartDate',r.startDate||'');setValue('icaoEiEndDate',r.endDate||'');setValue('icaoEiAssessmentDate',r.assessmentDate);setValue('icaoEiReportDate',r.reportDate);setValue('icaoEiPqVersion',r.pqVersion||'');setValue('icaoEiPqRevision',r.pqRevision||'');setValue('icaoEiOverall',r.overallEI);setValue('icaoEiOverallSat',r.overallSatisfactory);setValue('icaoEiOverallApplicable',r.overallApplicable);setValue('icaoEiSource',r.source);setValue('icaoEiNotes',r.notes);writeScopeAreas(Array.isArray(r.scopeAreas)?r.scopeAreas:(r.type==='CMAA'?AREAS:[]));const active=document.getElementById('icaoEiActive');if(active)active.checked=r.active!==false;AREAS.forEach(a=>setValue('icaoEiArea'+a,(r.areas||{})[a]));const del=document.getElementById('icaoEiDeleteBtn');if(del)del.style.display='inline-flex';const audit=document.getElementById('icaoEiFormAudit');if(audit)audit.textContent=`Oluşturan: ${((r.createdBy||{}).displayName||(r.createdBy||{}).email||'-')} | Oluşturma: ${fmtDate(r.createdAt)} | Son güncelleme: ${fmtDate(r.updatedAt)} | Assessment Event: ${(r.assessmentEventId||'-')}`;setMessage('',null);renderList();
     };
     window.saveIcaoOfficialEiRecord=async function(event){
         if(event)event.preventDefault();
         if(!firebase.auth().currentUser)return setMessage('Kayıt için yetkili oturum gereklidir.','error');
         const name=formValue('icaoEiName'),assessmentDate=formValue('icaoEiAssessmentDate');if(!name||!assessmentDate)return setMessage('Değerlendirme adı ve tarihi zorunludur.','error');
         const areas={};let filled=0;for(const a of AREAS){const v=num(formValue('icaoEiArea'+a));if(v!==null&&(v<0||v>100))return setMessage(`${a} değeri 0–100 arasında olmalıdır.`,'error');areas[a]=v;if(v!==null)filled++;}if(!filled)return setMessage('En az bir alan EI değeri giriniz.','error');
-        const overall=num(formValue('icaoEiOverall'));if(overall!==null&&(overall<0||overall>100))return setMessage('Overall EI değeri 0–100 arasında olmalıdır.','error');
+        let overall=num(formValue('icaoEiOverall'));if(overall!==null&&(overall<0||overall>100))return setMessage('Overall EI değeri 0–100 arasında olmalıdır.','error');
+        const overallSatisfactory=intOrNull(formValue('icaoEiOverallSat')),overallApplicable=intOrNull(formValue('icaoEiOverallApplicable'));
+        if(overallApplicable!==null&&overallApplicable<=0)return setMessage('Overall uygulanabilir PQ sayısı 0’dan büyük olmalıdır.','error');
+        if(overallSatisfactory!==null&&overallApplicable!==null){if(overallSatisfactory>overallApplicable)return setMessage('Satisfactory PQ sayısı uygulanabilir PQ sayısından büyük olamaz.','error');const calculated=Math.round((overallSatisfactory/overallApplicable)*10000)/100;if(overall===null){overall=calculated;setValue('icaoEiOverall',overall);}else if(Math.abs(overall-calculated)>0.03&&!confirm(`Girilen Overall EI (%${overall.toFixed(2)}) ile ${overallSatisfactory}/${overallApplicable} hesabı (%${calculated.toFixed(2)}) uyuşmuyor. Girilen EI değeri korunarak devam edilsin mi?`))return;}
         const id=formValue('icaoEiRecordId')||db.ref('icao_official_ei').push().key,existing=(window.icaoOfficialEiRecords||{})[id]||{},now=new Date().toISOString(),who=actor();
-        const payload=clean({name,type:formValue('icaoEiType')||'OTHER',assessmentDate,reportDate:formValue('icaoEiReportDate')||'',overallEI:overall,areas,source:formValue('icaoEiSource'),notes:formValue('icaoEiNotes'),active:!!(document.getElementById('icaoEiActive')||{}).checked,isDeleted:false,createdAt:existing.createdAt||now,createdBy:existing.createdBy||who,updatedAt:now,updatedBy:who,moduleVersion:'official-ei-management-v1'});
+        const links=typeof window.getAssessmentEventIdsForOfficialEi==='function'?window.getAssessmentEventIdsForOfficialEi(id):{eventId:`official_${id}`,snapshotId:`official_after_${id}`};
+        const payload=clean({name,type:formValue('icaoEiType')||'OTHER',resultStatus:formValue('icaoEiResultStatus')||'official',startDate:formValue('icaoEiStartDate')||'',endDate:formValue('icaoEiEndDate')||'',assessmentDate,reportDate:formValue('icaoEiReportDate')||'',pqVersion:formValue('icaoEiPqVersion'),pqRevision:formValue('icaoEiPqRevision'),scopeAreas:readScopeAreas(),overallEI:overall,overallSatisfactory,overallApplicable,areas,source:formValue('icaoEiSource'),notes:formValue('icaoEiNotes'),active:!!(document.getElementById('icaoEiActive')||{}).checked,isDeleted:false,assessmentEventId:links.eventId,eiSnapshotId:links.snapshotId,createdAt:existing.createdAt||now,createdBy:existing.createdBy||who,updatedAt:now,updatedBy:who,moduleVersion:'official-ei-management-v3-assessment'});
         setMessage('Firebase’e kaydediliyor...');
-        try{await db.ref('icao_official_ei/'+id).set(payload);setValue('icaoEiRecordId',id);setMessage('Resmî EI kaydı Firebase üzerinde başarıyla kaydedildi.','success');if(typeof showAppRuntimeToast==='function')showAppRuntimeToast('Resmî EI kaydı kaydedildi.','success');}
+        try{await db.ref('icao_official_ei/'+id).set(payload);let syncWarning='';if(typeof window.syncOfficialEiRecordToAssessmentModel==='function'){try{await window.syncOfficialEiRecordToAssessmentModel(id,payload,{silent:true});}catch(syncErr){console.error(syncErr);syncWarning=' Olay/Snapshot senkronizasyonu ayrıca kontrol edilmelidir.';}}setValue('icaoEiRecordId',id);setMessage('Değerlendirme kaydı başarıyla kaydedildi.'+syncWarning,syncWarning?'warn':'success');if(typeof showAppRuntimeToast==='function')showAppRuntimeToast('Değerlendirme ve EI kaydı kaydedildi.',syncWarning?'warn':'success');}
         catch(err){console.error(err);setMessage('Kayıt başarısız: '+(err.message||err),'error');}
     };
     window.deleteIcaoOfficialEiRecord=async function(){
@@ -300,19 +313,19 @@
         const records=allRecords();if(records.length&&!confirm('Firebase üzerinde mevcut resmî EI kayıtları var. Yerleşik CMAA ve Virtual OSVA dönemleri de eklensin mi?'))return;
         const now=new Date().toISOString(),who=actor(),root=db.ref('icao_official_ei'),updates={};
         const defaults=[
-            {name:'CMAA',type:'CMAA',assessmentDate:'2024-09-01',overallEI:50.69,areas:{LEG:86.36,ORG:50.00,PEL:70.73,OPS:68.03,AIR:54.84,AIG:25.30,ANS:20.69,AGA:53.91},source:'ICAO USOAP OLF resmî CMAA sonucu'},
-            {name:'Virtual OSVA (ICAO Val.)',type:'OSVA',assessmentDate:'2026-05-01',overallEI:55.28,areas:{LEG:86.36,ORG:50.00,PEL:70.73,OPS:70.73,AIR:71.61,AIG:25.30,ANS:20.69,AGA:53.91},source:'ICAO USOAP OLF Virtual OSVA / ICAO validasyon sonucu'}
+            {name:'CMAA',type:'CMAA',resultStatus:'official',assessmentDate:'2024-09-01',scopeAreas:[...AREAS],pqVersion:'2020',pqRevision:'',overallEI:50.69,areas:{LEG:86.36,ORG:50.00,PEL:70.73,OPS:68.03,AIR:54.84,AIG:25.30,ANS:20.69,AGA:53.91},source:'ICAO USOAP OLF resmî CMAA sonucu'},
+            {name:'Virtual OSVA (ICAO Val.)',type:'OSVA',resultStatus:'official',startDate:'2026-05-04',endDate:'2026-05-08',assessmentDate:'2026-05-08',scopeAreas:['OPS','AIR'],pqVersion:'2024',pqRevision:'',overallEI:55.28,areas:{LEG:86.36,ORG:50.00,PEL:70.73,OPS:70.73,AIR:71.61,AIG:25.30,ANS:20.69,AGA:53.91},source:'ICAO USOAP OLF Virtual OSVA / ICAO validasyon sonucu'}
         ];
         const existingKeys=new Set(records.map(r=>`${String(r.name||'').toLocaleLowerCase('tr')}|${r.assessmentDate||''}`));
-        defaults.forEach(r=>{const naturalKey=`${String(r.name||'').toLocaleLowerCase('tr')}|${r.assessmentDate||''}`;if(existingKeys.has(naturalKey))return;const id=root.push().key;updates[id]=clean({...r,reportDate:'',notes:'Başlangıç veri seti',active:true,isDeleted:false,createdAt:now,createdBy:who,updatedAt:now,updatedBy:who,moduleVersion:'official-ei-management-v1'});});
+        defaults.forEach(r=>{const naturalKey=`${String(r.name||'').toLocaleLowerCase('tr')}|${r.assessmentDate||''}`;if(existingKeys.has(naturalKey))return;const id=root.push().key;const links=typeof window.getAssessmentEventIdsForOfficialEi==='function'?window.getAssessmentEventIdsForOfficialEi(id):{eventId:`official_${id}`,snapshotId:`official_after_${id}`};updates[id]=clean({...r,reportDate:'',notes:'Başlangıç veri seti',active:true,isDeleted:false,assessmentEventId:links.eventId,eiSnapshotId:links.snapshotId,createdAt:now,createdBy:who,updatedAt:now,updatedBy:who,moduleVersion:'official-ei-management-v3-assessment'});});
         if(!Object.keys(updates).length)return alert('CMAA ve Virtual OSVA başlangıç kayıtları zaten mevcut.');
         try{await root.update(updates);if(typeof showAppRuntimeToast==='function')showAppRuntimeToast('CMAA ve Virtual OSVA verileri Firebase’e aktarıldı.','success');}
         catch(err){alert('Başlangıç verileri yüklenemedi: '+(err.message||err));}
     };
 
 
-    const ICAO_EI_EXCEL_HEADERS=['Kayıt ID','Değerlendirme Adı *','Değerlendirme Türü','Değerlendirme Tarihi *','Raporun Alındığı Tarih','Overall EI (%)','LEG (%)','ORG (%)','PEL (%)','OPS (%)','AIR (%)','AIG (%)','ANS (%)','AGA (%)','Durum','Kaynak / Referans','Açıklama / Not'];
-    const ICAO_EI_EXCEL_WIDTHS=[18,28,22,22,22,16,12,12,12,12,12,12,12,12,14,38,45];
+    const ICAO_EI_EXCEL_HEADERS=['Kayıt ID','Değerlendirme Adı *','Değerlendirme Türü','Sonuç Statüsü','Ziyaret Başlangıç','Ziyaret Bitiş','Değerlendirme Tarihi *','Raporun Alındığı Tarih','PQ Sürümü','PQ Revizyonu','Kapsam Alanları','Overall Satisfactory PQ','Overall Uygulanabilir PQ','Overall EI (%)','LEG (%)','ORG (%)','PEL (%)','OPS (%)','AIR (%)','AIG (%)','ANS (%)','AGA (%)','Durum','Kaynak / Referans','Açıklama / Not'];
+    const ICAO_EI_EXCEL_WIDTHS=[18,28,22,18,18,18,22,22,14,16,30,20,20,16,12,12,12,12,12,12,12,12,14,38,45];
     const ICAO_EI_TYPES=new Set(['CMAA','OSVA','ICVM','AUDIT','OTHER']);
 
     function setExcelStatus(message,type){
@@ -324,24 +337,28 @@
         if(typeof downloadReportWorkbook==='function')return downloadReportWorkbook(wb,fileName);
         XLSX.writeFile(wb,fileName);
     }
-    function setIcaoEiSheetWidths(ws){ws['!cols']=ICAO_EI_EXCEL_WIDTHS.map(w=>({wch:w}));ws['!autofilter']={ref:`A1:Q${Math.max(2,(ws['!ref']?XLSX.utils.decode_range(ws['!ref']).e.r+1:2))}`};}
+    function setIcaoEiSheetWidths(ws){ws['!cols']=ICAO_EI_EXCEL_WIDTHS.map(w=>({wch:w}));const lastCol=XLSX.utils.encode_col(ICAO_EI_EXCEL_HEADERS.length-1);ws['!autofilter']={ref:`A1:${lastCol}${Math.max(2,(ws['!ref']?XLSX.utils.decode_range(ws['!ref']).e.r+1:2))}`};}
     function appendIcaoEiUsageSheets(wb){
         const usage=[
             ['ICAO Resmî EI Excel Şablonu – Kullanım Açıklamaları',''],
             ['Kural','Açıklama'],
             ['Kayıt ID','Yeni kayıtlarda boş bırakılır. Sistemden dışa aktarılan dosyada bulunan ID korunursa ilgili Firebase kaydı güncellenir.'],
             ['Zorunlu alanlar','Değerlendirme Adı ve Değerlendirme Tarihi zorunludur. En az bir alan EI değeri girilmelidir.'],
-            ['Tarih biçimi','Excel tarihi veya GG.AA.YYYY / YYYY-AA-GG biçimi kullanılabilir.'],
+            ['Tarih biçimi','Excel tarihi veya GG.AA.YYYY / YYYY-AA-GG biçimi kullanılabilir. Ziyaret başlangıç/bitiş tarihi isteğe bağlıdır.'],
             ['Oranlar','0 ile 100 arasında gerçek yüzde değeri girilir. Örnek: 68,03. Hücreye 0,6803 yazılmamalıdır.'],
             ['Değerlendirme Türü','CMAA, OSVA, ICVM, AUDIT veya OTHER.'],
+            ['Sonuç Statüsü','OFFICIAL, DRAFT veya PROVISIONAL. Boş bırakılırsa OFFICIAL kabul edilir.'],
+            ['Kapsam Alanları','Değerlendirilen alanlar virgülle yazılır. Örnek: OPS,AIR. Kapsam dışı alanların EI değeri tutulabilir fakat olay etkisinde değerlendirilmiş sayılmaz.'],
+            ['PQ Sürümü / Revizyonu','Değerlendirmenin kullandığı ICAO PQ setini belirtmek için ayrı alanlardır.'],
+            ['Overall Satisfactory / Uygulanabilir','İsteğe bağlıdır. İkisi birlikte verilirse Overall EI boş olduğunda otomatik hesaplanabilir.'],
             ['Durum','AKTİF veya PASİF. Boş bırakılırsa AKTİF kabul edilir.'],
             ['Güncelleme mantığı','Kayıt ID yoksa aynı Değerlendirme Adı + Değerlendirme Tarihi eşleşmesi aranır; bulunursa güncellenir, bulunmazsa yeni kayıt oluşturulur.'],
             ['Silme','Excel içe aktarma mevcut kayıtları silmez. Silme/pasife alma işlemi uygulamadaki yönetim ekranından yapılır.']
         ];
         const wsUsage=XLSX.utils.aoa_to_sheet(usage);wsUsage['!cols']=[{wch:26},{wch:95}];XLSX.utils.book_append_sheet(wb,wsUsage,'Kullanim');
         const examples=[ICAO_EI_EXCEL_HEADERS,
-            ['', 'CMAA','CMAA','2024-09-01','',50.69,86.36,50.00,70.73,68.03,54.84,25.30,20.69,53.91,'AKTİF','ICAO USOAP OLF resmî CMAA sonucu','Örnek satır'],
-            ['', 'Virtual OSVA (ICAO Val.)','OSVA','2026-05-01','',55.28,86.36,50.00,70.73,70.73,71.61,25.30,20.69,53.91,'AKTİF','ICAO USOAP OLF Virtual OSVA sonucu','Örnek satır']
+            ['', 'CMAA','CMAA','OFFICIAL','','','2024-09-01','','2020','','LEG,ORG,PEL,OPS,AIR,AIG,ANS,AGA','','',50.69,86.36,50.00,70.73,68.03,54.84,25.30,20.69,53.91,'AKTİF','ICAO USOAP OLF resmî CMAA sonucu','Örnek satır'],
+            ['', 'Virtual OSVA (ICAO Val.)','OSVA','OFFICIAL','2026-05-04','2026-05-08','2026-05-08','','2024','','OPS,AIR','','',55.28,86.36,50.00,70.73,70.73,71.61,25.30,20.69,53.91,'AKTİF','ICAO USOAP OLF Virtual OSVA sonucu','Örnek satır']
         ];
         const wsExample=XLSX.utils.aoa_to_sheet(examples);setIcaoEiSheetWidths(wsExample);XLSX.utils.book_append_sheet(wb,wsExample,'Ornek');
     }
@@ -352,7 +369,7 @@
     };
     function exportRow(r){
         const a=r.areas||{};
-        return {'Kayıt ID':r.id||'','Değerlendirme Adı *':r.name||'','Değerlendirme Türü':r.type||'OTHER','Değerlendirme Tarihi *':r.assessmentDate||'','Raporun Alındığı Tarih':r.reportDate||'','Overall EI (%)':num(r.overallEI),'LEG (%)':num(a.LEG),'ORG (%)':num(a.ORG),'PEL (%)':num(a.PEL),'OPS (%)':num(a.OPS),'AIR (%)':num(a.AIR),'AIG (%)':num(a.AIG),'ANS (%)':num(a.ANS),'AGA (%)':num(a.AGA),'Durum':r.active!==false?'AKTİF':'PASİF','Kaynak / Referans':r.source||'','Açıklama / Not':r.notes||''};
+        return {'Kayıt ID':r.id||'','Değerlendirme Adı *':r.name||'','Değerlendirme Türü':r.type||'OTHER','Sonuç Statüsü':String(r.resultStatus||'official').toUpperCase(),'Ziyaret Başlangıç':r.startDate||'','Ziyaret Bitiş':r.endDate||'','Değerlendirme Tarihi *':r.assessmentDate||'','Raporun Alındığı Tarih':r.reportDate||'','PQ Sürümü':r.pqVersion||'','PQ Revizyonu':r.pqRevision||'','Kapsam Alanları':Array.isArray(r.scopeAreas)?r.scopeAreas.join(','):'','Overall Satisfactory PQ':intOrNull(r.overallSatisfactory),'Overall Uygulanabilir PQ':intOrNull(r.overallApplicable),'Overall EI (%)':num(r.overallEI),'LEG (%)':num(a.LEG),'ORG (%)':num(a.ORG),'PEL (%)':num(a.PEL),'OPS (%)':num(a.OPS),'AIR (%)':num(a.AIR),'AIG (%)':num(a.AIG),'ANS (%)':num(a.ANS),'AGA (%)':num(a.AGA),'Durum':r.active!==false?'AKTİF':'PASİF','Kaynak / Referans':r.source||'','Açıklama / Not':r.notes||''};
     }
     window.exportIcaoOfficialEiExcel=function(){
         if(typeof XLSX==='undefined')return alert('Excel kütüphanesi yüklenemedi.');
@@ -380,6 +397,9 @@
         const s=String(value||'').trim().toLocaleUpperCase('tr-TR');if(!s)return true;
         return !['PASİF','PASIF','HAYIR','NO','FALSE','0','KAPALI'].includes(s);
     }
+    function excelResultStatus(value){const s=String(value||'OFFICIAL').trim().toUpperCase();if(['DRAFT','TASLAK'].includes(s))return'draft';if(['PROVISIONAL','GEÇİCİ','GECICI'].includes(s))return'provisional';return'official';}
+    function excelScopeAreas(value){const raw=String(value||'').toUpperCase().split(/[,;|\s]+/).filter(Boolean);const set=new Set(raw);return AREAS.filter(a=>set.has(a));}
+    function excelInteger(value,label,errors){if(value===null||value===undefined||String(value).trim()==='')return null;const n=Number(value);if(!Number.isFinite(n)||n<0||Math.round(n)!==n){errors.push(`${label} negatif olmayan tam sayı olmalıdır`);return null;}return n;}
     function excelPercent(value,label,errors){
         if(value===null||value===undefined||String(value).trim()==='')return null;
         const n=num(String(value).replace('%','').trim());if(n===null||n<0||n>100){errors.push(`${label} 0–100 arasında olmalıdır`);return null;}return n;
@@ -390,19 +410,33 @@
         const name=String(rowLookup(row,['Değerlendirme Adı *','Değerlendirme Adı','Degerlendirme Adi'])||'').trim();
         const assessmentRaw=rowLookup(row,['Değerlendirme Tarihi *','Değerlendirme Tarihi','Degerlendirme Tarihi']);
         const assessmentDate=excelDateIso(assessmentRaw);
+        const startRaw=rowLookup(row,['Ziyaret Başlangıç','Ziyaret Baslangic','Başlangıç Tarihi']);
+        const endRaw=rowLookup(row,['Ziyaret Bitiş','Ziyaret Bitis','Bitiş Tarihi']);
+        const startDate=excelDateIso(startRaw),endDate=excelDateIso(endRaw);
         const reportRaw=rowLookup(row,['Raporun Alındığı Tarih','Rapor Tarihi']);
         const reportDate=excelDateIso(reportRaw);
         if(!name)errors.push('Değerlendirme Adı zorunludur');
         if(!assessmentDate)errors.push('Değerlendirme Tarihi geçerli olmalıdır');
+        if(startRaw!==''&&startRaw!==null&&startRaw!==undefined&&!startDate)errors.push('Ziyaret Başlangıç tarihi geçersizdir');
+        if(endRaw!==''&&endRaw!==null&&endRaw!==undefined&&!endDate)errors.push('Ziyaret Bitiş tarihi geçersizdir');
+        if(startDate&&endDate&&startDate>endDate)errors.push('Ziyaret başlangıç tarihi bitiş tarihinden sonra olamaz');
         if(reportRaw!==''&&reportRaw!==null&&reportRaw!==undefined&&!reportDate)errors.push('Raporun Alındığı Tarih geçersizdir');
         let type=String(rowLookup(row,['Değerlendirme Türü','Degerlendirme Turu','Tür','Tur'])||'OTHER').trim().toLocaleUpperCase('tr-TR');if(!ICAO_EI_TYPES.has(type))type='OTHER';
-        const overallEI=excelPercent(rowLookup(row,['Overall EI (%)','Overall EI','Overall']), 'Overall EI', errors);
+        const resultStatus=excelResultStatus(rowLookup(row,['Sonuç Statüsü','Sonuc Statusu','Statü','Status']));
+        const pqVersion=String(rowLookup(row,['PQ Sürümü','PQ Surumu','PQ Version'])||'').trim();
+        const pqRevision=String(rowLookup(row,['PQ Revizyonu','PQ Revision'])||'').trim();
+        const scopeAreas=excelScopeAreas(rowLookup(row,['Kapsam Alanları','Kapsam Alanlari','Scope Areas']));
+        const overallSatisfactory=excelInteger(rowLookup(row,['Overall Satisfactory PQ','Overall Satisfactory','Satisfactory PQ']),'Overall Satisfactory PQ',errors);
+        const overallApplicable=excelInteger(rowLookup(row,['Overall Uygulanabilir PQ','Overall Applicable PQ','Applicable PQ']),'Overall Uygulanabilir PQ',errors);
+        if(overallSatisfactory!==null&&overallApplicable!==null&&overallSatisfactory>overallApplicable)errors.push('Overall Satisfactory PQ, uygulanabilir PQ sayısından büyük olamaz');
+        let overallEI=excelPercent(rowLookup(row,['Overall EI (%)','Overall EI','Overall']), 'Overall EI', errors);
+        if(overallEI===null&&overallSatisfactory!==null&&overallApplicable>0)overallEI=Math.round((overallSatisfactory/overallApplicable)*10000)/100;
         const areas={};let filled=0;for(const area of AREAS){const value=excelPercent(rowLookup(row,[`${area} (%)`,area]),area,errors);areas[area]=value;if(value!==null)filled++;}
         if(!filled)errors.push('En az bir alan EI değeri girilmelidir');
         const source=String(rowLookup(row,['Kaynak / Referans','Kaynak','Referans'])||'').trim();
         const notes=String(rowLookup(row,['Açıklama / Not','Açıklama','Not'])||'').trim();
         const active=excelActive(rowLookup(row,['Durum','Aktif']));
-        return {rowNumber,recordId,name,type,assessmentDate,reportDate,overallEI,areas,source,notes,active,errors,naturalKey:`${name.toLocaleLowerCase('tr-TR')}|${assessmentDate}`};
+        return {rowNumber,recordId,name,type,resultStatus,startDate,endDate,assessmentDate,reportDate,pqVersion,pqRevision,scopeAreas,overallSatisfactory,overallApplicable,overallEI,areas,source,notes,active,errors,naturalKey:`${name.toLocaleLowerCase('tr-TR')}|${assessmentDate}`};
     }
     window.importIcaoOfficialEiExcel=async function(event){
         const input=event&&event.target;const file=input&&input.files&&input.files[0];if(!file)return;
@@ -425,17 +459,19 @@
                 if(!existing){const match=existingByNatural.get(item.naturalKey);if(match){id=match.id;existing=store[id]||match;}}
                 if(!id)id=db.ref('icao_official_ei').push().key;
                 if(existing)updateCount++;else createCount++;
-                updates[id]=clean({name:item.name,type:item.type,assessmentDate:item.assessmentDate,reportDate:item.reportDate,overallEI:item.overallEI,areas:item.areas,source:item.source,notes:item.notes,active:item.active,isDeleted:false,createdAt:(existing&&existing.createdAt)||now,createdBy:(existing&&existing.createdBy)||who,updatedAt:now,updatedBy:who,moduleVersion:'official-ei-management-v2-excel'});
+                const links=typeof window.getAssessmentEventIdsForOfficialEi==='function'?window.getAssessmentEventIdsForOfficialEi(id):{eventId:`official_${id}`,snapshotId:`official_after_${id}`};
+                updates[id]=clean({name:item.name,type:item.type,resultStatus:item.resultStatus,startDate:item.startDate,endDate:item.endDate,assessmentDate:item.assessmentDate,reportDate:item.reportDate,pqVersion:item.pqVersion,pqRevision:item.pqRevision,scopeAreas:item.scopeAreas,overallSatisfactory:item.overallSatisfactory,overallApplicable:item.overallApplicable,overallEI:item.overallEI,areas:item.areas,source:item.source,notes:item.notes,active:item.active,isDeleted:false,assessmentEventId:links.eventId,eiSnapshotId:links.snapshotId,createdAt:(existing&&existing.createdAt)||now,createdBy:(existing&&existing.createdBy)||who,updatedAt:now,updatedBy:who,moduleVersion:'official-ei-management-v3-assessment-excel'});
             });
             const errorPreview=invalid.length?'\n\nAtlanacak hatalı satırlar:\n'+invalid.slice(0,8).map(x=>`${x.rowNumber}. satır: ${x.errors.join(', ')}`).join('\n')+(invalid.length>8?`\n... ve ${invalid.length-8} satır daha`:''):'';
             const approved=confirm(`${valid.length} geçerli kayıt bulundu.\nYeni kayıt: ${createCount}\nGüncellenecek kayıt: ${updateCount}\nHatalı/atlanacak satır: ${invalid.length}${errorPreview}\n\nFirebase'e aktarılsın mı?`);if(!approved){setExcelStatus('Excel içe aktarma kullanıcı tarafından iptal edildi.','warn');return;}
             await db.ref('icao_official_ei').update(updates);
+            if(typeof window.syncAllOfficialEiRecordsToAssessmentModel==='function')setTimeout(()=>window.syncAllOfficialEiRecordsToAssessmentModel({silent:true}),100);
             const summary=`Excel içe aktarma tamamlandı: ${createCount} yeni kayıt, ${updateCount} güncelleme${invalid.length?`, ${invalid.length} hatalı satır atlandı`:''}.`;
             setExcelStatus(summary,'success');if(typeof showAppRuntimeToast==='function')showAppRuntimeToast(summary,'success');
         }catch(err){console.error('ICAO resmî EI Excel içe aktarma hatası',err);setExcelStatus('Excel içe aktarma başarısız: '+(err.message||err),'error');}
         finally{if(input)input.value='';}
     };
 
-    window.runIcaoOfficialEiManagementSelfCheck=function(){const records=allRecords(),active=activeRecords(),globalPlugin=typeof Chart!=='undefined'&&Chart.registry?Chart.registry.plugins.get('chartBarValuePlugin'):null,result={passed:!!document.getElementById('icaoOfficialEiModal')&&typeof startIcaoOfficialEiListener==='function'&&typeof saveIcaoOfficialEiRecord==='function'&&typeof importIcaoOfficialEiExcel==='function'&&typeof exportIcaoOfficialEiExcel==='function'&&typeof downloadIcaoOfficialEiExcelTemplate==='function'&&!globalPlugin,records:records.length,active:active.length,chartUsesManagedData:active.length>=1,globalValuePluginRegistered:!!globalPlugin,overallIncluded:!!(getManagedIcaoOfficialEiChartConfig()&&getManagedIcaoOfficialEiChartConfig().areas.some(r=>r.area==='Overall')),multiPeriodControls:!!document.getElementById('icaoOfficialPeriodSelector')&&!!document.getElementById('icaoOfficialReferenceSelect'),overallCards:!!document.getElementById('icaoOfficialOverallCards')&&typeof renderIcaoOfficialOverallCards==='function',trendChart:!!document.getElementById('icaoOfficialTrendCanvas')&&typeof renderIcaoOfficialTrend==='function',trendMetric:officialEiTrendMetric,trendRecords:trendRecords().length,selectedPeriods:(getManagedIcaoOfficialEiChartConfig()&&getManagedIcaoOfficialEiChartConfig().records||[]).length,excelInputPresent:!!document.getElementById('icaoEiExcelInput'),functions:{start:typeof startIcaoOfficialEiListener,save:typeof saveIcaoOfficialEiRecord,delete:typeof deleteIcaoOfficialEiRecord,importExcel:typeof importIcaoOfficialEiExcel,exportExcel:typeof exportIcaoOfficialEiExcel,template:typeof downloadIcaoOfficialEiExcelTemplate}};console.log('ICAO Resmî EI Veri Yönetimi kontrolü:',result);return result;};
+    window.runIcaoOfficialEiManagementSelfCheck=function(){const records=allRecords(),active=activeRecords(),globalPlugin=typeof Chart!=='undefined'&&Chart.registry?Chart.registry.plugins.get('chartBarValuePlugin'):null,result={passed:!!document.getElementById('icaoOfficialEiModal')&&typeof startIcaoOfficialEiListener==='function'&&typeof saveIcaoOfficialEiRecord==='function'&&typeof importIcaoOfficialEiExcel==='function'&&typeof exportIcaoOfficialEiExcel==='function'&&typeof downloadIcaoOfficialEiExcelTemplate==='function'&&!globalPlugin,records:records.length,active:active.length,chartUsesManagedData:active.length>=1,globalValuePluginRegistered:!!globalPlugin,overallIncluded:!!(getManagedIcaoOfficialEiChartConfig()&&getManagedIcaoOfficialEiChartConfig().areas.some(r=>r.area==='Overall')),multiPeriodControls:!!document.getElementById('icaoOfficialPeriodSelector')&&!!document.getElementById('icaoOfficialReferenceSelect'),overallCards:!!document.getElementById('icaoOfficialOverallCards')&&typeof renderIcaoOfficialOverallCards==='function',trendChart:!!document.getElementById('icaoOfficialTrendCanvas')&&typeof renderIcaoOfficialTrend==='function',trendMetric:officialEiTrendMetric,trendRecords:trendRecords().length,selectedPeriods:(getManagedIcaoOfficialEiChartConfig()&&getManagedIcaoOfficialEiChartConfig().records||[]).length,excelInputPresent:!!document.getElementById('icaoEiExcelInput'),assessmentModel:typeof window.runAssessmentEventSelfCheck==='function'?window.runAssessmentEventSelfCheck():null,functions:{start:typeof startIcaoOfficialEiListener,save:typeof saveIcaoOfficialEiRecord,delete:typeof deleteIcaoOfficialEiRecord,importExcel:typeof importIcaoOfficialEiExcel,exportExcel:typeof exportIcaoOfficialEiExcel,template:typeof downloadIcaoOfficialEiExcelTemplate}};console.log('ICAO Resmî EI Veri Yönetimi kontrolü:',result);return result;};
     updateStatus();
 })();

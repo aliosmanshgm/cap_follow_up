@@ -1,16 +1,23 @@
 {
   "app": "USOAP CMA CAP Takip",
-  "version": "3.0-monolith-rebuild",
+  "version": "4.0-phase1-assessment-events",
   "baseline": "index_visit_hub_pq_version_database(2).html",
   "buildDate": "2026-11-13",
+  "features": [
+    "assessment-event-model",
+    "ei-snapshot-model",
+    "official-ei-backward-compatibility",
+    "assessment-scope-areas",
+    "pq-version-revision-on-assessment",
+    "overall-numerator-denominator"
+  ],
   "architecture": {
     "index": "index.html",
-    "styles": [
-      "css/app.css"
-    ],
+    "styles": ["css/app.css"],
     "scripts": [
       "js/app.js",
       "js/modules/visit-sync.js",
+      "js/modules/assessment-events.js",
       "js/modules/official-ei-management.js",
       "js/parsers/pq-docx-parser.js",
       "js/services/pq-repository.js",
