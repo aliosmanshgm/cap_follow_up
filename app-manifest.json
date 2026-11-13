@@ -1,6 +1,6 @@
 {
   "app": "USOAP CMA CAP Takip",
-  "version": "4.0-phase1-assessment-events",
+  "version": "5.0-phase2-ei-assessment-timeline",
   "baseline": "index_visit_hub_pq_version_database(2).html",
   "buildDate": "2026-11-13",
   "features": [
@@ -9,7 +9,11 @@
     "official-ei-backward-compatibility",
     "assessment-scope-areas",
     "pq-version-revision-on-assessment",
-    "overall-numerator-denominator"
+    "overall-numerator-denominator",
+    "dashboard-assessment-timeline",
+    "validation-candidate-projection",
+    "area-scope-aware-ei-chart",
+    "assessment-snapshot-official-ei-chart-source"
   ],
   "architecture": {
     "index": "index.html",

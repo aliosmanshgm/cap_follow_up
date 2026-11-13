@@ -4,7 +4,7 @@
     const AREAS=['LEG','ORG','PEL','OPS','AIR','AIG','ANS','AGA'];
     const EVENT_PATH='icao_assessment_events';
     const SNAPSHOT_PATH='icao_ei_snapshots';
-    const MODULE_VERSION='assessment-events-v1';
+    const MODULE_VERSION='assessment-events-v2-ei-timeline';
     let eventRef=null,eventCallback=null,snapshotRef=null,snapshotCallback=null;
     let syncInFlight=false,syncQueued=false;
 
@@ -72,6 +72,8 @@
         const name=String(record&&record.name||'').toLocaleLowerCase('tr-TR');
         if(type==='CMAA')return [...AREAS];
         if(type==='OSVA'&&/virtual\s*osva|mayıs\s*2026|may\s*2026/i.test(name))return ['OPS','AIR'];
+        const explicitAreas=AREAS.filter(area=>num(record&&record.areas&&record.areas[area])!==null);
+        if(explicitAreas.length)return explicitAreas;
         return [];
     }
     function areaSnapshot(record,scopeAreas){
@@ -220,8 +222,8 @@
         window.icaoAssessmentModelLoaded=false;updateStatus();
         if(!firebase.auth().currentUser)return;
         eventRef=db.ref(EVENT_PATH);snapshotRef=db.ref(SNAPSHOT_PATH);
-        eventCallback=snap=>{window.icaoAssessmentEvents=snap.val()||{};window.icaoAssessmentModelLoaded=true;updateStatus();};
-        snapshotCallback=snap=>{window.icaoEiSnapshots=snap.val()||{};window.icaoAssessmentModelLoaded=true;updateStatus();};
+        eventCallback=snap=>{window.icaoAssessmentEvents=snap.val()||{};window.icaoAssessmentModelLoaded=true;updateStatus();scheduleAssessmentUiRefresh();};
+        snapshotCallback=snap=>{window.icaoEiSnapshots=snap.val()||{};window.icaoAssessmentModelLoaded=true;updateStatus();scheduleAssessmentUiRefresh();};
         eventRef.on('value',eventCallback,err=>{console.error('Assessment Event verisi okunamadı',err);window.icaoAssessmentModelLoaded=true;updateStatus();});
         snapshotRef.on('value',snapshotCallback,err=>{console.error('EI Snapshot verisi okunamadı',err);window.icaoAssessmentModelLoaded=true;updateStatus();});
     };
@@ -252,6 +254,83 @@
         const rows=window.getAssessmentTimelineWithSnapshots().filter(x=>x.resultStatus==='official'&&x.snapshot&&x.snapshot.resultStatus==='official');
         return rows.length?rows[rows.length-1]:null;
     };
+
+    window.getOfficialAssessmentTimelineWithSnapshots=function(options={}){
+        const includePassive=options.includePassive===true;
+        return window.getAssessmentTimelineWithSnapshots({includePassive})
+            .filter(x=>x&&x.resultStatus==='official'&&x.snapshot&&x.snapshot.resultStatus==='official'&&!x.snapshot.isDeleted)
+            .filter(x=>includePassive||x.active!==false)
+            .sort((a,b)=>String(a.assessmentDate||a.endDate||a.startDate||'').localeCompare(String(b.assessmentDate||b.endDate||b.startDate||''))||String(a.createdAt||'').localeCompare(String(b.createdAt||'')));
+    };
+    window.getAssessmentMetricValue=function(row,metric='Overall'){
+        if(!row||!row.snapshot)return null;
+        if(metric==='Overall'){
+            const n=num(row.snapshot.overall&&row.snapshot.overall.ei);
+            return n;
+        }
+        const area=String(metric||'').toUpperCase();
+        if(!AREAS.includes(area))return null;
+        return num(row.snapshot.areas&&row.snapshot.areas[area]&&row.snapshot.areas[area].ei);
+    };
+    window.isAreaInAssessmentScope=function(row,area){
+        area=String(area||'').toUpperCase();
+        if(!AREAS.includes(area)||!row)return false;
+        const scope=normalizeAreas(row.scopeAreas||row.snapshot&&row.snapshot.scopeAreas||[]);
+        if(scope.includes(area))return true;
+        if(String(row.type||'').toUpperCase()==='CMAA')return true;
+        return !!(row.snapshot&&row.snapshot.areas&&row.snapshot.areas[area]&&row.snapshot.areas[area].inScope===true);
+    };
+    window.getAssessmentChartRecords=function(options={}){
+        return window.getOfficialAssessmentTimelineWithSnapshots(options).map(row=>{
+            const areas={};
+            AREAS.forEach(area=>{areas[area]=window.getAssessmentMetricValue(row,area);});
+            return {
+                id:row.id,
+                name:row.name||row.type||'ICAO değerlendirmesi',
+                label:row.name||row.type||'ICAO değerlendirmesi',
+                type:row.type||'OTHER',
+                resultStatus:row.resultStatus||'official',
+                assessmentDate:row.assessmentDate||row.endDate||row.startDate||'',
+                startDate:row.startDate||'',
+                endDate:row.endDate||'',
+                reportDate:row.reportDate||'',
+                pqVersion:row.pqVersion||'',
+                pqRevision:row.pqRevision||'',
+                scopeAreas:normalizeAreas(row.scopeAreas||row.snapshot&&row.snapshot.scopeAreas||[]),
+                overallEI:window.getAssessmentMetricValue(row,'Overall'),
+                overallSatisfactory:intOrNull(row.snapshot&&row.snapshot.overall&&row.snapshot.overall.satisfactory),
+                overallApplicable:intOrNull(row.snapshot&&row.snapshot.overall&&row.snapshot.overall.applicable),
+                areas,
+                source:row.source||row.snapshot&&row.snapshot.source||'',
+                notes:row.notes||row.snapshot&&row.snapshot.notes||'',
+                active:row.active!==false,
+                snapshotId:row.snapshot&&row.snapshot.id||row.linkedSnapshotId||''
+            };
+        });
+    };
+    window.getAssessmentEffectiveAreaTimeline=function(area,options={}){
+        area=String(area||'').toUpperCase();
+        const rows=window.getOfficialAssessmentTimelineWithSnapshots(options);
+        let effective=null;
+        return rows.map((row,index)=>{
+            const value=window.getAssessmentMetricValue(row,area);
+            const inScope=window.isAreaInAssessmentScope(row,area);
+            const baseline=index===0;
+            if(value!==null&&(inScope||baseline))effective=value;
+            return {eventId:row.id,name:row.name||row.type||'ICAO',type:row.type||'OTHER',assessmentDate:row.assessmentDate||'',inScope,value,effective,hasValue:value!==null};
+        });
+    };
+
+    let assessmentUiRefreshTimer=null;
+    function scheduleAssessmentUiRefresh(){
+        clearTimeout(assessmentUiRefreshTimer);
+        assessmentUiRefreshTimer=setTimeout(()=>{
+            try{if(typeof renderIcaoOfficialPeriodControls==='function')renderIcaoOfficialPeriodControls();}catch(e){}
+            try{if(typeof renderIcaoOfficialChart==='function')renderIcaoOfficialChart();}catch(e){}
+            try{if(typeof renderIcaoOfficialTrend==='function')renderIcaoOfficialTrend();}catch(e){}
+            try{if(typeof render==='function')render();}catch(e){}
+        },80);
+    }
 
     window.runAssessmentEventSelfCheck=function(){
         const events=window.getAssessmentTimeline({includePassive:true});

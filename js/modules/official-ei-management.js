@@ -29,6 +29,12 @@
     function fmtDate(v){if(!v)return'-';const d=new Date(String(v).length===10?v+'T00:00:00':v);return isNaN(d)?String(v):d.toLocaleDateString('tr-TR',{day:'2-digit',month:'long',year:'numeric'});}
     function activeRecords(){return Object.entries(window.icaoOfficialEiRecords||{}).map(([id,r])=>({id,...(r||{})})).filter(r=>!r.isDeleted&&r.active!==false).sort((a,b)=>String(a.assessmentDate||'').localeCompare(String(b.assessmentDate||''))||String(a.createdAt||'').localeCompare(String(b.createdAt||'')));}
     function allRecords(){return Object.entries(window.icaoOfficialEiRecords||{}).map(([id,r])=>({id,...(r||{})})).filter(r=>!r.isDeleted).sort((a,b)=>String(b.assessmentDate||'').localeCompare(String(a.assessmentDate||''))||String(b.updatedAt||'').localeCompare(String(a.updatedAt||'')));}
+    function assessmentChartRecords(includePassive=false){
+        if(typeof window.getAssessmentChartRecords!=='function')return[];
+        try{return (window.getAssessmentChartRecords({includePassive})||[]).filter(r=>r&&r.resultStatus==='official'&&(includePassive||r.active!==false));}catch(e){return[];}
+    }
+    function chartSourceRecords(){const assessment=assessmentChartRecords(false);return assessment.length?assessment:activeRecords();}
+    function chartDataSourceName(){return assessmentChartRecords(false).length?'Assessment Event + EI Snapshot':'Eski resmî EI kayıtları (fallback)';}
     function chartLabel(r){const date=r.assessmentDate?new Date(r.assessmentDate+'T00:00:00'):null;const dateLabel=date&&!isNaN(date)?date.toLocaleDateString('tr-TR',{month:'short',year:'numeric'}):'';return [r.name||r.type||'ICAO',dateLabel].filter(Boolean).join(' — ');}
 
     function saveChartPreferences(){
@@ -39,7 +45,7 @@
         return [records[0].id,...records.slice(-3).map(r=>r.id)].filter((id,index,arr)=>arr.indexOf(id)===index);
     }
     function normalizeChartSelection(){
-        const records=activeRecords(),validIds=new Set(records.map(r=>r.id));
+        const records=chartSourceRecords(),validIds=new Set(records.map(r=>r.id));
         officialEiChartSelectedIds=officialEiChartSelectedIds.filter(id=>validIds.has(id));
         if(!officialEiChartSelectedIds.length&&records.length)officialEiChartSelectedIds=defaultChartSelection(records);
         if(officialEiChartSelectedIds.length>4)officialEiChartSelectedIds=officialEiChartSelectedIds.slice(0,4);
@@ -83,7 +89,7 @@
         triggerChartRefresh();
     };
     window.selectIcaoOfficialPeriodPreset=function(mode){
-        const records=activeRecords();
+        const records=chartSourceRecords();
         if(!records.length)return;
         if(mode==='latestTwo')officialEiChartSelectedIds=records.slice(-2).map(r=>r.id);
         else if(mode==='firstLast')officialEiChartSelectedIds=records.length===1?[records[0].id]:[records[0].id,records[records.length-1].id];
@@ -108,12 +114,13 @@
             referenceSelect.innerHTML=selected.length?selected.map(r=>`<option value="${escapeHtml(r.id)}" ${r.id===officialEiChartReferenceId?'selected':''}>${escapeHtml(chartLabel(r))}</option>`).join(''):'<option value="">Dönem seçiniz</option>';
             referenceSelect.disabled=selected.length<1;
         }
+        try{updateStatus();}catch(e){}
     };
 
     window.getManagedIcaoOfficialEiChartConfig=function(){
         const records=selectedChartRecords();
         if(!records.length)return null;
-        const normalizedRecords=records.map(r=>({id:r.id,label:chartLabel(r),name:r.name||r.type||'ICAO',assessmentDate:r.assessmentDate||'',overallEI:num(r.overallEI),areas:r.areas||{}}));
+        const normalizedRecords=records.map(r=>({id:r.id,label:chartLabel(r),name:r.name||r.type||'ICAO',type:r.type||'OTHER',assessmentDate:r.assessmentDate||'',overallEI:num(r.overallEI),areas:r.areas||{},scopeAreas:Array.isArray(r.scopeAreas)?r.scopeAreas:[],pqVersion:r.pqVersion||'',pqRevision:r.pqRevision||'',source:r.source||''}));
         return {
             records:normalizedRecords,
             referenceId:officialEiChartReferenceId||normalizedRecords[0].id,
@@ -130,7 +137,8 @@
         try{localStorage.setItem(OFFICIAL_EI_TREND_PREFS_KEY,JSON.stringify({metric:officialEiTrendMetric,includePassive:officialEiTrendIncludePassive}));}catch(e){}
     }
     function trendRecords(){
-        const source=officialEiTrendIncludePassive?allRecords():activeRecords();
+        const assessment=assessmentChartRecords(officialEiTrendIncludePassive);
+        const source=assessment.length?assessment:(officialEiTrendIncludePassive?allRecords():activeRecords());
         return [...source].sort((a,b)=>String(a.assessmentDate||'').localeCompare(String(b.assessmentDate||''))||String(a.createdAt||'').localeCompare(String(b.createdAt||'')));
     }
     function trendValue(record,metric){
@@ -206,7 +214,8 @@
     function updateStatus(){
         const records=allRecords(),active=activeRecords();
         const txt=document.getElementById('icaoOfficialEiStatusTxt');
-        if(txt)txt.innerHTML=records.length?`<b>${records.length}</b> değerlendirme kaydı, <b>${active.length}</b> aktif dönem. Dashboard karşılaştırma grafiğinde kullanıcı tarafından seçilen en fazla dört aktif dönem gösterilir.`:'Henüz Firebase üzerinde resmî EI kaydı bulunmuyor. Dashboard veri girişi bekliyor.';
+        if(txt)txt.innerHTML=records.length?`<b>${records.length}</b> değerlendirme kaydı, <b>${active.length}</b> aktif dönem. Kayıtlar Assessment Event + EI Snapshot modeline otomatik senkronize edilir; Dashboard grafiği bu modelden beslenir.`:'Henüz Firebase üzerinde resmî EI kaydı bulunmuyor. Dashboard veri girişi bekliyor.';
+        const auto=document.getElementById('icaoOfficialAutoSourceStatus');if(auto){const a=assessmentChartRecords(false);auto.textContent=a.length?`Otomatik kaynak: Assessment Event + EI Snapshot · ${a.length} resmî değerlendirme`:'Assessment Event kaydı yok; eski resmî EI kayıtları geçici kaynak olarak kullanılıyor.';auto.style.color=a.length?'var(--ok)':'var(--warn)';}
         const sum=document.getElementById('icaoOfficialEiListSummary');if(sum){
             const chronological=[...records].sort((a,b)=>String(a.assessmentDate||'').localeCompare(String(b.assessmentDate||'')));
             const first=chronological[0],last=chronological[chronological.length-1];
@@ -472,6 +481,6 @@
         finally{if(input)input.value='';}
     };
 
-    window.runIcaoOfficialEiManagementSelfCheck=function(){const records=allRecords(),active=activeRecords(),globalPlugin=typeof Chart!=='undefined'&&Chart.registry?Chart.registry.plugins.get('chartBarValuePlugin'):null,result={passed:!!document.getElementById('icaoOfficialEiModal')&&typeof startIcaoOfficialEiListener==='function'&&typeof saveIcaoOfficialEiRecord==='function'&&typeof importIcaoOfficialEiExcel==='function'&&typeof exportIcaoOfficialEiExcel==='function'&&typeof downloadIcaoOfficialEiExcelTemplate==='function'&&!globalPlugin,records:records.length,active:active.length,chartUsesManagedData:active.length>=1,globalValuePluginRegistered:!!globalPlugin,overallIncluded:!!(getManagedIcaoOfficialEiChartConfig()&&getManagedIcaoOfficialEiChartConfig().areas.some(r=>r.area==='Overall')),multiPeriodControls:!!document.getElementById('icaoOfficialPeriodSelector')&&!!document.getElementById('icaoOfficialReferenceSelect'),overallCards:!!document.getElementById('icaoOfficialOverallCards')&&typeof renderIcaoOfficialOverallCards==='function',trendChart:!!document.getElementById('icaoOfficialTrendCanvas')&&typeof renderIcaoOfficialTrend==='function',trendMetric:officialEiTrendMetric,trendRecords:trendRecords().length,selectedPeriods:(getManagedIcaoOfficialEiChartConfig()&&getManagedIcaoOfficialEiChartConfig().records||[]).length,excelInputPresent:!!document.getElementById('icaoEiExcelInput'),assessmentModel:typeof window.runAssessmentEventSelfCheck==='function'?window.runAssessmentEventSelfCheck():null,functions:{start:typeof startIcaoOfficialEiListener,save:typeof saveIcaoOfficialEiRecord,delete:typeof deleteIcaoOfficialEiRecord,importExcel:typeof importIcaoOfficialEiExcel,exportExcel:typeof exportIcaoOfficialEiExcel,template:typeof downloadIcaoOfficialEiExcelTemplate}};console.log('ICAO Resmî EI Veri Yönetimi kontrolü:',result);return result;};
+    window.runIcaoOfficialEiManagementSelfCheck=function(){const records=allRecords(),active=activeRecords(),globalPlugin=typeof Chart!=='undefined'&&Chart.registry?Chart.registry.plugins.get('chartBarValuePlugin'):null,result={passed:!!document.getElementById('icaoOfficialEiModal')&&typeof startIcaoOfficialEiListener==='function'&&typeof saveIcaoOfficialEiRecord==='function'&&typeof importIcaoOfficialEiExcel==='function'&&typeof exportIcaoOfficialEiExcel==='function'&&typeof downloadIcaoOfficialEiExcelTemplate==='function'&&!globalPlugin,records:records.length,active:active.length,chartUsesManagedData:active.length>=1,globalValuePluginRegistered:!!globalPlugin,overallIncluded:!!(getManagedIcaoOfficialEiChartConfig()&&getManagedIcaoOfficialEiChartConfig().areas.some(r=>r.area==='Overall')),multiPeriodControls:!!document.getElementById('icaoOfficialPeriodSelector')&&!!document.getElementById('icaoOfficialReferenceSelect'),overallCards:!!document.getElementById('icaoOfficialOverallCards')&&typeof renderIcaoOfficialOverallCards==='function',trendChart:!!document.getElementById('icaoOfficialTrendCanvas')&&typeof renderIcaoOfficialTrend==='function',trendMetric:officialEiTrendMetric,trendRecords:trendRecords().length,chartDataSource:chartDataSourceName(),assessmentChartRecords:assessmentChartRecords(false).length,selectedPeriods:(getManagedIcaoOfficialEiChartConfig()&&getManagedIcaoOfficialEiChartConfig().records||[]).length,excelInputPresent:!!document.getElementById('icaoEiExcelInput'),assessmentModel:typeof window.runAssessmentEventSelfCheck==='function'?window.runAssessmentEventSelfCheck():null,functions:{start:typeof startIcaoOfficialEiListener,save:typeof saveIcaoOfficialEiRecord,delete:typeof deleteIcaoOfficialEiRecord,importExcel:typeof importIcaoOfficialEiExcel,exportExcel:typeof exportIcaoOfficialEiExcel,template:typeof downloadIcaoOfficialEiExcelTemplate}};console.log('ICAO Resmî EI Veri Yönetimi kontrolü:',result);return result;};
     updateStatus();
 })();

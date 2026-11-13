@@ -6967,6 +6967,95 @@ const I18N = {
         renderIcaoOfficialChangeSummary(config);
     }
 
+    function getDashboardAssessmentRows() {
+        if (typeof window.getOfficialAssessmentTimelineWithSnapshots !== 'function') return [];
+        try {
+            return (window.getOfficialAssessmentTimelineWithSnapshots() || []).filter(row => {
+                if (!row || !row.snapshot) return false;
+                const overall = typeof window.getAssessmentMetricValue === 'function' ? window.getAssessmentMetricValue(row, 'Overall') : null;
+                const hasArea = ['LEG','ORG','PEL','OPS','AIR','AIG','ANS','AGA'].some(a => typeof window.getAssessmentMetricValue === 'function' && window.getAssessmentMetricValue(row, a) !== null);
+                return overall !== null || hasArea;
+            });
+        } catch (e) { return []; }
+    }
+
+    function dashboardAssessmentDateLabel(row) {
+        const raw = row && (row.assessmentDate || row.endDate || row.startDate);
+        if (!raw) return 'Tarih yok';
+        const d = new Date(String(raw).length === 10 ? raw + 'T00:00:00' : raw);
+        return isNaN(d) ? String(raw) : d.toLocaleDateString('tr-TR', {day:'2-digit', month:'short', year:'numeric'});
+    }
+
+    function dashboardAssessmentScopeLabel(row) {
+        const scope = Array.isArray(row && row.scopeAreas) ? row.scopeAreas : [];
+        if (scope.length >= 8) return 'Tüm alanlar';
+        if (scope.length) return scope.join(' + ');
+        return 'Kapsam belirtilmedi';
+    }
+
+    function renderDashboardAssessmentTimeline(rows) {
+        const el = document.getElementById('eiAssessmentTimeline');
+        if (!el) return;
+        if (!rows || !rows.length) {
+            el.innerHTML = '<div class="ei-assessment-empty">Assessment Event kaydı bulunamadı. EI katmanları geçici olarak Excel EI referansı ve ICAO kapatma kayıtlarından hesaplanıyor.</div>';
+            return;
+        }
+        let prev = null;
+        el.innerHTML = rows.map((row, index) => {
+            const value = typeof window.getAssessmentMetricValue === 'function' ? window.getAssessmentMetricValue(row, 'Overall') : null;
+            const delta = value !== null && prev !== null ? Math.round((value - prev) * 100) / 100 : null;
+            if (value !== null) prev = value;
+            const deltaClass = delta === null || delta === 0 ? 'neu' : delta > 0 ? 'pos' : 'neg';
+            const deltaHtml = delta === null ? '' : `<span class="event-delta ${deltaClass}">${delta > 0 ? '+' : ''}${delta.toLocaleString('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:2})} puan</span>`;
+            const scope = Array.isArray(row.scopeAreas) ? row.scopeAreas : [];
+            const scopeHtml = scope.length ? `<div class="event-scope">${scope.map(a=>`<span class="scope-chip">${escapeHtml(a)}</span>`).join('')}</div>` : '';
+            const cls = index === 0 ? 'baseline' : index === rows.length - 1 ? 'latest' : '';
+            const overall = value === null ? 'EI yok' : `%${value.toLocaleString('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:2})}`;
+            return `<div class="ei-assessment-card ${cls}">
+                <div class="event-top"><div class="event-name">${escapeHtml(row.name || row.type || 'ICAO Değerlendirmesi')}</div><span class="event-type">${escapeHtml(row.type || 'OTHER')}</span></div>
+                <div class="event-ei">${overall}${deltaHtml}</div>
+                <div class="event-meta">${escapeHtml(dashboardAssessmentDateLabel(row))}<br>${escapeHtml(dashboardAssessmentScopeLabel(row))}</div>${scopeHtml}
+            </div>`;
+        }).join('');
+    }
+
+    function assessmentAreaState(rows, area, fallbackBasePct) {
+        let effective = isFinite(fallbackBasePct) ? fallbackBasePct : 0;
+        let base = effective;
+        const steps = [];
+        (rows || []).forEach((row, index) => {
+            const value = typeof window.getAssessmentMetricValue === 'function' ? window.getAssessmentMetricValue(row, area) : null;
+            const inScope = index === 0 || (typeof window.isAreaInAssessmentScope === 'function' ? window.isAreaInAssessmentScope(row, area) : false);
+            const before = effective;
+            if (value !== null && (inScope || index === 0)) effective = value;
+            if (index === 0 && value !== null) base = value;
+            steps.push({row, value, inScope, before, effective, delta: value !== null && inScope ? Math.round((effective - before) * 100) / 100 : null});
+        });
+        return {base, official: effective, steps};
+    }
+
+    function renderEiAreaAssessmentTable(rows, areaRows) {
+        const el = document.getElementById('eiAreaAssessmentTable');
+        if (!el) return;
+        if (!areaRows || !areaRows.length) { el.innerHTML = ''; return; }
+        if (!rows || !rows.length) {
+            el.innerHTML = '<div class="ei-assessment-empty">Alan bazlı resmî değerlendirme zaman çizgisi için Assessment Event / EI Snapshot verisi bulunmuyor.</div>';
+            return;
+        }
+        const headers = rows.map(r => `<th>${escapeHtml(r.type || 'ICAO')}<br><span style="font-size:9px;color:var(--muted);font-weight:500;">${escapeHtml(dashboardAssessmentDateLabel(r))}</span></th>`).join('');
+        const body = areaRows.map(d => {
+            const eventCells = (d.assessmentSteps || []).map((st, index) => {
+                if (index > 0 && !st.inScope) return '<td class="scope-out">Kapsam dışı</td>';
+                if (st.value === null) return '<td class="scope-out">EI verisi yok</td>';
+                const delta = index === 0 ? null : st.delta;
+                const deltaText = delta === null ? '' : `<br><span style="font-size:9px;color:${delta>0?'var(--ok)':delta<0?'var(--danger)':'var(--muted)'};font-weight:700;">${delta>0?'+':''}${delta.toFixed(2)} puan</span>`;
+                return `<td class="scope-in"><b>%${Number(st.value).toFixed(2)}</b>${deltaText}</td>`;
+            }).join('');
+            return `<tr><td><b>${escapeHtml(d.alan)}</b></td>${eventCells}<td class="projection-cell"><b>%${d.local}</b><br><span style="font-size:9px;color:var(--muted);">${d.validationCandidateCount} aday PQ</span></td><td class="theoretical-cell"><b>%${d.proj}</b><br><span style="font-size:9px;color:var(--muted);">+${d.openCapCount} açık CAP</span></td></tr>`;
+        }).join('');
+        el.innerHTML = `<table><thead><tr><th>Alan</th>${headers}<th>Validasyon Adayı Projeksiyonu</th><th>Teorik Üst Sınır</th></tr></thead><tbody>${body}</tbody></table>`;
+    }
+
     function updateEIProjections(filteredData) {
         if (Object.keys(baseEIData).length === 0) return;
 
@@ -6976,32 +7065,59 @@ const I18N = {
 
         let scope = model.scope;
         let absGT = scope.total;
-        let cBase = scope.baseSatOnly;
-        let cIcao = getBucketAfterValidationSat(scope);
-        let cLocal = cIcao + scope.localCompleted;
-        let cProj = cLocal + scope.projected;
+        let fallbackBaseSat = scope.baseSatOnly;
+        let fallbackOfficialSat = getBucketAfterValidationSat(scope);
+        let assessmentRows = getDashboardAssessmentRows();
+        renderDashboardAssessmentTimeline(assessmentRows);
 
-        let pctB = ratioPct(cBase, absGT);
-        let pctI = ratioPct(cIcao, absGT);
-        let pctL = ratioPct(cLocal, absGT);
-        let pctP = ratioPct(cProj, absGT);
+        const overallRows = assessmentRows.filter(r => typeof window.getAssessmentMetricValue === 'function' && window.getAssessmentMetricValue(r,'Overall') !== null);
+        const baselineEvent = overallRows.length ? overallRows[0] : null;
+        const latestEvent = overallRows.length ? overallRows[overallRows.length - 1] : null;
+        let pctB = baselineEvent ? window.getAssessmentMetricValue(baselineEvent,'Overall') : ratioPct(fallbackBaseSat, absGT);
+        let pctI = latestEvent ? window.getAssessmentMetricValue(latestEvent,'Overall') : ratioPct(fallbackOfficialSat, absGT);
+        if (!isFinite(pctB)) pctB = 0;
+        if (!isFinite(pctI)) pctI = pctB;
 
-        document.getElementById('lblBase').innerHTML = `${pctText(pctB)} <span style="font-size:12px; font-weight:normal; color:var(--muted); margin-left:5px;">(${cBase}/${absGT})</span>`;
-        document.getElementById('lblIcao').innerHTML = `${pctText(pctI)} <span style="font-size:12px; font-weight:normal; color:var(--icao-blue); margin-left:5px;">(${cIcao}/${absGT})</span>`;
-        document.getElementById('lblLocal').innerHTML = `${pctText(pctL)} <span style="font-size:12px; font-weight:normal; color:var(--ok); margin-left:5px;">(${cLocal}/${absGT})</span>`;
-        document.getElementById('lblProj').innerHTML = `${pctText(pctP)} <span style="font-size:13px; font-weight:normal; color:var(--warn); margin-left:5px;">(${cProj}/${absGT})</span>`;
+        const officialSnap = latestEvent && latestEvent.snapshot ? latestEvent.snapshot : null;
+        const officialSat = officialSnap && officialSnap.overall ? Number(officialSnap.overall.satisfactory) : NaN;
+        const officialApplicable = officialSnap && officialSnap.overall ? Number(officialSnap.overall.applicable) : NaN;
+        const compatibleCounts = Number.isFinite(officialSat) && Number.isFinite(officialApplicable) && officialApplicable === absGT;
+        const cIcao = compatibleCounts ? officialSat : fallbackOfficialSat;
+        const candidateCount = scope.localCompleted || 0;
+        const openCapCount = scope.projected || 0;
+        let pctL = Math.min(100, pctI + ratioPct(candidateCount, absGT));
+        let pctP = Math.min(100, pctL + ratioPct(openCapCount, absGT));
+        const cLocal = compatibleCounts ? Math.min(absGT, officialSat + candidateCount) : Math.min(absGT, cIcao + candidateCount);
+        const cProj = Math.min(absGT, cLocal + openCapCount);
+
+        const baseTitle = document.getElementById('lblBaseTitle');
+        const officialTitle = document.getElementById('lblIcaoTitle');
+        if (baseTitle) baseTitle.textContent = baselineEvent ? `${baselineEvent.type || baselineEvent.name || 'İlk değerlendirme'} EI (%):` : 'CMAA / Başlangıç EI (%):';
+        if (officialTitle) officialTitle.textContent = latestEvent ? `Güncel Resmî EI (${latestEvent.type || latestEvent.name || 'son değerlendirme'} sonrası):` : 'Güncel Resmî ICAO EI (%):';
+        const localTitle = document.getElementById('lblLocalTitle'); if(localTitle)localTitle.textContent='Validasyon Adayları Dahil EI Projeksiyonu:';
+        const projTitle = document.getElementById('lblProjTitle'); if(projTitle)projTitle.textContent="Tüm Açık CAP'ler Başarıyla Valide Edilirse Teorik EI:";
+
+        const baselineCounts = baselineEvent && baselineEvent.snapshot && baselineEvent.snapshot.overall ? baselineEvent.snapshot.overall : null;
+        const baseCountHtml = baselineCounts && Number.isFinite(Number(baselineCounts.satisfactory)) && Number.isFinite(Number(baselineCounts.applicable)) ? `(${baselineCounts.satisfactory}/${baselineCounts.applicable})` : `(${fallbackBaseSat}/${absGT})`;
+        const officialCountHtml = compatibleCounts ? `(${officialSat}/${officialApplicable})` : (latestEvent ? '(resmî snapshot)' : `(${cIcao}/${absGT})`);
+        document.getElementById('lblBase').innerHTML = `${pctText(pctB)} <span style="font-size:12px; font-weight:normal; color:var(--muted); margin-left:5px;">${baseCountHtml}</span>`;
+        document.getElementById('lblIcao').innerHTML = `${pctText(pctI)} <span style="font-size:12px; font-weight:normal; color:var(--icao-blue); margin-left:5px;">${officialCountHtml}</span>`;
+        document.getElementById('lblLocal').innerHTML = `${pctText(pctL)} <span style="font-size:12px; font-weight:normal; color:var(--ok); margin-left:5px;">(+${candidateCount} validasyon adayı PQ)</span>`;
+        document.getElementById('lblProj').innerHTML = `${pctText(pctP)} <span style="font-size:13px; font-weight:normal; color:var(--warn); margin-left:5px;">(+${openCapCount} açık CAP PQ)</span>`;
 
         document.getElementById('barBase').style.width = Math.max(0, Math.min(100, pctB)) + '%';
         document.getElementById('barBase').innerHTML = pctText(pctB);
         document.getElementById('barIcao').style.width = Math.max(0, pctI - pctB) + '%';
         document.getElementById('barLocal').style.width = Math.max(0, pctL - pctI) + '%';
         document.getElementById('barProj').style.width = Math.max(0, pctP - pctL) + '%';
+        const meta = document.getElementById('eiProjectionMeta');
+        if(meta)meta.innerHTML = `<b>Metodoloji:</b> Resmî EI yalnız Assessment Event/EI Snapshot sonucuyla değişir. <b>${candidateCount}</b> PQ'nun tüm CAP adımları tamamlanmış olup henüz ICAO validasyonu beklediği için yeşil alan yalnız projeksiyondur. <b>${openCapCount}</b> PQ ise açık CAP havuzundaki teorik ilave potansiyeldir.${latestEvent?` Son resmî değerlendirme: <b>${escapeHtml(latestEvent.name||latestEvent.type||'-')}</b> (${escapeHtml(dashboardAssessmentDateLabel(latestEvent))}).`:''}`;
 
         let sAreas = getCheckedValues('areaFilterList');
         let isG = sAreas.includes('all');
         let aAreas = isG ? Object.keys(baseEIData) : sAreas.map(normalizeAreaKey).filter(a => baseEIData[a]);
         if (aAreas.length === 0) { aAreas = Object.keys(baseEIData); isG = true; }
-        let dAreas = isG ? aAreas.filter(a => model.activeAreas.has(a) || model.areas[a].icaoClosed > 0) : aAreas;
+        let dAreas = isG ? aAreas.filter(a => model.activeAreas.has(a) || model.areas[a].icaoClosed > 0 || assessmentRows.length > 0) : aAreas;
         dAreas.sort(sortAreas);
 
         let validationTasks = model.validationTasks || [];
@@ -7015,12 +7131,10 @@ const I18N = {
             if (!m || m.total === 0) return;
             let tr = document.createElement('tr');
             if (item.key === 'Scope') tr.className = "ms-global-row";
-
             let currentSat = getBucketCurrentSat(m);
             let basePct = ratioPct(m.baseSatOnly, m.total);
             let currentPct = ratioPct(currentSat, m.total);
             let maxPct = getBucketMaxPct(m);
-
             let html = `<td style="text-align: left;">${m.name}</td>`;
             html += `<td><b>${pctText(basePct)}</b><br><span style="font-size:10px; color:var(--muted);">(${m.baseSatOnly}/${m.total})</span></td>`;
             if (validationTasks.length > 0) validationTasks.forEach((task, idx) => { html += validationMilestoneCellHtml(m, validationTasks, idx); });
@@ -7035,31 +7149,62 @@ const I18N = {
 
         window.currentAreaEIData = dAreas.map(a => {
             let bkt = model.areas[a];
-            let base = ratioPct(bkt.baseSatOnly, bkt.total);
-            let icao = ratioPct(getBucketAfterValidationSat(bkt), bkt.total);
-            let local = ratioPct(getBucketCurrentSat(bkt), bkt.total);
-            let proj = ratioPct(getBucketProjectedSat(bkt), bkt.total);
-            return { alan: a, base: base.toFixed(2), icao: icao.toFixed(2), local: local.toFixed(2), proj: proj.toFixed(2), noCap: bkt.noCap, undatedProjected: bkt.undatedProjected };
+            let fallbackBase = ratioPct(bkt.baseSatOnly, bkt.total);
+            let state = assessmentAreaState(assessmentRows, a, fallbackBase);
+            let official = assessmentRows.length ? state.official : ratioPct(getBucketAfterValidationSat(bkt), bkt.total);
+            let local = Math.min(100, official + ratioPct(bkt.localCompleted || 0, bkt.total));
+            let proj = Math.min(100, local + ratioPct(bkt.projected || 0, bkt.total));
+            return { alan: a, base: Number(state.base).toFixed(2), icao: Number(official).toFixed(2), local: Number(local).toFixed(2), proj: Number(proj).toFixed(2), noCap: bkt.noCap, undatedProjected: bkt.undatedProjected, validationCandidateCount:bkt.localCompleted||0, openCapCount:bkt.projected||0, assessmentSteps:state.steps };
         });
+
+        const sourceBadge=document.getElementById('eiAreaChartSourceBadge');
+        if(sourceBadge)sourceBadge.textContent=assessmentRows.length?`${assessmentRows.length} resmî Assessment Event · kapsam bilgisi aktif`:'Fallback: Excel EI referansı / ICAO kapatma kayıtları';
 
         const ctx = document.getElementById('eiChartCanvas').getContext('2d');
         if (charts.ei) charts.ei.destroy();
+        const datasets=[];
+        if(assessmentRows.length){
+            datasets.push({label:`1. ${assessmentRows[0].type||assessmentRows[0].name||'Başlangıç'} EI`,data:window.currentAreaEIData.map(d=>parseFloat(d.base)),backgroundColor:'#64748b',assessmentKind:'baseline'});
+            const palette=['#3b82f6','#2563eb','#7c3aed','#0ea5e9','#4f46e5','#0284c7'];
+            assessmentRows.slice(1).forEach((row,idx)=>{
+                const eventIndex=idx+1;
+                const data=window.currentAreaEIData.map(d=>{const st=d.assessmentSteps[eventIndex];return st&&st.inScope&&st.value!==null?Number((st.effective-st.before).toFixed(2)):0;});
+                const scopeMask=window.currentAreaEIData.map(d=>{const st=d.assessmentSteps[eventIndex];return !!(st&&st.inScope);});
+                const valueMask=window.currentAreaEIData.map(d=>{const st=d.assessmentSteps[eventIndex];return !!(st&&st.value!==null);});
+                if(data.some((v,i)=>scopeMask[i]||valueMask[i]))datasets.push({label:`${eventIndex+1}. ${row.type||row.name||'ICAO'} değişimi`,data,backgroundColor:palette[idx%palette.length],assessmentKind:'event',assessmentRow:row,scopeMask,valueMask});
+            });
+            datasets.push({label:'Validasyon Adayları',data:window.currentAreaEIData.map(d=>Number((parseFloat(d.local)-parseFloat(d.icao)).toFixed(2))),backgroundColor:'#10b981',assessmentKind:'candidate'});
+            datasets.push({label:'Açık CAP Teorik Potansiyeli',data:window.currentAreaEIData.map(d=>Number((parseFloat(d.proj)-parseFloat(d.local)).toFixed(2))),backgroundColor:'#f59e0b',assessmentKind:'projection'});
+        }else{
+            datasets.push({ label: '1. CMAA EI (%)', data: window.currentAreaEIData.map(d => parseFloat(d.base)), backgroundColor: '#64748b' });
+            datasets.push({ label: '2. ICAO Validasyonları EI (%)', data: window.currentAreaEIData.map(d => parseFloat(d.icao) - parseFloat(d.base)), backgroundColor: '#3b82f6' });
+            datasets.push({ label: '3. Validasyon Adayları', data: window.currentAreaEIData.map(d => parseFloat(d.local) - parseFloat(d.icao)), backgroundColor: '#10b981' });
+            datasets.push({ label: '4. Açık CAP Teorik Potansiyeli', data: window.currentAreaEIData.map(d => parseFloat(d.proj) - parseFloat(d.local)), backgroundColor: '#f59e0b' });
+        }
+        const hasNegative=datasets.some(ds=>(ds.data||[]).some(v=>Number(v)<0));
         charts.ei = new Chart(ctx, {
             type: 'bar',
             data: {
-                labels: window.currentAreaEIData.map(d => [ d.alan, `CMAA: %${d.base}`, `ICAO Val.: %${d.icao}`, `Mevcut: %${d.local}` ]),
-                datasets: [
-                    { label: '1. CMAA EI (%)', data: window.currentAreaEIData.map(d => parseFloat(d.base)), backgroundColor: '#64748b' },
-                    { label: '2. ICAO Validasyonları EI (%)', data: window.currentAreaEIData.map(d => parseFloat(d.icao) - parseFloat(d.base)), backgroundColor: '#3b82f6' },
-                    { label: '3. CAP Adımları Tamamlanmışlar Dahil EI (%)', data: window.currentAreaEIData.map(d => parseFloat(d.local) - parseFloat(d.icao)), backgroundColor: '#10b981' },
-                    { label: '4. Tüm CAP\'ler Tamamlanmışlar Dahil EI (%)', data: window.currentAreaEIData.map(d => parseFloat(d.proj) - parseFloat(d.local)), backgroundColor: '#f59e0b' }
-                ]
+                labels: window.currentAreaEIData.map(d => [ d.alan, `Resmî: %${d.icao}`, `Aday: %${d.local}` ]),
+                datasets
             },
             options: {
                 responsive: true, maintainAspectRatio: false,
-                scales: { x: { stacked: true }, y: { stacked: true, max: 100 } }
+                plugins:{tooltip:{callbacks:{label:(ctx)=>{
+                    const ds=ctx.dataset,d=window.currentAreaEIData[ctx.dataIndex];
+                    if(ds.assessmentKind==='baseline')return `${ds.label}: %${Number(ctx.raw).toFixed(2)}`;
+                    if(ds.assessmentKind==='event'){
+                        if(ds.scopeMask&&!ds.scopeMask[ctx.dataIndex])return `${ds.label}: Kapsam dışı`;
+                        if(ds.valueMask&&!ds.valueMask[ctx.dataIndex])return `${ds.label}: EI verisi yok`;
+                        const st=d.assessmentSteps[(assessmentRows||[]).findIndex(r=>ds.assessmentRow&&r.id===ds.assessmentRow.id)];
+                        return `${ds.label}: ${Number(ctx.raw)>=0?'+':''}${Number(ctx.raw).toFixed(2)} puan${st&&st.value!==null?` → %${Number(st.value).toFixed(2)}`:''}`;
+                    }
+                    return `${ds.label}: ${Number(ctx.raw)>=0&&ds.assessmentKind!=='baseline'?'+':''}${Number(ctx.raw).toFixed(2)} puan`;
+                }}}},
+                scales: { x: { stacked: true }, y: { stacked: true, min:hasNegative?-15:0, max: 100, ticks:{callback:v=>v+'%'} } }
             }
         });
+        renderEiAreaAssessmentTable(assessmentRows,window.currentAreaEIData);
     }
 
     window.runSimulator = function() {

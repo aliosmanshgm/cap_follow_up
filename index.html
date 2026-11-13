@@ -13,7 +13,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.10/pdfmake.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.10/vfs_fonts.js"></script>
-    <link rel="stylesheet" href="css/app.css?v=20261113-phase1-assessment-v4">
+    <link rel="stylesheet" href="css/app.css?v=20261113-phase2-ei-timeline-v5">
 </head>
 <body>
 
@@ -360,19 +360,21 @@
                 <div class="ei-panel" id="eiOverallProgressPanel" style="display: none; margin: 0; padding: 25px; grid-template-columns: 1fr; height: 100%; align-content: center;">
                     <div>
                         <h3 id="eiPanelTitle" style="margin: 0 0 5px 0; color: var(--primary);">🌍 Genel (Overall) Etkin Uygulama (EI) Oranı (%) Değişimi</h3>
-                        <p id="eiPanelSubtitle" style="margin: 0 0 15px 0; font-size: 13px; color: var(--muted);">Denetim referans puanı üzerine ICAO onaylı ve kendi tamamladığımız maddelerin güncel etkisi hesaplanmaktadır.</p>
-                        <div class="ei-bar-wrapper">
+                        <p id="eiPanelSubtitle" style="margin: 0 0 12px 0; font-size: 13px; color: var(--muted);">Resmî ICAO değerlendirmeleri ile validasyon adayı CAP'ler birbirinden ayrılarak gösterilir. EI yalnızca resmî değerlendirme sonucunda değişmiş kabul edilir.</p>
+                        <div id="eiAssessmentTimeline" class="ei-assessment-timeline"><div class="ei-assessment-empty">Resmî değerlendirme zaman çizgisi yükleniyor...</div></div>
+                        <div class="ei-bar-wrapper" id="eiOverallSegmentBar">
                             <div class="ei-bar-base" id="barBase" style="width:0%"></div>
                             <div class="ei-bar-icao" id="barIcao" style="width:0%"></div>
                             <div class="ei-bar-real" id="barLocal" style="width:0%"></div>
                             <div class="ei-bar-proj" id="barProj" style="width:0%"></div>
                         </div>
                         <div class="ei-stats-text">
-                            <div><span><i class="dot" style="background:#64748b;"></i> <b>CMAA EI (%):</b></span> <span id="lblBase">%0.00</span></div>
-                            <div><span><i class="dot" style="background:var(--icao-blue);"></i> <b>ICAO Validasyonları EI (%):</b></span> <span id="lblIcao" style="color:var(--icao-blue);">%0.00</span></div>
-                            <div><span><i class="dot" style="background:var(--ok);"></i> <b>CAP Adımları Tamamlanmışlar Dahil EI (%):</b></span> <span id="lblLocal" style="color:var(--ok);">%0.00</span></div>
-                            <div style="border-left: 4px solid var(--warn);"><span><i class="dot" style="background:var(--warn);"></i> <b>Tüm CAP'ler Tamamlanmışlar Dahil EI (%):</b></span> <span id="lblProj" style="color:var(--warn); font-size: 16px;">%0.00</span></div>
+                            <div><span><i class="dot" style="background:#64748b;"></i> <b id="lblBaseTitle">Başlangıç Resmî EI:</b></span> <span id="lblBase">%0.00</span></div>
+                            <div><span><i class="dot" style="background:var(--icao-blue);"></i> <b id="lblIcaoTitle">Güncel Resmî EI:</b></span> <span id="lblIcao" style="color:var(--icao-blue);">%0.00</span></div>
+                            <div><span><i class="dot" style="background:var(--ok);"></i> <b id="lblLocalTitle">Validasyon Adayları Dahil EI Projeksiyonu:</b></span> <span id="lblLocal" style="color:var(--ok);">%0.00</span></div>
+                            <div style="border-left: 4px solid var(--warn);"><span><i class="dot" style="background:var(--warn);"></i> <b id="lblProjTitle">Tüm Açık CAP'ler Başarıyla Valide Edilirse Teorik EI:</b></span> <span id="lblProj" style="color:var(--warn); font-size: 16px;">%0.00</span></div>
                         </div>
+                        <div id="eiProjectionMeta" class="ei-projection-meta"></div>
                     </div>
                 </div>
             </div>
@@ -388,15 +390,23 @@
             </div>
 
             <div class="ei-panel" id="eiChartPanel" style="display: none; grid-template-columns: 1fr; padding: 20px;">
-                <h3 style="margin: 0 0 15px 0; color: var(--primary);">📊 Denetim Alanı Bazında EI (%) Katmanlı Değişim Grafiği</h3>
-                <div><canvas id="eiChartCanvas" style="min-height: 280px;"></canvas></div>
+                <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;margin-bottom:12px;">
+                    <div>
+                        <h3 style="margin: 0 0 5px 0; color: var(--primary);">📊 Denetim Alanı Bazında EI (%) – Değerlendirme ve Projeksiyon</h3>
+                        <p style="margin:0;font-size:12px;color:var(--muted);">CMAA başlangıcı, kapsam dahilindeki OSVA/ICVM değişimleri, validasyon adayları ve teorik CAP potansiyeli aynı modelde gösterilir. Bir değerlendirmeye dahil olmayan alanlar “Kapsam dışı” olarak işaretlenir.</p>
+                    </div>
+                    <div id="eiAreaChartSourceBadge" class="ei-chart-source-badge">Assessment Event verisi bekleniyor</div>
+                </div>
+                <div><canvas id="eiChartCanvas" style="min-height: 320px;"></canvas></div>
+                <div id="eiAreaAssessmentTable" class="ei-area-assessment-table"></div>
             </div>
 
             <div class="ei-panel" id="icaoOfficialChartPanel" style="grid-template-columns: 1fr; padding: 20px; margin-top: 20px;">
                 <div style="display:flex; justify-content:space-between; gap:12px; align-items:flex-start; flex-wrap:wrap; margin-bottom:12px;">
                     <div>
                         <h3 style="margin: 0 0 5px 0; color: var(--primary);">🌐 ICAO Resmî EI Karşılaştırma Grafiği</h3>
-                        <p style="margin:0; font-size:13px; color:var(--muted);">Veri Yönetimi bölümündeki aktif resmî ICAO değerlendirmelerinden seçilen dönemlerin Overall ve alan bazlı EI oranlarını karşılaştırır. Kayıt sayısı sınırsızdır; grafikte okunabilirlik için aynı anda en fazla dört dönem gösterilir.</p>
+                        <p style="margin:0; font-size:13px; color:var(--muted);">Grafik artık doğrudan Assessment Event + EI Snapshot zaman çizgisinden beslenir. Veri Yönetimi kayıtları bu modele otomatik senkronize edilir; grafik için ayrıca dönem verisi girilmez.</p>
+                        <div id="icaoOfficialAutoSourceStatus" class="ei-auto-source-status">Assessment Event kaynağı kontrol ediliyor...</div>
                     </div>
                     <div id="icaoOfficialPeriodSummary" style="font-size:12px; color:var(--muted); background: rgba(37,99,235,0.06); padding: 8px 12px; border-radius: 8px; border: 1px solid rgba(37,99,235,0.12);">
                         Gösterilen dönemler: <b id="icaoOfficialSelectedPeriodSummary">Yükleniyor...</b>
@@ -1887,12 +1897,12 @@
 </div>
 
 
-<script src="js/app.js?v=20261113-phase1-assessment-v4"></script>
-<script src="js/modules/visit-sync.js?v=20261113-phase1-assessment-v4"></script>
-<script src="js/modules/assessment-events.js?v=20261113-phase1-assessment-v4"></script>
-<script src="js/modules/official-ei-management.js?v=20261113-phase1-assessment-v4"></script>
-<script src="js/parsers/pq-docx-parser.js?v=20261113-phase1-assessment-v4"></script>
-<script src="js/services/pq-repository.js?v=20261113-phase1-assessment-v4"></script>
-<script src="js/modules/pq-library.js?v=20261113-phase1-assessment-v4"></script>
+<script src="js/app.js?v=20261113-phase2-ei-timeline-v5"></script>
+<script src="js/modules/visit-sync.js?v=20261113-phase2-ei-timeline-v5"></script>
+<script src="js/modules/assessment-events.js?v=20261113-phase2-ei-timeline-v5"></script>
+<script src="js/modules/official-ei-management.js?v=20261113-phase2-ei-timeline-v5"></script>
+<script src="js/parsers/pq-docx-parser.js?v=20261113-phase2-ei-timeline-v5"></script>
+<script src="js/services/pq-repository.js?v=20261113-phase2-ei-timeline-v5"></script>
+<script src="js/modules/pq-library.js?v=20261113-phase2-ei-timeline-v5"></script>
 </body>
 </html>
