@@ -13,7 +13,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.10/pdfmake.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.10/vfs_fonts.js"></script>
-    <link rel="stylesheet" href="css/app.css?v=20261113-phase2-ei-timeline-v5">
+    <link rel="stylesheet" href="css/app.css?v=20261114-phase3-cap-pq-linkage-v6">
 </head>
 <body>
 
@@ -1684,11 +1684,13 @@
                             <div class="pqdb-kpi"><strong id="pqDbKpiOnsite">0</strong><span>On-site</span></div>
                             <div class="pqdb-kpi purple"><strong id="pqDbKpiPpq">0</strong><span>PPQ</span></div>
                             <div class="pqdb-kpi warn"><strong id="pqDbKpiChanges">0</strong><span>Amendment</span></div>
+                            <div class="pqdb-kpi teal"><strong id="pqDbKpiConcepts">0</strong><span>PQ Concept</span></div>
                         </div>
                         <div id="pqDbModebar" class="pqdb-modebar">
                             <button type="button" class="active" data-pqdb-view="versions" onclick="setPqDbView('versions')">🗂️ Alan / Sürüm / Revizyon</button>
                             <button type="button" data-pqdb-view="catalog" onclick="setPqDbView('catalog')">📋 PQ Kataloğu</button>
                             <button type="button" data-pqdb-view="compare" onclick="setPqDbView('compare')">🔀 Sürüm Kıyaslama</button>
+                            <button type="button" data-pqdb-view="linkage" onclick="setPqDbView('linkage')">🔗 CAP ↔ PQ Bağlantıları</button>
                         </div>
         
                         <div id="pqDbViewVersions" class="pqdb-view active">
@@ -1734,6 +1736,31 @@
                                 <div class="pqdb-panel-head"><h4>Değişiklik Matrisi</h4><span id="pqDbCompareSummary">-</span></div>
                                 <div class="pqdb-table-wrap"><table class="pqdb-table"><thead><tr><th>Önceki PQ</th><th>Yeni PQ</th><th>Tür</th><th>On/Off-site</th><th>CE / SSP</th><th>Açıklama</th></tr></thead><tbody id="pqDbCompareBody"></tbody></table></div>
                             </div>
+                        <div id="pqDbViewLinkage" class="pqdb-view">
+                            <div class="pqdb-linkage-head">
+                                <div>
+                                    <h4>🔗 CAP ↔ PQ Kalıcı Bağlantı Haritası</h4>
+                                    <p>CAP kayıtlarını yalnız PQ numarasıyla değil, sürümler arasında devam eden <b>PQ Concept</b> ve her sürüme özgü <b>PQ Instance</b> kimlikleriyle izler. PQ numarası değişse dahi CAP geçmişi aktif PQ ile ilişkilendirilebilir.</p>
+                                </div>
+                                <div class="pqdb-actions">
+                                    <button type="button" onclick="refreshCapPqLinkage({persist:true})">↻ CAP Bağlantılarını Yenile</button>
+                                    <button type="button" class="btn-outline" onclick="rebuildPqLinkageIndex()">🧬 Firebase Lineage İndeksini Yeniden Kur</button>
+                                </div>
+                            </div>
+                            <div id="pqDbLinkageMeta" class="pqdb-sync">PQ lineage bilgisi hazırlanıyor...</div>
+                            <div class="pqdb-linkage-kpis">
+                                <div class="pqdb-link-kpi"><strong id="pqDbLinkPqCount">0</strong><span>CAP kapsamındaki PQ</span></div>
+                                <div class="pqdb-link-kpi ok"><strong id="pqDbLinkLinked">0</strong><span>Kalıcı bağlı</span></div>
+                                <div class="pqdb-link-kpi info"><strong id="pqDbLinkRenumbered">0</strong><span>Numarası değişen</span></div>
+                                <div class="pqdb-link-kpi danger"><strong id="pqDbLinkUnmatched">0</strong><span>Eşleşmeyen</span></div>
+                                <div class="pqdb-link-kpi warn"><strong id="pqDbLinkAmbiguous">0</strong><span>Belirsiz / çoklu ardıl</span></div>
+                            </div>
+                            <div class="pqdb-panel">
+                                <div class="pqdb-panel-head"><h4>CAP → Kaynak PQ → Aktif PQ</h4><span>Kaynak bağlantı ilk kurulduğunda sabitlenir; aktif PQ sürümü değiştikçe güncel referans yeniden çözülür.</span></div>
+                                <div class="pqdb-table-wrap"><table class="pqdb-table pqdb-linkage-table"><thead><tr><th>Alan</th><th>CAP PQ</th><th>Durum</th><th>Kaynak PQ Instance</th><th>Aktif PQ Instance</th><th>PQ Concept</th><th>İlişki</th></tr></thead><tbody id="pqDbLinkageBody"></tbody></table></div>
+                            </div>
+                        </div>
+
                         </div>
                     </div>
                 </div>
@@ -1897,12 +1924,13 @@
 </div>
 
 
-<script src="js/app.js?v=20261113-phase2-ei-timeline-v5"></script>
-<script src="js/modules/visit-sync.js?v=20261113-phase2-ei-timeline-v5"></script>
-<script src="js/modules/assessment-events.js?v=20261113-phase2-ei-timeline-v5"></script>
-<script src="js/modules/official-ei-management.js?v=20261113-phase2-ei-timeline-v5"></script>
-<script src="js/parsers/pq-docx-parser.js?v=20261113-phase2-ei-timeline-v5"></script>
-<script src="js/services/pq-repository.js?v=20261113-phase2-ei-timeline-v5"></script>
-<script src="js/modules/pq-library.js?v=20261113-phase2-ei-timeline-v5"></script>
+<script src="js/app.js?v=20261114-phase3-cap-pq-linkage-v6"></script>
+<script src="js/modules/visit-sync.js?v=20261114-phase3-cap-pq-linkage-v6"></script>
+<script src="js/modules/assessment-events.js?v=20261114-phase3-cap-pq-linkage-v6"></script>
+<script src="js/modules/official-ei-management.js?v=20261114-phase3-cap-pq-linkage-v6"></script>
+<script src="js/parsers/pq-docx-parser.js?v=20261114-phase3-cap-pq-linkage-v6"></script>
+<script src="js/modules/pq-linkage.js?v=20261114-phase3-cap-pq-linkage-v6"></script>
+<script src="js/services/pq-repository.js?v=20261114-phase3-cap-pq-linkage-v6"></script>
+<script src="js/modules/pq-library.js?v=20261114-phase3-cap-pq-linkage-v6"></script>
 </body>
 </html>

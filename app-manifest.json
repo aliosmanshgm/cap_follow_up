@@ -1,19 +1,23 @@
 {
   "app": "USOAP CMA CAP Takip",
-  "version": "5.0-phase2-ei-assessment-timeline",
+  "version": "6.0-phase3-cap-pq-linkage",
   "baseline": "index_visit_hub_pq_version_database(2).html",
-  "buildDate": "2026-11-13",
+  "buildDate": "2026-11-14",
   "features": [
     "assessment-event-model",
     "ei-snapshot-model",
-    "official-ei-backward-compatibility",
-    "assessment-scope-areas",
-    "pq-version-revision-on-assessment",
-    "overall-numerator-denominator",
     "dashboard-assessment-timeline",
     "validation-candidate-projection",
     "area-scope-aware-ei-chart",
-    "assessment-snapshot-official-ei-chart-source"
+    "pq-instance-id",
+    "pq-concept-id",
+    "pq-version-lineage",
+    "cap-pq-persistent-linkage",
+    "cap-source-and-current-pq-reference",
+    "visit-pq-lineage-snapshot",
+    "firebase-pq-linkage-rebuild",
+    "pq-linkage-audit-view",
+    "pq-linkage-excel-export"
   ],
   "architecture": {
     "index": "index.html",
@@ -24,6 +28,7 @@
       "js/modules/assessment-events.js",
       "js/modules/official-ei-management.js",
       "js/parsers/pq-docx-parser.js",
+      "js/modules/pq-linkage.js",
       "js/services/pq-repository.js",
       "js/modules/pq-library.js"
     ]

@@ -102,6 +102,25 @@
     return{documentId:existingData.documentId||makeDocumentId(),area:parsed.meta.area,year:String(parsed.meta.year||''),revision:String(parsed.meta.revision||''),publicationDate:parsed.meta.publicationDate||'',note:String(parsed.meta.note||existingData.note||''),active:parsed.meta.active!==false,sourceFile:file.name,sourceDocument,importedAt:existingData.importedAt||new Date().toISOString(),importedBy:existingData.importedBy||user&&((user.displayName||user.email||user.uid))||'',metadataUpdatedAt:new Date().toISOString(),metadataHistory:existingData.metadataHistory||{},amendmentMeta:parsed.amendmentMeta||{},pqs:pqsObj,amendments:amendmentsObj,stats:{pqCount:m.pqCount||parsed.pqs.length,onSite:m.onSite||0,offSite:m.offSite||0,ppq:m.ppq||0,auditorNotes:m.auditorNotes||0,amendments:m.amendments||parsed.amendments.length}};
   }
 
+  function applyLinkageToLibrary(library){
+    if(window.PQLinkage&&typeof window.PQLinkage.enrichLibrary==='function')return window.PQLinkage.enrichLibrary(library);
+    return library;
+  }
+
+  function prepareLibraryWithArea(rootLibrary,editionKey,editionMeta,area,areaData){
+    const library=normalize(rootLibrary||{});
+    library.editions[editionKey]=library.editions[editionKey]||{year:editionMeta.year,revision:editionMeta.revision,label:editionMeta.label,areas:{}};
+    library.editions[editionKey].year=editionMeta.year;
+    library.editions[editionKey].revision=editionMeta.revision;
+    library.editions[editionKey].label=editionMeta.label;
+    library.editions[editionKey].areas=library.editions[editionKey].areas||{};
+    library.editions[editionKey].areas[area]=areaData;
+    library.activeByArea=library.activeByArea||{};
+    if(areaData.active)library.activeByArea[area]={editionKey,area,year:areaData.year,revision:areaData.revision,documentId:areaData.documentId,updatedAt:new Date().toISOString()};
+    else if(library.activeByArea[area]&&library.activeByArea[area].editionKey===editionKey)delete library.activeByArea[area];
+    return applyLinkageToLibrary(library);
+  }
+
   async function saveParsedDocument({file,parsed,editionKey,overwrite=false,onProgress}){
     if(typeof db==='undefined'||!db)throw new Error('Firebase Realtime Database bağlantısı bulunamadı.');
     if(!isOnline())throw new Error('Firebase kaydı için çevrim içi bağlantı gerekir.');
@@ -111,23 +130,26 @@
     if(!connected)throw new Error('Firebase Realtime Database bağlantısı kurulamadı. İnternet bağlantısını, databaseURL ayarını ve Firebase erişimini kontrol edin.');
 
     const area=parsed.meta.area,editionPath=`icao_pq_library/editions/${editionKey}`,areaPath=`${editionPath}/areas/${safeKey(area)}`;
-    let editionExisting,existing,activeExisting;
-    emit(onProgress,'check','Mevcut sürüm/alan kaydı kontrol ediliyor…');
+    let editionExisting,existing,activeExisting,libraryExisting;
+    emit(onProgress,'check','Mevcut sürüm/alan kaydı ve PQ lineage indeksi kontrol ediliyor…');
     try{
-      [editionExisting,existing,activeExisting]=await Promise.all([
+      [editionExisting,existing,activeExisting,libraryExisting]=await Promise.all([
         withTimeout(db.ref(editionPath).once('value'),DB_TIMEOUT_MS,'Firebase sürüm kontrolü'),
         withTimeout(db.ref(areaPath).once('value'),DB_TIMEOUT_MS,'Firebase alan kontrolü'),
-        withTimeout(db.ref(`icao_pq_library/activeByArea/${safeKey(area)}`).once('value'),DB_TIMEOUT_MS,'Firebase aktif PQ sürümü kontrolü')
+        withTimeout(db.ref(`icao_pq_library/activeByArea/${safeKey(area)}`).once('value'),DB_TIMEOUT_MS,'Firebase aktif PQ sürümü kontrolü'),
+        withTimeout(db.ref('icao_pq_library').once('value'),DB_TIMEOUT_MS,'Firebase PQ lineage kontrolü')
       ]);
     }catch(err){throw friendlyDbError(err);}
     if(existing.exists()&&!overwrite)throw new Error(`${editionKey} / ${area} zaten kayıtlı. Güncelleme onayı gerekir.`);
 
     // Storage, ana veritabanı kaydını artık bloke etmez. Önce yapılandırılmış PQ verisi yazılır.
     const baseSourceDocument={status:'pending',name:file&&file.name||'',size:file&&file.size||0,type:file&&file.type||'',sha256:await sha256(file),storagePath:'',downloadURL:''};
-    const areaData=buildAreaData(parsed,file,baseSourceDocument,user,existing.exists()?existing.val():null),now=new Date().toISOString(),importId=`imp_${Date.now()}_${Math.random().toString(36).slice(2,8)}`;
+    let areaData=buildAreaData(parsed,file,baseSourceDocument,user,existing.exists()?existing.val():null),now=new Date().toISOString(),importId=`imp_${Date.now()}_${Math.random().toString(36).slice(2,8)}`;
     const editionMeta={year:parsed.meta.year,revision:parsed.meta.revision,label:`${parsed.meta.year} Edition${parsed.meta.revision?` · Revision ${parsed.meta.revision}`:''}`,updatedAt:now};
     if(!editionExisting.exists())editionMeta.createdAt=now;
-    const importData={importId,editionKey,area,fileName:file.name,fileSize:file.size||0,sha256:baseSourceDocument.sha256||'',sourceDocument:baseSourceDocument,stats:areaData.stats,importedAt:now,importedBy:areaData.importedBy,mode:existing.exists()?'replace':'create'};
+    const linkageLibrary=prepareLibraryWithArea(libraryExisting&&libraryExisting.exists()?libraryExisting.val():{},editionKey,editionMeta,area,areaData);
+    areaData=((((linkageLibrary.editions||{})[editionKey]||{}).areas||{})[area])||areaData;
+    const importData={importId,editionKey,area,fileName:file.name,fileSize:file.size||0,sha256:baseSourceDocument.sha256||'',sourceDocument:baseSourceDocument,stats:areaData.stats,importedAt:now,importedBy:areaData.importedBy,mode:existing.exists()?'replace':'create',linkageSchemaVersion:(linkageLibrary.linkageMeta||{}).schemaVersion||1};
     const updates={};
     updates[`icao_pq_library/editions/${editionKey}/year`]=editionMeta.year;
     updates[`icao_pq_library/editions/${editionKey}/revision`]=editionMeta.revision;
@@ -136,6 +158,8 @@
     if(editionMeta.createdAt)updates[`icao_pq_library/editions/${editionKey}/createdAt`]=editionMeta.createdAt;
     updates[areaPath]=areaData;
     updates[`icao_pq_library/imports/${importId}`]=importData;
+    if(linkageLibrary.concepts)updates['icao_pq_library/concepts']=linkageLibrary.concepts;
+    if(linkageLibrary.linkageMeta)updates['icao_pq_library/linkageMeta']=linkageLibrary.linkageMeta;
     const activePath=`icao_pq_library/activeByArea/${safeKey(area)}`;
     const previousActive=activeExisting&&activeExisting.exists()?activeExisting.val():null;
     if(areaData.active){
@@ -176,6 +200,8 @@
     local.editions[editionKey].areas=local.editions[editionKey].areas||{};
     local.editions[editionKey].areas[area]=areaData;
     local.editions[editionKey].updatedAt=now;
+    if(linkageLibrary.concepts)local.concepts=linkageLibrary.concepts;
+    if(linkageLibrary.linkageMeta)local.linkageMeta=linkageLibrary.linkageMeta;
     local.activeByArea=local.activeByArea||{};
     if(areaData.active)local.activeByArea[area]={editionKey,area,year:areaData.year,revision:areaData.revision,documentId:areaData.documentId,updatedAt:now};
     else if(local.activeByArea[area]&&local.activeByArea[area].editionKey===editionKey)delete local.activeByArea[area];
@@ -264,5 +290,34 @@
     return{sourceEditionKey,sourceArea,targetEditionKey,targetArea,record:next};
   }
 
-  window.PQRepository={load,saveParsedDocument,updateMetadata,setActiveAreaRecord,readLocal,writeLocal,safeKey,waitForDbConnection};
+  async function rebuildLinkageIndex({onProgress}={}){
+    if(typeof db==='undefined'||!db)throw new Error('Firebase Realtime Database bağlantısı bulunamadı.');
+    if(!isOnline())throw new Error('PQ bağlantı indeksini yenilemek için çevrim içi bağlantı gerekir.');
+    if(!authUser())throw new Error('PQ bağlantı indeksini yenilemek için yetkili kullanıcı girişi gerekir.');
+    if(!window.PQLinkage||typeof window.PQLinkage.enrichLibrary!=='function')throw new Error('PQ linkage modülü yüklenemedi.');
+    emit(onProgress,'read','PQ sürümleri Firebase’den okunuyor…');
+    const connected=await waitForDbConnection();if(!connected)throw new Error('Firebase Realtime Database bağlantısı kurulamadı.');
+    let snap;try{snap=await withTimeout(db.ref('icao_pq_library').once('value'),DB_TIMEOUT_MS,'PQ bağlantı indeksi okuması');}catch(err){throw friendlyDbError(err);}
+    const library=applyLinkageToLibrary(normalize(snap.exists()?snap.val():{})),updates={};
+    let pqCount=0;
+    for(const [editionKey,edition] of Object.entries(library.editions||{})){
+      for(const [area,areaData] of Object.entries((edition||{}).areas||{})){
+        for(const [pqKey,pq] of Object.entries((areaData||{}).pqs||{})){
+          updates[`icao_pq_library/editions/${safeKey(editionKey)}/areas/${safeKey(area)}/pqs/${safeKey(pqKey)}/instanceId`]=pq.instanceId||'';
+          updates[`icao_pq_library/editions/${safeKey(editionKey)}/areas/${safeKey(area)}/pqs/${safeKey(pqKey)}/conceptId`]=pq.conceptId||'';
+          updates[`icao_pq_library/editions/${safeKey(editionKey)}/areas/${safeKey(area)}/pqs/${safeKey(pqKey)}/lineage`]=pq.lineage||{};
+          pqCount++;
+        }
+      }
+    }
+    updates['icao_pq_library/concepts']=library.concepts||{};
+    updates['icao_pq_library/linkageMeta']={...(library.linkageMeta||{}),rebuiltAt:new Date().toISOString(),rebuiltBy:(authUser()&&((authUser().displayName||authUser().email||authUser().uid)))||''};
+    emit(onProgress,'write',`${pqCount} PQ instance bağlantısı Firebase’e yazılıyor…`);
+    try{await withTimeout(db.ref().update(firebaseValue(updates)),DB_TIMEOUT_MS*2,'PQ bağlantı indeksi yazımı');}catch(err){throw friendlyDbError(err);}
+    writeLocal(library);
+    emit(onProgress,'done',`${pqCount} PQ instance ve ${Object.keys(library.concepts||{}).length} concept güncellendi.`);
+    return{library,pqCount,conceptCount:Object.keys(library.concepts||{}).length};
+  }
+
+  window.PQRepository={load,saveParsedDocument,updateMetadata,setActiveAreaRecord,rebuildLinkageIndex,readLocal,writeLocal,safeKey,waitForDbConnection};
 })();

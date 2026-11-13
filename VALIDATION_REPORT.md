@@ -1,37 +1,61 @@
-# Validation Report — Phase 2 EI Assessment Timeline v5
+# Validation Report — Phase 3 CAP ↔ PQ Persistent Linkage v6
 
-## Static integrity
-- Reference main tabs: **25**
-- Current main tabs: **25**
-- Missing reference tabs: **None**
-- Duplicate HTML IDs: **None**
-- Inline handler calls checked: **337** (171 unique functions)
-- Missing handler functions: **None**
-- Missing local script/style references: **None**
-- All JavaScript files passed `node --check`.
+Tarih: 2026-11-14
 
-## Assessment Event unit scenario
-A synthetic timeline was evaluated with:
-- CMAA — all 8 areas — Overall 50.69%
-- OSVA — OPS + AIR only — Overall 55.28%
-- ICVM — LEG + ORG + OPS + AIR — Overall 64.17%
+## Statik yapı kontrolleri
 
-Expected behavior verified:
-- OPS effective EI follows CMAA → OSVA → ICVM.
-- PEL remains at the CMAA value during OSVA and ICVM and is marked out-of-scope.
-- Overall timeline returns 50.69 → 55.28 → 64.17 in chronological order.
+- JavaScript syntax: **PASS** — `js/` altındaki tüm `.js` dosyaları `node --check` ile doğrulandı.
+- HTML ID: **671 toplam / 671 benzersiz / 0 duplicate**.
+- Yerel `src` / `href` referansları: **eksik dosya yok**.
+- Ana sekme eşleşmesi: **25 switchTab hedefi / 25 tab paneli**, eksik veya orphan sekme yok.
+- Inline arayüz handler kontrolü: **177 fonksiyon / 0 eksik**.
+- Yeni linkage bileşenleri: `pqDbViewLinkage`, `pqDbLinkageBody`, `pqDbLinkPqCount`, `pqDbKpiConcepts` mevcut.
+- `js/modules/pq-linkage.js` index tarafından doğru sırada yükleniyor: parser sonrasında, repository öncesinde.
 
-## Phase 2 functional changes
-- Dashboard shows individual official assessment cards rather than a single anonymous validation layer.
-- Current official EI comes from the latest official Assessment Event / EI Snapshot when available.
-- Completed CAPs are labelled **Validation Candidates** and remain projection-only until ICAO validation.
-- Open CAPs are shown separately as theoretical potential.
-- Area EI chart is assessment-scope aware.
-- Area × assessment table explicitly shows `Kapsam dışı`.
-- ICAO Official EI comparison/trend prefer Assessment Event + EI Snapshot as their chart source; legacy `icao_official_ei` remains fallback and data-management layer.
+## Sentetik lineage testi
 
-## Compatibility
-If Assessment Event data is unavailable, the dashboard falls back to the existing Excel EI reference / AFTER VALIDATION / ICAO-closed logic. No existing main tab was removed.
+Test senaryosu:
 
-## Browser smoke-test note
-A headless Chromium network smoke-test could not complete within the container timeout because the page loads external CDN/Firebase resources. Static integrity, JavaScript syntax, and the Assessment Event unit scenario passed; final live Firebase/GitHub Pages verification should be performed after deployment.
+- 2020 OPS PQ `4.001`
+- 2024 OPS PQ `4.101`
+- ICAO amendment: `4.001 → 4.101 / Revised`
+- 2024 sürümü aktif
+
+Sonuç:
+
+- 2020 ve 2024 PQ kayıtları aynı `PQ Concept ID` altında bağlandı: **PASS**.
+- CAP kaydı `PQ 4.001` olarak kaldığında aktif sürümde `PQ 4.101` bulundu: **PASS**.
+- `sourcePqRef.pq = 4.001`, `currentPqRef.pq = 4.101`: **PASS**.
+- `renumbered = true`: **PASS**.
+- Aynı numarayla devam eden `4.003` concept devamlılığı: **PASS**.
+- Örnek CAP linkage özeti: 2 bağlı / 0 eşleşmeyen / 1 numarası değişen: **PASS**.
+
+## Firebase veri modeli
+
+Mevcut `icao_pq_library` yolu genişletildi:
+
+- `concepts`
+- `linkageMeta`
+- PQ kayıtlarında `instanceId`, `conceptId`, `lineage`
+
+Mevcut root read/write kuralı bu alanları da kapsar; yeni kök Firebase yolu gerektirmez.
+
+## Geriye uyumluluk
+
+- Eski PQ kayıtlarında lineage alanları yoksa bellekte otomatik oluşturulur.
+- Mevcut CAP satırları silinmez veya numarası değiştirilmez.
+- CAP üzerinde kaynak PQ referansı ilk bağlandığında korunur; aktif PQ referansı güncel edition'a göre yeniden çözülür.
+- Arşiv kayıtları `rawData` ve `pqMasterData` üzerinden yeni link alanlarını da saklar.
+- Ziyaret scope snapshot'ları PQ Concept / source / current referanslarını içerir.
+
+## Yayın sonrası önerilen ilk işlem
+
+Mevcut eski PQ sürümlerine kalıcı `instanceId / conceptId / lineage` alanlarını Firebase'de yazmak için uygulamada:
+
+`📚 ICAO PQ Veri Tabanı → 🔗 CAP ↔ PQ Bağlantıları → 🧬 Firebase Lineage İndeksini Yeniden Kur`
+
+işlemini bir kez çalıştırın.
+
+## Sınır
+
+Bu rapor statik/sentetik doğrulamayı kapsar. Canlı Firebase Rules, kimlik doğrulama, mevcut gerçek 2020/2024 PQ koleksiyonu ve GitHub Pages cache davranışı push sonrasında tarayıcı üzerinden doğrulanmalıdır.

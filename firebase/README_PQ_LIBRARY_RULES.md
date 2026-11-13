@@ -73,3 +73,34 @@ Mevcut `icao_official_ei/{recordId}` kayıtları geriye uyumluluk için korunur.
 - `areas.{AREA}.ei`, `areas.{AREA}.satisfactory`, `areas.{AREA}.applicable`, `areas.{AREA}.inScope`
 
 Not: Eski resmî EI kayıtlarında numerator/denominator veya kapsam bilgisi yoksa bu alanlar uydurulmaz; boş/null tutulur. Dashboard dönüşümü sonraki fazda bu yeni modele bağlanacaktır.
+
+# CAP ↔ PQ kalıcı bağlantı modeli (Faz 3)
+
+Faz 3 yeni bir kök Firebase yolu açmaz; mevcut `icao_pq_library` ağacını genişletir:
+
+- `icao_pq_library/concepts/{conceptId}` — sürümler boyunca devam eden mantıksal PQ concept kaydı
+- `icao_pq_library/linkageMeta` — lineage şema sürümü, instance/concept sayısı ve üretim zamanı
+- `icao_pq_library/editions/{editionKey}/areas/{area}/pqs/{pqKey}/instanceId`
+- `icao_pq_library/editions/{editionKey}/areas/{area}/pqs/{pqKey}/conceptId`
+- `icao_pq_library/editions/{editionKey}/areas/{area}/pqs/{pqKey}/lineage`
+
+Bu nedenle mevcut aşağıdaki kural Faz 3 verilerini de kapsar:
+
+```json
+"icao_pq_library": {
+  ".read": "auth != null",
+  ".write": "auth != null"
+}
+```
+
+## Concept / Instance mantığı
+
+- `PQ Instance ID`: belirli alan + edition + revision + PQ numarası için benzersizdir.
+- `PQ Concept ID`: aynı konunun sürümler boyunca izlenmesini sağlar.
+- `lineage.previousPqs`: yeni PQ'nun ICAO Summary of Amendments tablosundan gelen önceki PQ numaralarıdır.
+- `lineage.previousInstanceIds`: predecessor PQ instance kayıtlarıdır.
+- `lineage.parentConceptIds`: özellikle birleşme/çoklu predecessor senaryolarında üst concept kayıtlarıdır.
+
+## Bir defalık / gerektiğinde rebuild
+
+PQ Veri Tabanı ekranındaki **Firebase Lineage İndeksini Yeniden Kur** işlemi mevcut tüm sürümleri okuyup instance/concept kimliklerini yeniden üretir ve Firebase'e yazar. Bu işlem eski PQ verisini silmez; mevcut PQ kayıtlarına kimlik ve lineage alanlarını ekler ve `concepts` indeksini yeniden oluşturur.

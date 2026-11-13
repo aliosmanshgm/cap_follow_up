@@ -1,38 +1,98 @@
-# USOAP CMA CAP Takip — Phase 2 EI Assessment Timeline v5
+# USOAP CMA CAP Takip — Phase 3 CAP ↔ PQ Kalıcı Bağlantı v6
 
-Bu sürüm, `index_visit_hub_pq_version_database(2).html` tek-parça sürümünü ana referans kabul eden Monolith Rebuild v3 ve Faz 1 Assessment Event + EI Snapshot v4 üzerine kurulmuştur. Eski 25 ana ekran korunur.
+Bu sürüm, `index_visit_hub_pq_version_database(2).html` tek-parça sürümünü ana referans kabul eden Monolith Rebuild v3, Faz 1 Assessment Event + EI Snapshot v4 ve Faz 2 EI Assessment Timeline v5 üzerine kurulmuştur. Eski 25 ana ekran korunur.
 
-## Faz 2 amacı
-Dashboard ve EI analizlerini tek bir anlık “ICAO Validasyonları” katmanı yerine resmî değerlendirme zaman çizgisine bağlamak:
+## Faz 3 amacı
+CAP kayıtlarının ICAO PQ Veri Tabanı ile yalnızca `Denetim Alanı + PQ numarası` üzerinden geçici olarak eşleşmesi yerine sürümler arasında kalıcı ve izlenebilir bir ilişki kurmak.
 
-`CMAA → OSVA → ICVM → Validasyon Adayları → Açık CAP Teorik Potansiyeli`
+Yeni iki kimlik kullanılır:
 
-## Dashboard değişiklikleri
-- Resmî Assessment Event kayıtları ayrı kartlar olarak gösterilir.
-- Her kartta değerlendirme türü, tarih, Overall EI, önceki döneme göre puan değişimi ve kapsam alanları yer alır.
-- “CAP adımları tamamlananlar dahil EI” ifadesi metodolojik olarak ayrıştırılmıştır:
-  - **Güncel Resmî EI** yalnız resmî Assessment Event / EI Snapshot sonucudur.
-  - **Validasyon Adayları Dahil EI Projeksiyonu** resmî EI değildir; tüm CAP adımları tamamlanmış fakat ICAO validasyonu bekleyen PQ'ların potansiyelidir.
-  - **Tüm Açık CAP'ler Başarıyla Valide Edilirse Teorik EI** ileri üst sınır projeksiyonudur.
+- **PQ Instance ID** — belirli bir Denetim Alanı + Sürüm + Revizyon + PQ kaydını tanımlar.
+- **PQ Concept ID** — aynı düzenleyici/denetim konusunun sürümler boyunca devam eden mantıksal kimliğidir.
 
-## Denetim Alanı Bazında EI
-Alan grafiği Assessment Event kapsamını dikkate alır. Örneğin OSVA yalnız OPS/AIR kapsamındaysa diğer alanlar OSVA ile değerlendirilmiş gibi gösterilmez. Grafiğin altında olay × alan tablosu bulunur ve ilgili hücreler açıkça **Kapsam dışı** olarak işaretlenir.
+Örnek:
 
-## ICAO Resmî EI Karşılaştırma Grafiği
-Grafik ve trend ekranı mümkün olduğunda doğrudan `icao_assessment_events` + `icao_ei_snapshots` modelinden beslenir. `icao_official_ei` kayıtları veri yönetimi / geriye uyumluluk katmanı olarak kalır ve yeni modele otomatik senkronize edilir. Böylece grafik için aynı dönem verisini ayrıca tekrar girmek gerekmez.
+`OPS 2020 / PQ 4.001 → OPS 2024 / PQ 4.101`
 
-## Geriye uyumluluk
-Assessment Event verisi henüz yoksa sistem eski Excel `EI_Referans`, `AFTER VALIDASYON` ve ICAO kapanış kayıtlarını fallback olarak kullanır. Mevcut CAP, ziyaret, rapor, PQ veri tabanı ve diğer ekranlar korunur.
+PQ numarası değişse dahi iki kayıt aynı `PQ Concept ID` altında izlenebilir.
+
+## CAP kayıtlarında tutulan bağlantı
+CAP satırları ve PQ master kayıtlarında aşağıdaki alanlar oluşturulur:
+
+- `pqConceptId`
+- `pqLinkStatus`
+- `sourcePqRef`
+- `currentPqRef`
+- `pqLink`
+
+`sourcePqRef` bağlantının ilk kurulduğu tarihsel PQ Instance'ını korur. `currentPqRef` ise ilgili denetim alanının aktif PQ sürümü değiştikçe yeniden çözülür.
+
+## ICAO Summary of Amendments kullanımı
+PQ lineage oluşturulurken mevcut PQ veri tabanındaki:
+
+- `previousPq`
+- `changeType`
+- `Summary of Amendments` kayıtları
+- aynı numaralı tarihsel PQ kayıtları
+
+birlikte değerlendirilir.
+
+Tek bir predecessor concept varsa Revised / No change benzeri geçişlerde concept devam eder. Birden fazla predecessor concept tek yeni PQ'da birleşiyorsa yeni concept oluşturulur ve parent concept ilişkileri saklanır.
+
+## PQ Veri Tabanı arayüzü
+Yeni **🔗 CAP ↔ PQ Bağlantıları** görünümü eklendi. Burada:
+
+- CAP kapsamındaki benzersiz PQ sayısı
+- kalıcı bağlı PQ sayısı
+- numarası değişmiş PQ sayısı
+- eşleşmeyen PQ sayısı
+- belirsiz / birden fazla ardıl bulunan PQ sayısı
+
+izlenebilir.
+
+Tablo her CAP PQ için şu zinciri gösterir:
+
+`CAP PQ → Kaynak PQ Instance → Aktif PQ Instance → PQ Concept`
+
+Ayrıca **Firebase Lineage İndeksini Yeniden Kur** düğmesi tüm kayıtları yeniden işler ve kalıcı kimlikleri Firebase'e yazar.
+
+## Ziyaret kayıtları
+Ziyaret kapsamına kaydedilen PQ snapshot'larına da:
+
+- `pqConceptId`
+- `sourcePqRef`
+- `currentPqRef`
+- `pqLinkStatus`
+
+alanları eklenmiştir. Böylece eski bir ziyaret kaydı, sonraki PQ sürümlerinde numara değişse dahi tarihsel PQ bağlantısını kaybetmez.
+
+## Excel dışa aktarımları
+CAP/PQ Excel çıktıları artık bağlantı alanlarını da içerir:
+
+- PQ Concept ID
+- PQ Link Durumu
+- Kaynak PQ ve sürümü
+- Aktif PQ ve sürümü
+- PQ Numarası Değişti mi
+
+PQ Veri Tabanı Excel çıktısında ayrıca PQ Instance ID ve lineage bilgileri bulunur.
 
 ## Firebase
-Faz 1'de eklenen yollar kullanılmaya devam eder:
-- `icao_assessment_events`
-- `icao_ei_snapshots`
+Mevcut `icao_pq_library` yolu altında yeni düğümler kullanılır:
 
-Ayrıntı: `firebase/README_PQ_LIBRARY_RULES.md`.
+- `icao_pq_library/concepts`
+- `icao_pq_library/linkageMeta`
+- PQ kayıtlarında `instanceId`, `conceptId`, `lineage`
+
+Yeni kök Firebase yolu açılmadığından mevcut `icao_pq_library` read/write kuralı yeterlidir. Ayrıntı `firebase/README_PQ_LIBRARY_RULES.md` dosyasındadır.
+
+## Geriye uyumluluk
+Eski PQ kayıtlarında concept/instance alanları bulunmasa bile kütüphane okunduğunda lineage bellekte otomatik üretilir. Kalıcı olarak Firebase'e yazmak için bir defa **Firebase Lineage İndeksini Yeniden Kur** işlemi çalıştırılabilir.
+
+CAP tarafında eski kayıtlar silinmez. Eşleşme mümkünse otomatik bağlanır; eşleşme yoksa `unmatched`, birden fazla aktif ardıl varsa `ambiguous` olarak işaretlenir.
 
 ## Sonraki faz
-1. CAP ↔ PQ kalıcı ilişki modeli (`PQ instance + PQ concept`)
-2. Validasyon adayı motorunun ziyaret planına bağlanması
+1. Validasyon adayı motorunun ziyaret planına bağlanması
+2. Tamamlanan CAP → validasyon adayı → sonraki ICAO ziyaretine atama akışı
 3. Ziyaret Yönetimi ana menüsünün Planlama / Hazırlık / Saha / Takip / Sonuç / Geçmiş olarak yeniden tasarlanması
-4. PQ Veri Tabanının görsel alan kartlarına dönüştürülmesi
+4. PQ Veri Tabanının görsel alan kartlarıyla yeniden tasarlanması

@@ -1407,6 +1407,7 @@ const I18N = {
             await yieldToBrowser();
             refreshAllFilters();
             await yieldToBrowser();
+            if(window.refreshCapPqLinkage)window.refreshCapPqLinkage({persist:false,silent:true});
             saveToLocalStorage();
             await yieldToBrowser();
             render();
@@ -1563,6 +1564,7 @@ const I18N = {
             await yieldToBrowser();
             refreshAllFilters();
             await yieldToBrowser();
+            if(window.refreshCapPqLinkage)window.refreshCapPqLinkage({persist:false,silent:true});
             saveToLocalStorage();
             await yieldToBrowser();
             render();
@@ -4562,7 +4564,7 @@ const I18N = {
     }
     function buildVisitScopeSnapshots() {
         const visit=getVisitScopeRecord(); const candidates=(visit&&isIcaoOfficialVisit(visit))?getVisitScopePoolCandidates(visit):buildVisitScopeCandidates(); const now=new Date().toISOString();
-        const pqs=candidates.filter(x=>visitScopeSelectedPqs.has(x.pq)).map(x=>({pq:x.pq,area:x.area,ce:x.ce,responsible:x.responsible,verificationType:x.verificationType,question:x.question,questionTr:x.questionTr||'',finding:x.finding,findingTr:x.findingTr||'',reviewEvidence:x.reviewEvidence,statusCode:x.statusCode,statusLabel:x.statusLabel,sourceReportDate:window_loadedReportDate?window_loadedReportDate.toISOString():null,snapshotAt:now}));
+        const pqs=candidates.filter(x=>visitScopeSelectedPqs.has(x.pq)).map(x=>{const master=pqMasterData[x.pq]||{},link=master.pqLink||{};return {pq:x.pq,area:x.area,ce:x.ce,responsible:x.responsible,verificationType:x.verificationType,question:x.question,questionTr:x.questionTr||'',finding:x.finding,findingTr:x.findingTr||'',reviewEvidence:x.reviewEvidence,statusCode:x.statusCode,statusLabel:x.statusLabel,pqConceptId:link.pqConceptId||master.pqConceptId||'',pqLinkStatus:link.status||'',sourcePqRef:link.sourcePqRef||null,currentPqRef:link.currentPqRef||master.currentPqRef||null,sourceReportDate:window_loadedReportDate?window_loadedReportDate.toISOString():null,snapshotAt:now};});
         const steps=candidates.flatMap(x=>x.actionItems.map(a=>({x,a}))).filter(z=>visitScopeSelectedSteps.has(z.a.key)).map(({x,a})=>({key:a.key,pq:x.pq,step:a.step,action:a.action,office:a.office,evidenceReference:a.evidenceReference||'',estDate:a.estDate,progress:a.progress,statusCode:a.statusCode,statusLabel:a.statusLabel,delayDays:a.delayDays||0,sourceFile:a.sourceFile||'',sourceReportDate:window_loadedReportDate?window_loadedReportDate.toISOString():null,snapshotAt:now}));
         return {pqs,steps};
     }
@@ -7923,9 +7925,19 @@ const I18N = {
         const daysDiff = classification.targetDate
             ? (classification.code === COMMON_ACTION_STATUS.LATE.code ? -classification.delayDays : classification.daysRemaining)
             : '';
+        const link=d.pqLink||m.pqLink||{},src=link.sourcePqRef||{},cur=link.currentPqRef||{};
         const row = {
             'PQ': d.pq,
             'Denetim Alanı': m.alan || 'DİĞER',
+            'PQ Concept ID': link.pqConceptId||m.pqConceptId||'',
+            'PQ Link Durumu': link.status||d.pqLinkStatus||'',
+            'Kaynak PQ Instance': src.instanceId||'',
+            'Kaynak PQ': src.pq||'',
+            'Kaynak PQ Sürümü': src.year||'',
+            'Aktif PQ Instance': cur.instanceId||'',
+            'Aktif PQ': cur.pq||'',
+            'Aktif PQ Sürümü': cur.year||'',
+            'PQ Numarası Değişti mi': link.renumbered?'EVET':'HAYIR',
             'CE': m.ce || '',
             'Doğrulama Türü': m.tur || '',
             'PQ Sorumlusu': m.sorumlu || '',
@@ -8001,9 +8013,17 @@ const I18N = {
             let late = actionStates.filter(x => x.code === COMMON_ACTION_STATUS.LATE.code).length;
             let nextDates = actionStates.map(x => x.targetDate).filter(Boolean).sort((a,b) => a-b);
             let closure = getPQClosureInfo(pq, items);
+            const link=m.pqLink||{},src=link.sourcePqRef||{},cur=link.currentPqRef||{};
             return {
                 'PQ': pq,
                 'Denetim Alanı': m.alan || 'DİĞER',
+                'PQ Concept ID': link.pqConceptId||m.pqConceptId||'',
+                'PQ Link Durumu': link.status||'',
+                'Kaynak PQ': src.pq||'',
+                'Kaynak Sürüm': src.year||'',
+                'Aktif PQ': cur.pq||'',
+                'Aktif Sürüm': cur.year||'',
+                'PQ Numarası Değişti mi': link.renumbered?'EVET':'HAYIR',
                 'CE': m.ce || '',
                 'Doğrulama Türü': m.tur || '',
                 'PQ Sorumlusu': m.sorumlu || '',
@@ -9780,7 +9800,7 @@ Mevcut: ${issue.currentValue || 'Boş'}`), fontSize:8},
     window.restoreSelectedArchive = function(selectId = 'trendSelectA') {
         let sel = document.getElementById(selectId).value; if(!sel || sel === 'current') return alert("Geçerli bir arşiv seçin.");
         if(confirm("Mevcut çalışma verileriniz temizlenecek ve arşiv yüklenecektir. Devam edilsin mi?")) {
-            showLoading(); let arch = systemArchives[sel]; rawData = arch.rawData || []; baseEIData = arch.baseEIData || {}; pqMasterData = reconstructPqMaster(arch.pqMasterData || {}); dailyReviewedPQs = new Set(arch.dailyReviewedPQs || []); dailyReviewedSet = new Set(); dailyPQNotes = {}; kanbanWorkflowStages = {}; if (Array.isArray(arch.kanbanWorkflowStages)) { arch.kanbanWorkflowStages.forEach(item => { if(item && item.key) kanbanWorkflowStages[item.key] = item.value; }); } else { kanbanWorkflowStages = arch.kanbanWorkflowStages || {}; } window.loadedWordAreas = new Set(); rawData.forEach(d => { let m = pqMasterData[d.pq]; if (m && m.alan) window.loadedWordAreas.add(m.alan.trim().toUpperCase()); });
+            showLoading(); let arch = systemArchives[sel]; rawData = arch.rawData || []; baseEIData = arch.baseEIData || {}; pqMasterData = reconstructPqMaster(arch.pqMasterData || {}); dailyReviewedPQs = new Set(arch.dailyReviewedPQs || []); dailyReviewedSet = new Set(); dailyPQNotes = {}; kanbanWorkflowStages = {}; if (Array.isArray(arch.kanbanWorkflowStages)) { arch.kanbanWorkflowStages.forEach(item => { if(item && item.key) kanbanWorkflowStages[item.key] = item.value; }); } else { kanbanWorkflowStages = arch.kanbanWorkflowStages || {}; } window.loadedWordAreas = new Set(); rawData.forEach(d => { let m = pqMasterData[d.pq]; if (m && m.alan) window.loadedWordAreas.add(m.alan.trim().toUpperCase()); }); if(window.refreshCapPqLinkage)window.refreshCapPqLinkage({persist:false,silent:true});
             loadedFiles = new Set(["[Arşiv] " + (arch.reportDateStr || arch.note)]); loadedExcelFile = "[Arşivden Gelen Master Veri]"; saveToLocalStorage(); hideLoading(); alert("Arşiv başarıyla yüklendi!"); switchTab('dashboard'); updateDynamicSubtitle(); refreshAllFilters(); renderFileList(); render();
         }
     };
