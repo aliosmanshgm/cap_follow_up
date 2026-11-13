@@ -333,11 +333,12 @@ const I18N = {
             btn.classList.add('active');
             const parentGroup = btn.closest('.nav-group');
             if(parentGroup) { if(window.innerWidth > 768) focusDesktopNavGroup(parentGroup); else parentGroup.classList.add('open'); keepNavGroupVisible(parentGroup); }
-            if(tabId === 'report' || tabId === 'trend' || tabId === 'kanban' || tabId === 'strategic' || tabId === 'smart' || tabId === 'quality' || tabId === 'pq-library' || tabId === 'visits' || tabId === 'visit-scope' || tabId === 'icao-visit-validation' || tabId === 'visit-workspace' || tabId === 'visit-followup' || tabId === 'visit-consultation' || tabId === 'visit-reports' || tabId === 'visit-management' || tabId === 'visit-analysis' || tabId === 'visit-audit') { btn.style.color = "var(--primary)"; }
+            if(tabId === 'report' || tabId === 'trend' || tabId === 'kanban' || tabId === 'strategic' || tabId === 'validation-readiness' || tabId === 'smart' || tabId === 'quality' || tabId === 'pq-library' || tabId === 'visits' || tabId === 'visit-scope' || tabId === 'icao-visit-validation' || tabId === 'visit-workspace' || tabId === 'visit-followup' || tabId === 'visit-consultation' || tabId === 'visit-reports' || tabId === 'visit-management' || tabId === 'visit-analysis' || tabId === 'visit-audit') { btn.style.color = "var(--primary)"; }
             if(tabId === 'past' || tabId === 'empty-caps') { btn.style.color = "var(--danger)"; }
             if(tabId === 'icao-closed') { btn.style.color = "#ca8a04"; }
             if(tabId === 'report') updateReportPreview();
             if(tabId === 'strategic') renderStrategicReportPreview();
+            if(tabId === 'validation-readiness' && typeof renderValidationReadiness==='function') renderValidationReadiness();
             if(tabId === 'smart') updateSmartManagementPanel(getFilteredData(), window.currentAnalyticsModel || null);
             if(tabId === 'quality') updateDataQualityCenter(getFilteredData());
             if(tabId === 'pq-library') renderIcaoPqLibraryModule();
@@ -656,8 +657,8 @@ const I18N = {
         initDesktopNavFocus();
         initStabilizationPackage();
         firebase.auth().onAuthStateChanged((user) => {
-            if (user) { document.getElementById('loginOverlay').style.display = 'none'; document.getElementById('mainAppContainer').style.display = 'flex'; loadFromLocalStorage(); startVisitFirebaseListener(); startVisitUnitSettingsListener(); if(typeof startAssessmentEventListener==='function')startAssessmentEventListener(); startIcaoOfficialEiListener(); } 
-            else { stopVisitFirebaseListener(); stopVisitUnitSettingsListener(); stopIcaoOfficialEiListener(); if(typeof stopAssessmentEventListener==='function')stopAssessmentEventListener(); document.getElementById('loadingOverlay').style.display = 'none'; document.getElementById('mainAppContainer').style.display = 'none'; document.getElementById('loginOverlay').style.display = 'flex'; }
+            if (user) { document.getElementById('loginOverlay').style.display = 'none'; document.getElementById('mainAppContainer').style.display = 'flex'; loadFromLocalStorage(); startVisitFirebaseListener(); startVisitUnitSettingsListener(); if(typeof startAssessmentEventListener==='function')startAssessmentEventListener(); startIcaoOfficialEiListener(); if(typeof startValidationReadinessListener==='function')startValidationReadinessListener(); } 
+            else { stopVisitFirebaseListener(); stopVisitUnitSettingsListener(); stopIcaoOfficialEiListener(); if(typeof stopAssessmentEventListener==='function')stopAssessmentEventListener(); if(typeof stopValidationReadinessListener==='function')stopValidationReadinessListener(); document.getElementById('loadingOverlay').style.display = 'none'; document.getElementById('mainAppContainer').style.display = 'none'; document.getElementById('loginOverlay').style.display = 'flex'; }
         });
     };
     
@@ -3317,6 +3318,7 @@ const I18N = {
             renderVisitManagementDashboard();
             renderVisitAnalysisModule();
             renderVisitAuditTrail(true);
+            if(typeof renderValidationReadiness==='function') renderValidationReadiness();
         };
         visitFirebaseRef.on('value', visitFirebaseCallback, error => {
             console.error('Ziyaret kayıtları yüklenemedi:', error);
@@ -5856,6 +5858,8 @@ const I18N = {
         }
 
         renderTable(filteredData, groups); updateCharts(filteredData, analytics); updateAreaSummary(filteredData, analytics); updateWarnings(filteredData, analytics); updatePastTasks(filteredData, analytics); updateEIProjections(filteredData); renderIcaoOfficialChart(); updateSmartManagementPanel(filteredData, analytics); updateDataQualityCenter(filteredData); renderKanban(filteredData, analytics);
+        if(typeof renderValidationReadinessDashboardSummary==='function') renderValidationReadinessDashboardSummary();
+        if(document.getElementById('tab-validation-readiness') && document.getElementById('tab-validation-readiness').classList.contains('active') && typeof renderValidationReadiness==='function') renderValidationReadiness();
         if(document.getElementById('tab-report').classList.contains('active')) updateReportPreview();
         if(document.getElementById('tab-strategic') && document.getElementById('tab-strategic').classList.contains('active')) renderStrategicReportPreview();
         if(document.getElementById('tab-visits') && document.getElementById('tab-visits').classList.contains('active')) renderVisitModule();
@@ -7113,7 +7117,16 @@ const I18N = {
         document.getElementById('barLocal').style.width = Math.max(0, pctL - pctI) + '%';
         document.getElementById('barProj').style.width = Math.max(0, pctP - pctL) + '%';
         const meta = document.getElementById('eiProjectionMeta');
-        if(meta)meta.innerHTML = `<b>Metodoloji:</b> Resmî EI yalnız Assessment Event/EI Snapshot sonucuyla değişir. <b>${candidateCount}</b> PQ'nun tüm CAP adımları tamamlanmış olup henüz ICAO validasyonu beklediği için yeşil alan yalnız projeksiyondur. <b>${openCapCount}</b> PQ ise açık CAP havuzundaki teorik ilave potansiyeldir.${latestEvent?` Son resmî değerlendirme: <b>${escapeHtml(latestEvent.name||latestEvent.type||'-')}</b> (${escapeHtml(dashboardAssessmentDateLabel(latestEvent))}).`:''}`;
+        if(meta){
+            let readinessText='';
+            try{
+                if(typeof window.getValidationReadinessSummary==='function'){
+                    const rs=window.getValidationReadinessSummary()||{};
+                    readinessText=` Validasyon hazırlığı: <b>${Number(rs.ready||0)}</b> hazır, <b>${Number(rs.assigned||0)}</b> ziyarete atanmış${Number(rs.hold||0)>0?`, <b>${Number(rs.hold||0)}</b> bekletiliyor`:''}.`;
+                }
+            }catch(e){}
+            meta.innerHTML = `<b>Metodoloji:</b> Resmî EI yalnız Assessment Event/EI Snapshot sonucuyla değişir. <b>${candidateCount}</b> PQ'nun tüm CAP adımları tamamlanmış olup henüz ICAO validasyonu beklediği için yeşil alan yalnız projeksiyondur. <b>${openCapCount}</b> PQ ise açık CAP havuzundaki teorik ilave potansiyeldir.${readinessText}${latestEvent?` Son resmî değerlendirme: <b>${escapeHtml(latestEvent.name||latestEvent.type||'-')}</b> (${escapeHtml(dashboardAssessmentDateLabel(latestEvent))}).`:''}`;
+        }
 
         let sAreas = getCheckedValues('areaFilterList');
         let isG = sAreas.includes('all');
@@ -9224,6 +9237,8 @@ ${formatOfficialEiDelta(delta)}`,fontSize:8});
             ctx.title = 'Akıllı Yönetim Özeti'; ctx.fileName = 'Akilli_Yonetim_Ozeti.xlsx'; ctx.mode = 'smart'; ctx.rows = getFilteredData();
         } else if (activeTab === 'tab-milestones') {
             ctx.title = 'Hedef Tabloları ve EI Projeksiyon Raporu'; ctx.fileName = 'Hedef_Tablolari_EI_Projeksiyon.xlsx'; ctx.mode = 'milestones'; ctx.rows = getFilteredData();
+        } else if (activeTab === 'tab-validation-readiness') {
+            ctx.title = 'Validasyon Hazırlığı Merkezi'; ctx.fileName = 'Validasyon_Hazirligi.xlsx'; ctx.mode = 'validation_readiness'; ctx.rows = typeof getValidationCandidateRows==='function' ? getValidationCandidateRows() : [];
         } else if (activeTab === 'tab-summary') {
             ctx.title = 'Alan Özetleri Performans Karnesi'; ctx.fileName = 'Alan_Ozetleri_Performans_Karnesi.xlsx'; ctx.mode = 'summary'; ctx.rows = getFilteredData();
         } else if (activeTab === 'tab-upcoming') {
@@ -9404,6 +9419,7 @@ ${formatOfficialEiDelta(delta)}`,fontSize:8});
         if (ctx.mode === 'trend') { exportTrendExcel(); return; }
         if (ctx.mode === 'strategic') { exportStrategicReportExcel(); return; }
         if (ctx.mode === 'quality') { exportDataQualityExcel(ctx); return; }
+        if (ctx.mode === 'validation_readiness' && typeof exportValidationReadinessExcel==='function') { exportValidationReadinessExcel(); return; }
         if (ctx.mode === 'visits') { exportVisitsExcel(ctx); return; }
         if (ctx.mode === 'icao_official_visit') { exportIcaoOfficialVisitExcel(); return; }
         if (ctx.mode === 'visit_scope') { exportVisitScopeExcel(); return; }
@@ -9700,6 +9716,7 @@ Mevcut: ${issue.currentValue || 'Boş'}`), fontSize:8},
             if (ctx.mode === 'manager') { exportManagerPDF(); return; }
             if (ctx.mode === 'kanban') { exportKanbanPDF(); return; }
             if (ctx.mode === 'quality') { exportDataQualityPDF(ctx); return; }
+            if (ctx.mode === 'validation_readiness' && typeof exportValidationReadinessPDF==='function') { exportValidationReadinessPDF(); return; }
             if (ctx.mode === 'visits') { exportVisitsPDF(ctx); return; }
             if (ctx.mode === 'icao_official_visit') { exportIcaoOfficialVisitPDF(); return; }
             if (ctx.mode === 'visit_scope') { exportVisitScopePDF(); return; }

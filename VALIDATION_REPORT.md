@@ -1,61 +1,78 @@
-# Validation Report — Phase 3 CAP ↔ PQ Persistent Linkage v6
+# USOAP CMA CAP Takip — Faz 4 Validasyon Hazırlığı v7 Doğrulama Raporu
 
-Tarih: 2026-11-14
+Tarih: 14.11.2026
+Temel: Faz 3 v6 CAP ↔ PQ Kalıcı Bağlantı Modeli
 
-## Statik yapı kontrolleri
+## Kapsam
 
-- JavaScript syntax: **PASS** — `js/` altındaki tüm `.js` dosyaları `node --check` ile doğrulandı.
-- HTML ID: **671 toplam / 671 benzersiz / 0 duplicate**.
-- Yerel `src` / `href` referansları: **eksik dosya yok**.
-- Ana sekme eşleşmesi: **25 switchTab hedefi / 25 tab paneli**, eksik veya orphan sekme yok.
-- Inline arayüz handler kontrolü: **177 fonksiyon / 0 eksik**.
-- Yeni linkage bileşenleri: `pqDbViewLinkage`, `pqDbLinkageBody`, `pqDbLinkPqCount`, `pqDbKpiConcepts` mevcut.
-- `js/modules/pq-linkage.js` index tarafından doğru sırada yükleniyor: parser sonrasında, repository öncesinde.
+Bu fazda tamamlanmış CAP'lerin otomatik olarak validasyon adayı havuzuna alınması, hazırlık durumlarının manuel kontrollere bağlanması, planlanan ICAO/OSVA/ICVM ziyaretlerine atanması ve beklenen EI etkisinin projeksiyon olarak hesaplanması uygulanmıştır.
 
-## Sentetik lineage testi
+## Statik kontroller
 
-Test senaryosu:
+- Tüm JavaScript dosyaları `node --check` ile doğrulandı: **PASS**.
+- HTML ID sayısı: **699**, benzersiz ID: **699**, duplicate ID: **0**.
+- Ana sekme hedefleri: **26/26** panel mevcut.
+- Inline arayüz handler çağrıları: **182 benzersiz global fonksiyon**, eksik karşılık: **0**.
+- Yerel script/stylesheet referansları: **10**, eksik dosya: **0**.
 
-- 2020 OPS PQ `4.001`
-- 2024 OPS PQ `4.101`
-- ICAO amendment: `4.001 → 4.101 / Revised`
-- 2024 sürümü aktif
+## Sentetik aday motoru testi
+
+Senaryo:
+- OPS 4.001: tüm CAP adımları tamamlanmış, PQ Concept bağlantısı mevcut, aktif PQ 4.101, kanıt referansları tam.
+- AIR 5.001: tüm CAP adımları tamamlanmış, PQ bağlantısı mevcut, kanıt referansı eksik.
+- OPS 4.002: ICAO tarafından kapatılmış.
+- Güncel Overall denominator: 720.
 
 Sonuç:
+- Validasyon adayı sayısı: **2**.
+- ICAO tarafından kapatılmış PQ aday havuzuna alınmadı.
+- OPS 4.001 aktif PQ karşılığı 4.101 olarak çözüldü.
+- Her bir PQ için Overall teorik EI etkisi `100 / 720 = 0,138888...` puan hesaplandı.
+- Alan etkileri ilgili alan denominator'larına göre doğru hesaplandı.
+- Kanıt referansı tamlık durumu doğru ayrıştırıldı.
 
-- 2020 ve 2024 PQ kayıtları aynı `PQ Concept ID` altında bağlandı: **PASS**.
-- CAP kaydı `PQ 4.001` olarak kaldığında aktif sürümde `PQ 4.101` bulundu: **PASS**.
-- `sourcePqRef.pq = 4.001`, `currentPqRef.pq = 4.101`: **PASS**.
-- `renumbered = true`: **PASS**.
-- Aynı numarayla devam eden `4.003` concept devamlılığı: **PASS**.
-- Örnek CAP linkage özeti: 2 bağlı / 0 eşleşmeyen / 1 numarası değişen: **PASS**.
+Durum: **PASS**.
 
-## Firebase veri modeli
+## Ziyarete atama / scope senkronizasyon testi
 
-Mevcut `icao_pq_library` yolu genişletildi:
+Senaryo:
+- OPS validasyon adayı, planlanmış bir ICAO/OSVA ziyaretine atandı.
+- Ziyaret kapsamı OPS alanını içeriyor.
 
-- `concepts`
-- `linkageMeta`
-- PQ kayıtlarında `instanceId`, `conceptId`, `lineage`
+Doğrulanan Firebase update yolları:
+- `icao_validation_readiness/{candidateKey}`
+- `icao_visits/{visitId}/validationCandidateAssignments/{candidateKey}`
+- `icao_visits/{visitId}/scope/pqs`
+- `icao_visits/{visitId}/scope/steps`
+- ziyaret scope audit alanları
 
-Mevcut root read/write kuralı bu alanları da kapsar; yeni kök Firebase yolu gerektirmez.
+Sonuç:
+- Aday metadata kaydı üretildi.
+- PQ scope snapshot'ına eklendi.
+- Tamamlanmış CAP adımı scope snapshot'ına eklendi.
+- Atama kaydı üretildi.
 
-## Geriye uyumluluk
+Durum: **PASS**.
 
-- Eski PQ kayıtlarında lineage alanları yoksa bellekte otomatik oluşturulur.
-- Mevcut CAP satırları silinmez veya numarası değiştirilmez.
-- CAP üzerinde kaynak PQ referansı ilk bağlandığında korunur; aktif PQ referansı güncel edition'a göre yeniden çözülür.
-- Arşiv kayıtları `rawData` ve `pqMasterData` üzerinden yeni link alanlarını da saklar.
-- Ziyaret scope snapshot'ları PQ Concept / source / current referanslarını içerir.
+## Metodolojik güvenlikler
 
-## Yayın sonrası önerilen ilk işlem
+- CAP tamamlanması resmî EI artışı olarak kabul edilmez; yalnız projeksiyon üretir.
+- `hold` durumundaki adaylar beklenen EI potansiyelinden çıkarılır.
+- “Validasyona Hazır” seçilirken PQ bağlantısı / kanıt paketi / iç inceleme eksikse kullanıcı uyarılır.
+- Hedef ziyaret ilgili denetim alanını kapsamıyorsa sistem kullanıcı onayı olmadan ziyaret kapsamını genişletmez.
+- Ziyaret bazlı EI beklentisi, güncel resmî EI + atanmış adayların kümülatif teorik etkisi olarak gösterilir ve resmî EI'den ayrı tutulur.
 
-Mevcut eski PQ sürümlerine kalıcı `instanceId / conceptId / lineage` alanlarını Firebase'de yazmak için uygulamada:
+## Firebase
 
-`📚 ICAO PQ Veri Tabanı → 🔗 CAP ↔ PQ Bağlantıları → 🧬 Firebase Lineage İndeksini Yeniden Kur`
+Yeni kök:
+- `icao_validation_readiness`
 
-işlemini bir kez çalıştırın.
+Ziyaret içine eklenen alt kayıt:
+- `icao_visits/{visitId}/validationCandidateAssignments`
 
-## Sınır
+Firebase Rules örneği `firebase/README_PQ_LIBRARY_RULES.md` içinde güncellenmiştir.
 
-Bu rapor statik/sentetik doğrulamayı kapsar. Canlı Firebase Rules, kimlik doğrulama, mevcut gerçek 2020/2024 PQ koleksiyonu ve GitHub Pages cache davranışı push sonrasında tarayıcı üzerinden doğrulanmalıdır.
+## Sonuç
+
+Faz 4 Validasyon Hazırlığı v7, statik kontroller ve sentetik veri testleri kapsamında **PASS**.
+Gerçek Firebase verisiyle son doğrulama, GitHub'a push/deploy sonrası kullanıcı oturumunda yapılmalıdır.

@@ -13,7 +13,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.10/pdfmake.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.10/vfs_fonts.js"></script>
-    <link rel="stylesheet" href="css/app.css?v=20261114-phase3-cap-pq-linkage-v6">
+    <link rel="stylesheet" href="css/app.css?v=20261114-phase4-validation-readiness-v7">
 </head>
 <body>
 
@@ -56,6 +56,7 @@
                 <div class="nav-group-items">
                     <button class="tab-btn" onclick="switchTab('milestones')" id="btn-tab-milestones">Hedefler</button>
                     <button class="tab-btn" onclick="switchTab('strategic')" id="btn-tab-strategic">Projeksiyon Analizi</button>
+                    <button class="tab-btn" onclick="switchTab('validation-readiness')" id="btn-tab-validation-readiness">🎯 Validasyon Hazırlığı</button>
                 </div>
             </div>
             <div class="nav-group open" data-nav-group="tasks">
@@ -379,6 +380,8 @@
                 </div>
             </div>
 
+            <div id="validationReadinessDashboardSummary" class="validation-dashboard-summary"><div class="validation-dashboard-empty">Validasyon hazırlığı verisi hesaplanıyor...</div></div>
+
             <div style="margin-top: 35px; margin-bottom: 25px;">
                 <h3 style="margin: 0 0 20px 0; font-size: 16px; color: var(--text); border-bottom: 1px solid var(--border); padding-bottom: 10px;">📋 Eylem Durum Özeti</h3>
                 <div class="stats-grid" style="margin-bottom: 0;">
@@ -515,6 +518,51 @@
                         <div id="smartOfficeList" class="smart-list"></div>
                     </section>
                 </div>
+            </div>
+        </div>
+
+        <div id="tab-validation-readiness" class="tab-content">
+            <div class="validation-readiness-shell">
+                <div class="validation-readiness-header">
+                    <div>
+                        <h3>🎯 Validasyon Hazırlığı Merkezi</h3>
+                        <p>Tüm CAP adımları tamamlanmış ancak henüz ICAO tarafından resmen valide edilmemiş PQ'ları; kanıt hazırlığı, PQ sürüm bağlantısı, iç inceleme, hedef ICAO ziyareti ve beklenen EI etkisiyle birlikte yönetin.</p>
+                    </div>
+                    <div class="validation-readiness-actions">
+                        <button type="button" class="btn-outline" onclick="createValidationTargetVisit()">➕ ICAO Ziyareti Planla</button>
+                        <button type="button" class="btn-outline" onclick="exportValidationReadinessExcel()">📊 Excel</button>
+                        <button type="button" onclick="renderValidationReadiness()">🔄 Yenile</button>
+                    </div>
+                </div>
+                <div id="validationReadyContext" class="validation-ready-context">Aday havuzu hazırlanıyor...</div>
+                <div class="validation-ready-kpi-grid">
+                    <div class="validation-ready-kpi"><strong id="validationReadyKpiTotal">0</strong><span>Validasyon adayı</span></div>
+                    <div class="validation-ready-kpi ok"><strong id="validationReadyKpiReady">0</strong><span>Hazır</span></div>
+                    <div class="validation-ready-kpi info"><strong id="validationReadyKpiAssigned">0</strong><span>Ziyarete atanmış</span></div>
+                    <div class="validation-ready-kpi"><strong id="validationReadyKpiEvidence">0</strong><span>Kanıt referansları tam</span></div>
+                    <div class="validation-ready-kpi warn"><strong id="validationReadyKpiHold">0</strong><span>Bekletiliyor</span></div>
+                    <div class="validation-ready-kpi impact"><strong id="validationReadyKpiDelta">+0.00</strong><span>Teorik Overall EI etkisi</span></div>
+                </div>
+                <div class="validation-ready-filterbar">
+                    <div><label>Denetim alanı</label><select id="validationReadyAreaFilter" onchange="renderValidationReadiness()"><option value="all">Tüm alanlar</option></select></div>
+                    <div><label>Hazırlık durumu</label><select id="validationReadyStatusFilter" onchange="renderValidationReadiness()"><option value="all">Tüm durumlar</option><option value="candidate">Aday</option><option value="ready">Hazır</option><option value="assigned">Ziyarete Atandı</option><option value="hold">Bekletiliyor</option></select></div>
+                    <div><label>Hedef ziyaret</label><select id="validationReadyTargetFilter" onchange="renderValidationReadiness()"><option value="all">Tüm hedef ziyaretler</option><option value="unassigned">Atanmamış</option></select></div>
+                    <div class="validation-ready-search"><label>Ara</label><input id="validationReadySearch" type="text" placeholder="PQ, concept, bulgu, ziyaret..." oninput="renderValidationReadiness()"></div>
+                </div>
+                <div class="validation-ready-grid">
+                    <section class="validation-ready-panel">
+                        <div class="validation-ready-panel-head"><h4>Alan Bazlı Hazırlık ve EI Etkisi</h4><span>Başarılı validasyon varsayımı</span></div>
+                        <div id="validationReadyAreaSummary" class="validation-area-grid"></div>
+                    </section>
+                    <section class="validation-ready-panel">
+                        <div class="validation-ready-panel-head"><h4>Hedef ICAO Ziyaretleri</h4><span>Atanmış adayların beklenen etkisi</span></div>
+                        <div id="validationReadyVisitPlans" class="validation-plan-list"></div>
+                    </section>
+                </div>
+                <section class="validation-ready-panel validation-ready-table-panel">
+                    <div class="validation-ready-panel-head"><h4>Validasyon Adayı PQ Listesi</h4><span>CAP tamamlanması resmî EI değişikliği değildir; burada gösterilen etkiler yalnız projeksiyondur.</span></div>
+                    <div class="validation-table-wrap"><table class="validation-table"><thead><tr><th>PQ / Concept</th><th>Alan / CAP</th><th>Hazırlık</th><th>Kontroller</th><th>Hedef Ziyaret</th><th>Overall EI</th><th>Alan EI</th><th>İşlem</th></tr></thead><tbody id="validationReadyTableBody"><tr><td colspan="8" class="validation-empty">Adaylar yükleniyor...</td></tr></tbody></table></div>
+                </section>
             </div>
         </div>
 
@@ -1913,6 +1961,28 @@
     </div>
 </div>
 
+<div id="validationReadinessModal" class="modal" style="z-index:12030;" onclick="if(event.target===this) closeValidationReadinessEditor()">
+    <div class="modal-content validation-readiness-modal-content">
+        <div class="modal-header">
+            <div><h3 style="margin:0;color:var(--primary);">🎯 Validasyon Adayı Hazırlık Kaydı</h3><div style="font-size:11px;color:var(--muted);margin-top:4px;">CAP tamamlanması ile ICAO validasyon sonucu arasındaki hazırlık ve atama kaydı</div></div>
+            <button type="button" class="btn-outline" onclick="closeValidationReadinessEditor()">✖</button>
+        </div>
+        <form onsubmit="saveValidationReadinessEditor(event)">
+            <input type="hidden" id="validationReadyEditKey">
+            <div class="validation-modal-identity"><div><b id="validationReadyEditPq">PQ -</b><span id="validationReadyEditArea">-</span></div><div id="validationReadyAutoInfo" class="validation-auto-info"></div></div>
+            <div class="validation-modal-grid">
+                <div><label>Hazırlık kararı</label><select id="validationReadyPlanningStatus"><option value="candidate">Aday / Hazırlanıyor</option><option value="ready">Validasyona Hazır</option><option value="hold">Beklet / Bu Ziyarete Hazır Değil</option></select></div>
+                <div><label>Öncelik</label><select id="validationReadyPriority"><option value="high">Yüksek</option><option value="normal">Normal</option><option value="low">Düşük</option></select></div>
+                <div><label>Kanıt paketi incelemesi</label><select id="validationReadyEvidenceStatus"><option value="not_reviewed">Henüz incelenmedi</option><option value="partial">Kısmi / Eksik var</option><option value="ready">Hazır</option></select></div>
+                <div><label>İç inceleme / uygunluk kontrolü</label><select id="validationReadyReviewStatus"><option value="pending">Bekliyor</option><option value="ready">Tamamlandı</option><option value="not_required">Gerekli değil</option></select></div>
+                <div class="full"><label>Hedef ICAO ziyareti / validasyon</label><select id="validationReadyTargetVisit"><option value="">Atanmadı / Daha sonra</option></select><div class="validation-modal-hint">Atama yapıldığında PQ ve mevcut CAP adımları hedef ICAO ziyaretinin kapsam snapshot'ına otomatik eklenir.</div></div>
+                <div class="full"><label>Hazırlık notu</label><textarea id="validationReadyNotes" rows="4" placeholder="Eksik kanıt, iç kontrol sonucu, ICAO'ya sunum notu, beklenen hususlar..."></textarea></div>
+            </div>
+            <div class="validation-modal-actions"><button type="button" class="btn-outline" onclick="closeValidationReadinessEditor()">Vazgeç</button><button type="submit">💾 Hazırlığı Kaydet</button></div>
+        </form>
+    </div>
+</div>
+
 <div id="gapModal" class="modal">
     <div class="modal-content">
         <div class="modal-header">
@@ -1924,13 +1994,14 @@
 </div>
 
 
-<script src="js/app.js?v=20261114-phase3-cap-pq-linkage-v6"></script>
-<script src="js/modules/visit-sync.js?v=20261114-phase3-cap-pq-linkage-v6"></script>
-<script src="js/modules/assessment-events.js?v=20261114-phase3-cap-pq-linkage-v6"></script>
-<script src="js/modules/official-ei-management.js?v=20261114-phase3-cap-pq-linkage-v6"></script>
-<script src="js/parsers/pq-docx-parser.js?v=20261114-phase3-cap-pq-linkage-v6"></script>
-<script src="js/modules/pq-linkage.js?v=20261114-phase3-cap-pq-linkage-v6"></script>
-<script src="js/services/pq-repository.js?v=20261114-phase3-cap-pq-linkage-v6"></script>
-<script src="js/modules/pq-library.js?v=20261114-phase3-cap-pq-linkage-v6"></script>
+<script src="js/app.js?v=20261114-phase4-validation-readiness-v7"></script>
+<script src="js/modules/visit-sync.js?v=20261114-phase4-validation-readiness-v7"></script>
+<script src="js/modules/assessment-events.js?v=20261114-phase4-validation-readiness-v7"></script>
+<script src="js/modules/official-ei-management.js?v=20261114-phase4-validation-readiness-v7"></script>
+<script src="js/parsers/pq-docx-parser.js?v=20261114-phase4-validation-readiness-v7"></script>
+<script src="js/modules/pq-linkage.js?v=20261114-phase4-validation-readiness-v7"></script>
+<script src="js/modules/validation-readiness.js?v=20261114-phase4-validation-readiness-v7"></script>
+<script src="js/services/pq-repository.js?v=20261114-phase4-validation-readiness-v7"></script>
+<script src="js/modules/pq-library.js?v=20261114-phase4-validation-readiness-v7"></script>
 </body>
 </html>

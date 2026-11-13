@@ -96,3 +96,20 @@ CAP tarafında eski kayıtlar silinmez. Eşleşme mümkünse otomatik bağlanır
 2. Tamamlanan CAP → validasyon adayı → sonraki ICAO ziyaretine atama akışı
 3. Ziyaret Yönetimi ana menüsünün Planlama / Hazırlık / Saha / Takip / Sonuç / Geçmiş olarak yeniden tasarlanması
 4. PQ Veri Tabanının görsel alan kartlarıyla yeniden tasarlanması
+
+## Faz 4 – Validasyon Hazırlığı Merkezi
+
+Bu sürüm, tüm CAP adımları tamamlanmış ancak henüz ICAO tarafından resmen valide edilmemiş PQ'lar için ayrı bir hazırlık ve atama katmanı ekler.
+
+- Otomatik validasyon adayı havuzu
+- PQ Concept / aktif PQ bağlantısı kontrolü
+- Kanıt referansı tamlık kontrolü
+- Kanıt paketi ve iç inceleme durumu
+- Öncelik ve bekletme kararı
+- Planlanan ICAO/OSVA/ICVM ziyaretine atama
+- Atanan PQ ve CAP step snapshot'larının ziyaret kapsamına otomatik eklenmesi
+- Overall ve alan bazlı teorik EI etkisi
+- Dashboard üzerinde atanmış adayların beklenen EI özeti
+- Excel dışa aktarma
+
+Metodolojik olarak CAP tamamlanması resmî EI değişikliği sayılmaz. Bu ekrandaki EI değerleri yalnızca başarılı ICAO validasyonu varsayımına dayalı projeksiyondur.

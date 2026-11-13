@@ -104,3 +104,34 @@ Bu nedenle mevcut aşağıdaki kural Faz 3 verilerini de kapsar:
 ## Bir defalık / gerektiğinde rebuild
 
 PQ Veri Tabanı ekranındaki **Firebase Lineage İndeksini Yeniden Kur** işlemi mevcut tüm sürümleri okuyup instance/concept kimliklerini yeniden üretir ve Firebase'e yazar. Bu işlem eski PQ verisini silmez; mevcut PQ kayıtlarına kimlik ve lineage alanlarını ekler ve `concepts` indeksini yeniden oluşturur.
+
+# Validasyon Hazırlığı yolu (Faz 4)
+
+Faz 4, CAP adımları tamamlanmış ancak henüz ICAO tarafından resmen valide edilmemiş PQ'ların hazırlık ve ziyaret atama metadata'sını aşağıdaki yolda saklar:
+
+- `icao_validation_readiness/{candidateKey}` — hazırlık kararı, kanıt paketi inceleme durumu, iç inceleme durumu, öncelik, hedef ICAO ziyareti ve notlar
+
+Hedef ziyarete atama yapıldığında ilgili ziyaret kaydı altında ayrıca:
+
+- `icao_visits/{visitId}/validationCandidateAssignments/{candidateKey}` — ziyaret-atama izi
+- `icao_visits/{visitId}/scope/pqs` ve `scope/steps` — aday PQ ve mevcut CAP step snapshot'ları
+
+kullanılır. `icao_visits` yolu zaten Ziyaret modülünün mevcut yetki kuralları kapsamında olmalıdır.
+
+Örnek Realtime Database kuralı:
+
+```json
+"icao_validation_readiness": {
+  ".read": "auth != null",
+  ".write": "auth != null"
+}
+```
+
+Bu kural parçası tek başına tam rules dosyası değildir; mevcut rules yapısına birleştirilmelidir.
+
+## Önemli metodoloji
+
+- `icao_validation_readiness` içindeki kayıt resmî EI sonucu değildir.
+- Bir PQ'nun CAP adımlarının tamamlanması onu yalnızca **validasyon adayı** yapar.
+- EI etkisi, aday/ziyaret bazında yalnızca projeksiyon olarak gösterilir.
+- Resmî EI ancak `icao_assessment_events + icao_ei_snapshots` içindeki resmî değerlendirme sonucu ile değişmiş kabul edilir.

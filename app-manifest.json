@@ -1,6 +1,6 @@
 {
   "app": "USOAP CMA CAP Takip",
-  "version": "6.0-phase3-cap-pq-linkage",
+  "version": "7.0-phase4-validation-readiness",
   "baseline": "index_visit_hub_pq_version_database(2).html",
   "buildDate": "2026-11-14",
   "features": [
@@ -17,11 +17,22 @@
     "visit-pq-lineage-snapshot",
     "firebase-pq-linkage-rebuild",
     "pq-linkage-audit-view",
-    "pq-linkage-excel-export"
+    "pq-linkage-excel-export",
+    "validation-readiness-engine",
+    "validation-candidate-persistent-metadata",
+    "validation-candidate-visit-assignment",
+    "validation-candidate-ei-impact",
+    "validation-readiness-dashboard-summary",
+    "validation-assignment-visit-scope-sync",
+    "validation-readiness-excel-export",
+    "validation-readiness-pdf-export",
+    "validation-visit-cumulative-ei-projection"
   ],
   "architecture": {
     "index": "index.html",
-    "styles": ["css/app.css"],
+    "styles": [
+      "css/app.css"
+    ],
     "scripts": [
       "js/app.js",
       "js/modules/visit-sync.js",
@@ -29,6 +40,7 @@
       "js/modules/official-ei-management.js",
       "js/parsers/pq-docx-parser.js",
       "js/modules/pq-linkage.js",
+      "js/modules/validation-readiness.js",
       "js/services/pq-repository.js",
       "js/modules/pq-library.js"
     ]
