@@ -272,6 +272,8 @@
             if(typeof window.syncAllOfficialEiRecordsToAssessmentModel==='function')window.syncAllOfficialEiRecordsToAssessmentModel({silent:true});
             if(typeof window.renderManagementFlow==='function')setTimeout(()=>window.renderManagementFlow(),0);
             if(typeof window.renderSystemIntegrityCenter==='function'&&document.getElementById('tab-quality')?.classList.contains('active'))setTimeout(()=>window.renderSystemIntegrityCenter(true),0);
+            if(typeof window.renderActionCenterDashboardSummary==='function')setTimeout(()=>window.renderActionCenterDashboardSummary(),0);
+            if(typeof window.renderActionCenter==='function'&&document.getElementById('tab-actions')?.classList.contains('active'))setTimeout(()=>window.renderActionCenter(),0);
         };
         officialEiRef.on('value',officialEiCallback,err=>{
             window.icaoOfficialEiManagementLoaded=true;

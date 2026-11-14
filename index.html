@@ -13,7 +13,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.10/pdfmake.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.10/vfs_fonts.js"></script>
-    <link rel="stylesheet" href="css/app.css?v=20261114-phase12-reporting-v15">
+    <link rel="stylesheet" href="css/app.css?v=20261114-phase13-actions-v16">
 </head>
 <body>
 
@@ -70,6 +70,7 @@
                     </div>
                     <button class="tab-btn" onclick="switchTab('validation-readiness')" id="btn-tab-validation-readiness">🎯 Validasyon Hazırlığı</button>
                     <button class="tab-btn" type="button" onclick="return switchTab('visits')" id="btn-tab-visit-hub">🧭 Ziyaret Yönetimi</button>
+                    <button class="tab-btn" type="button" onclick="switchTab('actions')" id="btn-tab-actions">✅ Aksiyon &amp; Görev Merkezi</button>
                     <div class="visit-legacy-nav" aria-hidden="true">
                         <button class="legacy-route-btn" onclick="switchTab('visits')" id="btn-tab-visits">Ziyaret Planı</button>
                         <button class="legacy-route-btn" onclick="switchTab('visit-scope')" id="btn-tab-visit-scope">Kapsam ve Hazırlık</button>
@@ -449,6 +450,7 @@
             </div>
 
             <div id="validationReadinessDashboardSummary" class="validation-dashboard-summary"><div class="validation-dashboard-empty">Validasyon hazırlığı verisi hesaplanıyor...</div></div>
+            <div id="actionCenterDashboardSummary" class="action-dashboard-summary"><div class="validation-dashboard-empty">Aksiyon merkezi hazırlanıyor...</div></div>
 
             <div style="margin-top: 35px; margin-bottom: 25px;">
                 <h3 style="margin: 0 0 20px 0; font-size: 16px; color: var(--text); border-bottom: 1px solid var(--border); padding-bottom: 10px;">📋 Eylem Durum Özeti</h3>
@@ -1266,6 +1268,58 @@
                     <div class="kanban-column-header"><h4>🟢 Tamamlanan</h4><span class="kanban-count" id="kb-done-count">0</span></div>
                     <div id="kb-done" class="kanban-cards"></div>
                 </div>
+            </div>
+        </div>
+
+        <div id="tab-actions" class="tab-content">
+            <div class="action-center-head">
+                <div>
+                    <h2 style="margin:0;color:var(--primary);">✅ Aksiyon &amp; Görev Merkezi</h2>
+                    <p>CAP, validasyon, ziyaret, takip/danışma ve veri bütünlüğü kayıtlarından türetilen operasyonel işleri; manuel görevlerle birlikte tek merkezde yönetin.</p>
+                </div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                    <button type="button" class="btn-outline" onclick="exportActionCenterPDF()">📄 PDF</button>
+                    <button type="button" class="btn-outline" onclick="exportActionCenterExcel()">📊 Excel</button>
+                    <button type="button" onclick="openNewManualAction()">➕ Manuel Görev</button>
+                </div>
+            </div>
+            <div class="action-kpi-grid">
+                <div class="action-kpi"><b id="actionKpiOpen">0</b><span>Açık görev</span></div>
+                <div class="action-kpi"><b id="actionKpiToday">0</b><span>Bugün</span></div>
+                <div class="action-kpi"><b id="actionKpiWeek">0</b><span>Bu hafta</span></div>
+                <div class="action-kpi danger"><b id="actionKpiOverdue">0</b><span>Gecikmiş</span></div>
+                <div class="action-kpi"><b id="actionKpiExternal">0</b><span>Dış cevap bekliyor</span></div>
+                <div class="action-kpi"><b id="actionKpiVerification">0</b><span>Doğrulama bekliyor</span></div>
+            </div>
+            <div class="action-quick-bar">
+                <button type="button" class="active" data-action-view="open" onclick="setActionQuickView('open')">Açık</button>
+                <button type="button" data-action-view="today" onclick="setActionQuickView('today')">Bugün</button>
+                <button type="button" data-action-view="week" onclick="setActionQuickView('week')">Bu hafta</button>
+                <button type="button" data-action-view="month" onclick="setActionQuickView('month')">Bu ay</button>
+                <button type="button" data-action-view="overdue" onclick="setActionQuickView('overdue')">Geciken</button>
+                <button type="button" data-action-view="external" onclick="setActionQuickView('external')">Dış cevap</button>
+                <button type="button" data-action-view="verification" onclick="setActionQuickView('verification')">Doğrulama</button>
+                <button type="button" data-action-view="completed" onclick="setActionQuickView('completed')">Tamamlanan</button>
+                <button type="button" data-action-view="all" onclick="setActionQuickView('all')">Tümü</button>
+            </div>
+            <div class="action-filter-grid">
+                <div class="control-group"><label>Kaynak</label><select id="actionSourceFilter" onchange="renderActionCenter()"><option value="all">Tüm kaynaklar</option><option value="cap">CAP</option><option value="validation">Validasyon</option><option value="visit">Ziyaret</option><option value="followup">Ziyaret Takibi</option><option value="consultation">Danışma</option><option value="integrity">Veri Bütünlüğü</option><option value="ei">EI / OLF</option><option value="manual">Manuel</option></select></div>
+                <div class="control-group"><label>Durum</label><select id="actionStatusFilter" onchange="renderActionCenter()"><option value="all">Tüm durumlar</option><option value="new">Yeni</option><option value="in_progress">Devam ediyor</option><option value="waiting">Beklemede</option><option value="external_wait">Dış cevaba bağlı</option><option value="verification">Doğrulama bekliyor</option><option value="completed">Tamamlandı</option></select></div>
+                <div class="control-group"><label>Öncelik</label><select id="actionPriorityFilter" onchange="renderActionCenter()"><option value="all">Tüm öncelikler</option><option value="critical">Kritik</option><option value="high">Yüksek</option><option value="medium">Orta</option><option value="low">Düşük</option></select></div>
+                <div class="control-group"><label>Arama</label><input id="actionSearchInput" type="search" placeholder="Görev, PQ, sorumlu, birim..." oninput="renderActionCenter()"></div>
+            </div>
+            <div class="action-settings">
+                <div><label>CAP termin uyarısı (gün)</label><br><input id="actionCapLeadDays" type="number" min="1" max="120" value="15"></div>
+                <div><label>Ziyaret hazırlık uyarısı (gün)</label><br><input id="actionVisitLeadDays" type="number" min="1" max="120" value="14"></div>
+                <button type="button" class="btn-outline" onclick="saveActionCenterSettings()">💾 Eşikleri Kaydet</button>
+                <button type="button" class="btn-outline" onclick="clearActionFilters()">Filtreleri Temizle</button>
+            </div>
+            <div id="actionCenterContext" class="action-context"></div>
+            <div class="action-table-wrap">
+                <table class="action-table">
+                    <thead><tr><th>Görev</th><th>Kaynak</th><th>Alan / PQ</th><th>Durum</th><th>Öncelik</th><th>Sorumlu / Birim</th><th>Hedef</th><th>Takip</th><th>İşlem</th></tr></thead>
+                    <tbody id="actionCenterTableBody"><tr><td colspan="9" class="action-empty">Aksiyonlar hazırlanıyor...</td></tr></tbody>
+                </table>
             </div>
         </div>
 
@@ -2203,6 +2257,32 @@
     </div>
 </div>
 
+<div id="actionCenterModal" class="modal" style="z-index:12045;" onclick="if(event.target===this) closeActionEditor()">
+    <div class="modal-content action-modal-content">
+        <div class="modal-header"><div><h3 style="margin:0;color:var(--primary);">✅ Aksiyon / Görev Kaydı</h3><div id="actionEditSourceBadge" class="action-source-badge">Manuel görev</div></div><button type="button" class="right-panel-close" onclick="closeActionEditor()">✖</button></div>
+        <form onsubmit="saveActionEditor(event)">
+            <input type="hidden" id="actionEditKey"><input type="hidden" id="actionEditAuto" value="0">
+            <div class="action-form-grid">
+                <div class="control-group wide"><label>Görev başlığı</label><input id="actionEditTitle" type="text" required></div>
+                <div class="control-group"><label>Durum</label><select id="actionEditStatus"><option value="new">Yeni</option><option value="in_progress">Devam ediyor</option><option value="waiting">Beklemede</option><option value="external_wait">Dış cevaba bağlı</option><option value="verification">Doğrulama bekliyor</option><option value="completed">Tamamlandı</option></select></div>
+                <div class="control-group full"><label>Açıklama</label><textarea id="actionEditDescription" rows="3"></textarea></div>
+                <div class="control-group"><label>Öncelik</label><select id="actionEditPriority"><option value="critical">Kritik</option><option value="high">Yüksek</option><option value="medium" selected>Orta</option><option value="low">Düşük</option></select></div>
+                <div class="control-group"><label>Sorumlu kişi</label><input id="actionEditOwner" type="text"></div>
+                <div class="control-group"><label>Sorumlu birim</label><input id="actionEditUnit" type="text"></div>
+                <div class="control-group"><label>Hedef tarih</label><input id="actionEditTargetDate" type="date"></div>
+                <div class="control-group"><label>Takip tarihi</label><input id="actionEditFollowDate" type="date"></div>
+                <div class="control-group"><label>Kaynak türü</label><select id="actionEditSourceType"><option value="manual">Manuel</option><option value="cap">CAP</option><option value="validation">Validasyon</option><option value="visit">Ziyaret</option><option value="followup">Ziyaret Takibi</option><option value="consultation">Danışma</option><option value="integrity">Veri Bütünlüğü</option><option value="ei">EI / OLF</option></select></div>
+                <div class="control-group"><label>Kaynak referansı</label><input id="actionEditSourceId" type="text"></div>
+                <div class="control-group"><label>Alan</label><input id="actionEditArea" type="text" placeholder="OPS"></div>
+                <div class="control-group"><label>PQ</label><input id="actionEditPq" type="text" placeholder="4.101"></div>
+                <div class="control-group"><label>CAP Adımı</label><input id="actionEditStep" type="text"></div>
+                <div class="control-group full"><label>Notlar</label><textarea id="actionEditNotes" rows="4" placeholder="Takip notu, beklenen cevap, tamamlanma koşulu..."></textarea></div>
+            </div>
+            <div class="action-modal-actions"><button type="button" id="actionDeleteBtn" style="display:none;background:var(--danger);" onclick="deleteManualAction()">🗑️ Sil</button><div class="right"><button type="button" class="btn-outline" onclick="closeActionEditor()">İptal</button><button type="submit">💾 Kaydet</button></div></div>
+        </form>
+    </div>
+</div>
+
 <div id="pqDbMetadataEditModal" class="modal pq-library-modal" style="z-index:12010;">
     <div class="modal-content pq-library-modal-content">
         <div class="modal-header">
@@ -2260,21 +2340,22 @@
 </div>
 
 
-<script src="js/app.js?v=20261114-phase12-reporting-v15"></script>
-<script src="js/modules/visit-sync.js?v=20261114-phase12-reporting-v15"></script>
-<script src="js/modules/visit-hub.js?v=20261114-phase12-reporting-v15"></script>
-<script src="js/modules/assessment-events.js?v=20261114-phase12-reporting-v15"></script>
-<script src="js/modules/official-ei-management.js?v=20261114-phase12-reporting-v15"></script>
-<script src="js/modules/official-ei-automation.js?v=20261114-phase12-reporting-v15"></script>
-<script src="js/parsers/pq-docx-parser.js?v=20261114-phase12-reporting-v15"></script>
-<script src="js/modules/pq-linkage.js?v=20261114-phase12-reporting-v15"></script>
-<script src="js/modules/validation-readiness.js?v=20261114-phase12-reporting-v15"></script>
-<script src="js/modules/assessment-impact.js?v=20261114-phase12-reporting-v15"></script>
-<script src="js/modules/management-shell.js?v=20261114-phase12-reporting-v15"></script>
-<script src="js/modules/drive-documents.js?v=20261114-phase12-reporting-v15"></script>
-<script src="js/services/pq-repository.js?v=20261114-phase12-reporting-v15"></script>
-<script src="js/modules/pq-library.js?v=20261114-phase12-reporting-v15"></script>
-<script src="js/modules/system-integrity.js?v=20261114-phase12-reporting-v15"></script>
-<script src="js/modules/reporting-center.js?v=20261114-phase12-reporting-v15"></script>
+<script src="js/app.js?v=20261114-phase13-actions-v16"></script>
+<script src="js/modules/visit-sync.js?v=20261114-phase13-actions-v16"></script>
+<script src="js/modules/visit-hub.js?v=20261114-phase13-actions-v16"></script>
+<script src="js/modules/assessment-events.js?v=20261114-phase13-actions-v16"></script>
+<script src="js/modules/official-ei-management.js?v=20261114-phase13-actions-v16"></script>
+<script src="js/modules/official-ei-automation.js?v=20261114-phase13-actions-v16"></script>
+<script src="js/parsers/pq-docx-parser.js?v=20261114-phase13-actions-v16"></script>
+<script src="js/modules/pq-linkage.js?v=20261114-phase13-actions-v16"></script>
+<script src="js/modules/validation-readiness.js?v=20261114-phase13-actions-v16"></script>
+<script src="js/modules/assessment-impact.js?v=20261114-phase13-actions-v16"></script>
+<script src="js/modules/management-shell.js?v=20261114-phase13-actions-v16"></script>
+<script src="js/modules/drive-documents.js?v=20261114-phase13-actions-v16"></script>
+<script src="js/services/pq-repository.js?v=20261114-phase13-actions-v16"></script>
+<script src="js/modules/pq-library.js?v=20261114-phase13-actions-v16"></script>
+<script src="js/modules/system-integrity.js?v=20261114-phase13-actions-v16"></script>
+<script src="js/modules/action-center.js?v=20261114-phase13-actions-v16"></script>
+<script src="js/modules/reporting-center.js?v=20261114-phase13-actions-v16"></script>
 </body>
 </html>

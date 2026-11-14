@@ -155,3 +155,31 @@ Bu faz için Realtime Database Rules'a şu kök eklenmelidir:
 Tam örnek rules dosyası `firebase/database.rules.phase11.json` olarak pakete eklenmiştir.
 
 **Firebase Storage gerekli değildir.** Google Drive OAuth access tokenı Firebase'e veya kalıcı tarayıcı depolamaya yazılmaz; yalnız aktif tarayıcı oturum belleğinde tutulur.
+
+
+## Faz 13 — Aksiyon & Görev Merkezi
+
+Yeni Realtime Database kökü:
+
+```text
+icao_action_center
+```
+
+Bu kökte yalnız görev iş akışı verileri tutulur:
+
+- `manual`: kullanıcı tarafından oluşturulan manuel görevler
+- `overrides`: otomatik türetilen görevlerin sorumlu/durum/tarih/not tercihleri
+- `settings`: CAP ve ziyaret uyarı eşikleri
+
+Otomatik görevlerin kaynak verisi burada kopyalanmaz; CAP, validasyon, ziyaret ve bütünlük kayıtlarından anlık türetilir.
+
+Rules:
+
+```json
+"icao_action_center": {
+  ".read": "auth != null",
+  ".write": "auth != null"
+}
+```
+
+Tam güncel dosya: `firebase/database.rules.phase13.json`.

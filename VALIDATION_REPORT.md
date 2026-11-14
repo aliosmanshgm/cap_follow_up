@@ -1,45 +1,82 @@
-# Faz 12 v15 — Doğrulama Raporu
+# Faz 13 v16 — Aksiyon & Görev Merkezi Doğrulama Raporu
 
 ## Kapsam
 
-Otomatik Raporlama Merkezi; Yönetici/Bakanlık, ICAO Teknik, Validasyon/Ziyaret Hazırlık ve İç Yönetim/Haftalık Takip olmak üzere dört profil üretir.
+Faz 12 v15 tam proje paketi taban alınarak merkezi Aksiyon & Görev Yönetimi eklendi.
+
+### Yeni işlevler
+
+- Operasyon menüsünde `Aksiyon & Görev Merkezi` ekranı
+- Dashboard üzerinde aksiyon özeti
+- Kaynak veriden otomatik türetilen görev motoru
+- Manuel görev oluşturma / düzenleme / silme
+- Otomatik görevlerde kullanıcı workflow override'ları
+- Bugün / Bu hafta / Bu ay / Geciken / Dış cevap / Doğrulama / Tamamlanan görünümleri
+- Sorumlu, birim, öncelik, hedef tarih, takip tarihi ve not yönetimi
+- Kaynak nesneye geri navigasyon
+- PDF ve Excel dışa aktarma
+- CAP ve ziyaret uyarı eşikleri
+- Yeni Firebase kökü: `icao_action_center`
+
+## Otomatik görev kuralları
+
+1. CAP adımı gecikmişse görev üretilir.
+2. CAP adımı belirlenen eşik içinde yaklaşıyorsa görev üretilir.
+3. Açık CAP adımında hedef tarih yoksa görev üretilir.
+4. Validasyon adayı hazır ancak ziyarete atanmamışsa görev üretilir.
+5. Hazır/atanmış validasyon adayında kanıt veya iç inceleme eksikse görev üretilir.
+6. Ziyaret tarihi belirlenen eşik içine girdiyse hazırlık görevi üretilir.
+7. Açık ziyaret takip kaydı gecikmiş / bugün / 7 gün içindeyse görev üretilir.
+8. Dış cevap bekleyen danışma kaydı görev üretir.
+9. Kritik/yüksek sistem bütünlüğü sorunları görev üretir.
+10. Tamamlanmış ICAO resmî ziyaretinde PQ bazlı validasyon sonucu yoksa doğrulama görevi üretilir.
+
+## Veri bütünlüğü yaklaşımı
+
+Otomatik görevler Firebase'e kopyalanmaz. Kaynak veriden anlık türetilir. `icao_action_center` altında yalnız:
+
+- `manual`
+- `overrides`
+- `settings`
+
+tutulur.
+
+Otomatik kaynak görevi devam ederken kullanıcı `Tamamlandı` seçerse efektif durum `Doğrulama bekliyor` olur. Kaynak gerçekten kapandığında görev otomatik havuzdan çıkar.
 
 ## Statik QA
 
-- Tüm JavaScript dosyaları `node --check`: **PASS**
-- HTML ID: **785 / 785 benzersiz**
-- Duplicate ID: **0**
-- Eksik yerel JS/CSS referansı: **0**
-- Tab sayısı: **28** (mevcut ekranlar korunmuştur)
-- Yeni modül referansı: `js/modules/reporting-center.js`: **PASS**
+- HTML ID: 821 / 821 benzersiz
+- Duplicate ID: 0
+- Tab ekranı: 29
+- Eksik yerel JS/CSS referansı: 0
+- `tab-actions`: mevcut
+- `btn-tab-actions`: mevcut
+- Dashboard aksiyon özeti: mevcut
+- Aksiyon modalı: mevcut
+- `action-center.js`: index içinde doğru sırada yükleniyor
+- Excel/PDF dispatcher bağlantıları: mevcut
+- Realtime Database Rules içinde `icao_action_center`: mevcut
+- Tüm JavaScript dosyaları `node --check`: PASS
+- `app-manifest.json`: geçerli JSON
+- `firebase/database.rules.phase13.json`: geçerli JSON
 
-Inline-handler taramasında `auth`, `click`, `getElementById`, `preventDefault`, `signOut`, `toggle` ifadeleri method/property çağrılarından kaynaklanan regex false-positive sonuçlardır; yeni Raporlama Merkezi handler'ları modülde mevcuttur.
+## Sentetik motor testi
 
-## Sentetik model testi
+Sentetik kaynak verilerle aşağıdaki kaynaklardan görev üretildi:
 
-Sentetik veri ile:
-- İlk resmî EI: 50.69
-- Güncel resmî EI: 64.17
-- Toplam değişim: +13.48 puan
-- Validasyon adayı: 1
-- Aday potansiyeli: +0.50 Overall puan
-- Ziyaret: 1
-- Drive doküman metadata: 1
-- CAP PQ: 2
-- Gecikmiş CAP adımı: 1
-- Raporlama Merkezi self-check: **PASS**
+- CAP
+- Validasyon
+- Ziyaret
+- Ziyaret Takibi
+- Danışma
+- Veri Bütünlüğü
 
-## Geriye uyumluluk
+Test sonucu: 8 görev üretildi; gecikmiş görev sınıflandırması doğrulandı.
 
-- Eski `tab-report` rotası korunmuştur.
-- Sağ üst `Ekran PDF` ve `Ekran Excel` düğmeleri Raporlama Merkezi açıkken yeni paket export'una yönlenir.
-- `updateReportPreview()` çağrıları yeni merkez aktifse `renderReportingCenter()` üzerinden çalışır.
-- Eski Yönetici Raporu fonksiyonları fallback olarak kodda korunmuştur.
-- CAP ve Ziyaret Hub navigasyonu değiştirilmemiştir.
+## Firebase
 
-## Veri güvenliği / metodoloji
+Yeni kök nedeniyle Faz 13 Rules dosyası Realtime Database Rules ekranına uygulanmalıdır:
 
-- Rapor üretimi salt-okunurdur; Firebase'e yeni kayıt yazmaz.
-- Yeni Firebase yolu yoktur; Rules güncellemesi gerekmez.
-- Drive dosyaları silinmez/değiştirilmez; yalnız metadata indeksi okunur.
-- Resmî EI / projeksiyon / draft katmanları ayrı raporlanır.
+`firebase/database.rules.phase13.json`
+
+Firebase Storage kullanılmaz.

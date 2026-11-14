@@ -64,3 +64,35 @@ Bu faz yeni bir Firebase kökü eklemez. **Realtime Database Rules değişikliğ
 ### Sürüm
 
 `v15 / phase12-automated-reporting-center`
+
+
+## Faz 13 — Aksiyon & Görev Merkezi v16
+
+Bu faz, uygulamadaki operasyonel kayıtları günlük işe dönüştüren merkezi görev katmanını ekler.
+
+### Otomatik görev kaynakları
+
+- Gecikmiş, yaklaşan veya hedef tarihi eksik CAP adımları
+- Ziyarete atanmamış validasyon adayları
+- Kanıt paketi veya iç incelemesi eksik validasyon adayları
+- Yaklaşan / tarihi geçmiş ziyaret hazırlıkları
+- Açık ziyaret takip kayıtları
+- Dış cevap bekleyen danışma kayıtları
+- Kritik ve yüksek veri bütünlüğü sorunları
+- Tamamlanmış ICAO ziyaretinde PQ bazlı sonuç kaydı bulunmaması
+
+### Veri modeli
+
+`icao_action_center` altında yalnız manuel görevler, kullanıcı workflow override'ları ve eşik ayarları saklanır. Otomatik görevler kaynak veriden her render sırasında türetilir. Bu sayede kaynak kayıt düzeldiğinde görev de kendiliğinden ortadan kalkar.
+
+### Görünümler
+
+Bugün, Bu hafta, Bu ay, Geciken, Dış cevap, Doğrulama, Tamamlanan ve Tümü. Dashboard üzerinde ayrıca açık/gecikmiş/bugün/dış cevap/doğrulama özetleri bulunur.
+
+### Güvenlik kuralı
+
+Otomatik bir görev kaynak problemi devam ederken kullanıcı tarafından `Tamamlandı` seçilirse efektif durum `Doğrulama bekliyor` olur. Böylece yalnız görev kaydını kapatmak, CAP/validasyon/ziyaret kaynağını çözülmüş saymaz.
+
+### Firebase
+
+Yeni kök nedeniyle `firebase/database.rules.phase13.json` Realtime Database Rules ekranına uygulanmalıdır. Firebase Storage gerekmez.

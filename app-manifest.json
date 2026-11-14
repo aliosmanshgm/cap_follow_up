@@ -1,6 +1,6 @@
 {
   "app": "USOAP CMA CAP Takip",
-  "version": "15-phase12-automated-reporting-center",
+  "version": "16-phase13-action-task-center",
   "baseline": "index_visit_hub_pq_version_database(2).html",
   "buildDate": "2026-11-14",
   "features": [
@@ -50,7 +50,18 @@
     "report-source-provenance",
     "report-document-evidence-index",
     "report-integrity-check-layer",
-    "multi-profile-pdf-excel-export"
+    "multi-profile-pdf-excel-export",
+    "action-task-center",
+    "derived-action-engine",
+    "manual-task-management",
+    "cap-deadline-actions",
+    "validation-readiness-actions",
+    "visit-preparation-actions",
+    "followup-consultation-actions",
+    "integrity-issue-actions",
+    "action-workflow-overlays",
+    "action-dashboard-summary",
+    "action-pdf-excel-export"
   ],
   "architecture": {
     "index": "index.html",
@@ -73,6 +84,7 @@
       "js/services/pq-repository.js",
       "js/modules/pq-library.js",
       "js/modules/system-integrity.js",
+      "js/modules/action-center.js",
       "js/modules/reporting-center.js"
     ]
   }
