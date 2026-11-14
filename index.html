@@ -13,7 +13,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.10/pdfmake.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.10/vfs_fonts.js"></script>
-    <link rel="stylesheet" href="css/app.css?v=20261114-phase9-ei-auto-v12">
+    <link rel="stylesheet" href="css/app.css?v=20261114-phase10-assessment-impact-v13">
 </head>
 <body>
 
@@ -84,7 +84,7 @@
             <div class="nav-group open" data-nav-group="analysis">
                 <button class="nav-group-title" type="button" onclick="toggleNavGroup(this)"><span>📈 Analiz</span><span class="nav-chevron">⌄</span></button>
                 <div class="nav-group-items">
-                    <button class="tab-btn nav-action-btn" type="button" onclick="openEiAnalysis()">EI &amp; Değerlendirme</button>
+                    <button class="tab-btn" type="button" onclick="switchTab('assessment-impact')" id="btn-tab-assessment-impact">EI &amp; Değerlendirme</button>
                     <button class="tab-btn" onclick="switchTab('summary')" id="btn-tab-summary">Alan Analizi</button>
                     <button class="tab-btn" onclick="switchTab('milestones')" id="btn-tab-milestones">Hedefler</button>
                     <button class="tab-btn" onclick="switchTab('strategic')" id="btn-tab-strategic">Stratejik Analiz</button>
@@ -432,6 +432,7 @@
                             <div style="border-left: 4px solid var(--warn);"><span><i class="dot" style="background:var(--warn);"></i> <b id="lblProjTitle">Tüm Açık CAP'ler Başarıyla Valide Edilirse Teorik EI:</b></span> <span id="lblProj" style="color:var(--warn); font-size: 16px;">%0.00</span></div>
                         </div>
                         <div id="eiProjectionMeta" class="ei-projection-meta"></div>
+                        <div style="display:flex;justify-content:flex-end;margin-top:8px;"><button type="button" class="btn-outline" onclick="switchTab('assessment-impact')">📈 Değerlendirme Dönemi &amp; EI Etki Analizini Aç</button></div>
                     </div>
                 </div>
             </div>
@@ -534,6 +535,47 @@
             </div>
         </div>
 
+
+        <div id="tab-assessment-impact" class="tab-content">
+            <div id="assessmentImpactRoot" class="assessment-impact-shell">
+                <div class="assessment-impact-header">
+                    <div>
+                        <span class="assessment-impact-eyebrow">FAZ 10 · DEĞERLENDİRME DÖNEMLERİ</span>
+                        <h2>📈 ICAO Değerlendirme Dönemleri &amp; EI Etki Analizi</h2>
+                        <p>Resmî Assessment Event / EI Snapshot kayıtlarını zaman ekseninde karşılaştırır; alan bazlı yeniden değerlendirmeyi, PQ sürüm/denominator değişimini ve son resmî değerlendirme sonrası validasyon hazırlığını ayrı katmanlarda gösterir.</p>
+                    </div>
+                    <div class="assessment-impact-actions">
+                        <button type="button" class="btn-outline" onclick="renderAssessmentImpactCenter()">↻ Yenile</button>
+                        <button type="button" class="btn-outline" onclick="openIcaoOfficialEiManager()">🌐 Resmî EI Kayıtları</button>
+                        <button type="button" class="btn-outline" onclick="switchTab('validation-readiness')">🎯 Validasyon Hazırlığı</button>
+                    </div>
+                </div>
+                <div id="assessmentImpactSourceInfo" class="assessment-impact-source">Assessment Event / EI Snapshot kaynağı hazırlanıyor...</div>
+                <div class="assessment-impact-kpis">
+                    <div><span>İlk Resmî EI</span><strong id="assessmentImpactKpiFirst">-</strong><small>İlk resmî snapshot</small></div>
+                    <div><span>Güncel Resmî EI</span><strong id="assessmentImpactKpiCurrent">-</strong><small>Son official snapshot</small></div>
+                    <div><span>Toplam Değişim</span><strong id="assessmentImpactKpiDelta">-</strong><small>İlk → güncel</small></div>
+                    <div><span>Resmî Değerlendirme</span><strong id="assessmentImpactKpiEvents">0</strong><small>CMAA / OSVA / ICVM vb.</small></div>
+                </div>
+                <section class="assessment-impact-card">
+                    <div class="assessment-impact-section-title"><div><span>Resmî zaman çizgisi</span><h3>Eylül 2024’ten Günümüze Değerlendirme Dönemleri</h3></div><small>Bir döneme tıklayarak ayrıntılı etkiyi inceleyin.</small></div>
+                    <div id="assessmentImpactTimeline" class="assessment-impact-timeline"><div class="assessment-impact-empty">Resmî değerlendirmeler yükleniyor...</div></div>
+                </section>
+                <section class="assessment-impact-card">
+                    <div id="assessmentImpactPeriodOverview"></div>
+                    <div id="assessmentImpactAreaTable"></div>
+                    <div id="assessmentImpactPqChanges"></div>
+                </section>
+                <section class="assessment-impact-card">
+                    <div id="assessmentImpactSinceLast"></div>
+                </section>
+                <section class="assessment-impact-card">
+                    <div class="assessment-impact-section-title"><div><span>Resmî olmayan katman</span><h3>Taslak / Geçici Değerlendirmeler</h3></div><small>Bu kayıtlar resmî EI tarihçesine dahil edilmez.</small></div>
+                    <div id="assessmentImpactPending" class="assessment-impact-pending-grid"><div class="assessment-impact-empty compact">Taslak/geçici kayıtlar yükleniyor...</div></div>
+                </section>
+                <div class="assessment-impact-footnote"><b>Metodoloji notu:</b> PQ sürümü/revizyonu veya applicable denominator değiştiğinde EI farkı otomatik olarak “performans artışı” kabul edilmez. Snapshot verisi tek başına performans etkisi ile metodoloji/PQ dönüşüm etkisini sayısal olarak ayrıştıramıyorsa sistem bunu açıkça “karma etki” olarak işaretler.</div>
+            </div>
+        </div>
 
         <div id="tab-smart" class="tab-content">
             <div class="smart-management-shell">
@@ -2094,18 +2136,19 @@
 </div>
 
 
-<script src="js/app.js?v=20261114-phase9-ei-auto-v12"></script>
-<script src="js/modules/visit-sync.js?v=20261114-phase9-ei-auto-v12"></script>
-<script src="js/modules/visit-hub.js?v=20261114-phase9-ei-auto-v12"></script>
-<script src="js/modules/assessment-events.js?v=20261114-phase9-ei-auto-v12"></script>
-<script src="js/modules/official-ei-management.js?v=20261114-phase9-ei-auto-v12"></script>
-<script src="js/modules/official-ei-automation.js?v=20261114-phase9-ei-auto-v12"></script>
-<script src="js/parsers/pq-docx-parser.js?v=20261114-phase9-ei-auto-v12"></script>
-<script src="js/modules/pq-linkage.js?v=20261114-phase9-ei-auto-v12"></script>
-<script src="js/modules/validation-readiness.js?v=20261114-phase9-ei-auto-v12"></script>
-<script src="js/modules/management-shell.js?v=20261114-phase9-ei-auto-v12"></script>
-<script src="js/services/pq-repository.js?v=20261114-phase9-ei-auto-v12"></script>
-<script src="js/modules/pq-library.js?v=20261114-phase9-ei-auto-v12"></script>
-<script src="js/modules/system-integrity.js?v=20261114-phase9-ei-auto-v12"></script>
+<script src="js/app.js?v=20261114-phase10-assessment-impact-v13"></script>
+<script src="js/modules/visit-sync.js?v=20261114-phase10-assessment-impact-v13"></script>
+<script src="js/modules/visit-hub.js?v=20261114-phase10-assessment-impact-v13"></script>
+<script src="js/modules/assessment-events.js?v=20261114-phase10-assessment-impact-v13"></script>
+<script src="js/modules/official-ei-management.js?v=20261114-phase10-assessment-impact-v13"></script>
+<script src="js/modules/official-ei-automation.js?v=20261114-phase10-assessment-impact-v13"></script>
+<script src="js/parsers/pq-docx-parser.js?v=20261114-phase10-assessment-impact-v13"></script>
+<script src="js/modules/pq-linkage.js?v=20261114-phase10-assessment-impact-v13"></script>
+<script src="js/modules/validation-readiness.js?v=20261114-phase10-assessment-impact-v13"></script>
+<script src="js/modules/assessment-impact.js?v=20261114-phase10-assessment-impact-v13"></script>
+<script src="js/modules/management-shell.js?v=20261114-phase10-assessment-impact-v13"></script>
+<script src="js/services/pq-repository.js?v=20261114-phase10-assessment-impact-v13"></script>
+<script src="js/modules/pq-library.js?v=20261114-phase10-assessment-impact-v13"></script>
+<script src="js/modules/system-integrity.js?v=20261114-phase10-assessment-impact-v13"></script>
 </body>
 </html>

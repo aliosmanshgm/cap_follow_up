@@ -329,6 +329,7 @@
             try{if(typeof renderIcaoOfficialChart==='function')renderIcaoOfficialChart();}catch(e){}
             try{if(typeof renderIcaoOfficialTrend==='function')renderIcaoOfficialTrend();}catch(e){}
             try{if(typeof render==='function')render();}catch(e){}
+            try{if(document.getElementById('tab-assessment-impact')?.classList.contains('active')&&typeof window.renderAssessmentImpactCenter==='function')window.renderAssessmentImpactCenter();}catch(e){}
         },80);
     }
 

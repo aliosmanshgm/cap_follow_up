@@ -1,6 +1,6 @@
 {
   "app": "USOAP CMA CAP Takip",
-  "version": "12-phase9-official-ei-automation",
+  "version": "13-phase10-assessment-impact",
   "baseline": "index_visit_hub_pq_version_database(2).html",
   "buildDate": "2026-11-14",
   "features": [
@@ -24,11 +24,18 @@
     "official-ei-findings-only-denominator-calculation",
     "official-ei-visit-validation-delta-calculation",
     "official-ei-automation-preview-before-commit",
-    "official-ei-manual-override-audit"
+    "official-ei-manual-override-audit",
+    "assessment-period-impact-analysis",
+    "area-effective-ei-history",
+    "pq-version-denominator-change-guard",
+    "last-official-assessment-status",
+    "traceable-validated-pq-impact"
   ],
   "architecture": {
     "index": "index.html",
-    "styles": ["css/app.css"],
+    "styles": [
+      "css/app.css"
+    ],
     "scripts": [
       "js/app.js",
       "js/modules/visit-sync.js",
@@ -39,6 +46,7 @@
       "js/parsers/pq-docx-parser.js",
       "js/modules/pq-linkage.js",
       "js/modules/validation-readiness.js",
+      "js/modules/assessment-impact.js",
       "js/modules/management-shell.js",
       "js/services/pq-repository.js",
       "js/modules/pq-library.js",

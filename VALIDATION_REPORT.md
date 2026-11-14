@@ -1,15 +1,31 @@
-# Faz 9 v12 — Doğrulama Raporu
+# Faz 10 v13 — Validation Report
 
-- Tüm JavaScript dosyaları `node --check` kontrolünden geçti.
-- `index.html` içinde duplicate ID bulunmadı.
-- Yerel JS/CSS referanslarında eksik dosya bulunmadı.
-- 194 inline arayüz handler'ının tamamının JS karşılığı doğrulandı.
-- Otomasyon modalı ve `official-ei-automation.js` yükleme referansı doğrulandı.
-- Sentetik tam-PQ durum testi: 2 Satisfactory / 3 Applicable = **%66,67**.
-- Sentetik findings-only testi: duplicate PQ deduplikasyonu, alan bazlı denominator ve `Applicable - unique findings` hesabı doğrulandı; örnek toplam 97/100 = **%97,00**.
-- Sentetik alan özet testi: 23/30 = **%76,67**.
-- Sentetik ICAO ziyaret-delta testi: ziyaret metadata'sı, provisional statü ve kaydetme önkoşulları doğrulandı.
-- Otomatik kayıt manuel formdan değiştirildiğinde `manualOverride` / `automation.status=overridden` izinin korunması kod düzeyinde doğrulandı.
-- Yeni Firebase root path veya Storage bağımlılığı eklenmedi.
+## Kapsam
+ICAO Değerlendirme Dönemleri & EI Etki Analizi.
 
-Not: Gerçek OLF/StateLive export'larında kolon adları ICAO export sürümüne göre değişebileceğinden importer normalize edilmiş başlık eşleştirmesi kullanır. Tanınmayan dosyada otomatik kayıt yapılmaz; kullanıcıya hata verilir.
+## Statik QA
+- Faz 9 FULL ZIP tabanı kullanıldı; önceki modüller korunarak yeni modül eklendi.
+- Yeni ekran: `tab-assessment-impact`.
+- Yeni modül: `js/modules/assessment-impact.js`.
+- Tüm JavaScript dosyaları `node --check` kontrolünden geçirildi.
+- HTML ID kontrolü: duplicate ID yok.
+- Yerel JS/CSS referans kontrolü: eksik dosya yok.
+- Ekran sayısı: 27.
+
+## Sentetik model testi
+- Baseline: Overall EI 50.00 / applicable 100.
+- Sonraki assessment: Overall EI 55.00 / applicable 100.
+- Beklenen overall fark: +5.00 puan — PASS.
+- LEG alanı: 50.00 → 60.00, beklenen +10.00 puan — PASS.
+- Sürüm ve denominator aynı olduğunda metodoloji sınıfı `performance` — PASS.
+
+## Metodoloji korumaları
+1. Yalnız `resultStatus=official` ve official snapshot resmî tarihçeye girer.
+2. Draft/provisional kayıtlar ayrı katmandadır.
+3. Scope dışı alanlara yeni değerlendirme sonucu atfedilmez; son geçerli resmî EI taşınır.
+4. PQ version/revision veya applicable denominator değişirse fark otomatik olarak saf performans artışı sayılmaz.
+5. PQ bazlı değişim yalnız izlenebilir ziyaret-validasyon kaydı varsa listelenir; tahmin yapılmaz.
+6. Validasyon adayları resmî EI’den ayrı projeksiyon katmanıdır.
+
+## Firebase
+Yeni Firebase root’u yok. Rules güncellemesi gerekmiyor. Storage kullanılmıyor.

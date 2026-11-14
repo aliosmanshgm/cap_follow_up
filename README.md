@@ -21,3 +21,19 @@ Excel yükledikten veya ICAO ziyareti seçtikten sonra önce hesap önizlemesini
 ## Firebase
 
 Yeni Firebase root path eklenmedi. Mevcut `icao_official_ei`, `icao_assessment_events` ve `icao_ei_snapshots` yolları kullanılır. Bu faz için Realtime Database Rules değişikliği gerekmez. Firebase Storage kullanılmaz.
+
+## Faz 10 — Değerlendirme Dönemleri & EI Etki Analizi (v13)
+
+Faz 10, resmî `icao_assessment_events` + `icao_ei_snapshots` zaman çizgisini tek bir etki analizi ekranında birleştirir.
+
+- Analiz → **EI & Değerlendirme** artık ayrı `assessment-impact` ekranını açar.
+- Resmî değerlendirmeler kronolojik dönemler halinde gösterilir (CMAA → OSVA → ICVM → sonraki official kayıtlar).
+- Her dönem için önceki / sonraki Overall EI, net puan değişimi, scope ve applicable denominator karşılaştırılır.
+- 8 alan için “etkin” EI tarihçesi tutulur: bir alan yeni değerlendirmede kapsam dışıysa önceki geçerli resmî EI taşınır ve **Yeniden değerlendirilmedi** olarak işaretlenir.
+- PQ sürümü/revizyonu veya denominator değişmişse fark **Karma etki / metodoloji değişimi** olarak etiketlenir; snapshot verisinin desteklemediği performans/metodoloji ayrımı tahmin edilmez.
+- PQ bazlı valide edilen liste yalnız linked ICAO ziyaretindeki gerçek `icaoValidation.records[*].status = validated` kayıtlarından üretilir.
+- Son resmî değerlendirme sonrası validasyon adayları ayrı projeksiyon katmanı olarak gösterilir; resmî EI değildir.
+- Draft / provisional Assessment Event kayıtları ayrı bölümde gösterilir ve resmî tarihçeye katılmaz.
+- Ekran PDF ve Excel dışa aktarımları eklenmiştir.
+
+Bu faz yeni Firebase root’u oluşturmaz ve Realtime Database Rules değişikliği gerektirmez. Firebase Storage kullanılmaz.

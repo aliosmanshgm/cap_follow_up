@@ -119,9 +119,7 @@
     };
 
     window.openEiAnalysis=function(){
-        const ok=typeof switchTab==='function'?switchTab('dashboard'):false;
-        if(ok)setTimeout(()=>{const target=document.getElementById('eiOverallProgressPanel')||document.getElementById('eiChartPanel');if(target&&target.scrollIntoView)target.scrollIntoView({behavior:'smooth',block:'start'});},80);
-        return ok;
+        return typeof switchTab==='function'?switchTab('assessment-impact'):false;
     };
 
     window.runManagementShellSelfCheck=function(){

@@ -377,11 +377,12 @@ const I18N = {
             if(btn) btn.classList.add('active');
             const parentGroup = btn ? btn.closest('.nav-group') : null;
             if(parentGroup) { if(window.innerWidth > 768) focusDesktopNavGroup(parentGroup); else parentGroup.classList.add('open'); keepNavGroupVisible(parentGroup); }
-            if(btn && (tabId === 'report' || tabId === 'trend' || tabId === 'kanban' || tabId === 'strategic' || tabId === 'validation-readiness' || tabId === 'smart' || tabId === 'quality' || tabId === 'pq-library' || tabId === 'visits' || tabId === 'visit-scope' || tabId === 'icao-visit-validation' || tabId === 'visit-workspace' || tabId === 'visit-followup' || tabId === 'visit-consultation' || tabId === 'visit-reports' || tabId === 'visit-management' || tabId === 'visit-analysis' || tabId === 'visit-audit')) { btn.style.color = "var(--primary)"; }
+            if(btn && (tabId === 'report' || tabId === 'trend' || tabId === 'kanban' || tabId === 'strategic' || tabId === 'assessment-impact' || tabId === 'validation-readiness' || tabId === 'smart' || tabId === 'quality' || tabId === 'pq-library' || tabId === 'visits' || tabId === 'visit-scope' || tabId === 'icao-visit-validation' || tabId === 'visit-workspace' || tabId === 'visit-followup' || tabId === 'visit-consultation' || tabId === 'visit-reports' || tabId === 'visit-management' || tabId === 'visit-analysis' || tabId === 'visit-audit')) { btn.style.color = "var(--primary)"; }
             if(btn && (tabId === 'past' || tabId === 'empty-caps')) { btn.style.color = "var(--danger)"; }
             if(btn && tabId === 'icao-closed') { btn.style.color = "#ca8a04"; }
             if(tabId === 'report') updateReportPreview();
             if(tabId === 'strategic') renderStrategicReportPreview();
+            if(tabId === 'assessment-impact' && typeof window.renderAssessmentImpactCenter==='function') window.renderAssessmentImpactCenter();
             if(tabId === 'validation-readiness' && typeof renderValidationReadiness==='function') renderValidationReadiness();
             if(tabId === 'smart') updateSmartManagementPanel(getFilteredData(), window.currentAnalyticsModel || null);
             if(tabId === 'quality') { updateDataQualityCenter(getFilteredData()); if(typeof window.renderSystemIntegrityCenter==='function') setTimeout(()=>window.renderSystemIntegrityCenter(true),0); }
@@ -9386,6 +9387,8 @@ ${formatOfficialEiDelta(delta)}`,fontSize:8});
             ctx.title = 'ICAO Tarafından Kapatılan PQ Raporu'; ctx.fileName = 'ICAO_Kapatilanlar_Detayli.xlsx'; ctx.mode = 'icao';
             Object.keys(pqMasterData).forEach(pq => { if (pqMasterData[pq] && pqMasterData[pq].isIcaoClosed) ctx.rows.push({ pq, ...pqMasterData[pq] }); });
             ctx.rows.sort((a,b) => sortAreas(a.alan,b.alan) || sortPQs(a.pq,b.pq));
+        } else if (activeTab === 'tab-assessment-impact') {
+            ctx.title = 'ICAO Değerlendirme Dönemleri ve EI Etki Analizi'; ctx.fileName = 'ICAO_Degerlendirme_Donemleri_EI_Etki_Analizi.xlsx'; ctx.mode = 'assessment_impact'; ctx.rows = [];
         } else if (activeTab === 'tab-strategic') {
             ctx.title = 'Filtre Bazlı Stratejik Rapor'; ctx.fileName = 'Filtre_Bazli_Stratejik_Rapor.xlsx'; ctx.mode = 'strategic'; ctx.rows = getFilteredData();
         } else if (activeTab === 'tab-trend') {
@@ -9528,6 +9531,7 @@ ${formatOfficialEiDelta(delta)}`,fontSize:8});
         const ctx = getActiveExportContext();
         if (ctx.mode === 'trend') { exportTrendExcel(); return; }
         if (ctx.mode === 'strategic') { exportStrategicReportExcel(); return; }
+        if (ctx.mode === 'assessment_impact' && typeof window.exportAssessmentImpactExcel==='function') { window.exportAssessmentImpactExcel(); return; }
         if (ctx.mode === 'quality') { exportDataQualityExcel(ctx); return; }
         if (ctx.mode === 'validation_readiness' && typeof exportValidationReadinessExcel==='function') { exportValidationReadinessExcel(); return; }
         if (ctx.mode === 'visits') { exportVisitsExcel(ctx); return; }
@@ -9823,6 +9827,7 @@ Mevcut: ${issue.currentValue || 'Boş'}`), fontSize:8},
             ctx = getActiveExportContext();
             if (ctx.mode === 'trend') { exportTrendPDF(); return; }
             if (ctx.mode === 'strategic') { exportStrategicReportPDF(); return; }
+            if (ctx.mode === 'assessment_impact' && typeof window.exportAssessmentImpactPDF==='function') { window.exportAssessmentImpactPDF(); return; }
             if (ctx.mode === 'manager') { exportManagerPDF(); return; }
             if (ctx.mode === 'kanban') { exportKanbanPDF(); return; }
             if (ctx.mode === 'quality') { exportDataQualityPDF(ctx); return; }
