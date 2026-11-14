@@ -317,25 +317,54 @@ const I18N = {
         if (!wrap) closeMoreActions();
     });
 
+    const HUB_TAB_BUTTON_FALLBACKS = {
+        // CAP Yönetimi Hub alt görünümleri artık sidebar'da ayrı düğme taşımaz.
+        'list':'btn-tab-cap-hub',
+        'upcoming':'btn-tab-cap-hub',
+        'past':'btn-tab-cap-hub',
+        'kanban':'btn-tab-cap-hub',
+        'empty-caps':'btn-tab-cap-hub',
+        'icao-closed':'btn-tab-cap-hub',
+        // Ziyaret Yönetimi Hub alt görünümleri artık sidebar'da ayrı düğme taşımaz.
+        'visits':'btn-tab-visit-hub',
+        'visit-management':'btn-tab-visit-hub',
+        'visit-scope':'btn-tab-visit-hub',
+        'visit-workspace':'btn-tab-visit-hub',
+        'visit-followup':'btn-tab-visit-hub',
+        'visit-consultation':'btn-tab-visit-hub',
+        'visit-reports':'btn-tab-visit-hub',
+        'icao-visit-validation':'btn-tab-visit-hub',
+        'visit-analysis':'btn-tab-visit-hub',
+        'visit-audit':'btn-tab-visit-hub'
+    };
+
+    function resolveNavigationButton(tabId) {
+        return document.getElementById('btn-tab-' + tabId) ||
+               document.getElementById(HUB_TAB_BUTTON_FALLBACKS[tabId] || '');
+    }
+
     function switchTab(tabId) {
         const target = document.getElementById('tab-' + tabId);
-        const btn = document.getElementById('btn-tab-' + tabId);
-        if (!target || !btn) {
-            const error = new Error(`Menü-sekme bağlantısı bulunamadı: ${tabId}`);
+        const btn = resolveNavigationButton(tabId);
+        if (!target) {
+            const error = new Error(`Sekme içeriği bulunamadı: ${tabId}`);
             recordRuntimeIssue('navigation', error.message, { tabId });
             showAppRuntimeToast('İstenen ekran açılamadı. Sistem Kontrolü ekranını inceleyiniz.', 'error');
             return false;
+        }
+        if (!btn) {
+            recordRuntimeIssue('navigation', `Görünür menü düğmesi bulunamadı; sekme doğrudan açılıyor: ${tabId}`, { tabId, severity:'warning' });
         }
         try {
             document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
             document.querySelectorAll('.tab-btn').forEach(t => { t.classList.remove('active'); t.style.color = "var(--muted)"; });
             target.classList.add('active');
-            btn.classList.add('active');
-            const parentGroup = btn.closest('.nav-group');
+            if(btn) btn.classList.add('active');
+            const parentGroup = btn ? btn.closest('.nav-group') : null;
             if(parentGroup) { if(window.innerWidth > 768) focusDesktopNavGroup(parentGroup); else parentGroup.classList.add('open'); keepNavGroupVisible(parentGroup); }
-            if(tabId === 'report' || tabId === 'trend' || tabId === 'kanban' || tabId === 'strategic' || tabId === 'validation-readiness' || tabId === 'smart' || tabId === 'quality' || tabId === 'pq-library' || tabId === 'visits' || tabId === 'visit-scope' || tabId === 'icao-visit-validation' || tabId === 'visit-workspace' || tabId === 'visit-followup' || tabId === 'visit-consultation' || tabId === 'visit-reports' || tabId === 'visit-management' || tabId === 'visit-analysis' || tabId === 'visit-audit') { btn.style.color = "var(--primary)"; }
-            if(tabId === 'past' || tabId === 'empty-caps') { btn.style.color = "var(--danger)"; }
-            if(tabId === 'icao-closed') { btn.style.color = "#ca8a04"; }
+            if(btn && (tabId === 'report' || tabId === 'trend' || tabId === 'kanban' || tabId === 'strategic' || tabId === 'validation-readiness' || tabId === 'smart' || tabId === 'quality' || tabId === 'pq-library' || tabId === 'visits' || tabId === 'visit-scope' || tabId === 'icao-visit-validation' || tabId === 'visit-workspace' || tabId === 'visit-followup' || tabId === 'visit-consultation' || tabId === 'visit-reports' || tabId === 'visit-management' || tabId === 'visit-analysis' || tabId === 'visit-audit')) { btn.style.color = "var(--primary)"; }
+            if(btn && (tabId === 'past' || tabId === 'empty-caps')) { btn.style.color = "var(--danger)"; }
+            if(btn && tabId === 'icao-closed') { btn.style.color = "#ca8a04"; }
             if(tabId === 'report') updateReportPreview();
             if(tabId === 'strategic') renderStrategicReportPreview();
             if(tabId === 'validation-readiness' && typeof renderValidationReadiness==='function') renderValidationReadiness();
