@@ -152,6 +152,7 @@
 
   function render(){
     if(!document.getElementById('tab-actions'))return;const tasks=allTasks(),rows=filteredTasks(tasks);renderKpis(tasks);renderQuick();renderTable(rows);renderDashboardSummary(tasks);
+    if(typeof window.refreshNotificationCenterFromActions==='function')setTimeout(()=>window.refreshNotificationCenterFromActions(),0);
     const info=document.getElementById('actionCenterContext');if(info)info.innerHTML=`<b>${rows.length}</b> görev gösteriliyor · toplam <b>${tasks.length}</b> görev · otomatik görevler kaynak veriden anlık türetilir, Firebase yalnız iş akışı tercihlerini ve manuel görevleri saklar.`;
     const cap=document.getElementById('actionCapLeadDays');if(cap&&!cap.matches(':focus'))cap.value=Number(state.settings.capLeadDays)||15;const visit=document.getElementById('actionVisitLeadDays');if(visit&&!visit.matches(':focus'))visit.value=Number(state.settings.visitLeadDays)||14;
   }

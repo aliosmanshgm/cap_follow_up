@@ -96,3 +96,31 @@ Otomatik bir görev kaynak problemi devam ederken kullanıcı tarafından `Tamam
 ### Firebase
 
 Yeni kök nedeniyle `firebase/database.rules.phase13.json` Realtime Database Rules ekranına uygulanmalıdır. Firebase Storage gerekmez.
+
+## Faz 14 v17 — Bildirim & Otomasyon Merkezi
+
+Yeni **Operasyon → Bildirim Merkezi** ekranı Aksiyon Merkezi'ndeki açık işleri anlık olarak bildirimlere dönüştürür.
+
+Başlıca işlevler:
+
+- kritik/yüksek/orta/bilgi seviyeleri
+- okunmamış, bugün, kritik/yüksek, ertelenmiş ve kapatılmış görünümler
+- kullanıcı bazında okundu / ertele / kapat durumu
+- kaynak görev değişirse fingerprint değişimiyle bildirimin yeniden görünmesi
+- tarayıcı Notification API ile masaüstü bildirimi (uygulama açıkken)
+- haftalık özet hatırlatıcısı ve otomatik özet metni
+- `mailto:` ile e-posta taslağı açma; ek Gmail yetkisi gerektirmez
+- Dashboard özeti ve sidebar okunmamış sayacı
+- Excel / PDF dışa aktarma
+
+### Firebase
+
+Yeni kullanıcı-bazlı kök:
+
+`icao_notification_center/users/{uid}`
+
+Tam Rules dosyası: `firebase/database.rules.phase14.json`.
+
+### Sınır
+
+GitHub Pages üzerinde çalışan tarayıcı uygulaması kapalıyken sürekli arka plan zamanlayıcısı veya güvenilir otomatik e-posta gönderimi yapamaz. Bu sürümde tarayıcı bildirimleri ve haftalık özet, uygulama açıkken çalışır. Arka plan e-posta gönderimi daha sonra sunucu/Cloud Functions/Apps Script gibi zamanlanabilir bir bileşenle bağlanabilir.

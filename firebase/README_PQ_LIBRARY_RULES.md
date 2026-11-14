@@ -183,3 +183,33 @@ Rules:
 ```
 
 Tam güncel dosya: `firebase/database.rules.phase13.json`.
+
+## Faz 14 — Bildirim & Otomasyon Merkezi
+
+Yeni Realtime Database kökü:
+
+```text
+icao_notification_center/users/{uid}
+```
+
+Bildirimlerin kendisi Firebase'e kopyalanmaz. Aksiyon Merkezi'nden anlık türetilir. Firebase yalnız kullanıcıya özel durum ve ayarları saklar:
+
+- `settings`: bildirim seviyeleri, yaklaşan iş penceresi, tarayıcı bildirimi ve haftalık özet tercihleri
+- `states`: okundu, ertelendi, kapatıldı ve son tarayıcı bildirimi fingerprint kayıtları
+
+Kullanıcıya özel erişim önerilir:
+
+```json
+"icao_notification_center": {
+  "users": {
+    "$uid": {
+      ".read": "auth != null && auth.uid === $uid",
+      ".write": "auth != null && auth.uid === $uid"
+    }
+  }
+}
+```
+
+Tam güncel rules dosyası: `firebase/database.rules.phase14.json`.
+
+Tarayıcı bildirimleri yalnız uygulama açıkken ve kullanıcı tarayıcı izni verdiyse çalışır. Haftalık özet de belirlenen gün/saatten sonra uygulama açıldığında üretilir. Arka planda otomatik e-posta gönderimi için sunucu/zamanlayıcı tabanlı ek entegrasyon gerekir.

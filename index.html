@@ -13,7 +13,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.10/pdfmake.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.10/vfs_fonts.js"></script>
-    <link rel="stylesheet" href="css/app.css?v=20261114-phase13-actions-v16">
+    <link rel="stylesheet" href="css/app.css?v=20261114-phase14-notifications-v17">
 </head>
 <body>
 
@@ -71,6 +71,7 @@
                     <button class="tab-btn" onclick="switchTab('validation-readiness')" id="btn-tab-validation-readiness">🎯 Validasyon Hazırlığı</button>
                     <button class="tab-btn" type="button" onclick="return switchTab('visits')" id="btn-tab-visit-hub">🧭 Ziyaret Yönetimi</button>
                     <button class="tab-btn" type="button" onclick="switchTab('actions')" id="btn-tab-actions">✅ Aksiyon &amp; Görev Merkezi</button>
+                    <button class="tab-btn notification-nav-btn" type="button" onclick="switchTab('notifications')" id="btn-tab-notifications">🔔 Bildirim Merkezi <span id="notificationNavBadge" class="notification-nav-badge" style="display:none;">0</span></button>
                     <div class="visit-legacy-nav" aria-hidden="true">
                         <button class="legacy-route-btn" onclick="switchTab('visits')" id="btn-tab-visits">Ziyaret Planı</button>
                         <button class="legacy-route-btn" onclick="switchTab('visit-scope')" id="btn-tab-visit-scope">Kapsam ve Hazırlık</button>
@@ -451,6 +452,7 @@
 
             <div id="validationReadinessDashboardSummary" class="validation-dashboard-summary"><div class="validation-dashboard-empty">Validasyon hazırlığı verisi hesaplanıyor...</div></div>
             <div id="actionCenterDashboardSummary" class="action-dashboard-summary"><div class="validation-dashboard-empty">Aksiyon merkezi hazırlanıyor...</div></div>
+            <div id="notificationCenterDashboardSummary" class="notification-dashboard-summary"><div class="validation-dashboard-empty">Bildirim merkezi hazırlanıyor...</div></div>
 
             <div style="margin-top: 35px; margin-bottom: 25px;">
                 <h3 style="margin: 0 0 20px 0; font-size: 16px; color: var(--text); border-bottom: 1px solid var(--border); padding-bottom: 10px;">📋 Eylem Durum Özeti</h3>
@@ -1319,6 +1321,91 @@
                 <table class="action-table">
                     <thead><tr><th>Görev</th><th>Kaynak</th><th>Alan / PQ</th><th>Durum</th><th>Öncelik</th><th>Sorumlu / Birim</th><th>Hedef</th><th>Takip</th><th>İşlem</th></tr></thead>
                     <tbody id="actionCenterTableBody"><tr><td colspan="9" class="action-empty">Aksiyonlar hazırlanıyor...</td></tr></tbody>
+                </table>
+            </div>
+        </div>
+
+
+        <div id="tab-notifications" class="tab-content">
+            <div class="notification-center-head">
+                <div>
+                    <h2>🔔 Bildirim &amp; Otomasyon Merkezi</h2>
+                    <p>CAP, validasyon, ziyaret ve veri bütünlüğündeki zaman duyarlı işleri tek yerde izler. Otomatik bildirimler kaynak Aksiyon Merkezi verisinden türetilir.</p>
+                </div>
+                <div class="notification-head-actions">
+                    <button type="button" class="btn-outline" onclick="renderNotificationCenter()">↻ Yenile</button>
+                    <button type="button" class="btn-outline" onclick="markAllNotificationsRead()">✓ Tümünü Okundu Yap</button>
+                    <button type="button" style="background:#059669" onclick="exportNotificationCenterExcel()">📊 Excel</button>
+                    <button type="button" style="background:#dc2626" onclick="exportNotificationCenterPDF()">📄 PDF</button>
+                </div>
+            </div>
+
+            <div class="notification-kpi-grid">
+                <div class="notification-kpi"><b id="notificationKpiUnread">0</b><span>Okunmamış</span></div>
+                <div class="notification-kpi critical"><b id="notificationKpiCritical">0</b><span>Kritik</span></div>
+                <div class="notification-kpi high"><b id="notificationKpiHigh">0</b><span>Yüksek</span></div>
+                <div class="notification-kpi"><b id="notificationKpiToday">0</b><span>Bugün</span></div>
+                <div class="notification-kpi"><b id="notificationKpiSnoozed">0</b><span>Ertelenmiş</span></div>
+                <div class="notification-kpi"><b id="notificationKpiActive">0</b><span>Aktif</span></div>
+            </div>
+
+            <div class="notification-quick-bar">
+                <button type="button" class="active" data-notification-view="active" onclick="setNotificationQuickView('active')">Aktif</button>
+                <button type="button" data-notification-view="unread" onclick="setNotificationQuickView('unread')">Okunmamış</button>
+                <button type="button" data-notification-view="critical" onclick="setNotificationQuickView('critical')">Kritik / Yüksek</button>
+                <button type="button" data-notification-view="today" onclick="setNotificationQuickView('today')">Bugün</button>
+                <button type="button" data-notification-view="snoozed" onclick="setNotificationQuickView('snoozed')">Ertelenmiş</button>
+                <button type="button" data-notification-view="dismissed" onclick="setNotificationQuickView('dismissed')">Kapatılanlar</button>
+                <button type="button" data-notification-view="all" onclick="setNotificationQuickView('all')">Tüm Aktif</button>
+            </div>
+
+            <div class="notification-filter-grid">
+                <div class="control-group"><label>Seviye</label><select id="notificationLevelFilter" onchange="renderNotificationCenter()"><option value="all">Tüm seviyeler</option><option value="critical">Kritik</option><option value="high">Yüksek</option><option value="medium">Orta</option><option value="info">Bilgi</option></select></div>
+                <div class="control-group"><label>Kaynak</label><select id="notificationSourceFilter" onchange="renderNotificationCenter()"><option value="all">Tüm kaynaklar</option><option value="cap">CAP</option><option value="validation">Validasyon</option><option value="visit">Ziyaret</option><option value="followup">Ziyaret Takibi</option><option value="consultation">Danışma</option><option value="integrity">Veri Bütünlüğü</option><option value="manual">Manuel</option><option value="digest">Haftalık Özet</option></select></div>
+                <div class="control-group notification-search"><label>Arama</label><input id="notificationSearch" type="search" placeholder="Başlık, PQ, alan, kaynak..." oninput="renderNotificationCenter()"></div>
+                <div class="notification-filter-actions"><button type="button" class="btn-outline" onclick="clearNotificationFilters()">Filtreleri Temizle</button></div>
+            </div>
+
+            <div class="notification-settings-layout">
+                <section class="notification-settings-card">
+                    <h3>🔔 Uygulama İçi Bildirimler</h3>
+                    <label class="notification-check"><input id="notificationEnabled" type="checkbox" checked><span><b>Bildirim motoru etkin</b><small>Aksiyon Merkezi'ndeki zaman duyarlı kayıtları bildirime dönüştürür.</small></span></label>
+                    <div class="notification-level-checks">
+                        <label><input id="notificationIncludeCritical" type="checkbox" checked> Kritik</label>
+                        <label><input id="notificationIncludeHigh" type="checkbox" checked> Yüksek</label>
+                        <label><input id="notificationIncludeMedium" type="checkbox" checked> Orta</label>
+                        <label><input id="notificationIncludeInfo" type="checkbox"> Bilgi</label>
+                    </div>
+                    <label>Yaklaşan iş uyarı penceresi (gün)</label><input id="notificationUpcomingDays" type="number" min="1" max="60" value="7">
+                </section>
+
+                <section class="notification-settings-card">
+                    <h3>🖥️ Tarayıcı Bildirimleri</h3>
+                    <label class="notification-check"><input id="notificationBrowserEnabled" type="checkbox"><span><b>Tarayıcı bildirimi göster</b><small>Yalnız uygulama açıkken çalışır; kritik/yüksek bildirimler masaüstüne iletilebilir.</small></span></label>
+                    <label>Asgari seviye</label><select id="notificationBrowserMin"><option value="critical">Sadece Kritik</option><option value="high" selected>Yüksek + Kritik</option><option value="medium">Orta + Yüksek + Kritik</option></select>
+                    <div class="notification-permission-row"><span>Tarayıcı izni: <b id="notificationBrowserPermission">-</b></span><button type="button" class="btn-outline" onclick="requestNotificationPermission()">İzin İste / Test Et</button></div>
+                </section>
+
+                <section class="notification-settings-card">
+                    <h3>📬 Haftalık Özet</h3>
+                    <label class="notification-check"><input id="notificationWeeklyEnabled" type="checkbox"><span><b>Haftalık özet hatırlatıcısı</b><small>Belirlenen gün/saatten sonra uygulama açıldığında özet hazır bildirimi üretir.</small></span></label>
+                    <div class="notification-weekly-grid"><div><label>Gün</label><select id="notificationWeeklyDay"><option value="1">Pazartesi</option><option value="2">Salı</option><option value="3">Çarşamba</option><option value="4">Perşembe</option><option value="5">Cuma</option><option value="6">Cumartesi</option><option value="7">Pazar</option></select></div><div><label>Saat</label><input id="notificationWeeklyHour" type="time" value="09:00"></div></div>
+                    <label>E-posta alıcısı</label><input id="notificationWeeklyEmail" type="email" placeholder="ornek@shgm.gov.tr">
+                    <div class="notification-weekly-actions"><button type="button" class="btn-outline" onclick="showWeeklyNotificationDigest()">Özeti Göster</button><button type="button" class="btn-outline" onclick="copyWeeklyNotificationDigest()">📋 Kopyala</button><button type="button" class="btn-outline" onclick="openWeeklyNotificationEmailDraft()">✉️ E-posta Taslağı</button></div>
+                </section>
+            </div>
+            <div class="notification-settings-save"><button type="button" onclick="saveNotificationSettings()">💾 Bildirim Ayarlarını Kaydet</button><span>Not: Tarayıcı ve haftalık özet otomasyonu uygulama açıkken çalışır. Arka planda otomatik e-posta gönderimi için ayrıca sunucu/zamanlayıcı entegrasyonu gerekir.</span></div>
+
+            <section id="notificationDigestPanel" class="notification-digest-panel" style="display:none;">
+                <div class="notification-digest-head"><div><h3>📬 Haftalık USOAP CMA Özeti</h3><p>Aksiyon Merkezi'ndeki güncel açık işlerden otomatik oluşturulur.</p></div><div><button type="button" class="btn-outline" onclick="copyWeeklyNotificationDigest()">📋 Kopyala</button><button type="button" onclick="openWeeklyNotificationEmailDraft()">✉️ E-posta Taslağı Aç</button></div></div>
+                <textarea id="notificationDigestText" rows="18" readonly></textarea>
+            </section>
+
+            <div id="notificationContext" class="notification-context"></div>
+            <div class="notification-table-wrap">
+                <table class="notification-table">
+                    <thead><tr><th>Seviye</th><th>Bildirim</th><th>Kaynak</th><th>Zaman / Durum</th><th>Hedef</th><th>Erteleme</th><th>İşlem</th></tr></thead>
+                    <tbody id="notificationTableBody"><tr><td colspan="7" class="notification-empty">Bildirimler hazırlanıyor...</td></tr></tbody>
                 </table>
             </div>
         </div>
@@ -2340,22 +2427,23 @@
 </div>
 
 
-<script src="js/app.js?v=20261114-phase13-actions-v16"></script>
-<script src="js/modules/visit-sync.js?v=20261114-phase13-actions-v16"></script>
-<script src="js/modules/visit-hub.js?v=20261114-phase13-actions-v16"></script>
-<script src="js/modules/assessment-events.js?v=20261114-phase13-actions-v16"></script>
-<script src="js/modules/official-ei-management.js?v=20261114-phase13-actions-v16"></script>
-<script src="js/modules/official-ei-automation.js?v=20261114-phase13-actions-v16"></script>
-<script src="js/parsers/pq-docx-parser.js?v=20261114-phase13-actions-v16"></script>
-<script src="js/modules/pq-linkage.js?v=20261114-phase13-actions-v16"></script>
-<script src="js/modules/validation-readiness.js?v=20261114-phase13-actions-v16"></script>
-<script src="js/modules/assessment-impact.js?v=20261114-phase13-actions-v16"></script>
-<script src="js/modules/management-shell.js?v=20261114-phase13-actions-v16"></script>
-<script src="js/modules/drive-documents.js?v=20261114-phase13-actions-v16"></script>
-<script src="js/services/pq-repository.js?v=20261114-phase13-actions-v16"></script>
-<script src="js/modules/pq-library.js?v=20261114-phase13-actions-v16"></script>
-<script src="js/modules/system-integrity.js?v=20261114-phase13-actions-v16"></script>
-<script src="js/modules/action-center.js?v=20261114-phase13-actions-v16"></script>
-<script src="js/modules/reporting-center.js?v=20261114-phase13-actions-v16"></script>
+<script src="js/app.js?v=20261114-phase14-notifications-v17"></script>
+<script src="js/modules/visit-sync.js?v=20261114-phase14-notifications-v17"></script>
+<script src="js/modules/visit-hub.js?v=20261114-phase14-notifications-v17"></script>
+<script src="js/modules/assessment-events.js?v=20261114-phase14-notifications-v17"></script>
+<script src="js/modules/official-ei-management.js?v=20261114-phase14-notifications-v17"></script>
+<script src="js/modules/official-ei-automation.js?v=20261114-phase14-notifications-v17"></script>
+<script src="js/parsers/pq-docx-parser.js?v=20261114-phase14-notifications-v17"></script>
+<script src="js/modules/pq-linkage.js?v=20261114-phase14-notifications-v17"></script>
+<script src="js/modules/validation-readiness.js?v=20261114-phase14-notifications-v17"></script>
+<script src="js/modules/assessment-impact.js?v=20261114-phase14-notifications-v17"></script>
+<script src="js/modules/management-shell.js?v=20261114-phase14-notifications-v17"></script>
+<script src="js/modules/drive-documents.js?v=20261114-phase14-notifications-v17"></script>
+<script src="js/services/pq-repository.js?v=20261114-phase14-notifications-v17"></script>
+<script src="js/modules/pq-library.js?v=20261114-phase14-notifications-v17"></script>
+<script src="js/modules/system-integrity.js?v=20261114-phase14-notifications-v17"></script>
+<script src="js/modules/action-center.js?v=20261114-phase14-notifications-v17"></script>
+<script src="js/modules/notification-center.js?v=20261114-phase14-notifications-v17"></script>
+<script src="js/modules/reporting-center.js?v=20261114-phase14-notifications-v17"></script>
 </body>
 </html>

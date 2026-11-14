@@ -1,6 +1,6 @@
 {
   "app": "USOAP CMA CAP Takip",
-  "version": "16-phase13-action-task-center",
+  "version": "17-phase14-notification-automation-center",
   "baseline": "index_visit_hub_pq_version_database(2).html",
   "buildDate": "2026-11-14",
   "features": [
@@ -61,7 +61,16 @@
     "integrity-issue-actions",
     "action-workflow-overlays",
     "action-dashboard-summary",
-    "action-pdf-excel-export"
+    "action-pdf-excel-export",
+    "notification-automation-center",
+    "derived-action-notifications",
+    "per-user-notification-state",
+    "notification-read-snooze-dismiss",
+    "browser-notification-api",
+    "weekly-digest-reminder",
+    "weekly-digest-mailto-draft",
+    "notification-dashboard-badge",
+    "notification-pdf-excel-export"
   ],
   "architecture": {
     "index": "index.html",
@@ -85,6 +94,7 @@
       "js/modules/pq-library.js",
       "js/modules/system-integrity.js",
       "js/modules/action-center.js",
+      "js/modules/notification-center.js",
       "js/modules/reporting-center.js"
     ]
   }
