@@ -33,3 +33,14 @@ OAuth Web Client ID istemci kimliğidir; client secret uygulamaya girilmez. Goog
 ## Ana metodoloji
 
 Drive dosya deposudur; Firebase ilişki ve uygulama metadata deposudur. Böylece aynı Drive belgesi CAP, PQ ve ziyaret bağlamında tek kimlikle izlenebilir ve Firebase Storage maliyeti/bağımlılığı oluşmaz.
+
+## v14.1 OAuth Branding public pages
+Google OAuth production/brand verification preparation adds three public pages at repository root:
+- `about.html` — public application homepage/description
+- `privacy.html` — privacy policy, including Google user data access/use/storage disclosure
+- `terms.html` — terms of use
+
+The login screen and sidebar include direct links to these pages. Suggested Google Auth Platform Branding URLs:
+- Home page: `https://aliosmanshgm.github.io/cap_follow_up/about.html`
+- Privacy policy: `https://aliosmanshgm.github.io/cap_follow_up/privacy.html`
+- Terms of service: `https://aliosmanshgm.github.io/cap_follow_up/terms.html`

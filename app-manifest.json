@@ -1,6 +1,6 @@
 {
   "app": "USOAP CMA CAP Takip",
-  "version": "14-phase11-google-drive-documents",
+  "version": "14.1-phase11-oauth-branding-public-pages",
   "baseline": "index_visit_hub_pq_version_database(2).html",
   "buildDate": "2026-11-14",
   "features": [
@@ -36,7 +36,11 @@
     "document-pq-cap-visit-linkage",
     "drive-link-registration",
     "pq-source-drive-auto-archive",
-    "firebase-document-metadata-registry"
+    "firebase-document-metadata-registry",
+    "public-oauth-homepage",
+    "public-privacy-policy",
+    "public-terms-of-service",
+    "in-product-privacy-links"
   ],
   "architecture": {
     "index": "index.html",

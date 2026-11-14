@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>USOAP CMA CAP Takip - Gizlilik Politikası</title>
+  <meta name="description" content="USOAP CMA CAP Takip gizlilik politikası ve Google kullanıcı verilerinin kullanım şekli.">
+  <style>
+    :root{--bg:#f5f7fb;--card:#fff;--text:#172033;--muted:#667085;--primary:#1d4ed8;--line:#e4e7ec;--soft:#eff6ff}
+    *{box-sizing:border-box}body{margin:0;font-family:Inter,Arial,sans-serif;background:var(--bg);color:var(--text);line-height:1.7}.wrap{max-width:920px;margin:0 auto;padding:40px 20px 70px}.hero,.card{background:var(--card);border:1px solid var(--line);border-radius:18px;box-shadow:0 8px 28px rgba(16,24,40,.06)}.hero{padding:34px}.eyebrow{font-size:13px;font-weight:700;color:var(--primary);text-transform:uppercase}.hero h1{margin:8px 0;font-size:34px}.hero p{margin:0;color:var(--muted)}.card{padding:28px;margin-top:18px}.card h2{margin-top:0;font-size:22px}.card h3{margin-bottom:4px}.card p,.card li{color:#344054}.notice{background:var(--soft);border-left:4px solid var(--primary);padding:14px 16px;border-radius:8px;color:#1e3a8a}.nav{display:flex;gap:14px;flex-wrap:wrap;margin-top:22px}.nav a,.card a{color:var(--primary);font-weight:700;text-decoration:none}.nav a:hover,.card a:hover{text-decoration:underline}.footer{margin-top:24px;text-align:center;color:var(--muted);font-size:13px}code{background:#f2f4f7;border-radius:5px;padding:2px 5px}@media(max-width:700px){.hero h1{font-size:28px}.wrap{padding:22px 14px 50px}}
+  </style>
+</head>
+<body>
+<main class="wrap">
+  <section class="hero">
+    <div class="eyebrow">USOAP CMA CAP Takip</div>
+    <h1>Gizlilik Politikası</h1>
+    <p>Bu politika, uygulamanın Google kullanıcı verilerine ve uygulama içerisinde işlenen diğer verilere nasıl eriştiğini, bunları nasıl kullandığını ve sakladığını açıklar.</p>
+    <div class="nav"><a href="about.html">Hakkında</a><a href="terms.html">Kullanım Koşulları</a><a href="index.html">Uygulamaya Git</a></div>
+  </section>
+
+  <section class="card">
+    <h2>1. Kapsam</h2>
+    <p>USOAP CMA CAP Takip; PQ, CAP, validasyon hazırlığı, ziyaret, EI ve bunlarla ilişkili doküman/kanıt kayıtlarının yönetimine yardımcı olan tarayıcı tabanlı bir uygulamadır. Bu politika, özellikle Google Drive entegrasyonu üzerinden erişilen Google kullanıcı verileri dahil olmak üzere uygulamanın veri işleme esaslarını kapsar.</p>
+  </section>
+
+  <section class="card">
+    <h2>2. Google kullanıcı verilerine erişim</h2>
+    <p>Uygulama Google Drive erişimi için Google OAuth kullanır ve <code>https://www.googleapis.com/auth/drive.file</code> kapsamını talep eder. Bu kapsam, uygulamanın tüm Google Drive içeriğine genel erişim sağlaması yerine, kullanıcı tarafından uygulama ile ilişkilendirilen veya uygulama tarafından oluşturulan/yüklenen dosyalar üzerinde çalışmasına imkân verir.</p>
+    <p>Uygulama, Google Drive'a bağlantı kurulmadığı sürece Google kullanıcı verilerine erişmez. Yetkilendirme kullanıcı tarafından açıkça başlatılır.</p>
+  </section>
+
+  <section class="card">
+    <h2>3. Google verilerinin kullanım amacı</h2>
+    <p>Google Drive erişimi yalnızca aşağıdaki işlevler için kullanılır:</p>
+    <ul>
+      <li>kullanıcının seçtiği belgeleri Google Drive'a yüklemek;</li>
+      <li>uygulamanın oluşturduğu çalışma klasörleri ve dosyaları yönetmek;</li>
+      <li>PQ kaynak belgeleri, CAP kanıtları, ziyaret kanıtları, ICAO raporları ve EI/OLF kaynak dosyalarını ilgili kayıtlarla ilişkilendirmek;</li>
+      <li>uygulama tarafından daha önce oluşturulan veya kullanıcı tarafından uygulamayla ilişkilendirilen dosyaların bağlantı ve metadata bilgilerini göstermek.</li>
+    </ul>
+    <div class="notice">Google kullanıcı verileri reklam, pazarlama, kullanıcı profilleme veya veri satışı amacıyla kullanılmaz.</div>
+  </section>
+
+  <section class="card">
+    <h2>4. Saklanan bilgiler</h2>
+    <h3>Google Drive'da</h3>
+    <p>Dosyaların kendisi kullanıcının Google Drive hesabında saklanır.</p>
+    <h3>Uygulama veri tabanında</h3>
+    <p>Uygulama, Firebase Realtime Database üzerinde dosyanın kendisini değil; gerektiğinde aşağıdaki metadata türlerini saklayabilir:</p>
+    <ul>
+      <li>Google Drive dosya kimliği;</li>
+      <li>dosya adı, MIME türü, boyut ve bağlantı bilgileri;</li>
+      <li>uygulama klasör kimliği;</li>
+      <li>belge türü;</li>
+      <li>ilgili denetim alanı, PQ, CAP adımı, ziyaret veya değerlendirme kaydı;</li>
+      <li>oluşturma/güncelleme zamanı ve uygulama kullanıcısına ilişkin kayıt bilgisi.</li>
+    </ul>
+    <p>Google OAuth Web Client ID ve uygulama klasörü ayarları uygulama yapılandırması kapsamında saklanabilir. OAuth erişim tokenı Firebase Realtime Database'e veya kalıcı tarayıcı depolamasına yazılmaz; aktif oturum sırasında bellekte tutulur.</p>
+  </section>
+
+  <section class="card">
+    <h2>5. Veri paylaşımı</h2>
+    <p>Google kullanıcı verileri satılmaz ve reklam amaçlı üçüncü taraflarla paylaşılmaz. Uygulamanın teknik olarak çalışabilmesi için kullanıcı tarafından seçilen işlevlere bağlı olarak Google hizmetleri ve Firebase altyapısı kullanılabilir. Bu hizmetler, ilgili hizmet sağlayıcıların kendi sözleşme ve gizlilik şartlarına tabidir.</p>
+    <p>Uygulama geliştiricisi, Google kullanıcı verilerini Google API Services User Data Policy ile bağdaşmayan amaçlarla kullanmaz.</p>
+  </section>
+
+  <section class="card">
+    <h2>6. Erişim, bağlantıyı kesme ve silme</h2>
+    <p>Kullanıcı Google Drive bağlantısını uygulama içinden kesebilir ve Google hesabının üçüncü taraf bağlantıları/izinleri bölümünden uygulamaya verilen OAuth yetkisini kaldırabilir.</p>
+    <p>Doküman Merkezi'nden bir metadata kaydının silinmesi, güvenlik amacıyla Google Drive'daki gerçek dosyayı otomatik olarak silmez. Drive'daki dosyanın silinmesi kullanıcı tarafından Google Drive üzerinden yönetilir.</p>
+  </section>
+
+  <section class="card">
+    <h2>7. Güvenlik</h2>
+    <p>Uygulama, HTTPS üzerinden sunulur ve Google OAuth erişim tokenını yalnız aktif oturum belleğinde tutacak şekilde tasarlanmıştır. Yetkili uygulama verilerine erişim için Firebase Authentication ve Realtime Database güvenlik kuralları kullanılabilir.</p>
+    <p>Hiçbir internet tabanlı sistem için mutlak güvenlik garanti edilemez. Kullanıcıların hesap güvenliğini, Google hesap izinlerini ve paylaşılan Drive dosyalarının erişim ayarlarını düzenli olarak kontrol etmeleri önerilir.</p>
+  </section>
+
+  <section class="card">
+    <h2>8. Politika değişiklikleri</h2>
+    <p>Uygulamanın Google kullanıcı verilerini kullanma şekli değişirse bu politika güncellenir. Güncel sürüm bu sayfada yayımlanır.</p>
+  </section>
+
+  <section class="card">
+    <h2>9. İletişim</h2>
+    <p>Gizlilik veya Google Drive erişimiyle ilgili sorular için <a href="mailto:aliosmanshgm@gmail.com">aliosmanshgm@gmail.com</a> adresinden iletişime geçebilirsiniz.</p>
+  </section>
+
+  <div class="footer">Yürürlük / Son güncelleme: 14 Kasım 2026 · USOAP CMA CAP Takip</div>
+</main>
+</body>
+</html>
