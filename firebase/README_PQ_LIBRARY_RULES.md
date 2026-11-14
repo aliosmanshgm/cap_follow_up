@@ -135,3 +135,23 @@ Bu kural parçası tek başına tam rules dosyası değildir; mevcut rules yapı
 - Bir PQ'nun CAP adımlarının tamamlanması onu yalnızca **validasyon adayı** yapar.
 - EI etkisi, aday/ziyaret bazında yalnızca projeksiyon olarak gösterilir.
 - Resmî EI ancak `icao_assessment_events + icao_ei_snapshots` içindeki resmî değerlendirme sonucu ile değişmiş kabul edilir.
+
+# Google Drive Doküman & Kanıt Merkezi (Faz 11)
+
+Faz 11 dosya binary içeriğini Firebase Storage'a yazmaz. Google Drive'daki dosyalara ait metadata ve CAP/PQ/Ziyaret ilişkileri aşağıdaki Realtime Database kökünde tutulur:
+
+- `icao_document_hub/settings` — OAuth Web Client ID, uygulama Drive kök klasör kimliği ve otomatik PQ arşiv tercihi
+- `icao_document_hub/records/{documentId}` — Drive dosya kimliği, web bağlantısı, belge türü, alan/PQ/step/ziyaret ilişkileri, açıklama ve etiketler
+
+Bu faz için Realtime Database Rules'a şu kök eklenmelidir:
+
+```json
+"icao_document_hub": {
+  ".read": "auth != null",
+  ".write": "auth != null"
+}
+```
+
+Tam örnek rules dosyası `firebase/database.rules.phase11.json` olarak pakete eklenmiştir.
+
+**Firebase Storage gerekli değildir.** Google Drive OAuth access tokenı Firebase'e veya kalıcı tarayıcı depolamaya yazılmaz; yalnız aktif tarayıcı oturum belleğinde tutulur.

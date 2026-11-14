@@ -13,7 +13,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.10/pdfmake.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.10/vfs_fonts.js"></script>
-    <link rel="stylesheet" href="css/app.css?v=20261114-phase10-assessment-impact-v13">
+    <link rel="stylesheet" href="css/app.css?v=20261114-phase11-drive-documents-v14">
 </head>
 <body>
 
@@ -97,6 +97,7 @@
                 <div class="nav-group-items">
                     <button class="tab-btn" onclick="switchTab('pq-library')" id="btn-tab-pq-library">📚 ICAO PQ Veri Tabanı</button>
                     <button class="tab-btn nav-action-btn" type="button" onclick="openIcaoOfficialEiManager()">🌐 ICAO Değerlendirme / EI Kayıtları</button>
+                    <button class="tab-btn" onclick="switchTab('drive-documents')" id="btn-tab-drive-documents">📎 Doküman &amp; Kanıt Merkezi</button>
                     <button class="tab-btn" onclick="switchTab('quality')" id="btn-tab-quality">🧪 Veri Kalitesi &amp; Bütünlük</button>
                 </div>
             </div>
@@ -1996,6 +1997,93 @@
             </div>
         </div>
 
+
+        <!-- FAZ 11 - GOOGLE DRIVE DOKUMAN & KANIT MERKEZI -->
+        <div id="tab-drive-documents" class="tab-content">
+            <div class="drive-center-header">
+                <div>
+                    <div class="section-kicker">FAZ 11 · HARİCİ DOKÜMAN ARŞİVİ</div>
+                    <h2>📎 Doküman &amp; Kanıt Merkezi</h2>
+                    <p>Dosyanın kendisi Google Drive'da tutulur; uygulama yalnız Drive dosya kimliği, bağlantısı ve PQ/CAP/Ziyaret ilişkisini Firebase Realtime Database'de saklar.</p>
+                </div>
+                <div class="drive-header-actions">
+                    <button class="btn-outline" type="button" onclick="refreshDriveDocuments()">↻ Yenile</button>
+                    <button class="btn-outline" type="button" onclick="disconnectGoogleDrive()">Bağlantıyı Kes</button>
+                    <button id="driveConnectBtn" type="button" onclick="connectGoogleDrive()">🔗 Google Drive'a Bağlan</button>
+                </div>
+            </div>
+
+            <div class="drive-status-panel">
+                <div><span id="driveConnectionBadge" class="drive-status-badge not-configured">OAuth ayarı gerekli</span><div id="driveConnectionDetail" class="drive-status-detail">Google Drive bağlantı durumu yükleniyor...</div></div>
+                <div class="drive-root-info"><b>Uygulama kök klasörü:</b> <span id="driveRootFolderIdView">-</span></div>
+            </div>
+
+            <div class="drive-kpi-grid">
+                <div class="drive-kpi-card"><span>Toplam Kayıt</span><b id="driveKpiTotal">0</b></div>
+                <div class="drive-kpi-card"><span>PQ Kaynakları</span><b id="driveKpiPq">0</b></div>
+                <div class="drive-kpi-card"><span>CAP Kanıtları</span><b id="driveKpiCap">0</b></div>
+                <div class="drive-kpi-card"><span>Ziyaret Kanıtları</span><b id="driveKpiVisit">0</b></div>
+                <div class="drive-kpi-card warning"><span>Genel / İlişkisiz</span><b id="driveKpiUnlinked">0</b></div>
+            </div>
+
+            <details class="drive-settings-card">
+                <summary>⚙️ Google Drive bağlantı ayarları</summary>
+                <div class="drive-settings-grid">
+                    <div class="control-group full"><label>Google OAuth 2.0 Web Client ID</label><input id="driveClientId" type="text" placeholder="...apps.googleusercontent.com"><small>Bu değer istemci kimliğidir; client secret değildir. Erişim tokenı kalıcı olarak saklanmaz.</small></div>
+                    <div class="control-group"><label>Drive kök klasör adı</label><input id="driveRootFolderName" type="text" value="USOAP CMA CAP Takip"></div>
+                    <div class="control-group"><label>GitHub Pages için Authorized JavaScript origin</label><div id="driveAuthorizedOrigin" class="drive-origin-box"></div></div>
+                    <label class="drive-check-row full"><input id="driveAutoArchivePq" type="checkbox"> PQ DOCX içe aktarmalarında, Drive oturumu zaten bağlıysa kaynak DOCX'i otomatik arşivle</label>
+                </div>
+                <div class="drive-settings-actions"><button type="button" class="btn-outline" onclick="resetGoogleDriveRootFolder()">Kök klasör kimliğini sıfırla</button><button type="button" onclick="saveGoogleDriveSettings()">💾 Ayarları Kaydet</button></div>
+                <div class="drive-setup-note"><b>Kurulum özeti:</b> Google Cloud projesinde Drive API etkinleştirilir, Web application OAuth Client oluşturulur ve yukarıda gösterilen origin yetkili JavaScript origin olarak eklenir. Uygulama en dar kapsam olarak <code>drive.file</code> kullanır.</div>
+            </details>
+
+            <div class="drive-action-grid">
+                <section class="drive-action-card">
+                    <h3>☁️ Dosyayı Drive'a Yükle ve İlişkilendir</h3>
+                    <div class="drive-form-grid">
+                        <div class="control-group full"><label>Dosya</label><input id="driveDocFile" type="file"></div>
+                        <div class="control-group"><label>Doküman türü</label><select id="driveDocType"><option value="pq-source">PQ Kaynak Belgesi</option><option value="cap-evidence">CAP Kanıtı</option><option value="visit-evidence">Ziyaret Kanıtı</option><option value="icao-report">ICAO Raporu / Resmî Belge</option><option value="ei-source">EI / OLF Kaynak Dosyası</option><option value="other">Diğer</option></select></div>
+                        <div class="control-group"><label>Denetim alanı</label><select id="driveDocArea"></select></div>
+                        <div class="control-group"><label>PQ</label><input id="driveDocPq" type="text" placeholder="Örn. 4.101"></div>
+                        <div class="control-group"><label>CAP Step</label><input id="driveDocStep" type="text" placeholder="Örn. 2"></div>
+                        <div class="control-group full"><label>Ziyaret</label><select id="driveDocVisit"></select></div>
+                        <div class="control-group full"><label>Açıklama</label><textarea id="driveDocDescription" rows="3" placeholder="Kanıtın neyi doğruladığı, kaynak rapor, kapsam vb."></textarea></div>
+                        <div class="control-group full"><label>Etiketler</label><input id="driveDocTags" type="text" placeholder="virgülle ayırın: icvm, mevzuat, eğitim"></div>
+                    </div>
+                    <button type="button" onclick="uploadDriveDocument()">☁️ Drive'a Yükle ve Kaydet</button>
+                </section>
+
+                <section class="drive-action-card">
+                    <h3>🔗 Mevcut Drive Dosyasını Kaydet</h3>
+                    <p class="drive-card-help">Dosya zaten Drive'daysa tekrar yüklemeden bağlantısını CAP/PQ/Ziyaret ile ilişkilendirin.</p>
+                    <div class="drive-form-grid">
+                        <div class="control-group full"><label>Drive bağlantısı</label><input id="driveLinkUrl" type="url" placeholder="https://drive.google.com/..."></div>
+                        <div class="control-group full"><label>Belge adı</label><input id="driveLinkName" type="text" placeholder="Örn. OPS 4.101 Kanıt Paketi"></div>
+                        <div class="control-group"><label>Doküman türü</label><select id="driveLinkType"><option value="pq-source">PQ Kaynak Belgesi</option><option value="cap-evidence">CAP Kanıtı</option><option value="visit-evidence">Ziyaret Kanıtı</option><option value="icao-report">ICAO Raporu / Resmî Belge</option><option value="ei-source">EI / OLF Kaynak Dosyası</option><option value="other">Diğer</option></select></div>
+                        <div class="control-group"><label>Denetim alanı</label><select id="driveLinkArea"></select></div>
+                        <div class="control-group"><label>PQ</label><input id="driveLinkPq" type="text" placeholder="Örn. 4.101"></div>
+                        <div class="control-group"><label>CAP Step</label><input id="driveLinkStep" type="text"></div>
+                        <div class="control-group full"><label>Ziyaret</label><select id="driveLinkVisit"></select></div>
+                        <div class="control-group full"><label>Açıklama</label><textarea id="driveLinkDescription" rows="3"></textarea></div>
+                        <div class="control-group full"><label>Etiketler</label><input id="driveLinkTags" type="text" placeholder="virgülle ayırın"></div>
+                    </div>
+                    <button type="button" onclick="registerDriveDocumentLink()">🔗 Bağlantıyı Kaydet</button>
+                </section>
+            </div>
+
+            <section class="drive-library-card">
+                <div class="drive-library-head"><div><h3>📚 Doküman Kayıtları</h3><p>Drive dosyaları tek yerde; ilişkiler üzerinden CAP, PQ ve ziyaret bağlamında izlenir.</p></div></div>
+                <div class="drive-filter-row">
+                    <input id="driveDocSearch" type="search" placeholder="Dosya adı, PQ, ziyaret, açıklama, etiket ara..." oninput="ICADriveDocuments.render()">
+                    <select id="driveDocFilterType" onchange="ICADriveDocuments.render()"><option value="all">Tüm doküman türleri</option><option value="pq-source">PQ Kaynak Belgesi</option><option value="cap-evidence">CAP Kanıtı</option><option value="visit-evidence">Ziyaret Kanıtı</option><option value="icao-report">ICAO Raporu / Resmî Belge</option><option value="ei-source">EI / OLF Kaynak Dosyası</option><option value="other">Diğer</option></select>
+                    <select id="driveDocFilterArea" onchange="ICADriveDocuments.render()"></select>
+                </div>
+                <div class="drive-table-wrap"><table class="drive-table"><thead><tr><th>Belge</th><th>Tür</th><th>İlişki</th><th>Etiket</th><th>Kaynak</th><th>Güncelleme</th><th>Drive</th><th>İşlem</th></tr></thead><tbody id="driveDocumentTableBody"></tbody></table></div>
+            </section>
+            <div id="driveBusy" class="drive-busy" style="display:none;">İşlem yapılıyor...</div>
+        </div>
+
         <!-- CAP EKSİKLİKLERİ -->
         <div id="tab-empty-caps" class="tab-content">
             <div class="table-wrapper" style="border: 1px solid var(--danger);">
@@ -2136,19 +2224,20 @@
 </div>
 
 
-<script src="js/app.js?v=20261114-phase10-assessment-impact-v13"></script>
-<script src="js/modules/visit-sync.js?v=20261114-phase10-assessment-impact-v13"></script>
-<script src="js/modules/visit-hub.js?v=20261114-phase10-assessment-impact-v13"></script>
-<script src="js/modules/assessment-events.js?v=20261114-phase10-assessment-impact-v13"></script>
-<script src="js/modules/official-ei-management.js?v=20261114-phase10-assessment-impact-v13"></script>
-<script src="js/modules/official-ei-automation.js?v=20261114-phase10-assessment-impact-v13"></script>
-<script src="js/parsers/pq-docx-parser.js?v=20261114-phase10-assessment-impact-v13"></script>
-<script src="js/modules/pq-linkage.js?v=20261114-phase10-assessment-impact-v13"></script>
-<script src="js/modules/validation-readiness.js?v=20261114-phase10-assessment-impact-v13"></script>
-<script src="js/modules/assessment-impact.js?v=20261114-phase10-assessment-impact-v13"></script>
-<script src="js/modules/management-shell.js?v=20261114-phase10-assessment-impact-v13"></script>
-<script src="js/services/pq-repository.js?v=20261114-phase10-assessment-impact-v13"></script>
-<script src="js/modules/pq-library.js?v=20261114-phase10-assessment-impact-v13"></script>
-<script src="js/modules/system-integrity.js?v=20261114-phase10-assessment-impact-v13"></script>
+<script src="js/app.js?v=20261114-phase11-drive-documents-v14"></script>
+<script src="js/modules/visit-sync.js?v=20261114-phase11-drive-documents-v14"></script>
+<script src="js/modules/visit-hub.js?v=20261114-phase11-drive-documents-v14"></script>
+<script src="js/modules/assessment-events.js?v=20261114-phase11-drive-documents-v14"></script>
+<script src="js/modules/official-ei-management.js?v=20261114-phase11-drive-documents-v14"></script>
+<script src="js/modules/official-ei-automation.js?v=20261114-phase11-drive-documents-v14"></script>
+<script src="js/parsers/pq-docx-parser.js?v=20261114-phase11-drive-documents-v14"></script>
+<script src="js/modules/pq-linkage.js?v=20261114-phase11-drive-documents-v14"></script>
+<script src="js/modules/validation-readiness.js?v=20261114-phase11-drive-documents-v14"></script>
+<script src="js/modules/assessment-impact.js?v=20261114-phase11-drive-documents-v14"></script>
+<script src="js/modules/management-shell.js?v=20261114-phase11-drive-documents-v14"></script>
+<script src="js/modules/drive-documents.js?v=20261114-phase11-drive-documents-v14"></script>
+<script src="js/services/pq-repository.js?v=20261114-phase11-drive-documents-v14"></script>
+<script src="js/modules/pq-library.js?v=20261114-phase11-drive-documents-v14"></script>
+<script src="js/modules/system-integrity.js?v=20261114-phase11-drive-documents-v14"></script>
 </body>
 </html>

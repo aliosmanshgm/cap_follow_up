@@ -205,7 +205,7 @@
                 <td>${r.targetVisitId?`<b>${escapeHtml(r.targetVisitName||'ICAO Ziyareti')}</b><br><small>${escapeHtml(r.targetVisitType||'')}</small>`:'<span style="color:var(--muted)">Atanmadı</span>'}</td>
                 <td><b>+${r.overallDelta.toFixed(2)}</b><br><small>Overall</small></td>
                 <td><b>+${r.areaDelta.toFixed(2)}</b><br><small>${escapeHtml(r.area)}</small></td>
-                <td><div class="validation-row-actions"><button type="button" onclick="openValidationReadinessEditor('${escapeHtml(r.key)}')">✏️ Hazırlık</button><button type="button" class="btn-outline" onclick="openValidationCandidatePq('${escapeHtml(r.pq)}')">PQ/CAP</button></div></td>
+                <td><div class="validation-row-actions"><button type="button" onclick="openValidationReadinessEditor('${escapeHtml(r.key)}')">✏️ Hazırlık</button><button type="button" class="btn-outline" onclick="openValidationCandidatePq('${escapeHtml(r.pq)}')">PQ/CAP</button><button type="button" class="btn-outline" onclick="openDriveDocumentsContext({pq:'${escapeHtml(r.pq)}',area:'${escapeHtml(r.area)}'})">📎 Kanıtlar${window.ICADriveDocuments&&typeof window.ICADriveDocuments.countForPq==='function'?` (${window.ICADriveDocuments.countForPq(r.pq)})`:''}</button></div></td>
             </tr>`;
         }).join('');
     }

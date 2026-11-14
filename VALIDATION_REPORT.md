@@ -1,31 +1,34 @@
-# Faz 10 v13 — Validation Report
+# Faz 11 v14 - Doğrulama Raporu
 
 ## Kapsam
-ICAO Değerlendirme Dönemleri & EI Etki Analizi.
 
-## Statik QA
-- Faz 9 FULL ZIP tabanı kullanıldı; önceki modüller korunarak yeni modül eklendi.
-- Yeni ekran: `tab-assessment-impact`.
-- Yeni modül: `js/modules/assessment-impact.js`.
-- Tüm JavaScript dosyaları `node --check` kontrolünden geçirildi.
-- HTML ID kontrolü: duplicate ID yok.
-- Yerel JS/CSS referans kontrolü: eksik dosya yok.
-- Ekran sayısı: 27.
+Google Drive Doküman & Kanıt Merkezi; OAuth ayarı, doğrudan Drive yükleme, mevcut Drive link kaydı, doküman metadata ilişkileri ve PQ kaynak DOCX otomatik arşiv bağlantısı.
 
-## Sentetik model testi
-- Baseline: Overall EI 50.00 / applicable 100.
-- Sonraki assessment: Overall EI 55.00 / applicable 100.
-- Beklenen overall fark: +5.00 puan — PASS.
-- LEG alanı: 50.00 → 60.00, beklenen +10.00 puan — PASS.
-- Sürüm ve denominator aynı olduğunda metodoloji sınıfı `performance` — PASS.
+## Statik kontroller
 
-## Metodoloji korumaları
-1. Yalnız `resultStatus=official` ve official snapshot resmî tarihçeye girer.
-2. Draft/provisional kayıtlar ayrı katmandadır.
-3. Scope dışı alanlara yeni değerlendirme sonucu atfedilmez; son geçerli resmî EI taşınır.
-4. PQ version/revision veya applicable denominator değişirse fark otomatik olarak saf performans artışı sayılmaz.
-5. PQ bazlı değişim yalnız izlenebilir ziyaret-validasyon kaydı varsa listelenir; tahmin yapılmaz.
-6. Validasyon adayları resmî EI’den ayrı projeksiyon katmanıdır.
+- Yeni `tab-drive-documents` ve sidebar düğmesi mevcut.
+- `drive-documents.js` syntax kontrolünden geçti.
+- `pq-repository.js` syntax kontrolünden geçti.
+- `app.js` syntax kontrolünden geçti.
+- HTML ID tekrar kontrolü yapıldı; duplicate ID yok.
+- Google Drive access tokenı Firebase/localStorage/sessionStorage'a yazılmıyor.
+- Doküman silme işlemi Drive dosyasını silmiyor; yalnız metadata kaydını kaldırıyor.
+- Firebase Storage varsayılan olarak kullanılmıyor.
 
 ## Firebase
-Yeni Firebase root’u yok. Rules güncellemesi gerekmiyor. Storage kullanılmıyor.
+
+Yeni kök: `icao_document_hub`. `firebase/database.rules.phase11.json` bu yolu içerir.
+
+## Canlı Google OAuth testi
+
+Canlı OAuth bağlantısı gerçek Google Cloud Web Client ID ve GitHub Pages authorized origin gerektirir. Statik paket içinde herhangi bir kullanıcı credential'ı gömülü değildir; bu nedenle son OAuth popup/yükleme testi deploy sonrasında kullanıcı hesabıyla yapılmalıdır.
+
+## Ek QA Sonuçları
+
+- HTML: 782 ID / 782 unique / 0 duplicate.
+- Tab sayısı: 28. Yeni `drive-documents` tabı mevcut.
+- Yerel JS/CSS referansı: eksik yok.
+- Tüm `.js` dosyaları `node --check` ile doğrulandı.
+- Drive ID parser sentetik testleri: `file/d`, Google Docs `/d`, `open?id`, `folders/{id}` senaryoları PASS.
+- PQ doküman sayacı ve ziyaret doküman sayacı sentetik testi PASS.
+- Access token kalıcı depolama çağrısı yok (`localStorage`/`sessionStorage` kullanılmıyor).

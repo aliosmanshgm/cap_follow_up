@@ -1,0 +1,47 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+
+    "icao_system": {
+      ".read": "auth != null",
+      ".write": "auth != null"
+    },
+    "icao_archive": {
+      ".read": "auth != null",
+      ".write": "auth != null"
+    },
+    "icao_official_ei": {
+      ".read": "auth != null",
+      ".write": "auth != null"
+    },
+    "icao_assessment_events": {
+      ".read": "auth != null",
+      ".write": "auth != null"
+    },
+    "icao_ei_snapshots": {
+      ".read": "auth != null",
+      ".write": "auth != null"
+    },
+    "icao_pq_library": {
+      ".read": "auth != null",
+      ".write": "auth != null"
+    },
+    "icao_validation_readiness": {
+      ".read": "auth != null",
+      ".write": "auth != null"
+    },
+    "icao_visits": {
+      ".read": "auth != null",
+      ".write": "auth != null"
+    },
+    "icao_visit_settings": {
+      ".read": "auth != null",
+      ".write": "auth != null"
+    },
+    "icao_document_hub": {
+      ".read": "auth != null",
+      ".write": "auth != null"
+    }
+  }
+}

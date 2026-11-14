@@ -1,6 +1,6 @@
 {
   "app": "USOAP CMA CAP Takip",
-  "version": "13-phase10-assessment-impact",
+  "version": "14-phase11-google-drive-documents",
   "baseline": "index_visit_hub_pq_version_database(2).html",
   "buildDate": "2026-11-14",
   "features": [
@@ -29,7 +29,14 @@
     "area-effective-ei-history",
     "pq-version-denominator-change-guard",
     "last-official-assessment-status",
-    "traceable-validated-pq-impact"
+    "traceable-validated-pq-impact",
+    "google-drive-document-center",
+    "google-identity-services-token-model",
+    "drive-file-scope",
+    "document-pq-cap-visit-linkage",
+    "drive-link-registration",
+    "pq-source-drive-auto-archive",
+    "firebase-document-metadata-registry"
   ],
   "architecture": {
     "index": "index.html",
@@ -48,6 +55,7 @@
       "js/modules/validation-readiness.js",
       "js/modules/assessment-impact.js",
       "js/modules/management-shell.js",
+      "js/modules/drive-documents.js",
       "js/services/pq-repository.js",
       "js/modules/pq-library.js",
       "js/modules/system-integrity.js"

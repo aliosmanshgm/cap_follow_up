@@ -77,11 +77,20 @@
     });
   }
 
-  async function uploadOriginal(file,meta,editionKey,onProgress){
+  async function uploadOriginal(file,meta,editionKey,onProgress,context={}){
     const result={status:'not-configured',name:file&&file.name||'',size:file&&file.size||0,type:file&&file.type||'',sha256:await sha256(file),storagePath:'',downloadURL:'',provider:''};
     if(!file)return result;
     const mode=String(window.PQ_ORIGINAL_DOCUMENT_STORAGE_MODE||DEFAULT_ORIGINAL_DOCUMENT_STORAGE_MODE).toLowerCase();
-    if(mode!=='firebase'){result.status='external-planned';result.provider='google-drive';return result;}
+    if(mode!=='firebase'){
+      result.status='external-planned';result.provider='google-drive';
+      try{
+        if(window.ICADriveDocuments&&typeof window.ICADriveDocuments.archivePqSourceDocument==='function'){
+          const archived=await window.ICADriveDocuments.archivePqSourceDocument(file,{meta,editionKey,area:meta&&meta.area||'',documentId:context.documentId||''});
+          if(archived&&archived.status==='stored')return {...result,...archived,sha256:archived.sha256||result.sha256};
+        }
+      }catch(err){result.error=String(err&&err.message||err);result.errorCode='GOOGLE_DRIVE_ARCHIVE_FAILED';console.warn('PQ kaynak DOCX Google Drive arsivlemesi yapilamadi; ana PQ kaydi korunuyor.',err);}
+      return result;
+    }
     if(typeof storage==='undefined'||!storage){result.status='sdk-unavailable';result.provider='firebase-storage';return result;}
     if(!authUser()){result.status='auth-required';return result;}
     const path=`icao-pq-documents/${safeKey(meta.year)}/R${safeKey(meta.revision||'0')}/${safeKey(meta.area)}/${Date.now()}_${cleanFileName(file.name)}`;
@@ -186,8 +195,8 @@
 
     // DB kaydı başarılı olduktan sonra kaynak DOCX arşiv politikası uygulanır. Varsayılan: harici/Google Drive planlı.
     const storageMode=String(window.PQ_ORIGINAL_DOCUMENT_STORAGE_MODE||DEFAULT_ORIGINAL_DOCUMENT_STORAGE_MODE).toLowerCase();
-    emit(onProgress,'storage',storageMode==='firebase'?'PQ verisi kaydedildi. Kaynak DOCX Firebase Storage’a yükleniyor…':'PQ verisi kaydedildi. Kaynak DOCX harici arşiv (Google Drive) için işaretleniyor…');
-    const sourceDocument=await uploadOriginal(file,parsed.meta,editionKey,pct=>emit(onProgress,'storage-progress',`Kaynak DOCX Storage’a yükleniyor… %${pct}`,String(pct)));
+    emit(onProgress,'storage',storageMode==='firebase'?'PQ verisi kaydedildi. Kaynak DOCX Firebase Storage’a yükleniyor…':'PQ verisi kaydedildi. Google Drive bağlı ve otomatik arşiv açıksa kaynak DOCX arşivlenecek; aksi halde harici arşiv için işaretlenecek…');
+    const sourceDocument=await uploadOriginal(file,parsed.meta,editionKey,pct=>emit(onProgress,'storage-progress',`Kaynak DOCX Storage’a yükleniyor… %${pct}`,String(pct)),{documentId:areaData.documentId});
     areaData.sourceDocument=sourceDocument;
     importData.sourceDocument=sourceDocument;
     importData.sha256=sourceDocument.sha256||baseSourceDocument.sha256||'';
