@@ -1,114 +1,44 @@
-# USOAP CMA CAP Takip — Faz 7 Uygulama Kabuğu & CAP Yönetimi Hub v10
+# USOAP CMA CAP Takip — Faz 8 v11
 
-Bu sürüm Faz 6 PQ Master/Reference Center v9 üzerine kurulmuştur. Veri modeli, Firebase Realtime Database yolları, Assessment Event / EI Snapshot modeli, CAP↔PQ lineage, Validasyon Hazırlığı, Ziyaret Yönetimi Hub ve PQ Master veri tabanı korunmuştur. Faz 7'nin amacı uygulamanın büyüyen menü yapısını sadeleştirmek ve **PQ → CAP → Validasyon → Ziyaret → Resmî EI** zincirini tek yönetim deneyiminde görünür hale getirmektir.
+## Veri Kalitesi & Süreç Bütünlüğü
 
-## Faz 7 ana değişiklikleri
+Bu sürüm Faz 7 v10.2 Ziyaret Yönetimi hotfix tabanı üzerine kurulmuştur.
 
-### 1. Sidebar dört ana gruba sadeleştirildi
-Önceki çok sayıdaki fonksiyonel grup yerine yalnız şu üst seviye gruplar görünür:
+### Yeni: Süreç & İlişki Bütünlüğü
+`Veri & Referans > Veri Kalitesi & Bütünlük` ekranının üst bölümünde PQ → CAP → Validasyon → Ziyaret → Assessment Event / EI Snapshot zinciri otomatik kontrol edilir.
 
-- 📊 Dashboard
-  - Genel Durum
-  - Yönetim Özeti
-- ⚙️ Operasyon
-  - 📋 CAP Yönetimi
-  - 🎯 Validasyon Hazırlığı
-  - 🧭 Ziyaret Yönetimi
-  - 📝 Yönetici Raporu
-- 📈 Analiz
-  - EI & Değerlendirme
-  - Alan Analizi
-  - Hedefler
-  - Stratejik Analiz
-  - Trend & Kıyaslama
-- 🗃️ Veri & Referans
-  - 📚 ICAO PQ Veri Tabanı
-  - 🌐 ICAO Değerlendirme / EI Kayıtları
-  - 🧪 Veri Kalitesi
+Kontroller:
+- 8 denetim alanının PQ sürüm kayıtları ve aktif sürüm/revizyon referansları
+- Aktif PQ kayıtlarında Instance ID / Concept ID lineage bütünlüğü
+- CAP ↔ PQ kalıcı bağlantılarında eşleşmeyen, belirsiz veya eksik kaynak/aktif Instance referansları
+- Validasyona hazır / ziyarete atanmış adaylarda PQ bağlantısı, kanıt referansı ve iç inceleme tutarlılığı
+- Validasyon adayı → hedef ICAO ziyareti bağlantısı ve ziyaret alan/scope senkronizasyonu
+- Ziyaret scope snapshot'larında PQ Concept / sourcePqRef / currentPqRef izlenebilirliği
+- Tamamlanmış ICAO ziyaretlerinde scope var ama validasyon sonucu yoksa uyarı
+- ICAO Resmî EI kaydı ↔ Assessment Event ↔ EI Snapshot senkronizasyonu
+- Satisfactory / Applicable oranı ile EI yüzdesinin matematiksel kontrolü
+- Son resmî EI snapshot'ında Applicable PQ denominator kontrolü
 
-Dosya yükleme, arşiv, sistem kontrolü, tema, dil ve oturum işlemleri mevcut Veri Yönetimi / Diğer menülerinde korunur.
+### Çalışma ilkesi
+Bu merkez **otomatik veri düzeltmez**. Sorunu, mevcut durumu ve önerilen düzeltme yolunu gösterir; ilgili modüle tek tıkla geçiş sağlar.
 
-### 2. Yeni CAP Yönetimi Hub
-Eskiden sidebar'da ayrı görünen:
+### Mevcut kayıt kalitesi korunmuştur
+Aynı ekranın altındaki `CAP / Master Kayıt Kalitesi` bölümü; Word CAP ve Excel master düzeyindeki eksik alan, tarih, ofis, mükerrerlik ve eşleşme kontrollerini aynen sürdürür.
 
-- Tüm PQ ve CAP'ler,
-- Yaklaşan,
-- Geciken,
-- Kanban,
-- CAP Eksiklikleri,
-- ICAO Kapatılanlar
+### Sistem Sağlığı entegrasyonu
+`Sistem Kontrolü` modalı artık süreç bütünlüğü skorunu ve kritik/yüksek ilişki sorunu sayısını da sağlık kontrolüne dahil eder. Bütünlük modeli JSON rapor olarak ayrıca indirilebilir.
 
-artık ayrı ana menü değildir. Tek **CAP Yönetimi** altında beş görünüm vardır:
+### Firebase
+Bu faz yeni Firebase kökü oluşturmaz. Mevcut Realtime Database Rules yeterlidir. Firebase Storage gerekli değildir.
 
-1. Portföy
-2. Termin & Risk
-3. İş Akışı
-4. Eksikler
-5. ICAO Sonuçları
+### Değişen ana dosyalar
+- `index.html`
+- `css/app.css`
+- `js/app.js`
+- `js/modules/system-integrity.js` (yeni)
+- `js/modules/pq-library.js`
+- `js/modules/assessment-events.js`
+- `js/modules/official-ei-management.js`
+- `js/modules/validation-readiness.js`
+- `app-manifest.json`
 
-Mevcut ekranlar ve veri işlevleri silinmemiş, Hub üzerinden yönlendirilmiştir.
-
-### 3. EI Odaklı Kanban yeniden konumlandırıldı
-`EI Odaklı CAP Kanban Panosu` ana menü olmaktan çıkarıldı ve **CAP İş Akışı Kanbanı** olarak CAP Yönetimi içine alındı.
-
-Kanban:
-
-- gecikme,
-- hedef tarih,
-- planlama riski,
-- CAP ilerlemesi
-
-odaklı operasyon ekranıdır. Kartlarda EI bilgisi karar desteği olarak kalabilir; ancak resmî/projeksiyon EI için **Validasyon Hazırlığı** ve Dashboard Assessment Event modeli esas alınır.
-
-### 4. Dashboard'a uçtan uca yönetim zinciri eklendi
-Dashboard'ın üstünde artık beş aşamalı canlı süreç görünür:
-
-`ICAO PQ Master → CAP Yönetimi → Validasyon Hazırlığı → Ziyaret Yönetimi → Resmî ICAO EI`
-
-Kartlarda mümkün olduğunda canlı bilgiler gösterilir:
-
-- aktif PQ alanı / aktif PQ sayısı,
-- CAP/PQ ve CAP adımı sayısı,
-- tamamlanan PQ / gecikme riski,
-- validasyon adayı / hazır / ziyarete atanmış sayıları,
-- aktif / yaklaşan ziyaret sayısı,
-- son resmî EI ve değerlendirme adı.
-
-Her kart ilgili çalışma merkezine doğrudan geçiş sağlar.
-
-### 5. EI & Değerlendirme kısa yolu
-Analiz grubundaki `EI & Değerlendirme` kısa yolu Dashboard'daki Assessment Event / EI alanına götürür. Böylece EI grafikleri ayrı ve tekrarlı bir ana menü oluşturmaz.
-
-### 6. Resmî EI kayıtları Veri & Referans altında erişilebilir
-ICAO resmî değerlendirme / EI kayıt yönetimi artık yalnız Veri Yönetimi modalında saklı değildir. `Veri & Referans` grubundan doğrudan açılabilir.
-
-### 7. Geriye uyumluluk
-Aşağıdaki tablar fiziksel olarak korunmuştur ve mevcut fonksiyonlar bunlara yönlenmeye devam edebilir:
-
-- `list`
-- `upcoming`
-- `past`
-- `kanban`
-- `empty-caps`
-- `icao-closed`
-- tüm ziyaret alt ekranları
-
-Legacy rota butonları görünür sidebar'dan gizlenmiştir; `switchTab(...)` ile geriye uyumluluk sürer.
-
-## Firebase
-Bu faz yeni Firebase kökü eklemez ve veri modelini değiştirmez. Faz 1–4 sonrasında uygulanmış Realtime Database Rules yeterlidir. Firebase Storage kullanılmaz.
-
-## Yeni dosya
-- `js/modules/management-shell.js`
-
-Bu modül:
-
-- CAP Yönetimi Hub navigasyonunu,
-- CAP Hub KPI özetini,
-- Dashboard uçtan uca süreç zincirini,
-- EI & Değerlendirme kısa yolunu
-
-yönetir.
-
-## Sürüm
-`10.0-phase7-application-shell-cap-hub`

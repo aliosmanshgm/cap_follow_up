@@ -13,7 +13,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.10/pdfmake.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.10/vfs_fonts.js"></script>
-    <link rel="stylesheet" href="css/app.css?v=20261114-phase7-app-shell-v10">
+    <link rel="stylesheet" href="css/app.css?v=20261114-phase8-integrity-v11">
 </head>
 <body>
 
@@ -97,7 +97,7 @@
                 <div class="nav-group-items">
                     <button class="tab-btn" onclick="switchTab('pq-library')" id="btn-tab-pq-library">📚 ICAO PQ Veri Tabanı</button>
                     <button class="tab-btn nav-action-btn" type="button" onclick="openIcaoOfficialEiManager()">🌐 ICAO Değerlendirme / EI Kayıtları</button>
-                    <button class="tab-btn" onclick="switchTab('quality')" id="btn-tab-quality">🧪 Veri Kalitesi</button>
+                    <button class="tab-btn" onclick="switchTab('quality')" id="btn-tab-quality">🧪 Veri Kalitesi &amp; Bütünlük</button>
                 </div>
             </div>
         </div>
@@ -1824,13 +1824,50 @@
                     </div>
                 </div>
 
-        <!-- VERİ KALİTESİ MERKEZİ -->
+        <!-- VERİ KALİTESİ & SÜREÇ BÜTÜNLÜĞÜ MERKEZİ -->
         <div id="tab-quality" class="tab-content">
+            <section id="systemIntegrityCenter" class="integrity-shell">
+                <div class="integrity-header">
+                    <div>
+                        <span class="integrity-eyebrow">Uçtan uca veri zinciri</span>
+                        <h3>🔗 Süreç &amp; İlişki Bütünlüğü</h3>
+                        <p>PQ → CAP → Validasyon → Ziyaret → Assessment Event / EI Snapshot zincirindeki kopuk, eski veya çelişkili referansları merkezi olarak denetler. Bu kontroller veri değiştirmez; yalnız sorunları ve önerilen düzeltme yolunu gösterir.</p>
+                    </div>
+                    <div class="integrity-header-actions">
+                        <button type="button" onclick="renderSystemIntegrityCenter(true)">🔄 Yenile</button>
+                        <button type="button" class="btn-outline" onclick="openSystemHealthModal()">🩺 Sistem Sağlığı</button>
+                        <button type="button" class="btn-outline" onclick="downloadSystemIntegrityReport()">⬇️ Bütünlük Raporu</button>
+                    </div>
+                </div>
+                <div id="integrityContext" class="integrity-context">Bütünlük modeli hazırlanıyor...</div>
+                <div class="integrity-kpi-grid">
+                    <div class="integrity-kpi ok"><strong id="integrityHealthyChecks">0</strong><span>Sağlıklı kontrol</span></div>
+                    <div class="integrity-kpi danger"><strong id="integrityCriticalIssues">0</strong><span>Kritik sorun</span></div>
+                    <div class="integrity-kpi warn"><strong id="integrityHighIssues">0</strong><span>Yüksek öncelik</span></div>
+                    <div class="integrity-kpi info"><strong id="integrityMediumIssues">0</strong><span>Orta / kontrol</span></div>
+                    <div class="integrity-kpi"><strong id="integrityScore">%100</strong><span>Bütünlük skoru</span></div>
+                </div>
+                <div id="integrityDomainGrid" class="integrity-domain-grid"></div>
+                <div class="integrity-toolbar">
+                    <div><label>Önem seviyesi</label><select id="integritySeverityFilter" onchange="renderSystemIntegrityCenter()"><option value="all">Tüm seviyeler</option><option value="critical">Kritik</option><option value="high">Yüksek</option><option value="medium">Orta</option><option value="low">Düşük / Kontrol</option></select></div>
+                    <div><label>Modül / alan</label><select id="integrityDomainFilter" onchange="renderSystemIntegrityCenter()"><option value="all">Tüm modüller</option></select></div>
+                    <div class="integrity-search"><label>Arama</label><input id="integritySearchInput" type="text" placeholder="PQ, ziyaret, assessment, sorun veya öneri ara..." oninput="renderSystemIntegrityCenter()"></div>
+                    <button type="button" class="btn-outline" onclick="clearSystemIntegrityFilters()">✖ Filtreleri temizle</button>
+                </div>
+                <div class="integrity-table-wrap">
+                    <table class="integrity-table">
+                        <thead><tr><th>Seviye</th><th>Modül</th><th>Kayıt</th><th>Sorun</th><th>Mevcut durum</th><th>Önerilen işlem</th><th></th></tr></thead>
+                        <tbody id="integrityIssueTableBody"></tbody>
+                    </table>
+                    <div id="integrityTableNote" class="integrity-table-note"></div>
+                </div>
+            </section>
+
             <div class="dq-shell">
                 <div class="dq-header">
                     <div>
-                        <h3>🧹 Veri Kalitesi Merkezi</h3>
-                        <p>Aktif filtre kapsamındaki Word CAP ve Excel master verilerini; eksik alanlar, geçersiz tarihler, mükerrer kayıtlar, Excel–Word eşleşme sorunları ve durum/tarih çelişkileri açısından kontrol eder.</p>
+                        <h3>🧹 CAP / Master Kayıt Kalitesi</h3>
+                        <p>Aktif filtre kapsamındaki Word CAP ve Excel master verilerini; eksik alanlar, geçersiz tarihler, mükerrer kayıtlar, Excel–Word eşleşme sorunları ve durum/tarih çelişkileri açısından kontrol eder. Üst bölümdeki süreç bütünlüğü kontrolleri ise modüller arası referansları denetler.</p>
                     </div>
                     <div class="dq-header-actions">
                         <button class="btn-outline" onclick="switchTab('empty-caps')">📭 CAP Eksiklikleri</button>
@@ -2005,16 +2042,17 @@
 </div>
 
 
-<script src="js/app.js?v=20261114-phase7-hotfix-v10.2"></script>
-<script src="js/modules/visit-sync.js?v=20261114-phase7-app-shell-v10"></script>
-<script src="js/modules/visit-hub.js?v=20261114-phase7-hotfix-v10.2"></script>
-<script src="js/modules/assessment-events.js?v=20261114-phase7-app-shell-v10"></script>
-<script src="js/modules/official-ei-management.js?v=20261114-phase7-app-shell-v10"></script>
-<script src="js/parsers/pq-docx-parser.js?v=20261114-phase7-app-shell-v10"></script>
-<script src="js/modules/pq-linkage.js?v=20261114-phase7-app-shell-v10"></script>
-<script src="js/modules/validation-readiness.js?v=20261114-phase7-app-shell-v10"></script>
-<script src="js/modules/management-shell.js?v=20261114-phase7-app-shell-v10"></script>
-<script src="js/services/pq-repository.js?v=20261114-phase7-app-shell-v10"></script>
-<script src="js/modules/pq-library.js?v=20261114-phase7-app-shell-v10"></script>
+<script src="js/app.js?v=20261114-phase8-integrity-v11"></script>
+<script src="js/modules/visit-sync.js?v=20261114-phase8-integrity-v11"></script>
+<script src="js/modules/visit-hub.js?v=20261114-phase8-integrity-v11"></script>
+<script src="js/modules/assessment-events.js?v=20261114-phase8-integrity-v11"></script>
+<script src="js/modules/official-ei-management.js?v=20261114-phase8-integrity-v11"></script>
+<script src="js/parsers/pq-docx-parser.js?v=20261114-phase8-integrity-v11"></script>
+<script src="js/modules/pq-linkage.js?v=20261114-phase8-integrity-v11"></script>
+<script src="js/modules/validation-readiness.js?v=20261114-phase8-integrity-v11"></script>
+<script src="js/modules/management-shell.js?v=20261114-phase8-integrity-v11"></script>
+<script src="js/services/pq-repository.js?v=20261114-phase8-integrity-v11"></script>
+<script src="js/modules/pq-library.js?v=20261114-phase8-integrity-v11"></script>
+<script src="js/modules/system-integrity.js?v=20261114-phase8-integrity-v11"></script>
 </body>
 </html>

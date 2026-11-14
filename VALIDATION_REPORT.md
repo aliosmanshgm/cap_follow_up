@@ -1,52 +1,45 @@
-# Faz 7 v10 — Doğrulama Raporu
-
-Tarih: 14.11.2026
+# Faz 8 v11 — Doğrulama Raporu
 
 ## Statik kontroller
+- JavaScript syntax: **PASS** (`node --check` tüm JS dosyaları)
+- HTML duplicate ID: **PASS** — 716 ID, tekrar yok
+- Yerel JS/CSS referansları: **PASS** — eksik dosya yok
+- Inline kullanıcı handler çözümlemesi: **PASS** — eksik uygulama fonksiyonu yok
+- Ana tab sayısı: **26** — önceki ekranlar korunuyor
+- `system-integrity.js` manifest ve HTML yükleme sırası: **PASS**
 
-- JavaScript syntax kontrolü: **BAŞARILI**
-  - `js/app.js`
-  - `js/modules/*.js`
-  - `js/parsers/*.js`
-  - `js/services/*.js`
-  - `js/config/*.js`
-- HTML ID sayısı: **703**
-- Duplicate HTML ID: **0**
-- Ana tab sayısı: **26**
-- `tab-*` karşılığı bulunmayan `btn-tab-*`: **0**
-- İncelenen inline UI handler sayısı: **185**
-- Kaynak kodda karşılığı bulunmayan handler: **0**
-- Eksik yerel JS/CSS referansı: **0**
-- Görünür ana navigasyon grubu: **4**
+## Bütünlük motoru sentetik testleri
+### Bozuk zincir senaryosu
+Aşağıdaki sorunların yakalandığı doğrulandı:
+- CAP ↔ PQ eşleşmiyor
+- Validasyon adayı silinmiş/olmayan hedef ziyarete bağlı
+- Hazır/atanmış adayda kanıt ve iç inceleme eksik
+- Resmî EI kaydının Assessment Event karşılığı yok
+- Resmî EI kaydının EI Snapshot karşılığı yok
 
-## Faz 7 kontrolleri
+Sonuç: **PASS**
 
-- `btn-tab-cap-hub`: mevcut
-- `managementFlowStrip`: mevcut
-- `management-shell.js`: syntax OK
-- CAP legacy tabları fiziksel olarak korunuyor
-- Ziyaret legacy tabları fiziksel olarak korunuyor
-- Kanban tabı korunuyor, yalnız CAP Hub altında yeniden konumlandırılıyor
-- Resmî EI yönetim modalı korunuyor
-- PQ Master/Reference Center korunuyor
-- Validasyon Hazırlığı korunuyor
-- Ziyaret Yönetimi Hub korunuyor
+### Sağlıklı zincir senaryosu
+- 8 alanın tamamında aktif PQ kaydı
+- Instance / Concept kimlikleri tam
+- CAP kalıcı PQ bağlantısı sağlıklı
+- Validasyon adayı kanıt ve iç inceleme açısından hazır
+- Hedef ICAO ziyareti alan ve scope açısından uyumlu
+- Resmî EI ↔ Assessment Event ↔ Snapshot bağlı
+- EI matematiği tutarlı
+
+Sonuç: **%100 bütünlük skoru, 0 sorun — PASS**
 
 ## Geriye uyumluluk
+- Mevcut Veri Kalitesi Merkezi korunmuştur.
+- Mevcut Firebase veri şeması değiştirilmemiştir.
+- Yeni Firebase Rules gerekmemektedir.
+- Firebase Storage kullanılmamaktadır.
 
-Mevcut `switchTab('list')`, `switchTab('kanban')`, `switchTab('upcoming')`, `switchTab('past')`, `switchTab('empty-caps')`, `switchTab('icao-closed')` çağrıları çalışmaya devam edecek şekilde route butonları DOM içinde tutulmuştur.
-
-`switchTab` sonrasında:
-
-- ziyaret tablarında `syncVisitHubNavigation`,
-- CAP tablarında `syncCapHubNavigation`
-
-çalışır.
-
-## Tarayıcı notu
-
-Container ortamındaki headless Chromium, sistem DBus / proses koşulları nedeniyle güvenilir bir tam UI smoke-test çıktısı üretemedi. Bu nedenle son canlı doğrulama GitHub Pages üzerinde yapılmalıdır. Statik DOM, handler ve JavaScript syntax kontrolleri başarılıdır.
-
-## Firebase
-
-Yeni Firebase yolu eklenmedi. Rules güncellemesi gerekmiyor.
+## Canlı ortam kontrolü
+GitHub Pages push sonrasında:
+1. `Veri & Referans > Veri Kalitesi & Bütünlük` açılmalı.
+2. PQ veri tabanı otomatik okunmalı.
+3. Üstte `Süreç & İlişki Bütünlüğü`, altta `CAP / Master Kayıt Kalitesi` görünmeli.
+4. Bütünlük kartlarından ilgili modüllere yönlendirme test edilmelidir.
+5. `Sistem Kontrolü` modalında `PQ → CAP → Validasyon → Ziyaret → EI bütünlüğü` satırı görünmelidir.

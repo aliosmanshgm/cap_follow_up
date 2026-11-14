@@ -96,9 +96,11 @@
             if(window.PQLinkage&&typeof window.PQLinkage.enrichLibrary==='function')window.PQLinkage.enrichLibrary(icaoPqLibrary);
             if(note)note.textContent='PQ veri tabanı yüklenemedi; yerel cache kullanılıyor. '+(err.message||err);
         }
-        pqDbLoaded=true;refreshCapPqLinkage({persist:true,silent:true});renderPqDbKpis();renderPqDbVersions();populatePqDbSelectors();renderPqDbCatalog();renderPqDbComparison();renderPqDbLinkage();if(typeof window.renderManagementFlow==='function')window.renderManagementFlow();return icaoPqLibrary;
+        pqDbLoaded=true;refreshCapPqLinkage({persist:true,silent:true});renderPqDbKpis();renderPqDbVersions();populatePqDbSelectors();renderPqDbCatalog();renderPqDbComparison();renderPqDbLinkage();if(typeof window.renderManagementFlow==='function')window.renderManagementFlow();if(typeof window.renderSystemIntegrityCenter==='function')setTimeout(()=>window.renderSystemIntegrityCenter(true),0);return icaoPqLibrary;
     }
     window.loadIcaoPqLibrary=loadIcaoPqLibrary;
+    window.getIcaoPqLibrarySnapshot=function(){return icaoPqLibrary||{editions:{},activeByArea:{}};};
+    window.isIcaoPqLibraryLoaded=function(){return pqDbLoaded===true;};
 
     function pqDbEditionEntries(){
         return Object.entries((icaoPqLibrary&&icaoPqLibrary.editions)||{}).map(([key,v])=>({key,...(v||{})})).sort((a,b)=>String(b.year||'').localeCompare(String(a.year||''),undefined,{numeric:true})||String(b.revision||'').localeCompare(String(a.revision||''),undefined,{numeric:true}));

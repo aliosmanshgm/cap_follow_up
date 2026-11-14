@@ -129,6 +129,21 @@ const I18N = {
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
+    // Modüller arası bütünlük kontrolleri için salt-okunur kaynak görünümü.
+    // Kaynak nesneler uygulamanın mevcut belleğinden gelir; bu fonksiyon veri yazmaz.
+    window.getSystemIntegritySourceSnapshot = function() {
+        let visits = [];
+        try { visits = (typeof getVisitRecords === 'function') ? getVisitRecords(true) : []; } catch (_) {}
+        return {
+            rawData: Array.isArray(rawData) ? rawData : [],
+            pqMasterData: pqMasterData || {},
+            baseEIData: baseEIData || {},
+            visits,
+            reportDate: window_loadedReportDate ? window_loadedReportDate.toISOString() : null,
+            capPqLinkageSummary: window.currentCapPqLinkageSummary || null
+        };
+    };
+
     // TEMEL FONKSİYONLAR
     function ensureLoadingDetailEl() {
         const overlay = document.getElementById('loadingOverlay');
@@ -369,7 +384,7 @@ const I18N = {
             if(tabId === 'strategic') renderStrategicReportPreview();
             if(tabId === 'validation-readiness' && typeof renderValidationReadiness==='function') renderValidationReadiness();
             if(tabId === 'smart') updateSmartManagementPanel(getFilteredData(), window.currentAnalyticsModel || null);
-            if(tabId === 'quality') updateDataQualityCenter(getFilteredData());
+            if(tabId === 'quality') { updateDataQualityCenter(getFilteredData()); if(typeof window.renderSystemIntegrityCenter==='function') setTimeout(()=>window.renderSystemIntegrityCenter(true),0); }
             if(tabId === 'pq-library') renderIcaoPqLibraryModule();
             if(tabId === 'visits') renderVisitModule();
             if(tabId === 'visit-scope') renderVisitScopeModule();
@@ -578,6 +593,18 @@ const I18N = {
         const assessmentEvents = assessmentReady ? Object.values(window.icaoAssessmentEvents || {}).filter(x => x && !x.isDeleted).length : 0;
         const assessmentSnapshots = assessmentReady ? Object.values(window.icaoEiSnapshots || {}).filter(x => x && !x.isDeleted).length : 0;
         add('assessment-model', 'Assessment Event / EI Snapshot modeli', assessmentReady ? 'ok' : 'warn', assessmentReady ? `${assessmentEvents} değerlendirme olayı, ${assessmentSnapshots} EI snapshot hazır.` : 'Assessment Event modülü yüklenemedi.');
+        let integritySummary = null;
+        if (typeof window.buildSystemIntegrityModel === 'function') {
+            try {
+                integritySummary = window.buildSystemIntegrityModel({silent:true});
+                const blocking = (integritySummary.severityCounts.critical || 0) + (integritySummary.severityCounts.high || 0);
+                add('process-integrity', 'PQ → CAP → Validasyon → Ziyaret → EI bütünlüğü', blocking ? 'warn' : 'ok', blocking ? `${blocking} kritik/yüksek öncelikli ilişki sorunu bulundu; toplam ${integritySummary.issues.length} kayıt kontrol edilmeli.` : `Bütünlük skoru %${integritySummary.score.toFixed(1)}; kritik/yüksek sorun bulunmadı.`);
+            } catch (integrityError) {
+                add('process-integrity', 'PQ → CAP → Validasyon → Ziyaret → EI bütünlüğü', 'warn', 'Bütünlük modeli çalıştırılamadı: ' + (integrityError.message || integrityError));
+            }
+        } else {
+            add('process-integrity', 'PQ → CAP → Validasyon → Ziyaret → EI bütünlüğü', 'warn', 'Süreç bütünlüğü modülü yüklenemedi.');
+        }
         add('duplicate-ids', 'HTML kimlik bütünlüğü', duplicateIds.length ? 'error' : 'ok', duplicateIds.length ? duplicateIds.map(x => `${x.id} (${x.count})`).join(', ') : 'Yinelenen HTML kimliği bulunmadı.');
         add('menu-tabs', 'Menü ve ekran bağlantıları', menuIssues.length ? 'error' : 'ok', menuIssues.length ? menuIssues.join(' | ') : 'Bütün menü düğmeleri ilgili ekrana bağlı.');
         const visitLevel = (visit.orphanFollow || visit.orphanConsult || visit.duplicateFieldworkIds) ? 'warn' : 'ok';
@@ -591,7 +618,8 @@ const I18N = {
             counts: { rawData:(rawData || []).length, pqMaster:Object.keys(pqMasterData || {}).length, ...visit },
             save: { pending:systemSavePending, inFlight:systemSaveInFlight, lastSaveAt:systemLastSaveAt ? systemLastSaveAt.toISOString() : null, error:systemLastSaveError ? (systemLastSaveError.message || String(systemLastSaveError)) : null },
             checks,
-            runtimeIssues: stabilizationState.runtimeIssues
+            runtimeIssues: stabilizationState.runtimeIssues,
+            integrity: integritySummary ? { score:integritySummary.score, severityCounts:integritySummary.severityCounts, domainCounts:integritySummary.domainCounts, issues:integritySummary.issues.length } : null
         };
         stabilizationState.lastHealthSnapshot = snapshot;
         return snapshot;
@@ -3385,6 +3413,7 @@ const I18N = {
             if(typeof window.refreshVisitHubSummary==='function') window.refreshVisitHubSummary();
             if(typeof window.renderManagementFlow==='function') window.renderManagementFlow();
             if(typeof window.refreshCapHubSummary==='function') window.refreshCapHubSummary();
+            if(typeof window.renderSystemIntegrityCenter==='function'&&document.getElementById('tab-quality')?.classList.contains('active')) window.renderSystemIntegrityCenter(true);
         };
         visitFirebaseRef.on('value', visitFirebaseCallback, error => {
             console.error('Ziyaret kayıtları yüklenemedi:', error);
@@ -5934,7 +5963,7 @@ const I18N = {
             document.getElementById('pqDetails').innerHTML = `<b>Dağılım:</b> ${stats.pqs.onSite} On-Site / ${stats.pqs.offSite} Off-Site ${pqExtra}`; document.getElementById('actionDetails').innerHTML = `<b>Dağılım:</b> ${stats.actions.onSite} On-Site / ${stats.actions.offSite} Off-Site`; document.getElementById('lateDetails').innerHTML = `<b>Dağılım:</b> ${stats.late.onSite} On-Site / ${stats.late.offSite} Off-Site`; document.getElementById('doneDetails').innerHTML = `<b>Dağılım:</b> ${stats.done.onSite} On-Site / ${stats.done.offSite} Off-Site`; document.getElementById('pendingDetails').innerHTML = `<b>Dağılım:</b> ${stats.pending.onSite} On-Site / ${stats.pending.offSite} Off-Site`;
         }
 
-        renderTable(filteredData, groups); updateCharts(filteredData, analytics); updateAreaSummary(filteredData, analytics); updateWarnings(filteredData, analytics); updatePastTasks(filteredData, analytics); updateEIProjections(filteredData); renderIcaoOfficialChart(); updateSmartManagementPanel(filteredData, analytics); updateDataQualityCenter(filteredData); renderKanban(filteredData, analytics);
+        renderTable(filteredData, groups); updateCharts(filteredData, analytics); updateAreaSummary(filteredData, analytics); updateWarnings(filteredData, analytics); updatePastTasks(filteredData, analytics); updateEIProjections(filteredData); renderIcaoOfficialChart(); updateSmartManagementPanel(filteredData, analytics); updateDataQualityCenter(filteredData); if(typeof window.renderSystemIntegrityCenter==='function'&&document.getElementById('tab-quality')?.classList.contains('active'))window.renderSystemIntegrityCenter(); renderKanban(filteredData, analytics);
         if(typeof renderValidationReadinessDashboardSummary==='function') renderValidationReadinessDashboardSummary();
         if(typeof window.renderManagementFlow==='function') window.renderManagementFlow();
         if(typeof window.refreshCapHubSummary==='function') window.refreshCapHubSummary();

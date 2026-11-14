@@ -1,6 +1,6 @@
 {
   "app": "USOAP CMA CAP Takip",
-  "version": "10.2-phase7-visit-hub-hotfix",
+  "version": "11-phase8-system-integrity",
   "baseline": "index_visit_hub_pq_version_database(2).html",
   "buildDate": "2026-11-14",
   "features": [
@@ -45,7 +45,14 @@
     "pq-cap-validation-visit-ei-navigation-bridge",
     "official-ei-reference-shortcut",
     "legacy-cap-routes-hidden",
-    "kanban-repositioned-under-cap-management"
+    "kanban-repositioned-under-cap-management",
+    "cross-module-data-integrity-center",
+    "pq-active-version-integrity-check",
+    "cap-pq-link-integrity-check",
+    "validation-visit-assignment-integrity",
+    "visit-lineage-snapshot-integrity",
+    "official-ei-assessment-sync-integrity",
+    "system-integrity-diagnostic-export"
   ],
   "architecture": {
     "index": "index.html",
@@ -63,7 +70,8 @@
       "js/modules/validation-readiness.js",
       "js/modules/management-shell.js",
       "js/services/pq-repository.js",
-      "js/modules/pq-library.js"
+      "js/modules/pq-library.js",
+      "js/modules/system-integrity.js"
     ]
   }
 }

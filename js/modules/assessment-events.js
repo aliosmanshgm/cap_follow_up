@@ -222,8 +222,8 @@
         window.icaoAssessmentModelLoaded=false;updateStatus();
         if(!firebase.auth().currentUser)return;
         eventRef=db.ref(EVENT_PATH);snapshotRef=db.ref(SNAPSHOT_PATH);
-        eventCallback=snap=>{window.icaoAssessmentEvents=snap.val()||{};window.icaoAssessmentModelLoaded=true;updateStatus();scheduleAssessmentUiRefresh();};
-        snapshotCallback=snap=>{window.icaoEiSnapshots=snap.val()||{};window.icaoAssessmentModelLoaded=true;updateStatus();scheduleAssessmentUiRefresh();};
+        eventCallback=snap=>{window.icaoAssessmentEvents=snap.val()||{};window.icaoAssessmentModelLoaded=true;updateStatus();scheduleAssessmentUiRefresh();if(typeof window.renderSystemIntegrityCenter==='function'&&document.getElementById('tab-quality')?.classList.contains('active'))setTimeout(()=>window.renderSystemIntegrityCenter(true),0);};
+        snapshotCallback=snap=>{window.icaoEiSnapshots=snap.val()||{};window.icaoAssessmentModelLoaded=true;updateStatus();scheduleAssessmentUiRefresh();if(typeof window.renderSystemIntegrityCenter==='function'&&document.getElementById('tab-quality')?.classList.contains('active'))setTimeout(()=>window.renderSystemIntegrityCenter(true),0);};
         eventRef.on('value',eventCallback,err=>{console.error('Assessment Event verisi okunamadı',err);window.icaoAssessmentModelLoaded=true;updateStatus();});
         snapshotRef.on('value',snapshotCallback,err=>{console.error('EI Snapshot verisi okunamadı',err);window.icaoAssessmentModelLoaded=true;updateStatus();});
     };
