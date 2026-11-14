@@ -398,6 +398,37 @@ const I18N = {
         }
     }
 
+
+    // Faz 7.2 - Ziyaret Hub bağımsız navigasyon fallback'i.
+    // Ana Ziyaret Yönetimi düğmesi visit-hub.js yüklenemese dahi çalışır.
+    const VISIT_HUB_SAFE_PHASE_TARGETS = Object.freeze({
+        planning:'visits',
+        preparation:'visit-scope',
+        field:'visit-workspace',
+        followup:'visit-followup',
+        results:'visit-reports',
+        history:'visit-analysis'
+    });
+    function openVisitHubSafe(phase = 'planning') {
+        const target = VISIT_HUB_SAFE_PHASE_TARGETS[String(phase || 'planning')] || 'visits';
+        // Zengin Hub modülü mevcutsa onu tercih et; hata verirse doğrudan sekmeye düş.
+        try {
+            if (typeof window.openVisitHub === 'function' && window.openVisitHub !== openVisitHubSafe) {
+                const result = window.openVisitHub(phase);
+                if (result !== false) return result;
+            }
+        } catch (error) {
+            console.warn('visit-hub.js üzerinden geçiş başarısız; doğrudan sekme açılıyor.', error);
+        }
+        return switchTab(target);
+    }
+    window.openVisitHubSafe = openVisitHubSafe;
+    // visit-hub.js eksik/404 ise Hub içindeki faz düğmeleri de çalışmaya devam etsin.
+    if (typeof window.openVisitHub !== 'function') window.openVisitHub = openVisitHubSafe;
+    if (typeof window.openVisitHubView !== 'function') {
+        window.openVisitHubView = function(tabId) { return switchTab(tabId); };
+    }
+
     // ================================================================
     // STABILIZASYON PAKETI 1
     // ================================================================

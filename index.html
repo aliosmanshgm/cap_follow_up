@@ -64,7 +64,7 @@
                         <button class="legacy-route-btn" onclick="switchTab('icao-closed')" id="btn-tab-icao-closed">ICAO Kapatılanlar</button>
                     </div>
                     <button class="tab-btn" onclick="switchTab('validation-readiness')" id="btn-tab-validation-readiness">🎯 Validasyon Hazırlığı</button>
-                    <button class="tab-btn" type="button" onclick="openVisitHub('planning')" id="btn-tab-visit-hub">🧭 Ziyaret Yönetimi</button>
+                    <button class="tab-btn" type="button" onclick="return switchTab('visits')" id="btn-tab-visit-hub">🧭 Ziyaret Yönetimi</button>
                     <div class="visit-legacy-nav" aria-hidden="true">
                         <button class="legacy-route-btn" onclick="switchTab('visits')" id="btn-tab-visits">Ziyaret Planı</button>
                         <button class="legacy-route-btn" onclick="switchTab('visit-scope')" id="btn-tab-visit-scope">Kapsam ve Hazırlık</button>
@@ -2005,9 +2005,9 @@
 </div>
 
 
-<script src="js/app.js?v=20261114-phase7-hotfix-v10.1"></script>
+<script src="js/app.js?v=20261114-phase7-hotfix-v10.2"></script>
 <script src="js/modules/visit-sync.js?v=20261114-phase7-app-shell-v10"></script>
-<script src="js/modules/visit-hub.js?v=20261114-phase7-app-shell-v10"></script>
+<script src="js/modules/visit-hub.js?v=20261114-phase7-hotfix-v10.2"></script>
 <script src="js/modules/assessment-events.js?v=20261114-phase7-app-shell-v10"></script>
 <script src="js/modules/official-ei-management.js?v=20261114-phase7-app-shell-v10"></script>
 <script src="js/parsers/pq-docx-parser.js?v=20261114-phase7-app-shell-v10"></script>

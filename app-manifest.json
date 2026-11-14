@@ -1,6 +1,6 @@
 {
   "app": "USOAP CMA CAP Takip",
-  "version": "10.1-phase7-hub-navigation-hotfix",
+  "version": "10.2-phase7-visit-hub-hotfix",
   "baseline": "index_visit_hub_pq_version_database(2).html",
   "buildDate": "2026-11-14",
   "features": [
@@ -45,8 +45,7 @@
     "pq-cap-validation-visit-ei-navigation-bridge",
     "official-ei-reference-shortcut",
     "legacy-cap-routes-hidden",
-    "kanban-repositioned-under-cap-management",
-    "hub-navigation-button-fallback-hotfix"
+    "kanban-repositioned-under-cap-management"
   ],
   "architecture": {
     "index": "index.html",
