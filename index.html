@@ -13,7 +13,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.10/pdfmake.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.10/vfs_fonts.js"></script>
-    <link rel="stylesheet" href="css/app.css?v=20261114-phase4-validation-readiness-v7">
+    <link rel="stylesheet" href="css/app.css?v=20261114-phase6-pq-ui-v9">
 </head>
 <body>
 
@@ -69,28 +69,36 @@
             </div>
 
             <div class="nav-group open" data-nav-group="visits">
-                <button class="nav-group-title" type="button" onclick="toggleNavGroup(this)"><span>🧭 Ziyaret ve İç Denetim</span><span class="nav-chevron">⌄</span></button>
+                <button class="nav-group-title" type="button" onclick="toggleNavGroup(this)"><span>🧭 Ziyaret Yönetimi</span><span class="nav-chevron">⌄</span></button>
                 <div class="nav-group-items">
-                    <button class="tab-btn" onclick="switchTab('visits')" id="btn-tab-visits">Ziyaret Planı</button>
-                    <button class="tab-btn" onclick="switchTab('visit-scope')" id="btn-tab-visit-scope">Kapsam ve Hazırlık</button>
-                    <button class="tab-btn" onclick="switchTab('icao-visit-validation')" id="btn-tab-icao-visit-validation">ICAO Resmî Ziyareti</button>
-                    <button class="tab-btn" onclick="switchTab('visit-workspace')" id="btn-tab-visit-workspace">Ziyaret Çalışma Alanı</button>
-                    <button class="tab-btn" onclick="switchTab('visit-followup')" id="btn-tab-visit-followup">Takip Yönetimi</button>
-                    <button class="tab-btn" onclick="switchTab('visit-consultation')" id="btn-tab-visit-consultation">Danışma Yönetimi</button>
-                    <button class="tab-btn" onclick="switchTab('visit-reports')" id="btn-tab-visit-reports">Ziyaret Raporları</button>
-                    <button class="tab-btn" onclick="switchTab('visit-management')" id="btn-tab-visit-management">Yönetim Paneli ve Takvim</button>
-                    <button class="tab-btn" onclick="switchTab('visit-analysis')" id="btn-tab-visit-analysis">PQ/CAP Geçmişi ve Analiz</button>
-                    <button class="tab-btn" onclick="switchTab('visit-audit')" id="btn-tab-visit-audit">Değişiklik Geçmişi</button>
+                    <button class="tab-btn" type="button" onclick="openVisitHub('planning')" id="btn-tab-visit-hub">Ziyaret Yönetimi Hub</button>
+                    <div class="visit-legacy-nav" aria-hidden="true">
+                        <button class="tab-btn" onclick="switchTab('visits')" id="btn-tab-visits">Ziyaret Planı</button>
+                        <button class="tab-btn" onclick="switchTab('visit-scope')" id="btn-tab-visit-scope">Kapsam ve Hazırlık</button>
+                        <button class="tab-btn" onclick="switchTab('icao-visit-validation')" id="btn-tab-icao-visit-validation">ICAO Resmî Ziyareti</button>
+                        <button class="tab-btn" onclick="switchTab('visit-workspace')" id="btn-tab-visit-workspace">Ziyaret Çalışma Alanı</button>
+                        <button class="tab-btn" onclick="switchTab('visit-followup')" id="btn-tab-visit-followup">Takip Yönetimi</button>
+                        <button class="tab-btn" onclick="switchTab('visit-consultation')" id="btn-tab-visit-consultation">Danışma Yönetimi</button>
+                        <button class="tab-btn" onclick="switchTab('visit-reports')" id="btn-tab-visit-reports">Ziyaret Raporları</button>
+                        <button class="tab-btn" onclick="switchTab('visit-management')" id="btn-tab-visit-management">Yönetim Paneli ve Takvim</button>
+                        <button class="tab-btn" onclick="switchTab('visit-analysis')" id="btn-tab-visit-analysis">PQ/CAP Geçmişi ve Analiz</button>
+                        <button class="tab-btn" onclick="switchTab('visit-audit')" id="btn-tab-visit-audit">Değişiklik Geçmişi</button>
+                    </div>
                 </div>
             </div>
             <div class="nav-group open" data-nav-group="records">
                 <button class="nav-group-title" type="button" onclick="toggleNavGroup(this)"><span>📋 PQ ve CAP Kayıtları</span><span class="nav-chevron">⌄</span></button>
                 <div class="nav-group-items">
                     <button class="tab-btn" onclick="switchTab('list')" id="btn-tab-list">Tüm PQ ve CAP'ler</button>
-                    <button class="tab-btn" onclick="switchTab('pq-library')" id="btn-tab-pq-library">📚 ICAO PQ Veri Tabanı &amp; Sürüm Yönetimi</button>
-                    <button class="tab-btn" onclick="switchTab('quality')" id="btn-tab-quality">Veri Kalitesi Merkezi</button>
                     <button class="tab-btn" onclick="switchTab('empty-caps')" id="btn-tab-empty-caps">CAP Eksiklikleri</button>
                     <button class="tab-btn" onclick="switchTab('icao-closed')" id="btn-tab-icao-closed">ICAO Kapatılanlar</button>
+                </div>
+            </div>
+            <div class="nav-group open" data-nav-group="reference">
+                <button class="nav-group-title" type="button" onclick="toggleNavGroup(this)"><span>🗃️ Veri &amp; Referans</span><span class="nav-chevron">⌄</span></button>
+                <div class="nav-group-items">
+                    <button class="tab-btn" onclick="switchTab('pq-library')" id="btn-tab-pq-library">📚 ICAO PQ Veri Tabanı</button>
+                    <button class="tab-btn" onclick="switchTab('quality')" id="btn-tab-quality">🧪 Veri Kalitesi Merkezi</button>
                 </div>
             </div>
             <div class="nav-group open" data-nav-group="reports">
@@ -1332,8 +1340,8 @@
             <div class="visit-shell">
                 <div class="visit-header">
                     <div>
-                        <h3>🧭 Ziyaret ve İç Denetim</h3>
-                        <p>Denetim alanı özelindeki birim ziyaretlerini planlayın, ziyaret üst bilgilerini yönetin ve kayıtları Firebase üzerinde tarihçeli kullanıcı bilgileriyle saklayın. PQ/CAP kapsam seçimi ve saha notları sonraki paketlerde bu ziyaret kaydına bağlanacaktır.</p>
+                        <h3>📋 Ziyaret Planlama &amp; Kayıtlar</h3>
+                        <p>CAP takip, iç denetim, validasyon hazırlığı, ICAO resmî ziyaretleri ve diğer ziyaret türlerinin üst bilgilerini tek kayıtta yönetin. Kapsam, saha, takip, rapor ve analiz aşamaları Ziyaret Yönetimi Hub üzerinden aynı ziyaret kimliğine bağlanır.</p>
                     </div>
                     <div class="visit-header-actions">
                         <button class="btn-outline" onclick="refreshVisitModule()">🔄 Yenile</button>
@@ -1667,7 +1675,7 @@
                     <input type="hidden" id="visitRecordId">
                     <div class="visit-form-grid">
                         <div class="visit-field full"><label>Ziyaret adı <span class="visit-required">*</span></label><input id="visitName" type="text" maxlength="180" required placeholder="Örn. ANS CAP İlerleme ve Kanıt Doğrulama Ziyareti"></div>
-                        <div class="visit-field"><label>Ziyaret türü <span class="visit-required">*</span></label><select id="visitType" required onchange="toggleVisitTypeFields()"><option value="internal">SHGM Ziyareti / İç Denetim</option><option value="icao_official">ICAO Resmî Ziyareti</option></select></div>
+                        <div class="visit-field"><label>Ziyaret türü <span class="visit-required">*</span></label><select id="visitType" required onchange="toggleVisitTypeFields()"><option value="cap_followup">CAP Takip Ziyareti</option><option value="internal">İç Denetim / SHGM Ziyareti</option><option value="validation_prep">Validasyon Hazırlığı</option><option value="icao_official">ICAO Resmî Ziyareti</option><option value="other">Diğer</option></select><div id="visitTypeHelp" class="visit-type-help"></div></div>
                         <div class="visit-field" id="icaoVisitTypeField" style="display:none"><label>ICAO ziyaret türü <span class="visit-required">*</span></label><select id="icaoVisitType"><option value="ICVM">ICVM</option><option value="OSVA">OSVA</option><option value="CMAA">CMAA</option><option value="OTHER">Diğer</option></select></div>
                         <div class="visit-field full"><div id="icaoVisitTypeNote" class="icao-official-type-note">ICAO resmî ziyaretlerinde ana değerlendirme seviyesi PQ/CAP'tir. Kapsama eklenen CAP Step'leri bilgi amaçlı korunur; Step bazında ayrı ICAO sonuç kaydı oluşturulmaz.</div></div>
                         <div class="visit-field full"><label>Denetim alanı veya alanları <span class="visit-required">*</span></label><div id="visitAreaCheckboxes" class="visit-check-grid"></div><div class="visit-form-note">En az bir denetim alanı seçilmelidir.</div></div>
@@ -1715,7 +1723,7 @@
                         <div class="pqdb-header">
                             <div>
                                 <h3>📚 ICAO PQ Veri Tabanı &amp; Sürüm Yönetimi</h3>
-                                <p>Kayıtlar <b>Denetim Alanı → Sürüm → Revizyon</b> hiyerarşisinde gösterilir. Word dokümanı okunduktan sonra Denetim Alanı, Sürüm, Revizyon ve kaynak belge tarihi kayıttan önce doğrulanabilir; kayıt sonrasında da güncellenebilir.</p>
+                                <p>Bu alan uygulamanın <b>master/reference veri merkezi</b> olarak çalışır. Önce denetim alanını seçin; ardından aktif PQ sürümünü, revizyon geçmişini, değişiklik yoğunluğunu ve ilgili PQ kataloğunu yönetin.</p>
                             </div>
                             <div class="pqdb-actions">
                                 <input id="pqDbDocxInput" type="file" accept=".docx" multiple hidden onchange="prepareIcaoPqDocuments(event)">
@@ -1742,7 +1750,14 @@
                         </div>
         
                         <div id="pqDbViewVersions" class="pqdb-view active">
-                            <div id="pqDbVersionGrid" class="pqdb-area-tree"></div>
+                            <div class="pqdb-area-center-head">
+                                <div>
+                                    <h4>Denetim Alanları</h4>
+                                    <p>LEG–AGA kartlarından birini seçerek o alanın aktif sürümünü ve tüm revizyon geçmişini yönetin.</p>
+                                </div>
+                                <div class="pqdb-area-center-legend"><span class="active-dot"></span> Aktif kayıt &nbsp;·&nbsp; <span class="empty-dot"></span> Henüz kayıt yok</div>
+                            </div>
+                            <div id="pqDbVersionGrid" class="pqdb-area-center"></div>
                         </div>
         
                         <div id="pqDbViewCatalog" class="pqdb-view">
@@ -1994,14 +2009,15 @@
 </div>
 
 
-<script src="js/app.js?v=20261114-phase4-validation-readiness-v7"></script>
-<script src="js/modules/visit-sync.js?v=20261114-phase4-validation-readiness-v7"></script>
-<script src="js/modules/assessment-events.js?v=20261114-phase4-validation-readiness-v7"></script>
-<script src="js/modules/official-ei-management.js?v=20261114-phase4-validation-readiness-v7"></script>
-<script src="js/parsers/pq-docx-parser.js?v=20261114-phase4-validation-readiness-v7"></script>
-<script src="js/modules/pq-linkage.js?v=20261114-phase4-validation-readiness-v7"></script>
-<script src="js/modules/validation-readiness.js?v=20261114-phase4-validation-readiness-v7"></script>
-<script src="js/services/pq-repository.js?v=20261114-phase4-validation-readiness-v7"></script>
-<script src="js/modules/pq-library.js?v=20261114-phase4-validation-readiness-v7"></script>
+<script src="js/app.js?v=20261114-phase6-pq-ui-v9"></script>
+<script src="js/modules/visit-sync.js?v=20261114-phase6-pq-ui-v9"></script>
+<script src="js/modules/visit-hub.js?v=20261114-phase6-pq-ui-v9"></script>
+<script src="js/modules/assessment-events.js?v=20261114-phase6-pq-ui-v9"></script>
+<script src="js/modules/official-ei-management.js?v=20261114-phase6-pq-ui-v9"></script>
+<script src="js/parsers/pq-docx-parser.js?v=20261114-phase6-pq-ui-v9"></script>
+<script src="js/modules/pq-linkage.js?v=20261114-phase6-pq-ui-v9"></script>
+<script src="js/modules/validation-readiness.js?v=20261114-phase6-pq-ui-v9"></script>
+<script src="js/services/pq-repository.js?v=20261114-phase6-pq-ui-v9"></script>
+<script src="js/modules/pq-library.js?v=20261114-phase6-pq-ui-v9"></script>
 </body>
 </html>

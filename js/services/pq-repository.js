@@ -5,6 +5,9 @@
   const DB_TIMEOUT_MS=15000;
   const DB_CONNECT_TIMEOUT_MS=8000;
   const STORAGE_TIMEOUT_MS=12000;
+  // Varsayılan dosya arşivi harici sağlayıcıdır (Google Drive entegrasyonu planlı).
+  // Firebase Storage ancak window.PQ_ORIGINAL_DOCUMENT_STORAGE_MODE='firebase' açıkça verilirse kullanılır.
+  const DEFAULT_ORIGINAL_DOCUMENT_STORAGE_MODE='external';
 
   function safeKey(v){return String(v||'').trim().replace(/[.#$\[\]\/]/g,'_').replace(/\s+/g,'_');}
   function cleanFileName(v){return String(v||'document.docx').replace(/[^A-Za-z0-9._-]+/g,'_').slice(0,140);}
@@ -75,9 +78,11 @@
   }
 
   async function uploadOriginal(file,meta,editionKey,onProgress){
-    const result={status:'not-configured',name:file&&file.name||'',size:file&&file.size||0,type:file&&file.type||'',sha256:await sha256(file),storagePath:'',downloadURL:''};
+    const result={status:'not-configured',name:file&&file.name||'',size:file&&file.size||0,type:file&&file.type||'',sha256:await sha256(file),storagePath:'',downloadURL:'',provider:''};
     if(!file)return result;
-    if(typeof storage==='undefined'||!storage){result.status='sdk-unavailable';return result;}
+    const mode=String(window.PQ_ORIGINAL_DOCUMENT_STORAGE_MODE||DEFAULT_ORIGINAL_DOCUMENT_STORAGE_MODE).toLowerCase();
+    if(mode!=='firebase'){result.status='external-planned';result.provider='google-drive';return result;}
+    if(typeof storage==='undefined'||!storage){result.status='sdk-unavailable';result.provider='firebase-storage';return result;}
     if(!authUser()){result.status='auth-required';return result;}
     const path=`icao-pq-documents/${safeKey(meta.year)}/R${safeKey(meta.revision||'0')}/${safeKey(meta.area)}/${Date.now()}_${cleanFileName(file.name)}`;
     try{
@@ -179,8 +184,9 @@
     try{verify=await withTimeout(db.ref(areaPath).once('value'),DB_TIMEOUT_MS,'Firebase yazma doğrulaması');}catch(err){throw friendlyDbError(err);}
     if(!verify.exists())throw new Error('Firebase yazma doğrulaması başarısız: alan kaydı okunamadı.');
 
-    // DB kaydı başarılı olduktan sonra kaynak DOCX best-effort olarak Storage'a alınır.
-    emit(onProgress,'storage','PQ verisi kaydedildi. Kaynak DOCX Storage’a yükleniyor…');
+    // DB kaydı başarılı olduktan sonra kaynak DOCX arşiv politikası uygulanır. Varsayılan: harici/Google Drive planlı.
+    const storageMode=String(window.PQ_ORIGINAL_DOCUMENT_STORAGE_MODE||DEFAULT_ORIGINAL_DOCUMENT_STORAGE_MODE).toLowerCase();
+    emit(onProgress,'storage',storageMode==='firebase'?'PQ verisi kaydedildi. Kaynak DOCX Firebase Storage’a yükleniyor…':'PQ verisi kaydedildi. Kaynak DOCX harici arşiv (Google Drive) için işaretleniyor…');
     const sourceDocument=await uploadOriginal(file,parsed.meta,editionKey,pct=>emit(onProgress,'storage-progress',`Kaynak DOCX Storage’a yükleniyor… %${pct}`,String(pct)));
     areaData.sourceDocument=sourceDocument;
     importData.sourceDocument=sourceDocument;

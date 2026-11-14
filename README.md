@@ -1,115 +1,99 @@
-# USOAP CMA CAP Takip — Phase 3 CAP ↔ PQ Kalıcı Bağlantı v6
+# USOAP CMA CAP Takip — Faz 6 PQ Master/Reference Center v9
 
-Bu sürüm, `index_visit_hub_pq_version_database(2).html` tek-parça sürümünü ana referans kabul eden Monolith Rebuild v3, Faz 1 Assessment Event + EI Snapshot v4 ve Faz 2 EI Assessment Timeline v5 üzerine kurulmuştur. Eski 25 ana ekran korunur.
+Bu sürüm Faz 5 Ziyaret Yönetimi Hub v8 üzerine kurulmuştur. Mevcut PQ/CAP verisi, Firebase yolları, PQ parser, CAP↔PQ lineage ve sürüm karşılaştırma mantığı korunmuş; **ICAO PQ Veri Tabanı & Sürüm Yönetimi** arayüzü master/reference veri merkezi mantığıyla yeniden tasarlanmıştır.
 
-## Faz 3 amacı
-CAP kayıtlarının ICAO PQ Veri Tabanı ile yalnızca `Denetim Alanı + PQ numarası` üzerinden geçici olarak eşleşmesi yerine sürümler arasında kalıcı ve izlenebilir bir ilişki kurmak.
+## Faz 6 ana değişiklikleri
 
-Yeni iki kimlik kullanılır:
+### 1. PQ Veri Tabanı artık ayrı bir “Veri & Referans” alanında
+Sidebar içinde PQ Veri Tabanı operasyonel CAP kayıtlarından ayrılmıştır.
 
-- **PQ Instance ID** — belirli bir Denetim Alanı + Sürüm + Revizyon + PQ kaydını tanımlar.
-- **PQ Concept ID** — aynı düzenleyici/denetim konusunun sürümler boyunca devam eden mantıksal kimliğidir.
+Yeni grup:
 
-Örnek:
+- 🗃️ Veri & Referans
+  - 📚 ICAO PQ Veri Tabanı
+  - 🧪 Veri Kalitesi Merkezi
 
-`OPS 2020 / PQ 4.001 → OPS 2024 / PQ 4.101`
+Böylece PQ kütüphanesi operasyon ekranı değil, uygulamanın master/reference veri kaynağı olarak konumlandırılır.
 
-PQ numarası değişse dahi iki kayıt aynı `PQ Concept ID` altında izlenebilir.
+### 2. Sekiz ICAO denetim alanı görsel kartlarla yönetilir
+İlk görünüm artık uzun akordeon listesi değildir. LEG, ORG, PEL, OPS, AIR, AIG, ANS ve AGA ayrı kartlar olarak sunulur.
 
-## CAP kayıtlarında tutulan bağlantı
-CAP satırları ve PQ master kayıtlarında aşağıdaki alanlar oluşturulur:
+Her kartta:
 
-- `pqConceptId`
-- `pqLinkStatus`
-- `sourcePqRef`
-- `currentPqRef`
-- `pqLink`
+- alan kodu ve PQ numara ailesi (1.xxx–8.xxx),
+- aktif/güncel sürüm,
+- revizyon,
+- aktif PQ sayısı,
+- On-site / Off-site dağılımı,
+- PPQ sayısı,
+- sürüm/revizyon kayıt sayısı,
+- amendment sayısı,
+- aktif kayıt durumu,
+- kaynak belge tarihi
 
-`sourcePqRef` bağlantının ilk kurulduğu tarihsel PQ Instance'ını korur. `currentPqRef` ise ilgili denetim alanının aktif PQ sürümü değiştikçe yeniden çözülür.
+görülebilir.
 
-## ICAO Summary of Amendments kullanımı
-PQ lineage oluşturulurken mevcut PQ veri tabanındaki:
+### 3. Alan odaklı drill-down
+Bir alan kartı seçildiğinde yalnız o denetim alanının sürüm ve revizyon geçmişi açılır.
 
-- `previousPq`
-- `changeType`
-- `Summary of Amendments` kayıtları
-- aynı numaralı tarihsel PQ kayıtları
+Alan detayında:
 
-birlikte değerlendirilir.
+- Aktif Kataloğu Aç,
+- Sürüm Kıyasla,
+- Yeni DOCX Yükle,
+- Metadata Düzenle,
+- Aktif Yap
 
-Tek bir predecessor concept varsa Revised / No change benzeri geçişlerde concept devam eder. Birden fazla predecessor concept tek yeni PQ'da birleşiyorsa yeni concept oluşturulur ve parent concept ilişkileri saklanır.
+işlemleri doğrudan kullanılabilir.
 
-## PQ Veri Tabanı arayüzü
-Yeni **🔗 CAP ↔ PQ Bağlantıları** görünümü eklendi. Burada:
+Sürüm → Revizyon hiyerarşisi korunmuştur.
 
-- CAP kapsamındaki benzersiz PQ sayısı
-- kalıcı bağlı PQ sayısı
-- numarası değişmiş PQ sayısı
-- eşleşmeyen PQ sayısı
-- belirsiz / birden fazla ardıl bulunan PQ sayısı
+### 4. Mevcut PQ fonksiyonları korunmuştur
+Aşağıdaki görünümler ve veri modelleri değiştirilmemiştir:
 
-izlenebilir.
-
-Tablo her CAP PQ için şu zinciri gösterir:
-
-`CAP PQ → Kaynak PQ Instance → Aktif PQ Instance → PQ Concept`
-
-Ayrıca **Firebase Lineage İndeksini Yeniden Kur** düğmesi tüm kayıtları yeniden işler ve kalıcı kimlikleri Firebase'e yazar.
-
-## Ziyaret kayıtları
-Ziyaret kapsamına kaydedilen PQ snapshot'larına da:
-
-- `pqConceptId`
-- `sourcePqRef`
-- `currentPqRef`
-- `pqLinkStatus`
-
-alanları eklenmiştir. Böylece eski bir ziyaret kaydı, sonraki PQ sürümlerinde numara değişse dahi tarihsel PQ bağlantısını kaybetmez.
-
-## Excel dışa aktarımları
-CAP/PQ Excel çıktıları artık bağlantı alanlarını da içerir:
-
-- PQ Concept ID
-- PQ Link Durumu
-- Kaynak PQ ve sürümü
-- Aktif PQ ve sürümü
-- PQ Numarası Değişti mi
-
-PQ Veri Tabanı Excel çıktısında ayrıca PQ Instance ID ve lineage bilgileri bulunur.
-
-## Firebase
-Mevcut `icao_pq_library` yolu altında yeni düğümler kullanılır:
-
-- `icao_pq_library/concepts`
-- `icao_pq_library/linkageMeta`
-- PQ kayıtlarında `instanceId`, `conceptId`, `lineage`
-
-Yeni kök Firebase yolu açılmadığından mevcut `icao_pq_library` read/write kuralı yeterlidir. Ayrıntı `firebase/README_PQ_LIBRARY_RULES.md` dosyasındadır.
-
-## Geriye uyumluluk
-Eski PQ kayıtlarında concept/instance alanları bulunmasa bile kütüphane okunduğunda lineage bellekte otomatik üretilir. Kalıcı olarak Firebase'e yazmak için bir defa **Firebase Lineage İndeksini Yeniden Kur** işlemi çalıştırılabilir.
-
-CAP tarafında eski kayıtlar silinmez. Eşleşme mümkünse otomatik bağlanır; eşleşme yoksa `unmatched`, birden fazla aktif ardıl varsa `ambiguous` olarak işaretlenir.
-
-## Sonraki faz
-1. Validasyon adayı motorunun ziyaret planına bağlanması
-2. Tamamlanan CAP → validasyon adayı → sonraki ICAO ziyaretine atama akışı
-3. Ziyaret Yönetimi ana menüsünün Planlama / Hazırlık / Saha / Takip / Sonuç / Geçmiş olarak yeniden tasarlanması
-4. PQ Veri Tabanının görsel alan kartlarıyla yeniden tasarlanması
-
-## Faz 4 – Validasyon Hazırlığı Merkezi
-
-Bu sürüm, tüm CAP adımları tamamlanmış ancak henüz ICAO tarafından resmen valide edilmemiş PQ'lar için ayrı bir hazırlık ve atama katmanı ekler.
-
-- Otomatik validasyon adayı havuzu
-- PQ Concept / aktif PQ bağlantısı kontrolü
-- Kanıt referansı tamlık kontrolü
-- Kanıt paketi ve iç inceleme durumu
-- Öncelik ve bekletme kararı
-- Planlanan ICAO/OSVA/ICVM ziyaretine atama
-- Atanan PQ ve CAP step snapshot'larının ziyaret kapsamına otomatik eklenmesi
-- Overall ve alan bazlı teorik EI etkisi
-- Dashboard üzerinde atanmış adayların beklenen EI özeti
+- PQ Kataloğu
+- Sürüm Kıyaslama
+- CAP ↔ PQ Kalıcı Bağlantıları
+- PQ Concept / PQ Instance modeli
+- Summary of Amendments verisi
+- Word DOCX parser
+- Word sonrası Alan / Sürüm / Revizyon metadata doğrulaması
+- Kayıt sonrası metadata düzenleme
+- aktif sürüm seçimi
 - Excel dışa aktarma
 
-Metodolojik olarak CAP tamamlanması resmî EI değişikliği sayılmaz. Bu ekrandaki EI değerleri yalnızca başarılı ICAO validasyonu varsayımına dayalı projeksiyondur.
+### 5. Firebase Storage varsayılan olarak kapatıldı
+Firebase Storage ücretli yükseltme gerektirdiğinden bu sürümde orijinal PQ DOCX dosyası Storage'a yüklenmeye çalışılmaz.
+
+Varsayılan akış:
+
+`PQ DOCX → tarayıcıda parse → yapılandırılmış PQ verisi → Firebase Realtime Database`
+
+Orijinal dosya kaydı `external-planned / google-drive` olarak işaretlenir. Böylece daha sonra planlanan Google Drive entegrasyonuna hazırdır.
+
+Firebase Storage ancak uygulama başlatılmadan önce açıkça:
+
+`window.PQ_ORIGINAL_DOCUMENT_STORAGE_MODE = 'firebase'`
+
+olarak ayarlanırsa kullanılır.
+
+Bu faz için Firebase Storage Rules gerekmez.
+
+## Firebase
+Yeni Firebase kökü eklenmemiştir. Mevcut Realtime Database yolları aynen kullanılır. Faz 1–4 sonrasında uygulanan Realtime Database Rules yeterlidir.
+
+## Geriye uyumluluk
+Mevcut:
+
+- `icao_pq_library`
+- `editions`
+- `activeByArea`
+- `concepts`
+- `linkageMeta`
+- CAP/PQ bağlantıları
+- ziyaret snapshot'ları
+
+korunur. Veri migrasyonu gerekmez.
+
+## Sürüm
+`9.0-phase6-pq-master-reference-center`
