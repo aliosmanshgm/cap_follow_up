@@ -1,6 +1,6 @@
 {
   "app": "USOAP CMA CAP Takip",
-  "version": "9.0-phase6-pq-master-reference-center",
+  "version": "10.0-phase7-application-shell-cap-hub",
   "baseline": "index_visit_hub_pq_version_database(2).html",
   "buildDate": "2026-11-14",
   "features": [
@@ -37,7 +37,15 @@
     "pq-area-visual-cards",
     "pq-area-active-version-summary",
     "pq-area-version-revision-drilldown",
-    "pq-library-reference-navigation"
+    "pq-library-reference-navigation",
+    "application-shell-four-group-navigation",
+    "cap-management-hub",
+    "cap-hub-five-view-workflow",
+    "dashboard-management-flow-chain",
+    "pq-cap-validation-visit-ei-navigation-bridge",
+    "official-ei-reference-shortcut",
+    "legacy-cap-routes-hidden",
+    "kanban-repositioned-under-cap-management"
   ],
   "architecture": {
     "index": "index.html",
@@ -53,6 +61,7 @@
       "js/parsers/pq-docx-parser.js",
       "js/modules/pq-linkage.js",
       "js/modules/validation-readiness.js",
+      "js/modules/management-shell.js",
       "js/services/pq-repository.js",
       "js/modules/pq-library.js"
     ]

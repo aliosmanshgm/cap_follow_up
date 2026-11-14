@@ -305,8 +305,8 @@
     window.startValidationReadinessListener=function(){
         window.stopValidationReadinessListener();window.icaoValidationReadinessLoaded=false;
         if(!firebase.auth().currentUser){window.renderValidationReadinessDashboardSummary();return;}
-        readinessRef=db.ref(PATH);readinessCallback=snap=>{window.icaoValidationReadiness=snap.val()||{};window.icaoValidationReadinessLoaded=true;window.renderValidationReadiness();};
-        readinessRef.on('value',readinessCallback,err=>{console.error('Validasyon hazırlığı okunamadı:',err);window.icaoValidationReadinessLoaded=true;window.renderValidationReadiness();});
+        readinessRef=db.ref(PATH);readinessCallback=snap=>{window.icaoValidationReadiness=snap.val()||{};window.icaoValidationReadinessLoaded=true;window.renderValidationReadiness();if(typeof window.renderManagementFlow==='function')window.renderManagementFlow();if(typeof window.refreshCapHubSummary==='function')window.refreshCapHubSummary();};
+        readinessRef.on('value',readinessCallback,err=>{console.error('Validasyon hazırlığı okunamadı:',err);window.icaoValidationReadinessLoaded=true;window.renderValidationReadiness();if(typeof window.renderManagementFlow==='function')window.renderManagementFlow();});
     };
     window.stopValidationReadinessListener=function(){if(readinessRef&&readinessCallback)readinessRef.off('value',readinessCallback);readinessRef=null;readinessCallback=null;window.icaoValidationReadiness={};window.icaoValidationReadinessLoaded=false;};
 

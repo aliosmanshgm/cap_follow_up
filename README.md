@@ -1,99 +1,114 @@
-# USOAP CMA CAP Takip — Faz 6 PQ Master/Reference Center v9
+# USOAP CMA CAP Takip — Faz 7 Uygulama Kabuğu & CAP Yönetimi Hub v10
 
-Bu sürüm Faz 5 Ziyaret Yönetimi Hub v8 üzerine kurulmuştur. Mevcut PQ/CAP verisi, Firebase yolları, PQ parser, CAP↔PQ lineage ve sürüm karşılaştırma mantığı korunmuş; **ICAO PQ Veri Tabanı & Sürüm Yönetimi** arayüzü master/reference veri merkezi mantığıyla yeniden tasarlanmıştır.
+Bu sürüm Faz 6 PQ Master/Reference Center v9 üzerine kurulmuştur. Veri modeli, Firebase Realtime Database yolları, Assessment Event / EI Snapshot modeli, CAP↔PQ lineage, Validasyon Hazırlığı, Ziyaret Yönetimi Hub ve PQ Master veri tabanı korunmuştur. Faz 7'nin amacı uygulamanın büyüyen menü yapısını sadeleştirmek ve **PQ → CAP → Validasyon → Ziyaret → Resmî EI** zincirini tek yönetim deneyiminde görünür hale getirmektir.
 
-## Faz 6 ana değişiklikleri
+## Faz 7 ana değişiklikleri
 
-### 1. PQ Veri Tabanı artık ayrı bir “Veri & Referans” alanında
-Sidebar içinde PQ Veri Tabanı operasyonel CAP kayıtlarından ayrılmıştır.
+### 1. Sidebar dört ana gruba sadeleştirildi
+Önceki çok sayıdaki fonksiyonel grup yerine yalnız şu üst seviye gruplar görünür:
 
-Yeni grup:
-
+- 📊 Dashboard
+  - Genel Durum
+  - Yönetim Özeti
+- ⚙️ Operasyon
+  - 📋 CAP Yönetimi
+  - 🎯 Validasyon Hazırlığı
+  - 🧭 Ziyaret Yönetimi
+  - 📝 Yönetici Raporu
+- 📈 Analiz
+  - EI & Değerlendirme
+  - Alan Analizi
+  - Hedefler
+  - Stratejik Analiz
+  - Trend & Kıyaslama
 - 🗃️ Veri & Referans
   - 📚 ICAO PQ Veri Tabanı
-  - 🧪 Veri Kalitesi Merkezi
+  - 🌐 ICAO Değerlendirme / EI Kayıtları
+  - 🧪 Veri Kalitesi
 
-Böylece PQ kütüphanesi operasyon ekranı değil, uygulamanın master/reference veri kaynağı olarak konumlandırılır.
+Dosya yükleme, arşiv, sistem kontrolü, tema, dil ve oturum işlemleri mevcut Veri Yönetimi / Diğer menülerinde korunur.
 
-### 2. Sekiz ICAO denetim alanı görsel kartlarla yönetilir
-İlk görünüm artık uzun akordeon listesi değildir. LEG, ORG, PEL, OPS, AIR, AIG, ANS ve AGA ayrı kartlar olarak sunulur.
+### 2. Yeni CAP Yönetimi Hub
+Eskiden sidebar'da ayrı görünen:
 
-Her kartta:
+- Tüm PQ ve CAP'ler,
+- Yaklaşan,
+- Geciken,
+- Kanban,
+- CAP Eksiklikleri,
+- ICAO Kapatılanlar
 
-- alan kodu ve PQ numara ailesi (1.xxx–8.xxx),
-- aktif/güncel sürüm,
-- revizyon,
-- aktif PQ sayısı,
-- On-site / Off-site dağılımı,
-- PPQ sayısı,
-- sürüm/revizyon kayıt sayısı,
-- amendment sayısı,
-- aktif kayıt durumu,
-- kaynak belge tarihi
+artık ayrı ana menü değildir. Tek **CAP Yönetimi** altında beş görünüm vardır:
 
-görülebilir.
+1. Portföy
+2. Termin & Risk
+3. İş Akışı
+4. Eksikler
+5. ICAO Sonuçları
 
-### 3. Alan odaklı drill-down
-Bir alan kartı seçildiğinde yalnız o denetim alanının sürüm ve revizyon geçmişi açılır.
+Mevcut ekranlar ve veri işlevleri silinmemiş, Hub üzerinden yönlendirilmiştir.
 
-Alan detayında:
+### 3. EI Odaklı Kanban yeniden konumlandırıldı
+`EI Odaklı CAP Kanban Panosu` ana menü olmaktan çıkarıldı ve **CAP İş Akışı Kanbanı** olarak CAP Yönetimi içine alındı.
 
-- Aktif Kataloğu Aç,
-- Sürüm Kıyasla,
-- Yeni DOCX Yükle,
-- Metadata Düzenle,
-- Aktif Yap
+Kanban:
 
-işlemleri doğrudan kullanılabilir.
+- gecikme,
+- hedef tarih,
+- planlama riski,
+- CAP ilerlemesi
 
-Sürüm → Revizyon hiyerarşisi korunmuştur.
+odaklı operasyon ekranıdır. Kartlarda EI bilgisi karar desteği olarak kalabilir; ancak resmî/projeksiyon EI için **Validasyon Hazırlığı** ve Dashboard Assessment Event modeli esas alınır.
 
-### 4. Mevcut PQ fonksiyonları korunmuştur
-Aşağıdaki görünümler ve veri modelleri değiştirilmemiştir:
+### 4. Dashboard'a uçtan uca yönetim zinciri eklendi
+Dashboard'ın üstünde artık beş aşamalı canlı süreç görünür:
 
-- PQ Kataloğu
-- Sürüm Kıyaslama
-- CAP ↔ PQ Kalıcı Bağlantıları
-- PQ Concept / PQ Instance modeli
-- Summary of Amendments verisi
-- Word DOCX parser
-- Word sonrası Alan / Sürüm / Revizyon metadata doğrulaması
-- Kayıt sonrası metadata düzenleme
-- aktif sürüm seçimi
-- Excel dışa aktarma
+`ICAO PQ Master → CAP Yönetimi → Validasyon Hazırlığı → Ziyaret Yönetimi → Resmî ICAO EI`
 
-### 5. Firebase Storage varsayılan olarak kapatıldı
-Firebase Storage ücretli yükseltme gerektirdiğinden bu sürümde orijinal PQ DOCX dosyası Storage'a yüklenmeye çalışılmaz.
+Kartlarda mümkün olduğunda canlı bilgiler gösterilir:
 
-Varsayılan akış:
+- aktif PQ alanı / aktif PQ sayısı,
+- CAP/PQ ve CAP adımı sayısı,
+- tamamlanan PQ / gecikme riski,
+- validasyon adayı / hazır / ziyarete atanmış sayıları,
+- aktif / yaklaşan ziyaret sayısı,
+- son resmî EI ve değerlendirme adı.
 
-`PQ DOCX → tarayıcıda parse → yapılandırılmış PQ verisi → Firebase Realtime Database`
+Her kart ilgili çalışma merkezine doğrudan geçiş sağlar.
 
-Orijinal dosya kaydı `external-planned / google-drive` olarak işaretlenir. Böylece daha sonra planlanan Google Drive entegrasyonuna hazırdır.
+### 5. EI & Değerlendirme kısa yolu
+Analiz grubundaki `EI & Değerlendirme` kısa yolu Dashboard'daki Assessment Event / EI alanına götürür. Böylece EI grafikleri ayrı ve tekrarlı bir ana menü oluşturmaz.
 
-Firebase Storage ancak uygulama başlatılmadan önce açıkça:
+### 6. Resmî EI kayıtları Veri & Referans altında erişilebilir
+ICAO resmî değerlendirme / EI kayıt yönetimi artık yalnız Veri Yönetimi modalında saklı değildir. `Veri & Referans` grubundan doğrudan açılabilir.
 
-`window.PQ_ORIGINAL_DOCUMENT_STORAGE_MODE = 'firebase'`
+### 7. Geriye uyumluluk
+Aşağıdaki tablar fiziksel olarak korunmuştur ve mevcut fonksiyonlar bunlara yönlenmeye devam edebilir:
 
-olarak ayarlanırsa kullanılır.
+- `list`
+- `upcoming`
+- `past`
+- `kanban`
+- `empty-caps`
+- `icao-closed`
+- tüm ziyaret alt ekranları
 
-Bu faz için Firebase Storage Rules gerekmez.
+Legacy rota butonları görünür sidebar'dan gizlenmiştir; `switchTab(...)` ile geriye uyumluluk sürer.
 
 ## Firebase
-Yeni Firebase kökü eklenmemiştir. Mevcut Realtime Database yolları aynen kullanılır. Faz 1–4 sonrasında uygulanan Realtime Database Rules yeterlidir.
+Bu faz yeni Firebase kökü eklemez ve veri modelini değiştirmez. Faz 1–4 sonrasında uygulanmış Realtime Database Rules yeterlidir. Firebase Storage kullanılmaz.
 
-## Geriye uyumluluk
-Mevcut:
+## Yeni dosya
+- `js/modules/management-shell.js`
 
-- `icao_pq_library`
-- `editions`
-- `activeByArea`
-- `concepts`
-- `linkageMeta`
-- CAP/PQ bağlantıları
-- ziyaret snapshot'ları
+Bu modül:
 
-korunur. Veri migrasyonu gerekmez.
+- CAP Yönetimi Hub navigasyonunu,
+- CAP Hub KPI özetini,
+- Dashboard uçtan uca süreç zincirini,
+- EI & Değerlendirme kısa yolunu
+
+yönetir.
 
 ## Sürüm
-`9.0-phase6-pq-master-reference-center`
+`10.0-phase7-application-shell-cap-hub`

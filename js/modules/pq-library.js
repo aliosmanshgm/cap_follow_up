@@ -96,7 +96,7 @@
             if(window.PQLinkage&&typeof window.PQLinkage.enrichLibrary==='function')window.PQLinkage.enrichLibrary(icaoPqLibrary);
             if(note)note.textContent='PQ veri tabanı yüklenemedi; yerel cache kullanılıyor. '+(err.message||err);
         }
-        pqDbLoaded=true;refreshCapPqLinkage({persist:true,silent:true});renderPqDbKpis();renderPqDbVersions();populatePqDbSelectors();renderPqDbCatalog();renderPqDbComparison();renderPqDbLinkage();return icaoPqLibrary;
+        pqDbLoaded=true;refreshCapPqLinkage({persist:true,silent:true});renderPqDbKpis();renderPqDbVersions();populatePqDbSelectors();renderPqDbCatalog();renderPqDbComparison();renderPqDbLinkage();if(typeof window.renderManagementFlow==='function')window.renderManagementFlow();return icaoPqLibrary;
     }
     window.loadIcaoPqLibrary=loadIcaoPqLibrary;
 
@@ -123,6 +123,15 @@
         const a=current&&current.areaData||{},pqs=pqDbPqList(a),amendments=pqDbAmendments(a);
         return {active,activeRow,current,pqs,amendments,onSite:pqs.filter(p=>p.assessmentMode==='On-site').length,offSite:pqs.filter(p=>p.assessmentMode==='Off-site').length,ppq:pqs.filter(p=>p.ppq).length};
     }
+    window.getPqLibrarySummary=function(){
+        const editions=pqDbEditionEntries();
+        const loadedAreas=new Set();let activeAreas=0,totalPqs=0;
+        for(const area of PQDB_AREAS){
+            const rows=pqDbAreaRows(area);if(rows.length)loadedAreas.add(area);
+            const ctx=pqDbAreaActiveContext(area,rows);if(ctx.activeRow||ctx.current){if(ctx.activeRow)activeAreas++;totalPqs+=ctx.pqs.length;}
+        }
+        return {versionCount:editions.length,loadedAreas:loadedAreas.size,activeAreas,totalPqs};
+    };
     function pqDbSelectArea(area){pqDbSelectedArea=String(area||'').toUpperCase();renderPqDbVersions();}
     window.pqDbSelectArea=pqDbSelectArea;
     function openPqDbAreaCatalog(area){

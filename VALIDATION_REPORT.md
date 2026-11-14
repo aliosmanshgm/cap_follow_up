@@ -1,34 +1,52 @@
-# Faz 6 v9 — Doğrulama Raporu
+# Faz 7 v10 — Doğrulama Raporu
 
-## Statik yapı kontrolleri
-- HTML ID sayısı: 701
-- Duplicate ID: 0
-- Yerel CSS/JS referansları: 11
-- Eksik yerel referans: 0
-- Inline arayüz handler fonksiyonları: 177
-- Eksik handler: 0
-- Tüm JavaScript dosyaları `node --check` kontrolünden geçti.
+Tarih: 14.11.2026
 
-## Faz 6 özellik kontrolleri
-- Ayrı `Veri & Referans` sidebar grubu: OK
-- PQ Veri Tabanı sidebar'da tek kayıt: OK
-- 8 alan için görsel kart merkezi: OK
-- LEG / ORG / PEL / OPS / AIR / AIG / ANS / AGA metadata tanımları: OK
-- Alan seçimi / drill-down: OK
-- Aktif PQ kataloğuna geçiş: OK
-- Alan bazlı sürüm kıyaslamaya geçiş: OK
-- Sürüm → revizyon geçmişi: OK
-- Mevcut PQ Kataloğu görünümü: korundu
-- Mevcut Sürüm Kıyaslama görünümü: korundu
-- Mevcut CAP ↔ PQ linkage görünümü: korundu
-- DOCX metadata doğrulama modalı: korundu
+## Statik kontroller
 
-## Firebase / Storage
-- Yeni Realtime Database kökü: yok
-- Realtime Database Rules değişikliği: gerekmiyor
-- Firebase Storage varsayılan modu: kapalı
-- Kaynak DOCX durumu: `external-planned`
-- Planlanan harici sağlayıcı: Google Drive
+- JavaScript syntax kontrolü: **BAŞARILI**
+  - `js/app.js`
+  - `js/modules/*.js`
+  - `js/parsers/*.js`
+  - `js/services/*.js`
+  - `js/config/*.js`
+- HTML ID sayısı: **703**
+- Duplicate HTML ID: **0**
+- Ana tab sayısı: **26**
+- `tab-*` karşılığı bulunmayan `btn-tab-*`: **0**
+- İncelenen inline UI handler sayısı: **185**
+- Kaynak kodda karşılığı bulunmayan handler: **0**
+- Eksik yerel JS/CSS referansı: **0**
+- Görünür ana navigasyon grubu: **4**
 
-## Not
-Gerçek Firebase verisiyle canlı entegrasyon testi GitHub Pages/Firebase oturumu üzerinde kullanıcı tarafından yapılmalıdır. Statik kontroller ve kod sözdizimi kontrolleri başarılıdır.
+## Faz 7 kontrolleri
+
+- `btn-tab-cap-hub`: mevcut
+- `managementFlowStrip`: mevcut
+- `management-shell.js`: syntax OK
+- CAP legacy tabları fiziksel olarak korunuyor
+- Ziyaret legacy tabları fiziksel olarak korunuyor
+- Kanban tabı korunuyor, yalnız CAP Hub altında yeniden konumlandırılıyor
+- Resmî EI yönetim modalı korunuyor
+- PQ Master/Reference Center korunuyor
+- Validasyon Hazırlığı korunuyor
+- Ziyaret Yönetimi Hub korunuyor
+
+## Geriye uyumluluk
+
+Mevcut `switchTab('list')`, `switchTab('kanban')`, `switchTab('upcoming')`, `switchTab('past')`, `switchTab('empty-caps')`, `switchTab('icao-closed')` çağrıları çalışmaya devam edecek şekilde route butonları DOM içinde tutulmuştur.
+
+`switchTab` sonrasında:
+
+- ziyaret tablarında `syncVisitHubNavigation`,
+- CAP tablarında `syncCapHubNavigation`
+
+çalışır.
+
+## Tarayıcı notu
+
+Container ortamındaki headless Chromium, sistem DBus / proses koşulları nedeniyle güvenilir bir tam UI smoke-test çıktısı üretemedi. Bu nedenle son canlı doğrulama GitHub Pages üzerinde yapılmalıdır. Statik DOM, handler ve JavaScript syntax kontrolleri başarılıdır.
+
+## Firebase
+
+Yeni Firebase yolu eklenmedi. Rules güncellemesi gerekmiyor.
