@@ -54,7 +54,8 @@
       <li>uygulama klasör kimliği;</li>
       <li>belge türü;</li>
       <li>ilgili denetim alanı, PQ, CAP adımı, ziyaret veya değerlendirme kaydı;</li>
-      <li>oluşturma/güncelleme zamanı ve uygulama kullanıcısına ilişkin kayıt bilgisi.</li>
+      <li>oluşturma/güncelleme zamanı ve uygulama kullanıcısına ilişkin kayıt bilgisi;</li>
+      <li>uygulama erişim yönetimi için Firebase kullanıcı UID'si, e-posta adresi, görünen ad, rol, birim/unvan, aktif/pasif durumu ve çalışma alanı kapsamı.</li>
     </ul>
     <p>Google OAuth Web Client ID ve uygulama klasörü ayarları uygulama yapılandırması kapsamında saklanabilir. OAuth erişim tokenı Firebase Realtime Database'e veya kalıcı tarayıcı depolamasına yazılmaz; aktif oturum sırasında bellekte tutulur.</p>
   </section>
@@ -73,7 +74,7 @@
 
   <section class="card">
     <h2>7. Güvenlik</h2>
-    <p>Uygulama, HTTPS üzerinden sunulur ve Google OAuth erişim tokenını yalnız aktif oturum belleğinde tutacak şekilde tasarlanmıştır. Yetkili uygulama verilerine erişim için Firebase Authentication ve Realtime Database güvenlik kuralları kullanılabilir.</p>
+    <p>Uygulama, HTTPS üzerinden sunulur ve Google OAuth erişim tokenını yalnız aktif oturum belleğinde tutacak şekilde tasarlanmıştır. Yetkili uygulama verilerine erişim için Firebase Authentication ve Realtime Database güvenlik kuralları kullanılır. Uygulama rolleri Sistem Sahibi, Yönetici, Koordinatör, Uzman ve Görüntüleyici seviyelerinde uygulanabilir; pasif kullanıcıların veri erişimi güvenlik kurallarıyla engellenir.</p>
     <p>Hiçbir internet tabanlı sistem için mutlak güvenlik garanti edilemez. Kullanıcıların hesap güvenliğini, Google hesap izinlerini ve paylaşılan Drive dosyalarının erişim ayarlarını düzenli olarak kontrol etmeleri önerilir.</p>
   </section>
 

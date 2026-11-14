@@ -213,3 +213,12 @@ Kullanıcıya özel erişim önerilir:
 Tam güncel rules dosyası: `firebase/database.rules.phase14.json`.
 
 Tarayıcı bildirimleri yalnız uygulama açıkken ve kullanıcı tarayıcı izni verdiyse çalışır. Haftalık özet de belirlenen gün/saatten sonra uygulama açıldığında üretilir. Arka planda otomatik e-posta gönderimi için sunucu/zamanlayıcı tabanlı ek entegrasyon gerekir.
+
+## Faz 15 - Kullanıcı / Rol / Yetki
+Yeni kök: `icao_access_control`.
+
+Faz 15 ile Realtime Database erişimi yalnız `auth != null` olmaktan çıkarak aktif kullanıcı + rol temelli hale gelir. Geçiş sırasında `icao_access_control/users` henüz yoksa kimliği doğrulanmış mevcut kullanıcılar geçici legacy erişimini korur. İlk Faz 15 girişi `owner` bootstrap kaydını oluşturduğunda rol tabanlı kurallar devreye girer.
+
+Roller: `owner`, `manager`, `coordinator`, `specialist`, `viewer`.
+
+Tam kural dosyası: `firebase/database.rules.phase15.json`.

@@ -13,7 +13,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.10/pdfmake.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.10/vfs_fonts.js"></script>
-    <link rel="stylesheet" href="css/app.css?v=20261114-phase14-notifications-v17">
+    <link rel="stylesheet" href="css/app.css?v=20261114-phase15-access-v18">
 </head>
 <body>
 
@@ -30,6 +30,19 @@
             <a href="about.html" target="_blank" rel="noopener" style="color:var(--primary);">Hakkında</a>
             <a href="privacy.html" target="_blank" rel="noopener" style="color:var(--primary);">Gizlilik</a>
             <a href="terms.html" target="_blank" rel="noopener" style="color:var(--primary);">Koşullar</a>
+        </div>
+    </div>
+</div>
+
+<div id="accessDeniedOverlay" class="access-denied-overlay" style="display:none;">
+    <div class="access-denied-box">
+        <div class="access-denied-icon">🔐</div>
+        <h2 id="accessDeniedTitle">Erişim Onayı Gerekli</h2>
+        <p id="accessDeniedMessage">Hesabınız doğrulandı ancak uygulama rolünüz henüz etkin değil.</p>
+        <div id="accessDeniedMeta" class="access-denied-meta"></div>
+        <div class="access-denied-actions">
+            <button type="button" onclick="retryAccessControl()">🔄 Yetkiyi Tekrar Kontrol Et</button>
+            <button type="button" class="btn-outline" onclick="firebase.auth().signOut()">🚪 Çıkış</button>
         </div>
     </div>
 </div>
@@ -108,9 +121,17 @@
                     <button class="tab-btn" onclick="switchTab('quality')" id="btn-tab-quality">🧪 Veri Kalitesi &amp; Bütünlük</button>
                 </div>
             </div>
+
+            <div class="nav-group open" data-nav-group="system" id="navGroupAccessControl" style="display:none;">
+                <button class="nav-group-title" type="button" onclick="toggleNavGroup(this)"><span>🔐 Sistem &amp; Yetki</span><span class="nav-chevron">⌄</span></button>
+                <div class="nav-group-items">
+                    <button class="tab-btn" type="button" onclick="switchTab('access-control')" id="btn-tab-access-control">👥 Kullanıcı &amp; Yetki Yönetimi</button>
+                </div>
+            </div>
         </div>
 
         <div class="sidebar-footer-action">
+            <div id="sidebarAccessIdentity" class="sidebar-access-identity"><span class="access-role-icon">🔒</span><span><b>Yetki hazırlanıyor</b><small>Kullanıcı profili yükleniyor</small></span></div>
             <button onclick="openDataManagement()" class="btn-outline data-management-btn">📂 Veri Yönetimi</button>
             <div style="margin-top:9px; font-size:10px; text-align:center; display:flex; justify-content:center; gap:8px; flex-wrap:wrap;">
                 <a href="about.html" target="_blank" rel="noopener" style="color:var(--muted);">Hakkında</a>
@@ -2097,6 +2118,12 @@
                 </div>
 
         <!-- VERİ KALİTESİ & SÜREÇ BÜTÜNLÜĞÜ MERKEZİ -->
+        <div id="tab-access-control" class="tab-content">
+            <div id="accessControlRoot" class="access-control-shell">
+                <div class="access-empty">Kullanıcı ve yetki bilgileri hazırlanıyor...</div>
+            </div>
+        </div>
+
         <div id="tab-quality" class="tab-content">
             <section id="systemIntegrityCenter" class="integrity-shell">
                 <div class="integrity-header">
@@ -2416,6 +2443,28 @@
     </div>
 </div>
 
+<div id="accessUserEditorModal" class="modal" style="z-index:12060;" onclick="if(event.target===this) closeAccessUserEditor()">
+    <div class="modal-content access-user-modal-content">
+        <div class="modal-header">
+            <div><h3 style="margin:0;color:var(--primary);">👤 Kullanıcı Rolü &amp; Yetkisi</h3><div class="access-modal-subtitle">Firebase Authentication hesabına uygulama rolü ve çalışma kapsamı atayın.</div></div>
+            <button type="button" class="right-panel-close" onclick="closeAccessUserEditor()">✖</button>
+        </div>
+        <form onsubmit="saveAccessUserEditor(event)">
+            <input type="hidden" id="accessEditUid">
+            <div class="access-user-form-grid">
+                <div class="control-group"><label>Ad / Görünen ad</label><input id="accessEditName" type="text" required></div>
+                <div class="control-group"><label>E-posta</label><input id="accessEditEmail" type="email" readonly></div>
+                <div class="control-group"><label>Rol</label><select id="accessEditRole"><option value="owner">Sistem Sahibi</option><option value="manager">Yönetici</option><option value="coordinator">Koordinatör</option><option value="specialist">Uzman</option><option value="viewer">Görüntüleyici</option></select></div>
+                <div class="control-group"><label>Birim</label><input id="accessEditUnit" type="text" placeholder="EYUİK"></div>
+                <div class="control-group"><label>Unvan / Görev</label><input id="accessEditTitle" type="text"></div>
+                <div class="control-group"><label>Hesap durumu</label><label class="access-active-switch"><input id="accessEditActive" type="checkbox" checked><span>Aktif erişim</span></label></div>
+                <div class="control-group full"><label>Çalışma kapsamı / denetim alanları</label><div class="access-area-grid"><label class="access-area-check"><input type="checkbox" id="accessAreaLEG" checked><span>LEG</span></label><label class="access-area-check"><input type="checkbox" id="accessAreaORG" checked><span>ORG</span></label><label class="access-area-check"><input type="checkbox" id="accessAreaPEL" checked><span>PEL</span></label><label class="access-area-check"><input type="checkbox" id="accessAreaOPS" checked><span>OPS</span></label><label class="access-area-check"><input type="checkbox" id="accessAreaAIR" checked><span>AIR</span></label><label class="access-area-check"><input type="checkbox" id="accessAreaAIG" checked><span>AIG</span></label><label class="access-area-check"><input type="checkbox" id="accessAreaANS" checked><span>ANS</span></label><label class="access-area-check"><input type="checkbox" id="accessAreaAGA" checked><span>AGA</span></label></div><small>Bu seçim görev ve filtre yönlendirmesi içindir; veri gizliliği sınırı rol bazlı Firebase Rules ile uygulanır.</small></div>
+            </div>
+            <div class="access-modal-actions"><button type="button" class="btn-outline" onclick="closeAccessUserEditor()">İptal</button><button type="submit">💾 Yetkiyi Kaydet</button></div>
+        </form>
+    </div>
+</div>
+
 <div id="gapModal" class="modal">
     <div class="modal-content">
         <div class="modal-header">
@@ -2427,23 +2476,24 @@
 </div>
 
 
-<script src="js/app.js?v=20261114-phase14-notifications-v17"></script>
-<script src="js/modules/visit-sync.js?v=20261114-phase14-notifications-v17"></script>
-<script src="js/modules/visit-hub.js?v=20261114-phase14-notifications-v17"></script>
-<script src="js/modules/assessment-events.js?v=20261114-phase14-notifications-v17"></script>
-<script src="js/modules/official-ei-management.js?v=20261114-phase14-notifications-v17"></script>
-<script src="js/modules/official-ei-automation.js?v=20261114-phase14-notifications-v17"></script>
-<script src="js/parsers/pq-docx-parser.js?v=20261114-phase14-notifications-v17"></script>
-<script src="js/modules/pq-linkage.js?v=20261114-phase14-notifications-v17"></script>
-<script src="js/modules/validation-readiness.js?v=20261114-phase14-notifications-v17"></script>
-<script src="js/modules/assessment-impact.js?v=20261114-phase14-notifications-v17"></script>
-<script src="js/modules/management-shell.js?v=20261114-phase14-notifications-v17"></script>
-<script src="js/modules/drive-documents.js?v=20261114-phase14-notifications-v17"></script>
-<script src="js/services/pq-repository.js?v=20261114-phase14-notifications-v17"></script>
-<script src="js/modules/pq-library.js?v=20261114-phase14-notifications-v17"></script>
-<script src="js/modules/system-integrity.js?v=20261114-phase14-notifications-v17"></script>
-<script src="js/modules/action-center.js?v=20261114-phase14-notifications-v17"></script>
-<script src="js/modules/notification-center.js?v=20261114-phase14-notifications-v17"></script>
-<script src="js/modules/reporting-center.js?v=20261114-phase14-notifications-v17"></script>
+<script src="js/app.js?v=20261114-phase15-access-v18"></script>
+<script src="js/modules/access-control.js?v=20261114-phase15-access-v18"></script>
+<script src="js/modules/visit-sync.js?v=20261114-phase15-access-v18"></script>
+<script src="js/modules/visit-hub.js?v=20261114-phase15-access-v18"></script>
+<script src="js/modules/assessment-events.js?v=20261114-phase15-access-v18"></script>
+<script src="js/modules/official-ei-management.js?v=20261114-phase15-access-v18"></script>
+<script src="js/modules/official-ei-automation.js?v=20261114-phase15-access-v18"></script>
+<script src="js/parsers/pq-docx-parser.js?v=20261114-phase15-access-v18"></script>
+<script src="js/modules/pq-linkage.js?v=20261114-phase15-access-v18"></script>
+<script src="js/modules/validation-readiness.js?v=20261114-phase15-access-v18"></script>
+<script src="js/modules/assessment-impact.js?v=20261114-phase15-access-v18"></script>
+<script src="js/modules/management-shell.js?v=20261114-phase15-access-v18"></script>
+<script src="js/modules/drive-documents.js?v=20261114-phase15-access-v18"></script>
+<script src="js/services/pq-repository.js?v=20261114-phase15-access-v18"></script>
+<script src="js/modules/pq-library.js?v=20261114-phase15-access-v18"></script>
+<script src="js/modules/system-integrity.js?v=20261114-phase15-access-v18"></script>
+<script src="js/modules/action-center.js?v=20261114-phase15-access-v18"></script>
+<script src="js/modules/notification-center.js?v=20261114-phase15-access-v18"></script>
+<script src="js/modules/reporting-center.js?v=20261114-phase15-access-v18"></script>
 </body>
 </html>

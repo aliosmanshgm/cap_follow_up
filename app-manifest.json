@@ -1,6 +1,6 @@
 {
   "app": "USOAP CMA CAP Takip",
-  "version": "17-phase14-notification-automation-center",
+  "version": "18-phase15-role-access-control",
   "baseline": "index_visit_hub_pq_version_database(2).html",
   "buildDate": "2026-11-14",
   "features": [
@@ -70,7 +70,17 @@
     "weekly-digest-reminder",
     "weekly-digest-mailto-draft",
     "notification-dashboard-badge",
-    "notification-pdf-excel-export"
+    "notification-pdf-excel-export",
+    "role-based-access-control",
+    "multi-user-access-model",
+    "first-owner-bootstrap",
+    "access-request-approval",
+    "owner-manager-coordinator-specialist-viewer-roles",
+    "realtime-database-role-rules",
+    "live-role-deactivation",
+    "access-audit-trail",
+    "user-area-work-scope",
+    "access-control-pdf-excel-export"
   ],
   "architecture": {
     "index": "index.html",
@@ -79,6 +89,7 @@
     ],
     "scripts": [
       "js/app.js",
+      "js/modules/access-control.js",
       "js/modules/visit-sync.js",
       "js/modules/visit-hub.js",
       "js/modules/assessment-events.js",

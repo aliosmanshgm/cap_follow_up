@@ -31,3 +31,26 @@
 
 ## Operasyonel sınır
 GitHub Pages tarayıcı uygulaması kapalıyken sürekli arka plan görevi çalıştıramaz. Bu nedenle masaüstü bildirimi ve haftalık zaman kontrolü uygulama açıkken yürütülür. Arka planda otomatik e-posta için zamanlanabilir sunucu/Cloud Functions/Apps Script entegrasyonu gerekir.
+
+## Faz 15 v18 - Kullanıcı / Rol / Yetki QA
+- Yeni `access-control.js` modülü syntax kontrolünden geçti.
+- `icao_access_control` Firebase kökü ve rol tabanlı Rules dosyası eklendi.
+- İlk kullanıcı bootstrap + sonradan erişim talebi akışı tasarlandı.
+- Rol değişikliği / pasif kullanıcı durumu canlı profil listener ile uygulanıyor.
+- Sistem Sahibi/Yönetici kullanıcı yönetimi; Yönetici'nin Sistem Sahibi kaydını değiştirmesini engelleyen sunucu kuralı eklendi.
+- Bildirim kullanıcı durumu self-only erişimini koruyor.
+- Eski veri kökleri için geçiş modu: `users` kaydı oluşana kadar authenticated legacy erişim; ilk owner kaydından sonra strict RBAC.
+- Yeni ekran: `tab-access-control`.
+- PDF/Excel yetki matrisi dışa aktarma bağlandı.
+
+### Faz 15 son statik/sentetik QA
+- HTML ID: 876 toplam / 876 benzersiz / 0 duplicate.
+- Ekran: 31 tab; yeni `access-control` ekranı dahil.
+- Yerel JS/CSS/HTML referansı: eksik yok.
+- Inline handler: 463 event attribute / 228 benzersiz çağrı / 0 eksik fonksiyon.
+- Tüm JS dosyaları `node --check`: PASS.
+- `database.rules.phase15.json`: geçerli JSON.
+- Sentetik bootstrap: ilk kullanıcı `owner`, aktif ve erişim açık: PASS.
+- Sentetik ikinci kullanıcı: veri erişimi yok, `requests/{uid}` pending talebi: PASS.
+- Rol matrisi: `viewer` operasyonel write izni yok; `coordinator` resmî EI yazabilir; `specialist` PQ library yazamaz; `manager` kullanıcı yönetebilir: PASS.
+- Faz 15 geçiş kuralı: access-control kullanıcı kaydı yokken authenticated legacy erişim; ilk owner kaydından sonra strict RBAC: PASS (kural yapısı doğrulandı).

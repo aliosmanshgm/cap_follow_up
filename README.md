@@ -124,3 +124,22 @@ Tam Rules dosyası: `firebase/database.rules.phase14.json`.
 ### Sınır
 
 GitHub Pages üzerinde çalışan tarayıcı uygulaması kapalıyken sürekli arka plan zamanlayıcısı veya güvenilir otomatik e-posta gönderimi yapamaz. Bu sürümde tarayıcı bildirimleri ve haftalık özet, uygulama açıkken çalışır. Arka plan e-posta gönderimi daha sonra sunucu/Cloud Functions/Apps Script gibi zamanlanabilir bir bileşenle bağlanabilir.
+
+## Faz 15 v18 - Kullanıcı, Rol ve Yetki Yönetimi
+- Çok kullanıcılı erişim modeli eklendi.
+- Roller: Sistem Sahibi, Yönetici, Koordinatör, Uzman, Görüntüleyici.
+- İlk kullanıcı güvenli bootstrap ile Sistem Sahibi olur.
+- Yeni Firebase Auth kullanıcıları ilk girişte erişim talebi oluşturur; veri erişimi onay sonrası açılır.
+- Realtime Database Rules rol bazlı gerçek yazma/read-only güvenliği uygular.
+- Görüntüleyici salt okunurdur; Uzman operasyonel yazma yapabilir; resmî EI/PQ sürüm yönetimi Koordinatör+ seviyesindedir.
+- Kullanıcı rolü/pasifliği oturum sırasında canlı uygulanır.
+- Kullanıcı yönetimi ve rol değişiklikleri audit kaydına alınır.
+- `Sistem & Yetki > Kullanıcı & Yetki Yönetimi` ekranı eklendi.
+- Ayrıntılı kurulum: `ACCESS_CONTROL_SETUP.md`.
+
+### Faz 15 dağıtım sırası
+1. `database.rules.phase15.json` dosyasını Realtime Database Rules'a uygulayın.
+2. Faz 15 changed paketini GitHub repository köküne çıkarıp push edin.
+3. Mevcut hesabınızla giriş yapın; ilk kullanıcı otomatik Sistem Sahibi olur.
+4. Yeni kullanıcıları Firebase Authentication > Users üzerinden oluşturun.
+5. Yeni kullanıcı ilk girişini yaptıktan sonra `Sistem & Yetki > Kullanıcı & Yetki Yönetimi` ekranından rol atayın.

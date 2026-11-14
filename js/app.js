@@ -377,12 +377,13 @@ const I18N = {
             if(btn) btn.classList.add('active');
             const parentGroup = btn ? btn.closest('.nav-group') : null;
             if(parentGroup) { if(window.innerWidth > 768) focusDesktopNavGroup(parentGroup); else parentGroup.classList.add('open'); keepNavGroupVisible(parentGroup); }
-            if(btn && (tabId === 'report' || tabId === 'actions' || tabId === 'notifications' || tabId === 'trend' || tabId === 'kanban' || tabId === 'strategic' || tabId === 'assessment-impact' || tabId === 'validation-readiness' || tabId === 'smart' || tabId === 'quality' || tabId === 'pq-library' || tabId === 'drive-documents' || tabId === 'visits' || tabId === 'visit-scope' || tabId === 'icao-visit-validation' || tabId === 'visit-workspace' || tabId === 'visit-followup' || tabId === 'visit-consultation' || tabId === 'visit-reports' || tabId === 'visit-management' || tabId === 'visit-analysis' || tabId === 'visit-audit')) { btn.style.color = "var(--primary)"; }
+            if(btn && (tabId === 'report' || tabId === 'actions' || tabId === 'notifications' || tabId === 'access-control' || tabId === 'trend' || tabId === 'kanban' || tabId === 'strategic' || tabId === 'assessment-impact' || tabId === 'validation-readiness' || tabId === 'smart' || tabId === 'quality' || tabId === 'pq-library' || tabId === 'drive-documents' || tabId === 'visits' || tabId === 'visit-scope' || tabId === 'icao-visit-validation' || tabId === 'visit-workspace' || tabId === 'visit-followup' || tabId === 'visit-consultation' || tabId === 'visit-reports' || tabId === 'visit-management' || tabId === 'visit-analysis' || tabId === 'visit-audit')) { btn.style.color = "var(--primary)"; }
             if(btn && (tabId === 'past' || tabId === 'empty-caps')) { btn.style.color = "var(--danger)"; }
             if(btn && tabId === 'icao-closed') { btn.style.color = "#ca8a04"; }
             if(tabId === 'report') { if(typeof window.renderReportingCenter==='function') window.renderReportingCenter(); else updateReportPreview(); }
             if(tabId === 'actions' && typeof window.renderActionCenter==='function') window.renderActionCenter();
             if(tabId === 'notifications' && typeof window.renderNotificationCenter==='function') window.renderNotificationCenter();
+            if(tabId === 'access-control' && typeof window.renderAccessControlCenter==='function') window.renderAccessControlCenter();
             if(tabId === 'strategic') renderStrategicReportPreview();
             if(tabId === 'assessment-impact' && typeof window.renderAssessmentImpactCenter==='function') window.renderAssessmentImpactCenter();
             if(tabId === 'validation-readiness' && typeof renderValidationReadiness==='function') renderValidationReadiness();
@@ -410,6 +411,7 @@ const I18N = {
             if(tabId === 'dashboard') { if(charts.s) charts.s.resize(); if(charts.d) charts.d.resize(); if(charts.o) charts.o.resize(); if(charts.ei) charts.ei.resize(); if(charts.icaoOfficial) charts.icaoOfficial.resize(); if(charts.icaoOfficialTrend) charts.icaoOfficialTrend.resize(); }
             if(tabId === 'trend') { if(charts.histTrend) charts.histTrend.resize(); }
             updateActiveScreenExportButtons();
+            if(typeof window.applyAccessControlUi==='function') setTimeout(()=>window.applyAccessControlUi(),0);
             return true;
         } catch (error) {
             recordRuntimeIssue('navigation', error.message || String(error), { tabId, stack:error.stack || '' });
@@ -604,6 +606,9 @@ const I18N = {
         const notificationReady = typeof window.runNotificationCenterSelfCheck === 'function';
         const notificationSummary = notificationReady && typeof window.getNotificationCenterSummary === 'function' ? window.getNotificationCenterSummary() : null;
         add('notification-center', 'Bildirim & Otomasyon Merkezi', notificationReady ? 'ok' : 'warn', notificationReady ? `${notificationSummary ? notificationSummary.unread : 0} okunmamış, ${notificationSummary ? notificationSummary.critical : 0} kritik bildirim.` : 'Bildirim Merkezi modülü yüklenemedi.');
+        const accessReady = typeof window.runAccessControlSelfCheck === 'function';
+        const accessCheck = accessReady ? window.runAccessControlSelfCheck() : null;
+        add('access-control', 'Kullanıcı & Yetki Yönetimi', accessReady && accessCheck && accessCheck.passed ? 'ok' : 'warn', accessReady ? `${accessCheck && accessCheck.role ? accessCheck.role : 'rol yok'} · ${accessCheck && accessCheck.active ? 'aktif' : 'pasif'} · istemci yazma koruması: ${accessCheck && accessCheck.writeGuard ? 'açık' : 'sunucu kuralları'}` : 'Yetki modülü yüklenemedi.');
         let integritySummary = null;
         if (typeof window.buildSystemIntegrityModel === 'function') {
             try {
@@ -758,13 +763,34 @@ const I18N = {
         initSidebarWheelScroll();
         initDesktopNavFocus();
         initStabilizationPackage();
-        firebase.auth().onAuthStateChanged((user) => {
-            if (user) { document.getElementById('loginOverlay').style.display = 'none'; document.getElementById('mainAppContainer').style.display = 'flex'; loadFromLocalStorage(); startVisitFirebaseListener(); startVisitUnitSettingsListener(); if(typeof startAssessmentEventListener==='function')startAssessmentEventListener(); startIcaoOfficialEiListener(); if(typeof startValidationReadinessListener==='function')startValidationReadinessListener(); } 
-            else { stopVisitFirebaseListener(); stopVisitUnitSettingsListener(); stopIcaoOfficialEiListener(); if(typeof stopAssessmentEventListener==='function')stopAssessmentEventListener(); if(typeof stopValidationReadinessListener==='function')stopValidationReadinessListener(); document.getElementById('loadingOverlay').style.display = 'none'; document.getElementById('mainAppContainer').style.display = 'none'; document.getElementById('loginOverlay').style.display = 'flex'; }
+        firebase.auth().onAuthStateChanged(async (user) => {
+            if (user) {
+                document.getElementById('loginOverlay').style.display = 'none';
+                document.getElementById('mainAppContainer').style.display = 'none';
+                let accessResult = {allowed:true};
+                if (typeof window.accessControlReadyForUser === 'function') {
+                    try { accessResult = await window.accessControlReadyForUser(user); }
+                    catch (error) { console.error('Yetki profili yüklenemedi:', error); accessResult = {allowed:false, reason:'rules-or-access', error:error && error.message}; }
+                }
+                if (!accessResult.allowed) {
+                    stopVisitFirebaseListener(); stopVisitUnitSettingsListener(); stopIcaoOfficialEiListener(); if(typeof stopAssessmentEventListener==='function')stopAssessmentEventListener(); if(typeof stopValidationReadinessListener==='function')stopValidationReadinessListener();
+                    document.getElementById('loadingOverlay').style.display = 'none';
+                    if (typeof window.showAccessDeniedGate === 'function') window.showAccessDeniedGate(accessResult);
+                    return;
+                }
+                if (typeof window.hideAccessDeniedGate === 'function') window.hideAccessDeniedGate();
+                document.getElementById('mainAppContainer').style.display = 'flex';
+                loadFromLocalStorage(); startVisitFirebaseListener(); startVisitUnitSettingsListener(); if(typeof startAssessmentEventListener==='function')startAssessmentEventListener(); startIcaoOfficialEiListener(); if(typeof startValidationReadinessListener==='function')startValidationReadinessListener();
+                if (typeof window.applyAccessControlUi === 'function') setTimeout(()=>window.applyAccessControlUi(), 0);
+            } else {
+                stopVisitFirebaseListener(); stopVisitUnitSettingsListener(); stopIcaoOfficialEiListener(); if(typeof stopAssessmentEventListener==='function')stopAssessmentEventListener(); if(typeof stopValidationReadinessListener==='function')stopValidationReadinessListener();
+                if (typeof window.accessControlReset === 'function') window.accessControlReset(); if (typeof window.hideAccessDeniedGate === 'function') window.hideAccessDeniedGate();
+                document.getElementById('loadingOverlay').style.display = 'none'; document.getElementById('mainAppContainer').style.display = 'none'; document.getElementById('loginOverlay').style.display = 'flex';
+            }
         });
     };
     
-    window.bypassLogin = function() { initSidebarWheelScroll(); initDesktopNavFocus(); document.getElementById('loginOverlay').style.display = 'none'; document.getElementById('mainAppContainer').style.display = 'flex'; renderFileList(); render(); };
+    window.bypassLogin = function() { initSidebarWheelScroll(); initDesktopNavFocus(); if(typeof window.hideAccessDeniedGate==='function')window.hideAccessDeniedGate(); document.getElementById('loginOverlay').style.display = 'none'; document.getElementById('mainAppContainer').style.display = 'flex'; renderFileList(); render(); };
     window.loginUser = function() { let email = document.getElementById('loginEmail').value.trim(); let pass = document.getElementById('loginPass').value; let errEl = document.getElementById('loginError'); if(!email || !pass) { errEl.innerText = "Lütfen e-posta ve şifrenizi giriniz."; errEl.style.display = "block"; return; } errEl.style.display = "none"; document.getElementById('loginOverlay').style.opacity = '0.5'; firebase.auth().signInWithEmailAndPassword(email, pass).then(() => { document.getElementById('loginOverlay').style.opacity = '1'; }).catch(() => { document.getElementById('loginOverlay').style.opacity = '1'; errEl.innerText = "Giriş başarısız."; errEl.style.display = "block"; }); };
 
     let systemSaveTimer = null;
@@ -9410,6 +9436,8 @@ ${formatOfficialEiDelta(delta)}`,fontSize:8});
             ctx.title = 'Aksiyon ve Görev Merkezi'; ctx.fileName = 'USOAP_Aksiyon_Gorev_Merkezi.xlsx'; ctx.mode = 'actions'; ctx.rows = typeof window.getActionCenterTasks==='function' ? window.getActionCenterTasks() : [];
         } else if (activeTab === 'tab-notifications') {
             ctx.title = 'Bildirim ve Otomasyon Merkezi'; ctx.fileName = 'USOAP_Bildirim_Merkezi.xlsx'; ctx.mode = 'notifications'; ctx.rows = typeof window.getNotificationCenterRows==='function' ? window.getNotificationCenterRows() : [];
+        } else if (activeTab === 'tab-access-control') {
+            ctx.title = 'Kullanıcı, Rol ve Yetki Matrisi'; ctx.fileName = 'USOAP_Kullanici_Yetki_Matrisi.xlsx'; ctx.mode = 'access_control'; ctx.rows = [];
         } else if (activeTab === 'tab-report') {
             ctx.title = 'Yönetici Brifing Raporu'; ctx.fileName = 'Yonetici_Brifing_Raporu.xlsx'; ctx.mode = 'manager'; ctx.rows = rawData;
         } else if (activeTab === 'tab-kanban') {
@@ -9549,6 +9577,7 @@ ${formatOfficialEiDelta(delta)}`,fontSize:8});
         if (ctx.mode === 'trend') { exportTrendExcel(); return; }
         if (ctx.mode === 'actions' && typeof window.exportActionCenterExcel==='function') { window.exportActionCenterExcel(); return; }
         if (ctx.mode === 'notifications' && typeof window.exportNotificationCenterExcel==='function') { window.exportNotificationCenterExcel(); return; }
+        if (ctx.mode === 'access_control' && typeof window.exportAccessControlExcel==='function') { window.exportAccessControlExcel(); return; }
         if (ctx.mode === 'strategic') { exportStrategicReportExcel(); return; }
         if (ctx.mode === 'assessment_impact' && typeof window.exportAssessmentImpactExcel==='function') { window.exportAssessmentImpactExcel(); return; }
         if (ctx.mode === 'quality') { exportDataQualityExcel(ctx); return; }
@@ -9849,6 +9878,7 @@ Mevcut: ${issue.currentValue || 'Boş'}`), fontSize:8},
             if (ctx.mode === 'trend') { exportTrendPDF(); return; }
             if (ctx.mode === 'actions' && typeof window.exportActionCenterPDF==='function') { window.exportActionCenterPDF(); return; }
             if (ctx.mode === 'notifications' && typeof window.exportNotificationCenterPDF==='function') { window.exportNotificationCenterPDF(); return; }
+            if (ctx.mode === 'access_control' && typeof window.exportAccessControlPDF==='function') { window.exportAccessControlPDF(); return; }
             if (ctx.mode === 'strategic') { exportStrategicReportPDF(); return; }
             if (ctx.mode === 'assessment_impact' && typeof window.exportAssessmentImpactPDF==='function') { window.exportAssessmentImpactPDF(); return; }
             if (ctx.mode === 'manager') { exportManagerPDF(); return; }
