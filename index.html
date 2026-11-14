@@ -13,7 +13,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.10/pdfmake.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.10/vfs_fonts.js"></script>
-    <link rel="stylesheet" href="css/app.css?v=20261114-phase11-drive-documents-v14">
+    <link rel="stylesheet" href="css/app.css?v=20261114-phase12-reporting-v15">
 </head>
 <body>
 
@@ -82,7 +82,7 @@
                         <button class="legacy-route-btn" onclick="switchTab('visit-analysis')" id="btn-tab-visit-analysis">PQ/CAP Geçmişi ve Analiz</button>
                         <button class="legacy-route-btn" onclick="switchTab('visit-audit')" id="btn-tab-visit-audit">Değişiklik Geçmişi</button>
                     </div>
-                    <button class="tab-btn" onclick="switchTab('report')" id="btn-tab-report">📝 Yönetici Raporu</button>
+                    <button class="tab-btn" onclick="switchTab('report')" id="btn-tab-report">📑 Raporlama Merkezi</button>
                 </div>
             </div>
 
@@ -1270,43 +1270,69 @@
         </div>
 
         <div id="tab-report" class="tab-content">
-            <div class="report-layout">
-                <div>
-                    <div style="background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
-                        <h3 style="margin: 0 0 15px 0; color: var(--primary); font-size: 16px;">📝 Yönetici Raporu</h3>
-                        <p style="font-size: 11px; color: var(--muted); margin-top: 0; margin-bottom: 12px;">Bu ekran artık seçim yapılmasa bile otomatik yönetici brifingi üretir. Seçili PQ'lar varsa ayrıca detay bölümü eklenir.</p>
-                        <div class="manager-mode-tabs">
-                            <label><input type="radio" name="reportMode" value="auto" checked onchange="updateReportPreview()"><span>Otomatik Yönetici Özeti<small>EI, gecikme, kritik yol, darboğaz ve hızlı kazanım listesi.</small></span></label>
-                            <label><input type="radio" name="reportMode" value="selected" onchange="updateReportPreview()"><span>Seçili PQ Raporu<small>Detaylı CAP Listesi veya Excel'de rapora eklenen PQ'lar.</small></span></label>
-                            <label><input type="radio" name="reportMode" value="combined" onchange="updateReportPreview()"><span>Birleşik Rapor<small>Otomatik brifing + seçili PQ detayları birlikte.</small></span></label>
-                        </div>
-                        <textarea id="managementNotes" class="report-textarea" placeholder="Yönetici değerlendirmesi / toplantı notu..." oninput="updateReportPreview(); saveToLocalStorage();"></textarea>
-                        <button onclick="copyReportToClipboard()" style="width: 100%; justify-content: center; margin-top: 10px; background: #059669; font-size: 14px; padding: 10px;">📋 Raporu Panoya Kopyala</button>
+            <div id="reportCenterRoot" class="report-center-shell">
+                <div class="report-center-header">
+                    <div>
+                        <h2>📑 Otomatik Raporlama Merkezi</h2>
+                        <p>PQ → CAP → Validasyon → Ziyaret → Resmî EI zincirini hedef kitleye göre tek pakette konsolide eder.</p>
                     </div>
-                    <div style="background: var(--card); border: 1px dashed var(--border); border-radius: 12px; padding: 14px; margin-top: 12px; font-size: 11px; color: var(--muted); line-height:1.5;">
-                        <b style="color:var(--text);">Not:</b> Seçili PQ raporu için Detaylı CAP Listesi'nde “GÜNLÜK RAPORA EKLE” kutusunu işaretleyebilir veya Excel'deki RAPORA EKLE kolonu üzerinden otomatik seçim yapabilirsin.
+                    <div class="report-center-actions">
+                        <button type="button" class="btn-outline" onclick="refreshReportingCenter()">↻ Yenile</button>
+                        <button type="button" class="btn-outline" onclick="copyReportingCenterText()">📋 Metni Kopyala</button>
+                        <button type="button" style="background:#059669" onclick="exportReportingCenterExcel()">📊 Paket Excel</button>
+                        <button type="button" style="background:#dc2626" onclick="exportReportingCenterPDF()">📄 Paket PDF</button>
                     </div>
                 </div>
-                <div>
-                    <div class="report-stat-row" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));">
-                        <div class="report-stat-mini">
-                            <h4 id="repCmaaFindings">0</h4><p>CMAA Bulgusu</p>
-                            <div id="repCmaaSub" style="font-size:11px; font-weight:600; color:var(--muted); margin-top:5px;"></div>
+
+                <div class="report-center-layout">
+                    <aside class="report-center-controls">
+                        <div class="report-center-control-card">
+                            <h3>1. Rapor Profili</h3>
+                            <div class="report-profile-grid">
+                                <button type="button" data-report-profile="executive" onclick="setReportingProfile('executive')"><b>🏛️ Yönetici / Bakanlık</b><span>Karar verici brifingi</span></button>
+                                <button type="button" data-report-profile="icao" onclick="setReportingProfile('icao')"><b>🌐 ICAO Teknik</b><span>İzlenebilir teknik paket</span></button>
+                                <button type="button" data-report-profile="validation" onclick="setReportingProfile('validation')"><b>🎯 Validasyon / Ziyaret</b><span>Hazırlık paketi</span></button>
+                                <button type="button" data-report-profile="weekly" onclick="setReportingProfile('weekly')"><b>📋 İç Yönetim</b><span>Haftalık takip</span></button>
+                            </div>
+                            <p id="reportCenterProfileDescription" class="report-center-profile-description"></p>
                         </div>
-                        <div class="report-stat-mini" style="border-bottom:4px solid var(--icao-blue);">
-                            <h4 id="repOfficialFindings" style="color: var(--icao-blue);">0</h4><p>Resmi Açık Bulgu</p>
-                            <div id="repOfficialSub" style="font-size:11px; font-weight:600; color:var(--muted); margin-top:5px;"></div>
+
+                        <div class="report-center-control-card">
+                            <h3>2. Rapor Bağlamı</h3>
+                            <label>Rapor tarihi</label>
+                            <input type="date" id="reportCenterDate" onchange="refreshReportingCenter()">
+                            <label>Başlık <small>(isteğe bağlı)</small></label>
+                            <input type="text" id="reportCenterTitle" placeholder="Örn: Kasım 2026 USOAP CMA Durum Brifingi" oninput="refreshReportingCenter()">
+                            <label>Denetim alanı</label>
+                            <select id="reportCenterArea" onchange="refreshReportingCenter()">
+                                <option value="ALL">Tüm alanlar</option><option>LEG</option><option>ORG</option><option>PEL</option><option>OPS</option><option>AIR</option><option>AIG</option><option>ANS</option><option>AGA</option>
+                            </select>
+                            <label>Hedef ziyaret / validasyon</label>
+                            <select id="reportCenterVisit" onchange="refreshReportingCenter()"><option value="">Ziyaret seçilmedi / tümü</option></select>
                         </div>
-                        <div class="report-stat-mini done">
-                            <h4 id="repLocalFindings" style="color: var(--ok);">0</h4><p>Kapatılması Beklenen Bulgu</p>
-                            <div id="repLocalSub" style="font-size:11px; font-weight:600; color:var(--muted); margin-top:5px;"></div>
+
+                        <div class="report-center-control-card">
+                            <h3>3. İçerik Katmanları</h3>
+                            <label class="report-center-check"><input type="checkbox" id="reportCenterIncludeProjection" checked onchange="refreshReportingCenter()"><span><b>Validasyon projeksiyonu</b><small>Resmî EI'den ayrı gösterilir</small></span></label>
+                            <label class="report-center-check"><input type="checkbox" id="reportCenterIncludeDraft" onchange="refreshReportingCenter()"><span><b>Taslak / provisional</b><small>Resmî kayıtlarla karıştırılmaz</small></span></label>
+                            <label class="report-center-check"><input type="checkbox" id="reportCenterIncludeIntegrity" checked onchange="refreshReportingCenter()"><span><b>Veri bütünlüğü</b><small>Kritik/yüksek sorunlar</small></span></label>
+                            <label class="report-center-check"><input type="checkbox" id="reportCenterIncludeDocuments" checked onchange="refreshReportingCenter()"><span><b>Doküman / kanıt indeksi</b><small>Google Drive metadata ilişkileri</small></span></label>
                         </div>
-                        <div class="report-stat-mini pending">
-                            <h4 id="repProjectedEi" style="color: var(--warn);">%0.00</h4><p>Tüm CAP Potansiyeli</p>
-                            <div id="repProjectedSub" style="font-size:11px; font-weight:600; color:var(--muted); margin-top:5px;"></div>
+
+                        <div class="report-center-control-card">
+                            <h3>4. Rapor Notu</h3>
+                            <textarea id="managementNotes" class="report-textarea" rows="6" placeholder="Yönetici değerlendirmesi, toplantı notu, ICAO sunum notu..." oninput="refreshReportingCenter()"></textarea>
+                            <button type="button" class="btn-outline" style="width:100%;justify-content:center;margin-top:8px" onclick="resetReportingCenter()">↺ Varsayılanlara Dön</button>
                         </div>
-                    </div>
-                    <div class="report-preview-box" id="reportPreview"></div>
+                    </aside>
+
+                    <main class="report-center-preview-pane">
+                        <div class="report-center-preview-toolbar">
+                            <div><b>Canlı Rapor Önizleme</b><span id="reportCenterGeneratedAt">–</span></div>
+                            <div class="report-center-legend"><span class="official">● Resmî</span><span class="projection">● Projeksiyon</span><span class="draft">● Taslak/Geçici</span></div>
+                        </div>
+                        <div class="report-preview-box report-center-preview" id="reportPreview"></div>
+                    </main>
                 </div>
             </div>
         </div>
@@ -2234,20 +2260,21 @@
 </div>
 
 
-<script src="js/app.js?v=20261114-phase11-drive-documents-v14"></script>
-<script src="js/modules/visit-sync.js?v=20261114-phase11-drive-documents-v14"></script>
-<script src="js/modules/visit-hub.js?v=20261114-phase11-drive-documents-v14"></script>
-<script src="js/modules/assessment-events.js?v=20261114-phase11-drive-documents-v14"></script>
-<script src="js/modules/official-ei-management.js?v=20261114-phase11-drive-documents-v14"></script>
-<script src="js/modules/official-ei-automation.js?v=20261114-phase11-drive-documents-v14"></script>
-<script src="js/parsers/pq-docx-parser.js?v=20261114-phase11-drive-documents-v14"></script>
-<script src="js/modules/pq-linkage.js?v=20261114-phase11-drive-documents-v14"></script>
-<script src="js/modules/validation-readiness.js?v=20261114-phase11-drive-documents-v14"></script>
-<script src="js/modules/assessment-impact.js?v=20261114-phase11-drive-documents-v14"></script>
-<script src="js/modules/management-shell.js?v=20261114-phase11-drive-documents-v14"></script>
-<script src="js/modules/drive-documents.js?v=20261114-phase11-drive-documents-v14"></script>
-<script src="js/services/pq-repository.js?v=20261114-phase11-drive-documents-v14"></script>
-<script src="js/modules/pq-library.js?v=20261114-phase11-drive-documents-v14"></script>
-<script src="js/modules/system-integrity.js?v=20261114-phase11-drive-documents-v14"></script>
+<script src="js/app.js?v=20261114-phase12-reporting-v15"></script>
+<script src="js/modules/visit-sync.js?v=20261114-phase12-reporting-v15"></script>
+<script src="js/modules/visit-hub.js?v=20261114-phase12-reporting-v15"></script>
+<script src="js/modules/assessment-events.js?v=20261114-phase12-reporting-v15"></script>
+<script src="js/modules/official-ei-management.js?v=20261114-phase12-reporting-v15"></script>
+<script src="js/modules/official-ei-automation.js?v=20261114-phase12-reporting-v15"></script>
+<script src="js/parsers/pq-docx-parser.js?v=20261114-phase12-reporting-v15"></script>
+<script src="js/modules/pq-linkage.js?v=20261114-phase12-reporting-v15"></script>
+<script src="js/modules/validation-readiness.js?v=20261114-phase12-reporting-v15"></script>
+<script src="js/modules/assessment-impact.js?v=20261114-phase12-reporting-v15"></script>
+<script src="js/modules/management-shell.js?v=20261114-phase12-reporting-v15"></script>
+<script src="js/modules/drive-documents.js?v=20261114-phase12-reporting-v15"></script>
+<script src="js/services/pq-repository.js?v=20261114-phase12-reporting-v15"></script>
+<script src="js/modules/pq-library.js?v=20261114-phase12-reporting-v15"></script>
+<script src="js/modules/system-integrity.js?v=20261114-phase12-reporting-v15"></script>
+<script src="js/modules/reporting-center.js?v=20261114-phase12-reporting-v15"></script>
 </body>
 </html>

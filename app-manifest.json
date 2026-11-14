@@ -1,6 +1,6 @@
 {
   "app": "USOAP CMA CAP Takip",
-  "version": "14.1-phase11-oauth-branding-public-pages",
+  "version": "15-phase12-automated-reporting-center",
   "baseline": "index_visit_hub_pq_version_database(2).html",
   "buildDate": "2026-11-14",
   "features": [
@@ -40,7 +40,17 @@
     "public-oauth-homepage",
     "public-privacy-policy",
     "public-terms-of-service",
-    "in-product-privacy-links"
+    "in-product-privacy-links",
+    "automated-reporting-center",
+    "executive-ministry-briefing-package",
+    "icao-technical-status-package",
+    "validation-visit-readiness-package",
+    "weekly-internal-management-package",
+    "report-projection-official-separation",
+    "report-source-provenance",
+    "report-document-evidence-index",
+    "report-integrity-check-layer",
+    "multi-profile-pdf-excel-export"
   ],
   "architecture": {
     "index": "index.html",
@@ -62,7 +72,8 @@
       "js/modules/drive-documents.js",
       "js/services/pq-repository.js",
       "js/modules/pq-library.js",
-      "js/modules/system-integrity.js"
+      "js/modules/system-integrity.js",
+      "js/modules/reporting-center.js"
     ]
   }
 }

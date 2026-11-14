@@ -1,46 +1,66 @@
-# USOAP CMA CAP Takip - Faz 11 v14
+# USOAP CMA CAP Takip — Faz 12 v15
 
-Faz 11, Firebase Storage kullanmadan Google Drive tabanlı **Doküman & Kanıt Merkezi** ekler.
+## Otomatik Raporlama Merkezi
 
-## Yeni özellikler
+Faz 12, uygulamadaki PQ, CAP, validasyon, ziyaret, Assessment Event / EI Snapshot, veri bütünlüğü ve Google Drive doküman ilişkilerini tek bir raporlama katmanında birleştirir.
 
-- `Veri & Referans > Doküman & Kanıt Merkezi` ekranı
-- Google Identity Services ile tarayıcı içi OAuth bağlantısı
-- Minimum `drive.file` erişim kapsamı
-- Dosyanın Drive'a yüklenmesi; yalnız metadata/ilişki kaydının Firebase RTDB'de tutulması
-- Mevcut Google Drive bağlantısının yeniden yüklemeden kaydedilmesi
-- Belge türleri: PQ kaynağı, CAP kanıtı, ziyaret kanıtı, ICAO raporu, EI/OLF kaynağı, diğer
-- Denetim alanı + PQ + CAP Step + ziyaret ilişkisi
-- Arama ve filtreleme
-- Drive dosyasını silmeden yalnız uygulama metadata kaydını kaldırma
-- Drive bağlı ve tercih açıkken PQ DOCX kaynaklarının otomatik arşivlenmesi
-- Firebase Storage bağımlılığı yok
+### Hazır rapor profilleri
 
-## Yeni Firebase yolu
+1. **Yönetici / Bakanlık Brifingi**
+   - İlk ve güncel resmî EI
+   - Değerlendirme zaman çizgisi
+   - Alan bazlı son resmî durum
+   - CAP ilerleme / gecikme
+   - Validasyon adayı ve resmî olmayan EI projeksiyonu
+   - Yaklaşan ziyaretler
+   - Kritik/yüksek veri bütünlüğü uyarıları
 
-`icao_document_hub`
+2. **ICAO Teknik Durum Paketi**
+   - Assessment Event + EI Snapshot geçmişi
+   - Etkin alan EI ve son resmî değerlendirme
+   - PQ sürümü/revizyonu ve denominator izlenebilirliği
+   - Ziyaret-validasyon kayıtlarından izlenebilir valide PQ listesi
+   - CAP → validasyon hazırlık durumu
+   - Taslak/provisional snapshot katmanı (isteğe bağlı)
+   - Drive doküman / kanıt metadata indeksi
+   - Veri bütünlüğü ve kaynak/provenance kontrolleri
 
-Bu nedenle Faz 11'de Realtime Database Rules güncellemesi gerekir. Hazır tam örnek:
+3. **Validasyon / Ziyaret Hazırlık Paketi**
+   - Hedef ziyaret seçimi
+   - Atanmış validasyon adayları
+   - Ziyaret scope PQ ve CAP step snapshot'ları
+   - Kanıt / iç inceleme hazırlığı
+   - Açık takip / danışma sayıları
+   - Drive belge indeksi
+   - Hazırlık öncesi bütünlük kontrolü
 
-`firebase/database.rules.phase11.json`
+4. **İç Yönetim / Haftalık Takip**
+   - Açık ve gecikmiş CAP/PQ
+   - Validasyon adayları
+   - Yaklaşan ziyaretler
+   - Veri bütünlüğü sorunları
+   - Son güncellenen dokümanlar
 
-## Google Drive kurulumu
+### Metodoloji korumaları
 
-Ayrıntılı adımlar: `GOOGLE_DRIVE_SETUP.md`
+- Resmî EI yalnız `official Assessment Event + EI Snapshot` kayıtlarından alınır.
+- Validasyon adayları ve tüm CAP potansiyeli **resmî EI değildir**.
+- Draft/provisional kayıtlar resmî sonuçlardan ayrı tutulur.
+- PQ sürümü/revizyonu veya applicable denominator değişmişse EI farkı otomatik olarak yalnız performans artışı sayılmaz.
+- PQ bazlı validasyon etkisi, yalnız ziyaret-validasyon kaydıyla izlenebilir ise raporlanır; sistem PQ değişimini tahmin etmez.
 
-OAuth Web Client ID istemci kimliğidir; client secret uygulamaya girilmez. Google Drive access tokenı kalıcı olarak saklanmaz.
+### Çıktılar
 
-## Ana metodoloji
+Her profil için:
+- Canlı HTML önizleme
+- PDF paket
+- Excel çalışma kitabı
+- Panoya kopyalanabilir düz metin
 
-Drive dosya deposudur; Firebase ilişki ve uygulama metadata deposudur. Böylece aynı Drive belgesi CAP, PQ ve ziyaret bağlamında tek kimlikle izlenebilir ve Firebase Storage maliyeti/bağımlılığı oluşmaz.
+### Firebase / Storage
 
-## v14.1 OAuth Branding public pages
-Google OAuth production/brand verification preparation adds three public pages at repository root:
-- `about.html` — public application homepage/description
-- `privacy.html` — privacy policy, including Google user data access/use/storage disclosure
-- `terms.html` — terms of use
+Bu faz yeni bir Firebase kökü eklemez. **Realtime Database Rules değişikliği gerekmez.** Firebase Storage kullanılmaz. Doküman indeksi Faz 11'deki `icao_document_hub` metadata kayıtlarını okur.
 
-The login screen and sidebar include direct links to these pages. Suggested Google Auth Platform Branding URLs:
-- Home page: `https://aliosmanshgm.github.io/cap_follow_up/about.html`
-- Privacy policy: `https://aliosmanshgm.github.io/cap_follow_up/privacy.html`
-- Terms of service: `https://aliosmanshgm.github.io/cap_follow_up/terms.html`
+### Sürüm
+
+`v15 / phase12-automated-reporting-center`

@@ -380,7 +380,7 @@ const I18N = {
             if(btn && (tabId === 'report' || tabId === 'trend' || tabId === 'kanban' || tabId === 'strategic' || tabId === 'assessment-impact' || tabId === 'validation-readiness' || tabId === 'smart' || tabId === 'quality' || tabId === 'pq-library' || tabId === 'drive-documents' || tabId === 'visits' || tabId === 'visit-scope' || tabId === 'icao-visit-validation' || tabId === 'visit-workspace' || tabId === 'visit-followup' || tabId === 'visit-consultation' || tabId === 'visit-reports' || tabId === 'visit-management' || tabId === 'visit-analysis' || tabId === 'visit-audit')) { btn.style.color = "var(--primary)"; }
             if(btn && (tabId === 'past' || tabId === 'empty-caps')) { btn.style.color = "var(--danger)"; }
             if(btn && tabId === 'icao-closed') { btn.style.color = "#ca8a04"; }
-            if(tabId === 'report') updateReportPreview();
+            if(tabId === 'report') { if(typeof window.renderReportingCenter==='function') window.renderReportingCenter(); else updateReportPreview(); }
             if(tabId === 'strategic') renderStrategicReportPreview();
             if(tabId === 'assessment-impact' && typeof window.renderAssessmentImpactCenter==='function') window.renderAssessmentImpactCenter();
             if(tabId === 'validation-readiness' && typeof renderValidationReadiness==='function') renderValidationReadiness();
@@ -5972,7 +5972,7 @@ const I18N = {
         if(typeof window.renderManagementFlow==='function') window.renderManagementFlow();
         if(typeof window.refreshCapHubSummary==='function') window.refreshCapHubSummary();
         if(document.getElementById('tab-validation-readiness') && document.getElementById('tab-validation-readiness').classList.contains('active') && typeof renderValidationReadiness==='function') renderValidationReadiness();
-        if(document.getElementById('tab-report').classList.contains('active')) updateReportPreview();
+        if(document.getElementById('tab-report').classList.contains('active')) { if(typeof window.renderReportingCenter==='function') window.renderReportingCenter(); else updateReportPreview(); }
         if(document.getElementById('tab-strategic') && document.getElementById('tab-strategic').classList.contains('active')) renderStrategicReportPreview();
         if(document.getElementById('tab-visits') && document.getElementById('tab-visits').classList.contains('active')) renderVisitModule();
     }
@@ -7712,6 +7712,7 @@ const I18N = {
     }
 
     function updateReportPreview() {
+        if (typeof window.renderReportingCenter === 'function' && document.getElementById('reportCenterRoot')) { window.renderReportingCenter(); return; }
         const noteEl = document.getElementById('managementNotes');
         const customNote = noteEl ? escapeHtml(noteEl.value || '') : '';
         const mode = getReportMode();
@@ -7735,7 +7736,7 @@ const I18N = {
         document.getElementById('repProjectedSub').innerHTML = `Açık bulgu: ${projected.findings}<br>${a.stats.lateActions.total} gecikmiş adım`;
     }
 
-    function copyReportToClipboard() { const previewEl = document.getElementById('reportPreview'); const range = document.createRange(); range.selectNode(previewEl); window.getSelection().removeAllRanges(); window.getSelection().addRange(range); try { document.execCommand('copy'); alert("Rapor panoya kopyalandı!"); } catch(err) { alert("Kopyalama başarısız oldu."); } window.getSelection().removeAllRanges(); }
+    function copyReportToClipboard() { if(typeof window.copyReportingCenterText==='function' && document.getElementById('reportCenterRoot')) { window.copyReportingCenterText(); return; } const previewEl = document.getElementById('reportPreview'); const range = document.createRange(); range.selectNode(previewEl); window.getSelection().removeAllRanges(); window.getSelection().addRange(range); try { document.execCommand('copy'); alert("Rapor panoya kopyalandı!"); } catch(err) { alert("Kopyalama başarısız oldu."); } window.getSelection().removeAllRanges(); }
 
     function truncateTextForExport(value, maxLen = 500) {
         let txt = (value === undefined || value === null ? '' : value.toString()).replace(/\s+/g, ' ').trim();
@@ -9553,6 +9554,7 @@ ${formatOfficialEiDelta(delta)}`,fontSize:8});
         addJsonSheet(wb, 'Rapor_Baglamı', buildFilterContextRows(ctx));
 
         if (ctx.mode === 'manager') {
+            if(typeof window.exportReportingCenterExcel==='function' && document.getElementById('reportCenterRoot')) { window.exportReportingCenterExcel(); return; }
             const bundle = buildManagerReportBundle();
             const support = bundle.support;
             addJsonSheet(wb, 'Yonetici_Brifingi', buildManagerReportExcelRows(bundle));
@@ -9746,6 +9748,7 @@ Mevcut: ${issue.currentValue || 'Boş'}`), fontSize:8},
     }
 
     function exportManagerPDF() {
+        if(typeof window.exportReportingCenterPDF==='function' && document.getElementById('reportCenterRoot')) { window.exportReportingCenterPDF(); return; }
         if (!rawData || rawData.length === 0) return alert('Dışa aktarılacak veri bulunamadı.');
         showLoading();
         setTimeout(() => {
@@ -10665,3 +10668,12 @@ Mevcut: ${issue.currentValue || 'Boş'}`), fontSize:8},
         console.log('Ziyaret tıklama ve kart yerleşimi kontrolü:',result);
         return result;
     };
+
+
+    // Faz 12 Raporlama Merkezi icin salt-okunur yardimci API'ler.
+    window.getVisitRecords = getVisitRecords;
+    window.getAllVisitFollowUpItems = getAllVisitFollowUpItems;
+    window.getAllVisitConsultationItems = getAllVisitConsultationItems;
+    window.buildManagerReportBundle = buildManagerReportBundle;
+    window.getManagerEiPhaseRows = getManagerEiPhaseRows;
+    window.safeDownloadPdf = safeDownloadPdf;

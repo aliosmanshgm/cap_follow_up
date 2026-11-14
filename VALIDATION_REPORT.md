@@ -1,34 +1,45 @@
-# Faz 11 v14 - Doğrulama Raporu
+# Faz 12 v15 — Doğrulama Raporu
 
 ## Kapsam
 
-Google Drive Doküman & Kanıt Merkezi; OAuth ayarı, doğrudan Drive yükleme, mevcut Drive link kaydı, doküman metadata ilişkileri ve PQ kaynak DOCX otomatik arşiv bağlantısı.
+Otomatik Raporlama Merkezi; Yönetici/Bakanlık, ICAO Teknik, Validasyon/Ziyaret Hazırlık ve İç Yönetim/Haftalık Takip olmak üzere dört profil üretir.
 
-## Statik kontroller
+## Statik QA
 
-- Yeni `tab-drive-documents` ve sidebar düğmesi mevcut.
-- `drive-documents.js` syntax kontrolünden geçti.
-- `pq-repository.js` syntax kontrolünden geçti.
-- `app.js` syntax kontrolünden geçti.
-- HTML ID tekrar kontrolü yapıldı; duplicate ID yok.
-- Google Drive access tokenı Firebase/localStorage/sessionStorage'a yazılmıyor.
-- Doküman silme işlemi Drive dosyasını silmiyor; yalnız metadata kaydını kaldırıyor.
-- Firebase Storage varsayılan olarak kullanılmıyor.
+- Tüm JavaScript dosyaları `node --check`: **PASS**
+- HTML ID: **785 / 785 benzersiz**
+- Duplicate ID: **0**
+- Eksik yerel JS/CSS referansı: **0**
+- Tab sayısı: **28** (mevcut ekranlar korunmuştur)
+- Yeni modül referansı: `js/modules/reporting-center.js`: **PASS**
 
-## Firebase
+Inline-handler taramasında `auth`, `click`, `getElementById`, `preventDefault`, `signOut`, `toggle` ifadeleri method/property çağrılarından kaynaklanan regex false-positive sonuçlardır; yeni Raporlama Merkezi handler'ları modülde mevcuttur.
 
-Yeni kök: `icao_document_hub`. `firebase/database.rules.phase11.json` bu yolu içerir.
+## Sentetik model testi
 
-## Canlı Google OAuth testi
+Sentetik veri ile:
+- İlk resmî EI: 50.69
+- Güncel resmî EI: 64.17
+- Toplam değişim: +13.48 puan
+- Validasyon adayı: 1
+- Aday potansiyeli: +0.50 Overall puan
+- Ziyaret: 1
+- Drive doküman metadata: 1
+- CAP PQ: 2
+- Gecikmiş CAP adımı: 1
+- Raporlama Merkezi self-check: **PASS**
 
-Canlı OAuth bağlantısı gerçek Google Cloud Web Client ID ve GitHub Pages authorized origin gerektirir. Statik paket içinde herhangi bir kullanıcı credential'ı gömülü değildir; bu nedenle son OAuth popup/yükleme testi deploy sonrasında kullanıcı hesabıyla yapılmalıdır.
+## Geriye uyumluluk
 
-## Ek QA Sonuçları
+- Eski `tab-report` rotası korunmuştur.
+- Sağ üst `Ekran PDF` ve `Ekran Excel` düğmeleri Raporlama Merkezi açıkken yeni paket export'una yönlenir.
+- `updateReportPreview()` çağrıları yeni merkez aktifse `renderReportingCenter()` üzerinden çalışır.
+- Eski Yönetici Raporu fonksiyonları fallback olarak kodda korunmuştur.
+- CAP ve Ziyaret Hub navigasyonu değiştirilmemiştir.
 
-- HTML: 782 ID / 782 unique / 0 duplicate.
-- Tab sayısı: 28. Yeni `drive-documents` tabı mevcut.
-- Yerel JS/CSS referansı: eksik yok.
-- Tüm `.js` dosyaları `node --check` ile doğrulandı.
-- Drive ID parser sentetik testleri: `file/d`, Google Docs `/d`, `open?id`, `folders/{id}` senaryoları PASS.
-- PQ doküman sayacı ve ziyaret doküman sayacı sentetik testi PASS.
-- Access token kalıcı depolama çağrısı yok (`localStorage`/`sessionStorage` kullanılmıyor).
+## Veri güvenliği / metodoloji
+
+- Rapor üretimi salt-okunurdur; Firebase'e yeni kayıt yazmaz.
+- Yeni Firebase yolu yoktur; Rules güncellemesi gerekmez.
+- Drive dosyaları silinmez/değiştirilmez; yalnız metadata indeksi okunur.
+- Resmî EI / projeksiyon / draft katmanları ayrı raporlanır.
