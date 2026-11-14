@@ -447,7 +447,7 @@ const I18N = {
     // ================================================================
     // STABILIZASYON PAKETI 1
     // ================================================================
-    const STABILIZATION_VERSION = '1.0.0';
+    const STABILIZATION_VERSION = '1.1.0-ei-auto';
     const stabilizationState = {
         firebaseConnected: null,
         connectionListenerStarted: false,
@@ -593,6 +593,8 @@ const I18N = {
         const assessmentEvents = assessmentReady ? Object.values(window.icaoAssessmentEvents || {}).filter(x => x && !x.isDeleted).length : 0;
         const assessmentSnapshots = assessmentReady ? Object.values(window.icaoEiSnapshots || {}).filter(x => x && !x.isDeleted).length : 0;
         add('assessment-model', 'Assessment Event / EI Snapshot modeli', assessmentReady ? 'ok' : 'warn', assessmentReady ? `${assessmentEvents} değerlendirme olayı, ${assessmentSnapshots} EI snapshot hazır.` : 'Assessment Event modülü yüklenemedi.');
+        const eiAutomationReady = typeof window.runIcaoEiAutomationSelfCheck === 'function';
+        add('official-ei-automation', 'ICAO Resmî EI otomasyonu', eiAutomationReady ? 'ok' : 'warn', eiAutomationReady ? 'OLF/StateLive ve ICAO ziyaret sonucu otomasyon modülü hazır.' : 'EI otomasyon modülü yüklenemedi.');
         let integritySummary = null;
         if (typeof window.buildSystemIntegrityModel === 'function') {
             try {

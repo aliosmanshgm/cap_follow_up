@@ -1,45 +1,15 @@
-# Faz 8 v11 — Doğrulama Raporu
+# Faz 9 v12 — Doğrulama Raporu
 
-## Statik kontroller
-- JavaScript syntax: **PASS** (`node --check` tüm JS dosyaları)
-- HTML duplicate ID: **PASS** — 716 ID, tekrar yok
-- Yerel JS/CSS referansları: **PASS** — eksik dosya yok
-- Inline kullanıcı handler çözümlemesi: **PASS** — eksik uygulama fonksiyonu yok
-- Ana tab sayısı: **26** — önceki ekranlar korunuyor
-- `system-integrity.js` manifest ve HTML yükleme sırası: **PASS**
+- Tüm JavaScript dosyaları `node --check` kontrolünden geçti.
+- `index.html` içinde duplicate ID bulunmadı.
+- Yerel JS/CSS referanslarında eksik dosya bulunmadı.
+- 194 inline arayüz handler'ının tamamının JS karşılığı doğrulandı.
+- Otomasyon modalı ve `official-ei-automation.js` yükleme referansı doğrulandı.
+- Sentetik tam-PQ durum testi: 2 Satisfactory / 3 Applicable = **%66,67**.
+- Sentetik findings-only testi: duplicate PQ deduplikasyonu, alan bazlı denominator ve `Applicable - unique findings` hesabı doğrulandı; örnek toplam 97/100 = **%97,00**.
+- Sentetik alan özet testi: 23/30 = **%76,67**.
+- Sentetik ICAO ziyaret-delta testi: ziyaret metadata'sı, provisional statü ve kaydetme önkoşulları doğrulandı.
+- Otomatik kayıt manuel formdan değiştirildiğinde `manualOverride` / `automation.status=overridden` izinin korunması kod düzeyinde doğrulandı.
+- Yeni Firebase root path veya Storage bağımlılığı eklenmedi.
 
-## Bütünlük motoru sentetik testleri
-### Bozuk zincir senaryosu
-Aşağıdaki sorunların yakalandığı doğrulandı:
-- CAP ↔ PQ eşleşmiyor
-- Validasyon adayı silinmiş/olmayan hedef ziyarete bağlı
-- Hazır/atanmış adayda kanıt ve iç inceleme eksik
-- Resmî EI kaydının Assessment Event karşılığı yok
-- Resmî EI kaydının EI Snapshot karşılığı yok
-
-Sonuç: **PASS**
-
-### Sağlıklı zincir senaryosu
-- 8 alanın tamamında aktif PQ kaydı
-- Instance / Concept kimlikleri tam
-- CAP kalıcı PQ bağlantısı sağlıklı
-- Validasyon adayı kanıt ve iç inceleme açısından hazır
-- Hedef ICAO ziyareti alan ve scope açısından uyumlu
-- Resmî EI ↔ Assessment Event ↔ Snapshot bağlı
-- EI matematiği tutarlı
-
-Sonuç: **%100 bütünlük skoru, 0 sorun — PASS**
-
-## Geriye uyumluluk
-- Mevcut Veri Kalitesi Merkezi korunmuştur.
-- Mevcut Firebase veri şeması değiştirilmemiştir.
-- Yeni Firebase Rules gerekmemektedir.
-- Firebase Storage kullanılmamaktadır.
-
-## Canlı ortam kontrolü
-GitHub Pages push sonrasında:
-1. `Veri & Referans > Veri Kalitesi & Bütünlük` açılmalı.
-2. PQ veri tabanı otomatik okunmalı.
-3. Üstte `Süreç & İlişki Bütünlüğü`, altta `CAP / Master Kayıt Kalitesi` görünmeli.
-4. Bütünlük kartlarından ilgili modüllere yönlendirme test edilmelidir.
-5. `Sistem Kontrolü` modalında `PQ → CAP → Validasyon → Ziyaret → EI bütünlüğü` satırı görünmelidir.
+Not: Gerçek OLF/StateLive export'larında kolon adları ICAO export sürümüne göre değişebileceğinden importer normalize edilmiş başlık eşleştirmesi kullanır. Tanınmayan dosyada otomatik kayıt yapılmaz; kullanıcıya hata verilir.

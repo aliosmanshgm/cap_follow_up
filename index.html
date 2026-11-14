@@ -13,7 +13,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.10/pdfmake.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.10/vfs_fonts.js"></script>
-    <link rel="stylesheet" href="css/app.css?v=20261114-phase8-integrity-v11">
+    <link rel="stylesheet" href="css/app.css?v=20261114-phase9-ei-auto-v12">
 </head>
 <body>
 
@@ -204,6 +204,7 @@
                             <button type="button" class="btn-outline" onclick="exportIcaoOfficialEiExcel()">📤 Excel'e Dışa Aktar</button>
                             <button type="button" class="btn-outline" onclick="seedDefaultIcaoOfficialEiData()">🧩 Başlangıç Dönemlerini Firebase'e Aktar</button>
                             <button type="button" class="btn-outline" onclick="syncAllOfficialEiRecordsToAssessmentModel()">🔄 Olay/Snapshot Modelini Senkronize Et</button>
+                            <button type="button" onclick="openIcaoEiAutomation()" style="background:#0f766e;">⚙️ OLF / Ziyaret Sonucundan EI Otomasyonu</button>
                         </div>
                         <div id="icaoEiExcelStatus" class="icao-ei-status" aria-live="polite"></div>
                     </section>
@@ -263,7 +264,58 @@
             </div>
         </div>
 
-        <div id="rightFiltersPanel" class="right-panel">
+        
+<div id="icaoEiAutomationModal" class="modal" style="z-index:12040;" onclick="if(event.target===this) closeIcaoEiAutomation()">
+    <div class="modal-content icao-ei-auto-modal-content">
+        <div class="modal-header">
+            <div>
+                <h3 style="margin:0;color:var(--primary);">⚙️ ICAO Resmî EI Otomasyonu</h3>
+                <div style="font-size:11px;color:var(--muted);margin-top:4px;">OLF / StateLive Excel veya ICAO ziyaret validasyon sonucundan EI önizlemesi üretir. Hiçbir sonuç kullanıcı onayı olmadan resmî kayıt haline gelmez.</div>
+            </div>
+            <button type="button" class="btn-outline" onclick="closeIcaoEiAutomation()">✖</button>
+        </div>
+        <div class="icao-ei-auto-grid">
+            <section class="data-panel-card">
+                <h4>1️⃣ Kaynak</h4>
+                <input id="icaoEiAutoFileInput" type="file" accept=".xlsx,.xls" style="display:none" onchange="handleIcaoEiAutoFile(event)">
+                <button type="button" class="btn-outline" style="width:100%;justify-content:center;margin-bottom:9px;" onclick="triggerIcaoEiAutoFile()">📥 OLF / StateLive Excel Analiz Et</button>
+                <div class="icao-ei-auto-divider"><span>veya</span></div>
+                <label>ICAO resmî ziyaret sonucu</label>
+                <select id="icaoEiAutoVisitSelect"><option value="">ICAO ziyareti seçiniz...</option></select>
+                <button type="button" class="btn-outline" style="width:100%;justify-content:center;margin-top:8px;" onclick="previewIcaoVisitEiAutomation()">✈️ Ziyaret Validasyon Sonucundan Hesapla</button>
+                <div style="margin-top:12px;border-top:1px solid var(--border);padding-top:10px;">
+                    <label>Findings-only dosyada denominator kaynağı</label>
+                    <select id="icaoEiAutoDenominator" onchange="recalculateIcaoEiAutoPreview()">
+                        <option value="latest">Son resmî EI snapshot → yoksa EI Referans Excel</option>
+                        <option value="master">EI Referans Excel / baseEIData</option>
+                    </select>
+                    <div class="icao-ei-auto-help">Tam PQ durum export'unda bu seçim kullanılmaz. StateLivePQFindings gibi yalnız bulgu dosyalarında benzersiz bulgu PQ sayısı denominator'dan düşülür.</div>
+                </div>
+                <div id="icaoEiAutoStatusText" class="icao-ei-status" aria-live="polite">Kaynak seçiniz.</div>
+            </section>
+            <section class="data-panel-card">
+                <h4>2️⃣ Değerlendirme Metadata'sı</h4>
+                <div class="icao-ei-auto-form-grid">
+                    <div class="full"><label>Değerlendirme adı *</label><input id="icaoEiAutoName" placeholder="Örn: ICVM Final / OLF StateLive 28.09.2026"></div>
+                    <div><label>Tür</label><select id="icaoEiAutoType"><option value="CMAA">CMAA</option><option value="OSVA">OSVA</option><option value="ICVM">ICVM</option><option value="AUDIT">Denetim</option><option value="OTHER" selected>Diğer</option></select></div>
+                    <div><label>Sonuç statüsü</label><select id="icaoEiAutoStatus"><option value="draft">Taslak</option><option value="provisional">Geçici / Provisional</option><option value="official">Resmî / Final</option></select></div>
+                    <div><label>Değerlendirme tarihi *</label><input type="date" id="icaoEiAutoDate"></div>
+                    <div><label>Rapor tarihi</label><input type="date" id="icaoEiAutoReportDate"></div>
+                    <div><label>PQ sürümü</label><input id="icaoEiAutoPqVersion" placeholder="Örn: 2024"></div>
+                    <div><label>PQ revizyonu</label><input id="icaoEiAutoPqRevision" placeholder="Örn: Rev.1"></div>
+                    <div class="full"><label>Not</label><textarea id="icaoEiAutoNotes" rows="3"></textarea></div>
+                </div>
+                <div class="icao-ei-auto-safety-note">🔒 Varsayılan statü <b>Taslak/Geçici</b> üretilir. Resmî/Final seçimi kullanıcı kararıdır; findings-only veya ziyaret-delta sonucunda ayrıca doğrulama uyarısı verilir.</div>
+            </section>
+        </div>
+        <section class="data-panel-card" style="margin-top:12px;">
+            <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;"><h4 style="margin:0;">3️⃣ Hesap Önizlemesi</h4><button id="icaoEiAutoCommitBtn" type="button" onclick="commitIcaoEiAutomationPreview()" disabled>💾 Önizlemeyi EI Kaydı Olarak Kaydet</button></div>
+            <div id="icaoEiAutoPreview" style="margin-top:10px;"></div>
+        </section>
+    </div>
+</div>
+
+<div id="rightFiltersPanel" class="right-panel">
             <div class="right-panel-header">
                 <h3 style="margin:0; font-size:15px; color:var(--primary);">⚙️ Filtreler</h3>
                 <button class="right-panel-close" onclick="toggleFiltersPanel()">✖</button>
@@ -2042,17 +2094,18 @@
 </div>
 
 
-<script src="js/app.js?v=20261114-phase8-integrity-v11"></script>
-<script src="js/modules/visit-sync.js?v=20261114-phase8-integrity-v11"></script>
-<script src="js/modules/visit-hub.js?v=20261114-phase8-integrity-v11"></script>
-<script src="js/modules/assessment-events.js?v=20261114-phase8-integrity-v11"></script>
-<script src="js/modules/official-ei-management.js?v=20261114-phase8-integrity-v11"></script>
-<script src="js/parsers/pq-docx-parser.js?v=20261114-phase8-integrity-v11"></script>
-<script src="js/modules/pq-linkage.js?v=20261114-phase8-integrity-v11"></script>
-<script src="js/modules/validation-readiness.js?v=20261114-phase8-integrity-v11"></script>
-<script src="js/modules/management-shell.js?v=20261114-phase8-integrity-v11"></script>
-<script src="js/services/pq-repository.js?v=20261114-phase8-integrity-v11"></script>
-<script src="js/modules/pq-library.js?v=20261114-phase8-integrity-v11"></script>
-<script src="js/modules/system-integrity.js?v=20261114-phase8-integrity-v11"></script>
+<script src="js/app.js?v=20261114-phase9-ei-auto-v12"></script>
+<script src="js/modules/visit-sync.js?v=20261114-phase9-ei-auto-v12"></script>
+<script src="js/modules/visit-hub.js?v=20261114-phase9-ei-auto-v12"></script>
+<script src="js/modules/assessment-events.js?v=20261114-phase9-ei-auto-v12"></script>
+<script src="js/modules/official-ei-management.js?v=20261114-phase9-ei-auto-v12"></script>
+<script src="js/modules/official-ei-automation.js?v=20261114-phase9-ei-auto-v12"></script>
+<script src="js/parsers/pq-docx-parser.js?v=20261114-phase9-ei-auto-v12"></script>
+<script src="js/modules/pq-linkage.js?v=20261114-phase9-ei-auto-v12"></script>
+<script src="js/modules/validation-readiness.js?v=20261114-phase9-ei-auto-v12"></script>
+<script src="js/modules/management-shell.js?v=20261114-phase9-ei-auto-v12"></script>
+<script src="js/services/pq-repository.js?v=20261114-phase9-ei-auto-v12"></script>
+<script src="js/modules/pq-library.js?v=20261114-phase9-ei-auto-v12"></script>
+<script src="js/modules/system-integrity.js?v=20261114-phase9-ei-auto-v12"></script>
 </body>
 </html>

@@ -1,44 +1,23 @@
-# USOAP CMA CAP Takip — Faz 8 v11
+# USOAP CMA CAP Takip — Faz 9 v12
 
-## Veri Kalitesi & Süreç Bütünlüğü
+## ICAO Resmî EI Otomasyonu
 
-Bu sürüm Faz 7 v10.2 Ziyaret Yönetimi hotfix tabanı üzerine kurulmuştur.
+Bu faz, ICAO Resmî EI kayıtlarının mümkün olduğunca manuel tekrar girişinden çıkarılması için üç hesaplama yolunu ekler:
 
-### Yeni: Süreç & İlişki Bütünlüğü
-`Veri & Referans > Veri Kalitesi & Bütünlük` ekranının üst bölümünde PQ → CAP → Validasyon → Ziyaret → Assessment Event / EI Snapshot zinciri otomatik kontrol edilir.
+1. **Tam PQ durum export'u**: PQ + alan + statü satırlarından Satisfactory / Not Satisfactory / Not Applicable sayıları ve EI otomatik hesaplanır.
+2. **StateLivePQFindings / findings-only export**: benzersiz bulgu PQ'ları Not Satisfactory kabul edilir; denominator son resmî snapshot'ın alan bazlı Applicable değerlerinden, eksikse mevcut EI Referans Excel `baseEIData` toplamlarından alınır. Sonuç varsayımsal olduğu için varsayılan olarak Taslak üretilir.
+3. **ICAO resmî ziyaret sonucu**: ziyaret ekranındaki `validated` PQ sonuçları mevcut resmî baseline üzerine delta olarak uygulanır ve Geçici/Provisional EI önizlemesi üretir.
 
-Kontroller:
-- 8 denetim alanının PQ sürüm kayıtları ve aktif sürüm/revizyon referansları
-- Aktif PQ kayıtlarında Instance ID / Concept ID lineage bütünlüğü
-- CAP ↔ PQ kalıcı bağlantılarında eşleşmeyen, belirsiz veya eksik kaynak/aktif Instance referansları
-- Validasyona hazır / ziyarete atanmış adaylarda PQ bağlantısı, kanıt referansı ve iç inceleme tutarlılığı
-- Validasyon adayı → hedef ICAO ziyareti bağlantısı ve ziyaret alan/scope senkronizasyonu
-- Ziyaret scope snapshot'larında PQ Concept / sourcePqRef / currentPqRef izlenebilirliği
-- Tamamlanmış ICAO ziyaretlerinde scope var ama validasyon sonucu yoksa uyarı
-- ICAO Resmî EI kaydı ↔ Assessment Event ↔ EI Snapshot senkronizasyonu
-- Satisfactory / Applicable oranı ile EI yüzdesinin matematiksel kontrolü
-- Son resmî EI snapshot'ında Applicable PQ denominator kontrolü
+Hiçbir otomatik hesap kullanıcı onayı olmadan Firebase'e yazılmaz. `Resmî / Final` statüsü kullanıcı tarafından seçilir. Findings-only ve ziyaret-delta yöntemlerinde Resmî/Final kayıttan önce ek doğrulama uyarısı gösterilir.
 
-### Çalışma ilkesi
-Bu merkez **otomatik veri düzeltmez**. Sorunu, mevcut durumu ve önerilen düzeltme yolunu gösterir; ilgili modüle tek tıkla geçiş sağlar.
+Otomatik kayıtta `automation` metadata'sı, yöntem, kaynak dosya/ziyaret, denominator kaynağı ve import anahtarı saklanır. Otomatik oluşturulmuş kayıt daha sonra manuel EI formundan değiştirilirse kayıt `Otomatik + Manuel Override` olarak işaretlenir; otomasyon kaynağı korunur.
 
-### Mevcut kayıt kalitesi korunmuştur
-Aynı ekranın altındaki `CAP / Master Kayıt Kalitesi` bölümü; Word CAP ve Excel master düzeyindeki eksik alan, tarih, ofis, mükerrerlik ve eşleşme kontrollerini aynen sürdürür.
+## Kullanım
 
-### Sistem Sağlığı entegrasyonu
-`Sistem Kontrolü` modalı artık süreç bütünlüğü skorunu ve kritik/yüksek ilişki sorunu sayısını da sağlık kontrolüne dahil eder. Bütünlük modeli JSON rapor olarak ayrıca indirilebilir.
+`Veri & Referans → ICAO Değerlendirme / EI Kayıtları → ⚙️ OLF / Ziyaret Sonucundan EI Otomasyonu`
 
-### Firebase
-Bu faz yeni Firebase kökü oluşturmaz. Mevcut Realtime Database Rules yeterlidir. Firebase Storage gerekli değildir.
+Excel yükledikten veya ICAO ziyareti seçtikten sonra önce hesap önizlemesini kontrol edin. Değerlendirme adı, tür, statü, tarih, PQ sürümü/revizyonu ve not alanlarını doğruladıktan sonra kaydedin.
 
-### Değişen ana dosyalar
-- `index.html`
-- `css/app.css`
-- `js/app.js`
-- `js/modules/system-integrity.js` (yeni)
-- `js/modules/pq-library.js`
-- `js/modules/assessment-events.js`
-- `js/modules/official-ei-management.js`
-- `js/modules/validation-readiness.js`
-- `app-manifest.json`
+## Firebase
 
+Yeni Firebase root path eklenmedi. Mevcut `icao_official_ei`, `icao_assessment_events` ve `icao_ei_snapshots` yolları kullanılır. Bu faz için Realtime Database Rules değişikliği gerekmez. Firebase Storage kullanılmaz.
