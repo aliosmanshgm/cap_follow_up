@@ -104,3 +104,13 @@ Legacy Excel Master normal iş akışının parçası değildir.
 - Published EI: ICAO Final Report
 - Responsibility: Responsibility Registry > legacy responsible fallback
 - Manual: controlled override only
+
+
+## RC1.2 — Assessment bağlama ve taslak/itiraz modeli
+
+- `importedAt`: dosyanın sisteme alındığı zamandır; EI dönemi veya assessment eşleştirmesi için kullanılmaz.
+- `effectiveAsOfDate`: snapshot'ın temsil ettiği gerçek durum tarihidir.
+- `linkedAssessmentEventId`: snapshot'ın hangi assessment sonucunu temsil ettiğini açıkça belirtir; tek bağlayıcı assessment ilişkisidir.
+- Assessment scope metrikleri (`scopeApplicable`, `scopeSatisfactory`) State Overall numerator/denominator değildir.
+- ICAO Draft Report değerleri `published.status=draft` olarak tutulur ve official State Snapshot'ı override etmez.
+- PQ bazında taslak sonuç ve itiraz/yorum süreci ICAO Visit kaydında yönetilir; final sonuç mevcut olduğunda taslak sonucu geçersiz kılar.

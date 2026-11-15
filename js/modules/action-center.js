@@ -2,7 +2,7 @@
 // Phase 13 v16: derived operational actions + manual tasks + workflow overlays
 (function(){
   'use strict';
-  const MODULE_VERSION='action-center-v16';
+  const MODULE_VERSION='action-center-v16.1-icao-objection';
   const PATH='icao_action_center';
   const DEFAULT_SETTINGS={capLeadDays:15,visitLeadDays:14};
   const STATUS={
@@ -14,7 +14,7 @@
     completed:{label:'Tamamlandı',css:'completed'}
   };
   const PRIORITY={critical:{label:'Kritik',rank:4},high:{label:'Yüksek',rank:3},medium:{label:'Orta',rank:2},low:{label:'Düşük',rank:1}};
-  const SOURCE_LABELS={cap:'CAP',validation:'Validasyon',visit:'Ziyaret',followup:'Ziyaret Takibi',consultation:'Danışma',integrity:'Veri Bütünlüğü',ei:'EI / OLF',manual:'Manuel'};
+  const SOURCE_LABELS={cap:'CAP',validation:'Validasyon',visit:'Ziyaret',followup:'Ziyaret Takibi',consultation:'Danışma',integrity:'Veri Bütünlüğü',ei:'EI / OLF',objection:'ICAO İtiraz',manual:'Manuel'};
   const state={manual:{},overrides:{},settings:{...DEFAULT_SETTINGS},loaded:false,ref:null,callback:null,activeKey:'',quickView:'open'};
 
   const db=()=>typeof firebase!=='undefined'&&firebase.database?firebase.database():null;
@@ -90,6 +90,24 @@
     return tasks;
   }
 
+  function buildObjectionTasks(){
+    const tasks=[];
+    visitRows().filter(v=>v&&v.visitType==='icao_official'&&!v.isDeleted).forEach(v=>{
+      const records=Object.values(obj(v.icaoValidation&&v.icaoValidation.records)).filter(r=>r&&!r.isDeleted);
+      records.forEach(r=>{
+        const st=text(r.objectionStatus||'none'),pq=text(r.pq),area=text(r.area).toUpperCase();
+        if(['planned','submitted','under_review'].includes(st)){
+          const waiting=['submitted','under_review'].includes(st),statusLabel=st==='planned'?'İtiraz/yorum hazırlanıyor':st==='submitted'?"ICAO'ya iletildi":'ICAO değerlendirmesinde';
+          tasks.push(autoTask({sourceType:'objection',sourceId:`${v.id}::${pq}::${st}`,title:`ICVM/ICAO itiraz takibi: ${area?area+' ':''}PQ ${pq}`,description:`${v.visitName||'ICAO ziyareti'} · ${statusLabel}${r.objectionNotes?` · ${text(r.objectionNotes).slice(0,160)}`:''}`,area,pq,priority:waiting?'high':'medium',owner:'',unit:r.responsibleUnit||'',targetDate:r.followUpDate||r.objectionDate||'',defaultStatus:waiting?'external_wait':'in_progress',route:{tab:'icao-visit-validation',visitId:v.id,pq},meta:{visitId:v.id,objectionStatus:st,draftResult:r.draftResult||'',finalResult:r.finalResult||''}}));
+        }
+        if(['accepted','rejected'].includes(st)&&!text(r.finalResult)){
+          tasks.push(autoTask({sourceType:'objection',sourceId:`final::${v.id}::${pq}`,title:`ICAO nihai PQ sonucu kaydedilmeli: ${area?area+' ':''}PQ ${pq}`,description:`İtiraz/yorum sonucu “${st==='accepted'?'kabul edildi':'kabul edilmedi'}”; nihai PQ sonucu henüz kaydedilmemiş.`,area,pq,priority:'high',owner:'',unit:r.responsibleUnit||'',targetDate:r.followUpDate||'',defaultStatus:'verification',route:{tab:'icao-visit-validation',visitId:v.id,pq},meta:{visitId:v.id,objectionStatus:st}}));
+        }
+      });
+    });
+    return tasks;
+  }
+
   function buildFollowTasks(){
     return followRows().filter(i=>i&&!['completed','cancelled'].includes(i.status)&&['overdue','today','next7','date_risk'].includes(i.timing)).map(i=>autoTask({sourceType:'followup',sourceId:i.key,title:`Ziyaret takip aksiyonu: ${i.visitName}`,description:`${i.source&&i.source.targetLabel||'Ziyaret geneli'}${i.source&&i.source.pq?` · PQ ${i.source.pq}`:''}`,area:(i.visitAreas||[]).join(', '),pq:i.source&&i.source.pq||'',step:i.source&&i.source.step||'',priority:i.timing==='overdue'?'high':priorityOf(i.priority),owner:i.owner||'',unit:(i.visitUnits||[]).join(' · '),targetDate:i.followUpDate||'',defaultStatus:'in_progress',route:{tab:'visit-followup',visitId:i.visitId,sourceId:i.sourceRecordId},meta:{visitId:i.visitId,timing:i.timing,daysLate:i.daysLate||0}}));
   }
@@ -110,7 +128,7 @@
   function manualTasks(){return Object.entries(obj(state.manual)).filter(([,r])=>r&&!r.isDeleted).map(([id,r])=>({key:`manual::${id}`,id,isAuto:false,sourceType:r.sourceType||'manual',sourceId:r.sourceId||'',title:r.title||'Adsız görev',description:r.description||'',area:r.area||'',pq:r.pq||'',step:r.step||'',status:r.status||'new',priority:priorityOf(r.priority),owner:r.owner||'',unit:r.unit||'',targetDate:r.targetDate||'',followUpDate:r.followUpDate||'',notes:r.notes||'',route:r.route||{},meta:r.meta||{},createdAt:r.createdAt||'',updatedAt:r.updatedAt||''}));}
 
   function allTasks(){
-    const map=new Map();[...buildCapTasks(),...buildValidationTasks(),...buildVisitTasks(),...buildFollowTasks(),...buildConsultationTasks(),...buildIntegrityTasks(),...manualTasks()].forEach(t=>map.set(t.key,t));
+    const map=new Map();[...buildCapTasks(),...buildValidationTasks(),...buildVisitTasks(),...buildObjectionTasks(),...buildFollowTasks(),...buildConsultationTasks(),...buildIntegrityTasks(),...manualTasks()].forEach(t=>map.set(t.key,t));
     return [...map.values()].map(t=>({...t,timing:timing(t)})).sort((a,b)=>{
       const sr={overdue:0,today:1,future:2,no_date:3},sa=sr[a.timing.code]??9,sb=sr[b.timing.code]??9;if(sa!==sb)return sa-sb;
       if((PRIORITY[b.priority]?.rank||0)!==(PRIORITY[a.priority]?.rank||0))return(PRIORITY[b.priority]?.rank||0)-(PRIORITY[a.priority]?.rank||0);
@@ -192,7 +210,7 @@
     if(r.tab==='list'){window.switchTab&&window.switchTab('list');setTimeout(()=>{try{if(typeof window.togglePQ==='function')window.togglePQ(String(r.pq||t.pq).replace(/\./g,'-'));}catch(_){}},80);return;}
     if(r.tab==='validation-readiness'){window.switchTab&&window.switchTab('validation-readiness');return;}
     if(r.tab==='visits'){window.switchTab&&window.switchTab('visits');setTimeout(()=>{if(r.visitId&&typeof window.viewVisitDetail==='function')window.viewVisitDetail(r.visitId);},80);return;}
-    if(r.tab==='icao-visit-validation'){if(r.visitId&&typeof window.openIcaoOfficialVisitValidation==='function')window.openIcaoOfficialVisitValidation(r.visitId);else window.switchTab&&window.switchTab('icao-visit-validation');return;}
+    if(r.tab==='icao-visit-validation'){if(r.visitId&&typeof window.openIcaoOfficialVisitValidation==='function'){window.openIcaoOfficialVisitValidation(r.visitId);if(r.pq)setTimeout(()=>{try{if(typeof window.selectIcaoValidationPq==='function')window.selectIcaoValidationPq(r.pq);}catch(_){}},100);}else window.switchTab&&window.switchTab('icao-visit-validation');return;}
     if(r.tab==='visit-followup'){window.switchTab&&window.switchTab('visit-followup');return;}
     if(r.tab==='visit-consultation'){window.switchTab&&window.switchTab('visit-consultation');return;}
     if(r.tab&&window.switchTab)window.switchTab(r.tab);

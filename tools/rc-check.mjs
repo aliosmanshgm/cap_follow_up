@@ -8,7 +8,7 @@ const read = p => fs.readFileSync(path.join(root,p),'utf8');
 const exists = p => fs.existsSync(path.join(root,p));
 const html = read('index.html');
 const manifest = JSON.parse(read('app-manifest.json'));
-const expectedCache = '20261115-v1.0-rc1.1';
+const expectedCache = '20261115-v1.0-rc1.2';
 const failures=[]; const warnings=[]; const passes=[];
 const pass=(name,detail='')=>passes.push({name,detail});
 const fail=(name,detail='')=>failures.push({name,detail});
@@ -61,7 +61,7 @@ const btnNoTab=[...btns].filter(x=>!tabs.has(x)&&!virtual.has(x));
 (tabsNoBtn.length||btnNoTab.length)?fail('Tab / Hub rotaları',`tabsNoBtn=${tabsNoBtn.join(',')} btnNoTab=${btnNoTab.join(',')}`):pass('Tab / Hub rotaları',`${tabs.size} ekran + ${virtual.size} sanal Hub`);
 
 // 7. Manifest / release
-manifest.version==='1.0.0-rc1.1'?pass('Manifest sürümü',manifest.version):fail('Manifest sürümü',String(manifest.version));
+manifest.version==='1.0.0-rc1.2'?pass('Manifest sürümü',manifest.version):fail('Manifest sürümü',String(manifest.version));
 manifest.releaseChannel==='release-candidate'?pass('Release channel','release-candidate'):fail('Release channel',String(manifest.releaseChannel));
 
 // 8. Public OAuth pages
@@ -106,6 +106,11 @@ const officialMgmt=read('js/modules/official-ei-management.js');
 const responsibility=read('js/modules/responsibility-registry.js');
 /state_snapshots|icao_state_snapshots/.test(stateCompliance)&&/compareStateComplianceSnapshots/.test(stateCompliance)?pass('State Snapshot source-of-truth modülü'):fail('State Snapshot source-of-truth modülü');
 /eventMetrics/.test(officialMgmt)&&/scopeApplicable/.test(officialMgmt)&&/stateSnapshotId/.test(officialMgmt)?pass('Assessment scope / Overall ayrımı'):fail('Assessment scope / Overall ayrımı');
+/linkedAssessmentEventId/.test(stateCompliance)&&/effectiveAsOfDate/.test(stateCompliance)&&!/automatic_post_event/.test(stateCompliance)?pass('Snapshot explicit assessment binding'):fail('Snapshot explicit assessment binding');
+!/bestPostEventStateSnapshot/.test(officialMgmt)&&/explicitSnapshotForEvent/.test(officialMgmt)&&/reconcileExplicitStateSnapshotLinks/.test(officialMgmt)?pass('Import tarihiyle otomatik assessment eşleştirme kaldırıldı'):fail('Import tarihiyle otomatik assessment eşleştirme kaldırıldı');
+/draftResult/.test(read('js/app.js'))&&/objectionStatus/.test(read('js/app.js'))&&/finalResult/.test(read('js/app.js'))?pass('ICAO draft / itiraz / final PQ akışı'):fail('ICAO draft / itiraz / final PQ akışı');
+/draft_published_with_state/.test(officialMgmt)&&/publishedCanOverrideState/.test(officialMgmt)?pass('Draft EI final snapshot override koruması'):fail('Draft EI final snapshot override koruması');
+/buildObjectionTasks/.test(read('js/modules/action-center.js'))?pass('ICAO itiraz aksiyon otomasyonu'):fail('ICAO itiraz aksiyon otomasyonu');
 /PQ Concept ID/.test(responsibility)&&/icao_responsibility_registry/.test(responsibility)?pass('Sorumluluk registry'):fail('Sorumluluk registry');
 /parseCapProtocolRow/.test(read('js/app.js'))&&/capFindingSource/.test(read('js/app.js'))?pass('CAP Word PROTOCOL FINDING kaynağı'):fail('CAP Word PROTOCOL FINDING kaynağı');
 /localStorage[^\n]*(?:accessToken|refreshToken)|sessionStorage[^\n]*(?:accessToken|refreshToken)/i.test(drive)?fail('Drive token kalıcılığı','token storage paterni bulundu'):pass('Drive token kalıcılığı','erişim tokenı yalnız bellek state içinde');

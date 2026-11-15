@@ -1,8 +1,8 @@
-# USOAP CMA CAP Takip — v1.0 RC1.1
+# USOAP CMA CAP Takip — v1.0 RC1.2
 
 ## EI Source of Truth & State Compliance Snapshot
 
-RC1.1, EI ve PQ durum yönetimini mükerrer legacy Excel alanlarından çıkarıp kaynak-otorite modeline taşır. Normal kullanımda ana girdiler **PQ Word + CAP Word + Full PQ Status Excel**; isteğe bağlı olarak **Responsibility Registry** ve ICAO assessment/final report kaynaklarıdır.
+RC1.2, EI ve PQ durum yönetimini mükerrer legacy Excel alanlarından çıkarıp kaynak-otorite modeline taşır. Normal kullanımda ana girdiler **PQ Word + CAP Word + Full PQ Status Excel**; isteğe bağlı olarak **Responsibility Registry** ve ICAO assessment/final report kaynaklarıdır.
 
 ### Ana ilkeler
 - **PQ Word / PQ DB**: PQ yapısı, CE, soru, On/Off-site, PPQ, referans, version/revision/lineage.
@@ -13,16 +13,16 @@ RC1.1, EI ve PQ durum yönetimini mükerrer legacy Excel alanlarından çıkarı
 - **Responsibility Registry**: kişi/birim sahipliği.
 - **Legacy Excel Master**: migration/fallback only; yeni EI üretmez.
 
-### RC1.1 dosyaları
+### RC1.2 dosyaları
 - `SOURCE_OF_TRUTH_MODEL.md` — kaynak otorite modeli
-- `RC1_1_DEPLOYMENT.md` — dağıtım ve ilk veri testi
+- `RC1_2_DEPLOYMENT.md` — explicit snapshot bağlama ve ICVM taslak/itiraz geçişi
 - `RC_ACCEPTANCE_CHECKLIST.md` — canlı kabul listesi
-- `RELEASE_NOTES_v1.0_RC1_1.md` — sürüm notları
-- `RC1_1_SOURCE_QA_REPORT.json` — gerçek CAP Word / legacy master kaynak QA
+- `RELEASE_NOTES_v1.0_RC1_2.md` — sürüm notları
+- `RC_STATIC_QA_REPORT.json` — otomatik RC statik QA raporu
 - `firebase/database.rules.rc1_1.json` — güncel Realtime Database Rules
 
 ### Firebase
-RC1.1 için `firebase/database.rules.rc1_1.json` kullanılmalıdır. Yeni yollar: `icao_state_snapshots` ve `icao_responsibility_registry`. Firebase Storage gerekmez.
+RC1.2 için `firebase/database.rules.rc1_1.json` kullanılmalıdır. Yeni yollar: `icao_state_snapshots` ve `icao_responsibility_registry`. Firebase Storage gerekmez.
 
 ---
 
@@ -196,3 +196,11 @@ PQ kartlarındaki amendment sayımı artık kaynak satır sayısına göre deği
 
 ## Faz 15 v18.5 - PQ kart dağılımı
 Alan kartlarında Revised, Merged, New, No change ve Deleted sayıları ayrı ayrı ve sıfır değerler dahil görünür.
+
+
+## RC1.2 Explicit Snapshot Binding & ICVM Objection Workflow
+- Full Status snapshot assessment eşleştirmesi yalnız açık `linkedAssessmentEventId` ile yapılır.
+- Import tarihi assessment eşleştirmesine katılmaz.
+- ICVM taslak PQ sonuçları ve itiraz/yorum süreci ICAO ziyaret kaydında izlenir.
+- Draft published EI resmî EI çizgisini değiştirmez.
+- Yeni Firebase root yoktur; RC1.1 Rules geçerlidir.

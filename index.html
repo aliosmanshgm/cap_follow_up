@@ -13,7 +13,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.10/pdfmake.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.10/vfs_fonts.js"></script>
-    <link rel="stylesheet" href="css/app.css?v=20261115-v1.0-rc1.1">
+    <link rel="stylesheet" href="css/app.css?v=20261115-v1.0-rc1.2">
 </head>
 <body>
 
@@ -149,7 +149,7 @@
                 <button onclick="toggleFiltersPanel()" class="btn-outline header-primary-action">🔎 Filtreler</button>
                 <button type="button" id="activeScreenPdfBtn" onclick="exportPDF()" style="background:#dc2626;" title="Aktif ekranı PDF olarak dışa aktar">📄 Ekran PDF</button>
                 <button id="activeScreenExcelBtn" onclick="exportExcel()" style="background:#059669;" title="Aktif ekranı Excel olarak dışa aktar">📊 Ekran Excel</button>
-                <button type="button" id="appReleaseBadge" class="system-connection-badge ok release-badge" onclick="openSystemHealthModal()" title="Release Candidate sistem kontrolünü aç">RC1.1 · v1.0</button>
+                <button type="button" id="appReleaseBadge" class="system-connection-badge ok release-badge" onclick="openSystemHealthModal()" title="Release Candidate sistem kontrolünü aç">RC1.2 · v1.0</button>
                 <button type="button" id="systemConnectionBadge" class="system-connection-badge checking" onclick="openSystemHealthModal()" title="Sistem bağlantı ve kayıt durumunu görüntüle">⚪ Kontrol ediliyor</button>
                 <div class="more-actions-wrap">
                     <button class="btn-outline" onclick="toggleMoreActions(event)">⚙️ Diğer <span style="font-size:10px;">▼</span></button>
@@ -276,6 +276,7 @@
                                 <div><label>Ziyaret bitiş tarihi</label><input type="date" id="icaoEiEndDate"></div>
                                 <div><label>Değerlendirme / sonuç tarihi *</label><input type="date" id="icaoEiAssessmentDate" required></div>
                                 <div><label>Raporun alındığı tarih</label><input type="date" id="icaoEiReportDate"></div>
+                                <div><label>Bağlı ICAO ziyareti</label><select id="icaoEiLinkedVisit" onchange="syncOfficialEiScopeFromVisit(this.value)"><option value="">Ziyarete bağlı değil</option></select><small style="display:block;color:var(--muted);margin-top:4px;">Taslak PQ sonuçları ve itiraz süreci bu ziyaret kaydından izlenir.</small></div>
                                 <div><label>PQ sürümü</label><input id="icaoEiPqVersion" placeholder="Örn: 2024"></div>
                                 <div><label>PQ revizyonu</label><input id="icaoEiPqRevision" placeholder="Örn: Rev.1"></div>
                                 <div class="full"><label>State Compliance Snapshot</label><select id="icaoEiStateSnapshot" onchange="applyStateSnapshotToOfficialEiForm(this.value)"><option value="">State Snapshot seçiniz...</option></select><div id="stateSnapshotStatus" style="font-size:10px;color:var(--muted);margin-top:5px;">Henüz State Snapshot yüklenmedi.</div></div>
@@ -285,7 +286,7 @@
                                 <div><label>Ziyaret kapsamındaki Applicable PQ</label><input type="number" id="icaoEiScopeApplicable" min="0" step="1" placeholder="Örn: ICVM kapsamı 85"></div>
                                 <div><label>Ziyaret sonucunda Satisfactory / Validated PQ</label><input type="number" id="icaoEiScopeSatisfactory" min="0" step="1" placeholder="Örn: ICVM sonucu 60"></div>
                                 <div><label>Kapsam başarı oranı</label><input type="text" id="icaoEiScopeSuccessRate" readonly placeholder="Otomatik"></div>
-                                <div class="full"><label style="display:flex;align-items:center;gap:8px;font-weight:700;"><input type="checkbox" id="icaoEiPublishedOverride" onchange="toggleIcaoPublishedOverride(this.checked)" style="width:17px;height:17px;"> ICAO yayımlanan EI değerlerini kontrollü override olarak gir</label><div style="font-size:10px;color:var(--muted);margin-top:4px;">Normal kullanımda EI, Full PQ Status State Snapshot'tan hesaplanır. Yalnız Final Report yayımlanan değerleri farklıysa override kullanın.</div></div>
+                                <div class="full"><label style="display:flex;align-items:center;gap:8px;font-weight:700;"><input type="checkbox" id="icaoEiPublishedOverride" onchange="toggleIcaoPublishedOverride(this.checked)" style="width:17px;height:17px;"> ICAO yayımlanan EI değerlerini kontrollü override olarak gir</label><div style="font-size:10px;color:var(--muted);margin-top:4px;">Normal kullanımda EI, Full PQ Status State Snapshot'tan hesaplanır. ICAO Draft/Final Report yayımlanmış EI değerleri varsa kontrollü yayımlanan sonuç alanında ayrıca tutulabilir; taslak değer resmî EI çizgisini değiştirmez.</div></div>
                                 <div><label>ICAO yayımlanan Overall EI (%)</label><input type="number" id="icaoEiPublishedOverall" min="0" max="100" step="0.01" disabled></div>
                                 <div><label>Durum</label><label style="display:flex;align-items:center;gap:8px;margin-top:8px;font-weight:700;"><input type="checkbox" id="icaoEiActive" checked style="width:17px;height:17px;"> Dashboard karşılaştırmalarında aktif kullan</label></div>
                                 <div class="full"><label>Kaynak / referans</label><input id="icaoEiSource" placeholder="Örn: ICAO USOAP OLF resmî sonuç raporu"></div>
@@ -333,7 +334,7 @@
         <div class="modal-header"><div><h3 style="margin:0;color:var(--primary);">📊 State Compliance Snapshot</h3><div style="font-size:11px;color:var(--muted);margin-top:4px;">Tüm PQ statülerini içeren OLF/State export'tan S / NS / N-A durumunu ve Overall/alan EI'lerini otomatik hesaplar. Findings-only dosyası State Snapshot değildir.</div></div><button type="button" class="btn-outline" onclick="closeStateSnapshotCenter()">✖</button></div>
         <div class="icao-ei-auto-grid">
           <section class="data-panel-card"><h4>1️⃣ Full PQ Status Kaynağı</h4><input id="stateSnapshotFileInput" type="file" accept=".xlsx,.xls" style="display:none" onchange="handleStateSnapshotFile(event)"><button type="button" class="btn-outline" style="width:100%;justify-content:center;" onclick="triggerStateSnapshotFile()">📥 Tüm PQ Statüleri Excel'ini Seç</button><div class="icao-ei-auto-help" style="margin-top:8px;">Dosyada her PQ için statü (Satisfactory / Not Satisfactory / N/A) bulunmalıdır. Yalnız açık finding listesi bu katmanda kabul edilmez.</div><div id="stateSnapshotPreview" style="margin-top:10px;"></div></section>
-          <section class="data-panel-card"><h4>2️⃣ Snapshot Metadata</h4><div class="icao-ei-auto-form-grid"><div class="full"><label>Snapshot adı</label><input id="stateSnapshotName"></div><div><label>Snapshot tarihi *</label><input type="date" id="stateSnapshotDate"></div><div><label>PQ sürümü</label><input id="stateSnapshotPqVersion" placeholder="2024"></div><div><label>PQ revizyonu</label><input id="stateSnapshotPqRevision" placeholder="Rev.1"></div></div><button type="button" onclick="saveStateSnapshot()" style="margin-top:10px;width:100%;justify-content:center;">💾 State Snapshot Olarak Kaydet</button><div style="margin-top:12px;border-top:1px solid var(--border);padding-top:10px;"><h4 style="margin:0 0 8px;">Kayıtlı Snapshot'lar</h4><div id="stateSnapshotList"></div></div></section>
+          <section class="data-panel-card"><h4>2️⃣ Snapshot Metadata</h4><input type="hidden" id="stateSnapshotEditId"><div class="icao-ei-auto-form-grid"><div class="full"><label>Snapshot adı</label><input id="stateSnapshotName"></div><div><label>Temsil ettiği durum tarihi *</label><input type="date" id="stateSnapshotDate"><small style="display:block;color:var(--muted);margin-top:4px;">Dosyanın indirildiği/yüklendiği tarih değil; PQ statülerinin fiilen geçerli olduğu tarih.</small></div><div><label>Bağlı ICAO değerlendirmesi</label><select id="stateSnapshotAssessmentEvent"><option value="">Bağımsız / mevcut genel durum</option></select><small style="display:block;color:var(--muted);margin-top:4px;">Snapshot yalnız burada seçilen assessment'a bağlanır; import tarihi otomatik eşleştirme için kullanılmaz.</small></div><div><label>PQ sürümü</label><input id="stateSnapshotPqVersion" placeholder="2024"></div><div><label>PQ revizyonu</label><input id="stateSnapshotPqRevision" placeholder="Rev.1"></div></div><div style="display:flex;gap:8px;margin-top:10px"><button type="button" onclick="saveStateSnapshot()" style="flex:1;justify-content:center;">💾 State Snapshot Olarak Kaydet</button><button type="button" class="btn-outline" onclick="resetStateSnapshotMetadataForm()">Temizle</button></div><div style="margin-top:12px;border-top:1px solid var(--border);padding-top:10px;"><h4 style="margin:0 0 8px;">Kayıtlı Snapshot'lar</h4><div id="stateSnapshotList"></div></div></section>
         </div>
     </div>
 </div>
@@ -491,7 +492,7 @@
                     <div>
                         <h3 id="eiPanelTitle" style="margin: 0 0 5px 0; color: var(--primary);">🌍 Genel (Overall) Etkin Uygulama (EI) Oranı (%) Değişimi</h3>
                         <p id="eiPanelSubtitle" style="margin: 0 0 12px 0; font-size: 13px; color: var(--muted);">Resmî ICAO değerlendirmeleri ile validasyon adayı CAP'ler birbirinden ayrılarak gösterilir. EI yalnızca resmî değerlendirme sonucunda değişmiş kabul edilir.</p>
-                        <div id="eiAssessmentTimeline" class="ei-assessment-timeline"><div class="ei-assessment-empty">Resmî değerlendirme zaman çizgisi yükleniyor...</div></div>
+                        <div id="eiAssessmentTimeline" class="ei-assessment-timeline"><div class="ei-assessment-empty">Resmî değerlendirme zaman çizgisi yükleniyor...</div></div><div id="eiPendingAssessmentNotice" style="margin-top:10px;"></div>
                         <div class="ei-bar-wrapper" id="eiOverallSegmentBar">
                             <div class="ei-bar-base" id="barBase" style="width:0%"></div>
                             <div class="ei-bar-icao" id="barIcao" style="width:0%"></div>
@@ -1365,7 +1366,7 @@
                 <button type="button" data-action-view="all" onclick="setActionQuickView('all')">Tümü</button>
             </div>
             <div class="action-filter-grid">
-                <div class="control-group"><label>Kaynak</label><select id="actionSourceFilter" onchange="renderActionCenter()"><option value="all">Tüm kaynaklar</option><option value="cap">CAP</option><option value="validation">Validasyon</option><option value="visit">Ziyaret</option><option value="followup">Ziyaret Takibi</option><option value="consultation">Danışma</option><option value="integrity">Veri Bütünlüğü</option><option value="ei">EI / OLF</option><option value="manual">Manuel</option></select></div>
+                <div class="control-group"><label>Kaynak</label><select id="actionSourceFilter" onchange="renderActionCenter()"><option value="all">Tüm kaynaklar</option><option value="cap">CAP</option><option value="validation">Validasyon</option><option value="visit">Ziyaret</option><option value="followup">Ziyaret Takibi</option><option value="consultation">Danışma</option><option value="integrity">Veri Bütünlüğü</option><option value="ei">EI / OLF</option><option value="objection">ICAO İtiraz</option><option value="manual">Manuel</option></select></div>
                 <div class="control-group"><label>Durum</label><select id="actionStatusFilter" onchange="renderActionCenter()"><option value="all">Tüm durumlar</option><option value="new">Yeni</option><option value="in_progress">Devam ediyor</option><option value="waiting">Beklemede</option><option value="external_wait">Dış cevaba bağlı</option><option value="verification">Doğrulama bekliyor</option><option value="completed">Tamamlandı</option></select></div>
                 <div class="control-group"><label>Öncelik</label><select id="actionPriorityFilter" onchange="renderActionCenter()"><option value="all">Tüm öncelikler</option><option value="critical">Kritik</option><option value="high">Yüksek</option><option value="medium">Orta</option><option value="low">Düşük</option></select></div>
                 <div class="control-group"><label>Arama</label><input id="actionSearchInput" type="search" placeholder="Görev, PQ, sorumlu, birim..." oninput="renderActionCenter()"></div>
@@ -1729,7 +1730,7 @@
                 </div>
                 <div class="icao-visit-kpis">
                     <div class="icao-visit-kpi"><strong id="icaoVisitKpiPq">0</strong><span>Kapsamdaki açık PQ</span></div>
-                    <div class="icao-visit-kpi ok"><strong id="icaoVisitKpiValidated">0</strong><span>CAP kapatıldı</span></div>
+                    <div class="icao-visit-kpi ok"><strong id="icaoVisitKpiValidated">0</strong><span>Taslak/çalışma S</span></div>
                     <div class="icao-visit-kpi danger"><strong id="icaoVisitKpiOpen">0</strong><span>CAP açık kaldı</span></div>
                     <div class="icao-visit-kpi warn"><strong id="icaoVisitKpiEvidence">0</strong><span>Ek kanıt / takip</span></div>
                     <div class="icao-visit-kpi ok"><strong id="icaoVisitKpiEi">+0</strong><span>EI'ye yeni PQ etkisi</span></div>
@@ -1750,7 +1751,7 @@
                             </div>
                             <select id="icaoVisitTextLanguage" style="display:none" aria-hidden="true"><option value="both">ENG + TR</option><option value="en">ENG</option><option value="tr">TR</option></select>
                         </div>
-                        <div id="icaoVisitTranslationStatus" class="icao-translation-status">Türkçe PQ metinleri Excel master yüklendiğinde burada kontrol edilir.</div>
+                        <div id="icaoVisitTranslationStatus" class="icao-translation-status">Türkçe PQ/finding metinleri PQ Veri Tabanı, CAP Word ve varsa legacy TR kaynağı üzerinden burada kontrol edilir.</div>
                         <div id="icaoOfficialVisitPqList" class="icao-visit-list"><div class="icao-visit-empty">Ziyaret seçildiğinde kapsamdaki PQ'lar burada gösterilecektir.</div></div>
                     </section>
                     <section class="icao-visit-panel">
@@ -1761,8 +1762,13 @@
                             <input type="hidden" id="icaoValidationPq">
                             <div id="icaoValidationSummary" class="icao-valid-summary"></div>
                             <div class="icao-valid-grid">
-                                <div class="icao-valid-field"><label>ICVM / ICAO sonucu</label><select id="icaoValidationStatus" required></select></div>
+                                <div class="icao-valid-field"><label>Çalışma / ziyaret sonucu</label><select id="icaoValidationStatus" required></select></div>
                                 <div class="icao-valid-field"><label>Sonuç tarihi</label><input id="icaoValidationResultDate" type="date"></div>
+                                <div class="icao-valid-field"><label>ICAO taslak PQ sonucu</label><select id="icaoValidationDraftResult"><option value="">Belirtilmedi</option><option value="satisfactory">Satisfactory</option><option value="not_satisfactory">Not Satisfactory</option><option value="no_change">No change</option><option value="pending">Değerlendirmede</option></select></div>
+                                <div class="icao-valid-field"><label>İtiraz / yorum durumu</label><select id="icaoValidationObjectionStatus"><option value="none">Yok</option><option value="planned">Hazırlanıyor</option><option value="submitted">ICAO'ya iletildi</option><option value="under_review">ICAO değerlendirmesinde</option><option value="accepted">Kabul edildi</option><option value="rejected">Kabul edilmedi</option><option value="withdrawn">Geri çekildi</option></select></div>
+                                <div class="icao-valid-field"><label>İtiraz / yorum tarihi</label><input id="icaoValidationObjectionDate" type="date"></div>
+                                <div class="icao-valid-field"><label>ICAO nihai PQ sonucu</label><select id="icaoValidationFinalResult"><option value="">Henüz yok</option><option value="satisfactory">Satisfactory</option><option value="not_satisfactory">Not Satisfactory</option><option value="no_change">No change</option></select></div>
+                                <div class="icao-valid-field full"><label>İtiraz / yorum referansı ve notu</label><textarea id="icaoValidationObjectionNotes" rows="3" placeholder="ICAO'ya iletilen yorum/itiraz, referans, gerekçe ve takip notu" oninput="handleIcaoValidationTextInput(this)"></textarea></div>
                                 <div class="icao-valid-field full"><label>ICAO'ya sunulan kanıt / uygulama kanıtı</label><div class="icvm-textarea-wrap" data-textarea-wrap="icaoValidationEvidence"><textarea id="icaoValidationEvidence" placeholder="Ziyaret sırasında fiilen sunulan ek/özel kanıt veya uygulama kanıtı varsa manuel olarak giriniz." oninput="handleIcaoValidationTextInput(this)"></textarea><div class="icvm-textarea-toolbar"><button type="button" onclick="icaoValidationTextAction('icaoValidationEvidence','timestamp')">🕒 Zaman</button><button type="button" onclick="icaoValidationTextAction('icaoValidationEvidence','copy')">📋 Kopyala</button><button type="button" onclick="icaoValidationTextAction('icaoValidationEvidence','expand')">⛶ Büyüt</button><button type="button" onclick="icaoValidationTextAction('icaoValidationEvidence','clear')">🧹 Temizle</button><span class="icvm-textarea-meta" id="icaoValidationEvidenceCount">0 karakter</span></div></div><div style="margin-top:5px"><span id="icaoValidationEvidenceAutoInfo" style="font-size:9px;color:var(--muted)">Step bazlı EVIDENCE REFERENCE bilgileri aşağıdaki salt okunur CAP Step bölümünde gösterilir. Bu alan otomatik doldurulmaz.</span></div></div>
                                 <div class="icao-valid-field full"><label>ICAO görüşü / ziyaret notu</label><div class="icvm-textarea-wrap" data-textarea-wrap="icaoValidationComment"><textarea id="icaoValidationComment" placeholder="ICAO uzmanının değerlendirmesi, görüşme notu veya teyit edilen husus" oninput="handleIcaoValidationTextInput(this)"></textarea><div class="icvm-textarea-toolbar"><button type="button" onclick="icaoValidationTextAction('icaoValidationComment','timestamp')">🕒 Zaman</button><button type="button" onclick="icaoValidationTextAction('icaoValidationComment','copy')">📋 Kopyala</button><button type="button" onclick="icaoValidationTextAction('icaoValidationComment','expand')">⛶ Büyüt</button><button type="button" onclick="icaoValidationTextAction('icaoValidationComment','clear')">🧹 Temizle</button><span class="icvm-textarea-meta" id="icaoValidationCommentCount">0 karakter</span></div></div></div>
                                 <div class="icao-valid-field full"><label>Ek kanıt / açıklama talebi</label><div class="icvm-textarea-wrap" data-textarea-wrap="icaoValidationAdditionalRequest"><textarea id="icaoValidationAdditionalRequest" placeholder="İlave belge, açıklama veya ziyaret sonrası talep" oninput="handleIcaoValidationTextInput(this)"></textarea><div class="icvm-textarea-toolbar"><button type="button" onclick="icaoValidationTextAction('icaoValidationAdditionalRequest','timestamp')">🕒 Zaman</button><button type="button" onclick="icaoValidationTextAction('icaoValidationAdditionalRequest','copy')">📋 Kopyala</button><button type="button" onclick="icaoValidationTextAction('icaoValidationAdditionalRequest','expand')">⛶ Büyüt</button><button type="button" onclick="icaoValidationTextAction('icaoValidationAdditionalRequest','clear')">🧹 Temizle</button><span class="icvm-textarea-meta" id="icaoValidationAdditionalRequestCount">0 karakter</span></div></div></div>
@@ -2205,7 +2211,7 @@
                 <div class="dq-header">
                     <div>
                         <h3>🧹 CAP / Master Kayıt Kalitesi</h3>
-                        <p>Aktif filtre kapsamındaki Word CAP ve Excel master verilerini; eksik alanlar, geçersiz tarihler, mükerrer kayıtlar, Excel–Word eşleşme sorunları ve durum/tarih çelişkileri açısından kontrol eder. Üst bölümdeki süreç bütünlüğü kontrolleri ise modüller arası referansları denetler.</p>
+                        <p>Aktif filtre kapsamındaki CAP Word, PQ Veri Tabanı, Full Status ve varsa legacy geçiş verilerini; eksik alanlar, geçersiz tarihler, mükerrer kayıtlar, kaynak eşleşme sorunları ve durum/tarih çelişkileri açısından kontrol eder. Üst bölümdeki süreç bütünlüğü kontrolleri ise modüller arası referansları denetler.</p>
                     </div>
                     <div class="dq-header-actions">
                         <button class="btn-outline" onclick="switchTab('empty-caps')">📭 CAP Eksiklikleri</button>
@@ -2425,7 +2431,7 @@
                 <div class="control-group"><label>Sorumlu birim</label><input id="actionEditUnit" type="text"></div>
                 <div class="control-group"><label>Hedef tarih</label><input id="actionEditTargetDate" type="date"></div>
                 <div class="control-group"><label>Takip tarihi</label><input id="actionEditFollowDate" type="date"></div>
-                <div class="control-group"><label>Kaynak türü</label><select id="actionEditSourceType"><option value="manual">Manuel</option><option value="cap">CAP</option><option value="validation">Validasyon</option><option value="visit">Ziyaret</option><option value="followup">Ziyaret Takibi</option><option value="consultation">Danışma</option><option value="integrity">Veri Bütünlüğü</option><option value="ei">EI / OLF</option></select></div>
+                <div class="control-group"><label>Kaynak türü</label><select id="actionEditSourceType"><option value="manual">Manuel</option><option value="cap">CAP</option><option value="validation">Validasyon</option><option value="visit">Ziyaret</option><option value="followup">Ziyaret Takibi</option><option value="consultation">Danışma</option><option value="integrity">Veri Bütünlüğü</option><option value="ei">EI / OLF</option><option value="objection">ICAO İtiraz</option></select></div>
                 <div class="control-group"><label>Kaynak referansı</label><input id="actionEditSourceId" type="text"></div>
                 <div class="control-group"><label>Alan</label><input id="actionEditArea" type="text" placeholder="OPS"></div>
                 <div class="control-group"><label>PQ</label><input id="actionEditPq" type="text" placeholder="4.101"></div>
@@ -2516,26 +2522,26 @@
 </div>
 
 
-<script src="js/app.js?v=20261115-v1.0-rc1.1"></script>
-<script src="js/modules/access-control.js?v=20261115-v1.0-rc1.1"></script>
-<script src="js/modules/visit-sync.js?v=20261115-v1.0-rc1.1"></script>
-<script src="js/modules/visit-hub.js?v=20261115-v1.0-rc1.1"></script>
-<script src="js/modules/state-compliance.js?v=20261115-v1.0-rc1.1"></script>
-<script src="js/modules/assessment-events.js?v=20261115-v1.0-rc1.1"></script>
-<script src="js/modules/official-ei-management.js?v=20261115-v1.0-rc1.1"></script>
-<script src="js/modules/official-ei-automation.js?v=20261115-v1.0-rc1.1"></script>
-<script src="js/parsers/pq-docx-parser.js?v=20261115-v1.0-rc1.1"></script>
-<script src="js/modules/pq-linkage.js?v=20261115-v1.0-rc1.1"></script>
-<script src="js/modules/validation-readiness.js?v=20261115-v1.0-rc1.1"></script>
-<script src="js/modules/assessment-impact.js?v=20261115-v1.0-rc1.1"></script>
-<script src="js/modules/management-shell.js?v=20261115-v1.0-rc1.1"></script>
-<script src="js/modules/drive-documents.js?v=20261115-v1.0-rc1.1"></script>
-<script src="js/services/pq-repository.js?v=20261115-v1.0-rc1.1"></script>
-<script src="js/modules/pq-library.js?v=20261115-v1.0-rc1.1"></script>
-<script src="js/modules/responsibility-registry.js?v=20261115-v1.0-rc1.1"></script>
-<script src="js/modules/system-integrity.js?v=20261115-v1.0-rc1.1"></script>
-<script src="js/modules/action-center.js?v=20261115-v1.0-rc1.1"></script>
-<script src="js/modules/notification-center.js?v=20261115-v1.0-rc1.1"></script>
-<script src="js/modules/reporting-center.js?v=20261115-v1.0-rc1.1"></script>
+<script src="js/app.js?v=20261115-v1.0-rc1.2"></script>
+<script src="js/modules/access-control.js?v=20261115-v1.0-rc1.2"></script>
+<script src="js/modules/visit-sync.js?v=20261115-v1.0-rc1.2"></script>
+<script src="js/modules/visit-hub.js?v=20261115-v1.0-rc1.2"></script>
+<script src="js/modules/state-compliance.js?v=20261115-v1.0-rc1.2"></script>
+<script src="js/modules/assessment-events.js?v=20261115-v1.0-rc1.2"></script>
+<script src="js/modules/official-ei-management.js?v=20261115-v1.0-rc1.2"></script>
+<script src="js/modules/official-ei-automation.js?v=20261115-v1.0-rc1.2"></script>
+<script src="js/parsers/pq-docx-parser.js?v=20261115-v1.0-rc1.2"></script>
+<script src="js/modules/pq-linkage.js?v=20261115-v1.0-rc1.2"></script>
+<script src="js/modules/validation-readiness.js?v=20261115-v1.0-rc1.2"></script>
+<script src="js/modules/assessment-impact.js?v=20261115-v1.0-rc1.2"></script>
+<script src="js/modules/management-shell.js?v=20261115-v1.0-rc1.2"></script>
+<script src="js/modules/drive-documents.js?v=20261115-v1.0-rc1.2"></script>
+<script src="js/services/pq-repository.js?v=20261115-v1.0-rc1.2"></script>
+<script src="js/modules/pq-library.js?v=20261115-v1.0-rc1.2"></script>
+<script src="js/modules/responsibility-registry.js?v=20261115-v1.0-rc1.2"></script>
+<script src="js/modules/system-integrity.js?v=20261115-v1.0-rc1.2"></script>
+<script src="js/modules/action-center.js?v=20261115-v1.0-rc1.2"></script>
+<script src="js/modules/notification-center.js?v=20261115-v1.0-rc1.2"></script>
+<script src="js/modules/reporting-center.js?v=20261115-v1.0-rc1.2"></script>
 </body>
 </html>

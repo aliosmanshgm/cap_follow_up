@@ -4,7 +4,7 @@
     const AREAS=['LEG','ORG','PEL','OPS','AIR','AIG','ANS','AGA'];
     const EVENT_PATH='icao_assessment_events';
     const SNAPSHOT_PATH='icao_ei_snapshots';
-    const MODULE_VERSION='assessment-events-v2-ei-timeline';
+    const MODULE_VERSION='assessment-events-v2.1-visit-draft-linkage';
     let eventRef=null,eventCallback=null,snapshotRef=null,snapshotCallback=null;
     let syncInFlight=false,syncQueued=false;
 
@@ -123,6 +123,7 @@
             isDeleted:record.isDeleted===true,
             linkedSnapshotId:snapshotId,
             linkedOfficialEiRecordId:String(recordId),
+            linkedVisitId:record.linkedVisitId||'',
             eventMetrics:record.eventMetrics||{},
             stateSnapshotId:record.stateSnapshotId||'',
             reconciliation:record.reconciliation||{},
@@ -144,6 +145,7 @@
             overall:{ei:overallEi,satisfactory:overallSatisfactory,applicable:overallApplicable,calculatedEi:calculatedOverall,publishedEi:publishedOverall},
             areas:areaSnapshot(record,scopeAreas),
             stateSnapshotId:record.stateSnapshotId||'',
+            linkedVisitId:record.linkedVisitId||'',
             sourceOfTruth:record.sourceOfTruth||{},
             reconciliation:record.reconciliation||{},
             source:record.source||'',
@@ -255,6 +257,10 @@
     };
     window.getLatestOfficialAssessmentSnapshot=function(){
         const rows=window.getAssessmentTimelineWithSnapshots().filter(x=>x.resultStatus==='official'&&x.snapshot&&x.snapshot.resultStatus==='official');
+        return rows.length?rows[rows.length-1]:null;
+    };
+    window.getLatestPendingAssessment=function(){
+        const rows=window.getAssessmentTimelineWithSnapshots({includePassive:false}).filter(x=>x&&(x.resultStatus==='draft'||x.resultStatus==='provisional')&&!x.isDeleted);
         return rows.length?rows[rows.length-1]:null;
     };
 

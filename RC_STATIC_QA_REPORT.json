@@ -1,9 +1,9 @@
 {
-  "release": "1.0.0-rc1.1",
-  "generatedAt": "2026-11-15T16:00:27.788Z",
+  "release": "1.0.0-rc1.2",
+  "generatedAt": "2026-11-15T16:38:51.756Z",
   "passed": true,
   "counts": {
-    "passes": 46,
+    "passes": 51,
     "warnings": 0,
     "failures": 0
   },
@@ -12,7 +12,7 @@
   "passes": [
     {
       "name": "HTML duplicate IDs",
-      "detail": "903/903 benzersiz"
+      "detail": "912/912 benzersiz"
     },
     {
       "name": "Yerel asset referansları",
@@ -20,7 +20,7 @@
     },
     {
       "name": "RC cache etiketi",
-      "detail": "22 yerel asset 20261115-v1.0-rc1.1"
+      "detail": "22 yerel asset 20261115-v1.0-rc1.2"
     },
     {
       "name": "JavaScript syntax",
@@ -28,7 +28,7 @@
     },
     {
       "name": "Inline handler fonksiyonları",
-      "detail": "479 handler"
+      "detail": "482 handler"
     },
     {
       "name": "Tab / Hub rotaları",
@@ -36,7 +36,7 @@
     },
     {
       "name": "Manifest sürümü",
-      "detail": "1.0.0-rc1.1"
+      "detail": "1.0.0-rc1.2"
     },
     {
       "name": "Release channel",
@@ -119,6 +119,26 @@
       "detail": ""
     },
     {
+      "name": "Snapshot explicit assessment binding",
+      "detail": ""
+    },
+    {
+      "name": "Import tarihiyle otomatik assessment eşleştirme kaldırıldı",
+      "detail": ""
+    },
+    {
+      "name": "ICAO draft / itiraz / final PQ akışı",
+      "detail": ""
+    },
+    {
+      "name": "Draft EI final snapshot override koruması",
+      "detail": ""
+    },
+    {
+      "name": "ICAO itiraz aksiyon otomasyonu",
+      "detail": ""
+    },
+    {
       "name": "Sorumluluk registry",
       "detail": ""
     },
@@ -184,7 +204,7 @@
     },
     {
       "name": "Boyut index.html",
-      "detail": "252 KB"
+      "detail": "255 KB"
     },
     {
       "name": "Boyut css/app.css",
@@ -192,7 +212,7 @@
     },
     {
       "name": "Boyut js/app.js",
-      "detail": "900 KB"
+      "detail": "904 KB"
     }
   ]
 }

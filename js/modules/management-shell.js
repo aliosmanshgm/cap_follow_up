@@ -1,7 +1,7 @@
 (function(){
     'use strict';
 
-    const SHELL_VERSION='management-shell-v1-phase7';
+    const SHELL_VERSION='management-shell-v1.0-rc1.2';
     const CAP_TABS=['list','upcoming','past','kanban','empty-caps','icao-closed'];
     const CAP_SECTIONS={
         portfolio:{order:1,icon:'📋',label:'Portföy',description:'Tüm PQ/CAP kayıtları, ilerleme ve temel sorumluluk görünümü.',primary:'list',tools:[{tab:'list',icon:'📋',label:'Tüm PQ ve CAP’ler'}]},
@@ -107,13 +107,15 @@
     window.renderManagementFlow=function(){
         const el=document.getElementById('managementFlowStrip');if(!el)return;
         const pq=pqSummary(),cap=capSummary(),val=validationSummary(),vis=visitSummary(),latest=latestAssessment();
+        let pending=null;try{pending=typeof window.getLatestPendingAssessment==='function'?window.getLatestPendingAssessment():null;}catch(_){pending=null;}
         const latestName=latest?(latest.name||latest.assessmentName||latest.type||'Son resmî değerlendirme'):'Resmî kayıt bekleniyor';
+        const officialSub=pending?`${latestName} · Son assessment: ${pending.name||pending.type||'ICAO'} (${pending.resultStatus==='draft'?'taslak':'geçici'})`:latestName;
         const html=[
             flowCard({step:'1',icon:'📚',title:'ICAO PQ Master',value:`${pq.activeAreas||0}/8 aktif alan`,sub:`${pq.totalPqs||0} aktif PQ · ${pq.versionCount||0} sürüm/revizyon`,action:"switchTab('pq-library')",kind:'reference'}),
             flowCard({step:'2',icon:'📋',title:'CAP Yönetimi',value:`${cap.pqCount} PQ / ${cap.actionCount} adım`,sub:`${cap.completed} tamamlandı · ${cap.late} gecikme riski`,action:"openCapHub('portfolio')",kind:'operation'}),
             flowCard({step:'3',icon:'🎯',title:'Validasyon Hazırlığı',value:`${val.total||0} aday PQ`,sub:`${val.ready||0} hazır · ${val.assigned||0} ziyarete atanmış`,action:"switchTab('validation-readiness')",kind:'validation'}),
             flowCard({step:'4',icon:'🧭',title:'Ziyaret Yönetimi',value:`${vis.active} aktif ziyaret`,sub:`${vis.upcoming} önümüzdeki 30 gün · ${vis.total} toplam`,action:"openVisitHub('planning')",kind:'visit'}),
-            flowCard({step:'5',icon:'🌐',title:'Resmî ICAO EI',value:latestEiText(latest),sub:latestName,action:"openIcaoOfficialEiManager()",kind:'official'})
+            flowCard({step:'5',icon:'🌐',title:'Resmî ICAO EI',value:latestEiText(latest),sub:officialSub,action:"openIcaoOfficialEiManager()",kind:'official'})
         ].join('');
         el.innerHTML=`<section class="management-flow-panel"><div class="management-flow-head"><div><span class="management-flow-eyebrow">USOAP CMA uçtan uca süreç</span><h3>PQ → CAP → Validasyon → Ziyaret → Resmî EI</h3><p>Her aşama bir önceki aşamanın kayıtlarını kullanır; resmî EI yalnız ICAO değerlendirmesiyle değişmiş kabul edilir.</p></div><button type="button" class="btn-outline" onclick="switchTab('quality')">🧪 Veri Kalitesi</button></div><div class="management-flow-grid">${html}</div></section>`;
     };

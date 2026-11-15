@@ -488,7 +488,7 @@ const I18N = {
     // ================================================================
     // STABILIZASYON PAKETI 1
     // ================================================================
-    const APP_RELEASE = Object.freeze({version:'1.0.0-rc1.1',label:'v1.0 RC1.1',buildDate:'2026-11-15',baseline:'Phase 16 RC1',cacheTag:'20261115-v1.0-rc1.1'});
+    const APP_RELEASE = Object.freeze({version:'1.0.0-rc1.2',label:'v1.0 RC1.2',buildDate:'2026-11-15',baseline:'RC1.1 Source of Truth',cacheTag:'20261115-v1.0-rc1.2'});
     const STABILIZATION_VERSION = APP_RELEASE.label;
     window.USOAP_APP_RELEASE = APP_RELEASE;
     const stabilizationState = {
@@ -671,7 +671,7 @@ const I18N = {
         add('word', 'Word okuma motoru', (typeof JSZip !== 'undefined') ? 'ok' : 'error', (typeof JSZip !== 'undefined') ? 'JSZip hazır.' : 'Word ayrıştırma kütüphanesi yüklenemedi.');
         add('charts', 'Grafik motoru', (typeof Chart !== 'undefined') ? 'ok' : 'warn', (typeof Chart !== 'undefined') ? 'Chart.js hazır.' : 'Grafik kütüphanesi yüklenemedi.');
         const assetVersionIssues = getLocalAssetVersionIssues();
-        add('release-build', 'Release / cache bütünlüğü', assetVersionIssues.length ? 'error' : 'ok', assetVersionIssues.length ? `RC1.1 cache etiketiyle eşleşmeyen ${assetVersionIssues.length} yerel asset: ${assetVersionIssues.slice(0,6).join(', ')}` : `${APP_RELEASE.label} · build ${APP_RELEASE.buildDate} · bütün yerel assetler ${APP_RELEASE.cacheTag}.`);
+        add('release-build', 'Release / cache bütünlüğü', assetVersionIssues.length ? 'error' : 'ok', assetVersionIssues.length ? `RC1.2 cache etiketiyle eşleşmeyen ${assetVersionIssues.length} yerel asset: ${assetVersionIssues.slice(0,6).join(', ')}` : `${APP_RELEASE.label} · build ${APP_RELEASE.buildDate} · bütün yerel assetler ${APP_RELEASE.cacheTag}.`);
         let storageOk=true; try{localStorage.setItem('__usoap_rc_probe','1');localStorage.removeItem('__usoap_rc_probe');}catch(_){storageOk=false;}
         add('browser-storage', 'Tarayıcı yerel depolama', storageOk ? 'ok' : 'warn', storageOk ? 'localStorage kullanılabilir.' : 'localStorage kapalı; çevrimdışı cache ve bazı tercihler kalıcı olmayabilir.');
         const originalDocMode=String(window.PQ_ORIGINAL_DOCUMENT_STORAGE_MODE||'external').toLowerCase();
@@ -3829,6 +3829,12 @@ const I18N = {
         const closedCount=Object.entries(pqMasterData||{}).filter(([pq,m])=>m&&isPqEffectivelyOfficiallyClosed(pq,m)&&normalizeAreaKey(m.alan)===key).length;
         return Math.min(Number(b.total||Infinity),Number(b.sat||0)+closedCount);
     }
+    function isIcaoWorkingSatisfactory(record){
+        const r=record||{},final=String(r.finalResult||''),draft=String(r.draftResult||''),status=String(r.status||'');
+        if(final)return final==='satisfactory';
+        if(draft)return draft==='satisfactory';
+        return status==='validated';
+    }
     function getIcaoOfficialVisitImpactModel(visit,scopeOverride=null){
         const scopePqs=Array.isArray(scopeOverride)?scopeOverride:getIcaoVisitScopePqs(visit), records=getIcaoValidationRecords(visit);
         const recordMap=new Map(records.map(r=>[String(r.pq),r]));
@@ -3839,7 +3845,7 @@ const I18N = {
             const t=Number((bucket&&bucket.total)||b.total||0),sat=getIcaoOfficialBaselineSat(area,baselineModel);
             areas[area]={area,total:t,baselineSat:sat,validatedNew:0};total+=t;baseline+=sat;
         });
-        scopePqs.forEach(p=>{const pq=String(p.pq||''),area=normalizeAreaKey(p.area||(pqMasterData[pq]||{}).alan),m=pqMasterData[pq]||{},r=recordMap.get(pq);if(!area||!areas[area]||isPqEffectivelyOfficiallyClosed(pq,m))return;if(r&&r.status==='validated'){areas[area].validatedNew++;validatedNew++;}});
+        scopePqs.forEach(p=>{const pq=String(p.pq||''),area=normalizeAreaKey(p.area||(pqMasterData[pq]||{}).alan),m=pqMasterData[pq]||{},r=recordMap.get(pq);if(!area||!areas[area]||isPqEffectivelyOfficiallyClosed(pq,m))return;if(r&&isIcaoWorkingSatisfactory(r)){areas[area].validatedNew++;validatedNew++;}});
         Object.values(areas).forEach(a=>{a.newSat=Math.min(a.total,a.baselineSat+a.validatedNew);a.baselinePct=ratioPct(a.baselineSat,a.total);a.newPct=ratioPct(a.newSat,a.total);a.delta=a.newPct-a.baselinePct;});
         const newSat=Math.min(total,baseline+validatedNew);
         return {scopePqs,records,areas,total,baselineSat:baseline,validatedNew,newSat,baselinePct:ratioPct(baseline,total),newPct:ratioPct(newSat,total),delta:ratioPct(newSat,total)-ratioPct(baseline,total),baselineSource:window.currentEiSourceKind==='state_snapshot'?'Son State Compliance Snapshot':'Legacy EI referans / validasyon fallback'};
@@ -3997,12 +4003,12 @@ const I18N = {
         const rows=getVisibleIcaoOfficialVisitPqs(visit),areaLabel=icaoOfficialVisitAreaLabel();updateIcaoTranslationStatus(visit);
         const c=document.getElementById('icaoVisitListCount');if(c)c.textContent=`${rows.length} / ${scope.length} PQ${areaLabel!=='Tüm alanlar'?` · ${areaLabel}`:''}`;
         if(note)note.textContent=`${visit.visitName||'ICAO ziyareti'} | Tür: ${ICAO_VISIT_TYPES[visit.icaoVisitType]||visit.icaoVisitType||'ICAO'} | Ziyaret alanları: ${visitArrayValue(visit.areas).join(', ')||'-'} | Alan filtresi: ${areaLabel} | Filtre kapsamı: ${scope.length} / toplam ${totalScope.length} açık CAP/PQ. Daha önce ICAO tarafından kapatılmış veya güncel CAP kaydı bulunmayan PQ'lar validasyon listesine alınmaz.`;
-        list.innerHTML=rows.length?rows.map(p=>{const pq=String(p.pq||''),m=pqMasterData[pq]||{},r=map.get(pq)||{},st=r.status||'not_evaluated',area=normalizeAreaKey(p.area||m.alan||'')||'-',ce=String(p.ce||m.ce||'-').trim()||'-',verification=String(p.verificationType||m.tur||'-').trim()||'-';return `<button type="button" class="icao-visit-pq ${st} ${activeIcaoValidationPq===pq?'active':''}" onclick="selectIcaoValidationPq('${escapeHtml(pq)}')"><div class="icao-visit-pq-title-row"><div class="icao-visit-pq-title">PQ ${escapeHtml(pq)}</div><span class="icao-visit-status-badge ${st}">${escapeHtml(ICAO_VALIDATION_STATUSES[st]||st)}</span></div><div class="icao-visit-pq-tags"><span class="icao-visit-meta-chip">${escapeHtml(area)}</span><span class="icao-visit-meta-chip">CE: ${escapeHtml(ce)}</span><span class="icao-visit-meta-chip">${escapeHtml(verification)}</span></div></button>`;}).join(''):'<div class="icao-visit-empty">Seçili ölçütlere uygun PQ bulunamadı. Ziyaret kapsamının “Kapsam ve Hazırlık” ekranında kaydedildiğini kontrol ediniz.</div>';
+        list.innerHTML=rows.length?rows.map(p=>{const pq=String(p.pq||''),m=pqMasterData[pq]||{},r=map.get(pq)||{},st=r.status||'not_evaluated',area=normalizeAreaKey(p.area||m.alan||'')||'-',ce=String(p.ce||m.ce||'-').trim()||'-',verification=String(p.verificationType||m.tur||'-').trim()||'-';return `<button type="button" class="icao-visit-pq ${st} ${activeIcaoValidationPq===pq?'active':''}" onclick="selectIcaoValidationPq('${escapeHtml(pq)}')"><div class="icao-visit-pq-title-row"><div class="icao-visit-pq-title">PQ ${escapeHtml(pq)}</div><span class="icao-visit-status-badge ${st}">${escapeHtml(ICAO_VALIDATION_STATUSES[st]||st)}</span></div><div class="icao-visit-pq-tags"><span class="icao-visit-meta-chip">${escapeHtml(area)}</span><span class="icao-visit-meta-chip">CE: ${escapeHtml(ce)}</span><span class="icao-visit-meta-chip">${escapeHtml(verification)}</span>${r.draftResult?`<span class="icao-visit-meta-chip">Taslak: ${escapeHtml(r.draftResult==='satisfactory'?'S':'NS')}</span>`:''}${r.objectionStatus&&r.objectionStatus!=='none'?`<span class="icao-visit-meta-chip">İtiraz: ${escapeHtml(r.objectionStatus)}</span>`:''}${r.finalResult?`<span class="icao-visit-meta-chip">Nihai: ${escapeHtml(r.finalResult==='satisfactory'?'S':'NS')}</span>`:''}</div></button>`;}).join(''):'<div class="icao-visit-empty">Seçili ölçütlere uygun PQ bulunamadı. Ziyaret kapsamının “Kapsam ve Hazırlık” ekranında kaydedildiğini kontrol ediniz.</div>';
         updateIcaoVisitKpis(visit);
     }
     function updateIcaoVisitKpis(visit){const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v};if(!visit){['icaoVisitKpiPq','icaoVisitKpiValidated','icaoVisitKpiOpen','icaoVisitKpiEvidence'].forEach(id=>set(id,0));set('icaoVisitKpiEi','+0');return;}const scoped=getIcaoVisitAreaScopedPqs(visit),m=getIcaoOfficialVisitImpactModel(visit,scoped),map=new Map(m.records.map(r=>[String(r.pq),r]));let open=0,evidence=0;m.scopePqs.forEach(p=>{const st=(map.get(String(p.pq))||{}).status||'not_evaluated';if(st==='open')open++;if(st==='additional_evidence'||st==='post_visit')evidence++;});set('icaoVisitKpiPq',m.scopePqs.length);set('icaoVisitKpiValidated',m.validatedNew);set('icaoVisitKpiOpen',open);set('icaoVisitKpiEvidence',evidence);set('icaoVisitKpiEi','+'+m.validatedNew);}
 
-    const ICAO_VALIDATION_TEXTAREA_IDS=['icaoValidationEvidence','icaoValidationComment','icaoValidationAdditionalRequest','icaoValidationNotes'];
+    const ICAO_VALIDATION_TEXTAREA_IDS=['icaoValidationEvidence','icaoValidationComment','icaoValidationAdditionalRequest','icaoValidationObjectionNotes','icaoValidationNotes'];
     let icaoValidationDraftTimer=null;
     function icaoValidationDraftKey(){
         const pq=(document.getElementById('icaoValidationPq')||{}).value||activeIcaoValidationPq||'';
@@ -4080,23 +4086,23 @@ const I18N = {
         // Eski sürümde otomatik doldurulan değer, kayıtlı otomatik snapshot ile aynıysa artık boş gösterilir.
         // Kullanıcının manuel olarak değiştirdiği kanıt metni korunur.
         if(r.evidenceAutoSnapshot&&normalizeIcaoEvidenceReference(evidenceValue)===normalizeIcaoEvidenceReference(r.evidenceAutoSnapshot)) evidenceValue='';
-        set('icaoValidationStatus',r.status||'not_evaluated');set('icaoValidationResultDate',r.resultDate);set('icaoValidationEvidence',evidenceValue);set('icaoValidationComment',r.icaoComment);set('icaoValidationAdditionalRequest',r.additionalRequest);set('icaoValidationResponsibleUnit',r.responsibleUnit);set('icaoValidationFollowUpDate',r.followUpDate);set('icaoValidationNotes',r.notes);
+        set('icaoValidationStatus',r.status||'not_evaluated');set('icaoValidationResultDate',r.resultDate);set('icaoValidationDraftResult',r.draftResult||'');set('icaoValidationObjectionStatus',r.objectionStatus||'none');set('icaoValidationObjectionDate',r.objectionDate||'');set('icaoValidationFinalResult',r.finalResult||'');set('icaoValidationObjectionNotes',r.objectionNotes||'');set('icaoValidationEvidence',evidenceValue);set('icaoValidationComment',r.icaoComment);set('icaoValidationAdditionalRequest',r.additionalRequest);set('icaoValidationResponsibleUnit',r.responsibleUnit);set('icaoValidationFollowUpDate',r.followUpDate);set('icaoValidationNotes',r.notes);
         updateIcaoValidationDraftInfo('Metin alanlarındaki değişiklikler tarayıcıda taslak olarak korunur.');restoreIcaoValidationTextDraft(r);refreshIcaoValidationTextareas();
         const evidenceInfo=document.getElementById('icaoValidationEvidenceAutoInfo');if(evidenceInfo)evidenceInfo.textContent='Step bazlı EVIDENCE REFERENCE bilgileri aşağıdaki salt okunur CAP Step bölümünde gösterilir. Bu alan otomatik doldurulmaz.';
         renderActiveIcaoPqTextSummary();
         const steps=getIcaoVisitPqSteps(visit,pq),stepEl=document.getElementById('icaoValidationSteps');if(stepEl)stepEl.innerHTML=steps.length?steps.map(s=>`<div class="icao-valid-step"><b>Step ${escapeHtml(s.step||'-')}</b> — ${escapeHtml(s.action||s.capText||s.description||'-')}<br><span style="color:var(--muted)">${escapeHtml(s.office||'-')} | ${escapeHtml(s.estDate||'-')} | ${escapeHtml(s.statusLabel||s.progress||'')}</span>${s.evidenceReference?`<br><span style="color:var(--text)"><b>📎 EVIDENCE REFERENCE:</b> ${escapeHtml(s.evidenceReference)}</span>`:''}</div>`).join(''):'<div class="icao-valid-step">Bu PQ için gösterilecek CAP Step kaydı bulunamadı.</div>';
         renderIcaoValidationImpactForPq(visit,pq);renderIcaoOfficialVisitPqList();
     }
-    function renderIcaoValidationImpactForPq(visit,pq){const el=document.getElementById('icaoValidationEiImpact');if(!el)return;const m=pqMasterData[pq]||{},alreadyOfficial=isPqEffectivelyOfficiallyClosed(pq,m),area=normalizeAreaKey(m.alan),base=baseEIData[area]||{},baselineModel=getIcaoOfficialBaselineModel(),bucket=baselineModel&&baselineModel.areas?baselineModel.areas[area]:null,total=Number((bucket&&bucket.total)||base.total||0),sat=getIcaoOfficialBaselineSat(area,baselineModel),r=getIcaoValidationForPq(visit,pq),eligible=!alreadyOfficial&&r&&r.status==='validated';const before=ratioPct(sat,total),after=ratioPct(Math.min(total,sat+(eligible?1:0)),total);el.innerHTML=`<b>EI etkisi</b><br>Mevcut resmî ${escapeHtml(area||'-')} EI: <b>${formatOfficialEiPct(before)}</b>${eligible?` → ziyaret sonucu geçici etkisi <b>${formatOfficialEiPct(after)}</b> <span class="icao-ei-positive">(${formatOfficialEiDelta(after-before)})</span>`:' · Bu PQ henüz yeni EI artışına dahil edilmez.'}${alreadyOfficial?'<br><span style="color:var(--danger)">Bu PQ son State Snapshot / legacy kayıt itibarıyla zaten Satisfactory; yeniden EI etkisi oluşturamaz.</span>':''}`;}
-    function resetIcaoValidationForm(){activeIcaoValidationPq=null;const f=document.getElementById('icaoValidationForm'),e=document.getElementById('icaoValidationEmpty');if(f)f.style.display='none';if(e)e.style.display='block';renderIcaoOfficialVisitPqList();}
+    function renderIcaoValidationImpactForPq(visit,pq){const el=document.getElementById('icaoValidationEiImpact');if(!el)return;const m=pqMasterData[pq]||{},alreadyOfficial=isPqEffectivelyOfficiallyClosed(pq,m),area=normalizeAreaKey(m.alan),base=baseEIData[area]||{},baselineModel=getIcaoOfficialBaselineModel(),bucket=baselineModel&&baselineModel.areas?baselineModel.areas[area]:null,total=Number((bucket&&bucket.total)||base.total||0),sat=getIcaoOfficialBaselineSat(area,baselineModel),r=getIcaoValidationForPq(visit,pq)||{},workingSat=isIcaoWorkingSatisfactory(r),eligible=!alreadyOfficial&&workingSat;const before=ratioPct(sat,total),after=ratioPct(Math.min(total,sat+(eligible?1:0)),total),state=typeof window.getCurrentPqState==='function'?window.getCurrentPqState(pq,area,m):null;const obj=r.objectionStatus&&r.objectionStatus!=='none'?`<br><span style="color:var(--warn)">İtiraz/yorum: <b>${escapeHtml(r.objectionStatus)}</b>${r.objectionDate?` · ${escapeHtml(r.objectionDate)}`:''}</span>`:'';const finalState=state&&state.status?`<br><span style="color:var(--muted)">Son Full Status PQ durumu: <b>${escapeHtml(state.status)}</b></span>`:'';el.innerHTML=`<b>EI etkisi</b><br>Mevcut resmî ${escapeHtml(area||'-')} EI: <b>${formatOfficialEiPct(before)}</b>${eligible?` → taslak ziyaret sonucu çalışma etkisi <b>${formatOfficialEiPct(after)}</b> <span class="icao-ei-positive">(${formatOfficialEiDelta(after-before)})</span>`:' · Bu PQ henüz yeni resmî EI artışına dahil edilmez.'}${r.draftResult?`<br>Taslak ICAO PQ sonucu: <b>${escapeHtml(r.draftResult)}</b>`:''}${r.finalResult?` · Nihai: <b>${escapeHtml(r.finalResult)}</b>`:''}${obj}${finalState}${alreadyOfficial?'<br><span style="color:var(--danger)">Bu PQ son resmî State Snapshot itibarıyla zaten Satisfactory; yeni EI etkisi oluşturamaz.</span>':''}`;}
+        function resetIcaoValidationForm(){activeIcaoValidationPq=null;const f=document.getElementById('icaoValidationForm'),e=document.getElementById('icaoValidationEmpty');if(f)f.style.display='none';if(e)e.style.display='block';renderIcaoOfficialVisitPqList();}
     async function saveIcaoValidationRecord(event){
         if(event)event.preventDefault();const user=firebase.auth().currentUser;if(!user)return alert('Kayıt için yetkili giriş gereklidir.');const visitId=activeIcaoOfficialVisitId,pq=(document.getElementById('icaoValidationPq')||{}).value;if(!visitId||!pq)return alert('Ziyaret ve PQ seçiniz.');const visit=icaoVisits[visitId]||{},m=pqMasterData[pq]||{};if(isPqEffectivelyOfficiallyClosed(pq,m))return alert('Bu PQ son resmî State Snapshot / legacy kayıt itibarıyla zaten Satisfactory durumdadır. Yeniden validasyon sonucu ile EI etkisi oluşturulamaz.');
         const val=id=>((document.getElementById(id)||{}).value||'').trim(),status=val('icaoValidationStatus')||'not_evaluated';const actor=getCurrentVisitUser(),now=new Date().toISOString(),key=icaoValidationKey(pq),existing=((visit.icaoValidation||{}).records||{})[key]||{};
-        const record={pq,area:normalizeAreaKey(m.alan),status,resultDate:val('icaoValidationResultDate'),evidence:val('icaoValidationEvidence'),evidenceAutoSnapshot:'',icaoComment:val('icaoValidationComment'),additionalRequest:val('icaoValidationAdditionalRequest'),responsibleUnit:val('icaoValidationResponsibleUnit'),followUpDate:val('icaoValidationFollowUpDate'),notes:val('icaoValidationNotes'),eiEligible:status==='validated',baselineOfficialClosed:false,isDeleted:false,createdAt:existing.createdAt||now,createdBy:existing.createdBy||actor,updatedAt:now,updatedBy:actor,moduleVersion:'icao-official-visit-validation-v1.2'};
-        const btn=document.getElementById('icaoValidationSaveButton');if(btn){btn.disabled=true;btn.textContent='Kaydediliyor...';}try{const updates={};updates[`icao_visits/${visitId}/icaoValidation/records/${key}`]=window.visitFirebaseSafeValue?window.visitFirebaseSafeValue(record):record;updates[`icao_visits/${visitId}/icaoValidation/updatedAt`]=now;updates[`icao_visits/${visitId}/icaoValidation/updatedBy`]=actor;updates[`icao_visits/${visitId}/icaoValidation/moduleVersion`]='icao-official-visit-validation-v1.2';addVisitAuditToUpdates(updates,visitId,'icao_validation',pq,existing.createdAt?'update':'create',existing,record,status==='validated'?'PQ/CAP ICVM kapsamında kapatıldı / validated olarak kaydedildi.':'PQ/CAP ICVM validasyon sonucu güncellendi.',now,actor,{pq});await db.ref().update(updates);const verify=await db.ref(`icao_visits/${visitId}/icaoValidation/records/${key}`).once('value');if(!verify.exists())throw new Error('Firebase yazma doğrulaması başarısız.');clearTimeout(icaoValidationDraftTimer);icaoValidationDraftTimer=null;clearIcaoValidationTextDraft();showAppRuntimeToast(status==='validated'?'CAP sonucu kaydedildi; geçici EI etkisine dahil edildi.':'ICVM değerlendirme kaydı Firebase üzerinde kaydedildi.','success');renderIcaoOfficialVisitModule(true);selectIcaoValidationPq(pq);}catch(err){console.error(err);alert('ICVM değerlendirme kaydı kaydedilemedi: '+(err.message||err));}finally{if(btn){btn.disabled=false;btn.textContent='💾 CAP Sonucunu Kaydet';}}
+        const record={pq,area:normalizeAreaKey(m.alan),status,resultDate:val('icaoValidationResultDate'),draftResult:val('icaoValidationDraftResult'),objectionStatus:val('icaoValidationObjectionStatus')||'none',objectionDate:val('icaoValidationObjectionDate'),finalResult:val('icaoValidationFinalResult'),objectionNotes:val('icaoValidationObjectionNotes'),evidence:val('icaoValidationEvidence'),evidenceAutoSnapshot:'',icaoComment:val('icaoValidationComment'),additionalRequest:val('icaoValidationAdditionalRequest'),responsibleUnit:val('icaoValidationResponsibleUnit'),followUpDate:val('icaoValidationFollowUpDate'),notes:val('icaoValidationNotes'),eiEligible:status==='validated'||val('icaoValidationDraftResult')==='satisfactory',baselineOfficialClosed:false,isDeleted:false,createdAt:existing.createdAt||now,createdBy:existing.createdBy||actor,updatedAt:now,updatedBy:actor,moduleVersion:'icao-official-visit-validation-v1.3-draft-objection'};
+        const btn=document.getElementById('icaoValidationSaveButton');if(btn){btn.disabled=true;btn.textContent='Kaydediliyor...';}try{const updates={};updates[`icao_visits/${visitId}/icaoValidation/records/${key}`]=window.visitFirebaseSafeValue?window.visitFirebaseSafeValue(record):record;updates[`icao_visits/${visitId}/icaoValidation/updatedAt`]=now;updates[`icao_visits/${visitId}/icaoValidation/updatedBy`]=actor;updates[`icao_visits/${visitId}/icaoValidation/moduleVersion`]='icao-official-visit-validation-v1.3-draft-objection';addVisitAuditToUpdates(updates,visitId,'icao_validation',pq,existing.createdAt?'update':'create',existing,record,status==='validated'?'PQ/CAP ICVM kapsamında kapatıldı / validated olarak kaydedildi.':'PQ/CAP ICVM validasyon sonucu güncellendi.',now,actor,{pq});await db.ref().update(updates);const verify=await db.ref(`icao_visits/${visitId}/icaoValidation/records/${key}`).once('value');if(!verify.exists())throw new Error('Firebase yazma doğrulaması başarısız.');clearTimeout(icaoValidationDraftTimer);icaoValidationDraftTimer=null;clearIcaoValidationTextDraft();showAppRuntimeToast(status==='validated'?'CAP sonucu kaydedildi; geçici EI etkisine dahil edildi.':'ICVM değerlendirme kaydı Firebase üzerinde kaydedildi.','success');renderIcaoOfficialVisitModule(true);selectIcaoValidationPq(pq);}catch(err){console.error(err);alert('ICVM değerlendirme kaydı kaydedilemedi: '+(err.message||err));}finally{if(btn){btn.disabled=false;btn.textContent='💾 CAP Sonucunu Kaydet';}}
     }
     function renderIcaoOfficialVisitEiSummary(){
-        const el=document.getElementById('icaoOfficialVisitEiSummary');if(!el)return;const visit=activeIcaoOfficialVisitId&&icaoVisits[activeIcaoOfficialVisitId]?{id:activeIcaoOfficialVisitId,...icaoVisits[activeIcaoOfficialVisitId]}:null;if(!visit){el.innerHTML='<div class="icao-visit-empty">Ziyaret seçildiğinde alan ve Overall EI etkisi hesaplanacaktır.</div>';return;}if(!Object.keys(baseEIData||{}).length){el.innerHTML='<div class="icao-visit-empty">EI hesaplaması için EI Referans Excel verisi yüklenmelidir.</div>';return;}const areaFilter=getSelectedIcaoVisitAreaFilter(),scopedPqs=getIcaoVisitAreaScopedPqs(visit,areaFilter),m=getIcaoOfficialVisitImpactModel(visit,scopedPqs),visitAreas=new Set(areaFilter==='all'?visitArrayValue(visit.areas).map(normalizeAreaKey):[areaFilter]);const rows=[{area:'Overall',total:m.total,baselineSat:m.baselineSat,validatedNew:m.validatedNew,newSat:m.newSat,baselinePct:m.baselinePct,newPct:m.newPct,delta:m.delta},...Object.values(m.areas).filter(a=>visitAreas.has(a.area))];const chartSvg=buildIcaoEiComparisonChartSvg(rows,{width:980,height:360});el.innerHTML=`<div class="visit-sync-note" style="margin-bottom:8px">Başlangıç EI/SAT değerleri, ICVM öncesindeki ICAO validasyonları sonrası resmî durumu esas alır. Bu hesap ziyaret sırasında çalışma amaçlıdır. ICAO'nun resmî sonuçları kesinleşmeden “ICAO Resmî EI Veri Yönetimi” tarihçesine otomatik aktarılmaz.${areaFilter!=='all'?` Overall satırı, yalnızca <b>${escapeHtml(areaFilter)}</b> alanında ICVM kapsamında kapanan PQ'ların Overall EI'ye geçici katkısını gösterir.`:''}</div><div style="overflow-x:auto"><table class="icao-ei-table icvm-ei-summary-table"><thead><tr><th>Alan</th><th>Uygulanabilir PQ</th><th>Mevcut Resmî SAT</th><th>ICVM'de Kapatılan Yeni PQ</th><th>Mevcut EI</th><th>Geçici ICVM Sonrası EI</th><th>Değişim</th></tr></thead><tbody>${rows.map(r=>`<tr><td><b>${escapeHtml(r.area)}</b></td><td>${r.total}</td><td>${r.baselineSat}</td><td class="icao-ei-positive">+${r.validatedNew}</td><td>${formatOfficialEiPct(r.baselinePct)}</td><td><b>${formatOfficialEiPct(r.newPct)}</b></td><td class="${r.delta>0?'icao-ei-positive':''}">${formatOfficialEiDelta(r.delta)}</td></tr>`).join('')}</tbody></table></div>${chartSvg?`<div style="margin-top:12px;padding:10px;border:1px solid #e2e8f0;border-radius:12px;background:#fff;overflow-x:auto"><div style="font-size:11px;font-weight:700;color:#0f172a;margin-bottom:6px">EI Değişim Sütun Grafiği</div>${chartSvg}</div>`:''}`;updateIcaoVisitKpis(visit);
+        const el=document.getElementById('icaoOfficialVisitEiSummary');if(!el)return;const visit=activeIcaoOfficialVisitId&&icaoVisits[activeIcaoOfficialVisitId]?{id:activeIcaoOfficialVisitId,...icaoVisits[activeIcaoOfficialVisitId]}:null;if(!visit){el.innerHTML='<div class="icao-visit-empty">Ziyaret seçildiğinde alan ve Overall EI etkisi hesaplanacaktır.</div>';return;}if(!Object.keys(baseEIData||{}).length){el.innerHTML='<div class="icao-visit-empty">EI hesaplaması için son resmî Full PQ Status State Snapshot yüklenmelidir.</div>';return;}const areaFilter=getSelectedIcaoVisitAreaFilter(),scopedPqs=getIcaoVisitAreaScopedPqs(visit,areaFilter),m=getIcaoOfficialVisitImpactModel(visit,scopedPqs),visitAreas=new Set(areaFilter==='all'?visitArrayValue(visit.areas).map(normalizeAreaKey):[areaFilter]);const rows=[{area:'Overall',total:m.total,baselineSat:m.baselineSat,validatedNew:m.validatedNew,newSat:m.newSat,baselinePct:m.baselinePct,newPct:m.newPct,delta:m.delta},...Object.values(m.areas).filter(a=>visitAreas.has(a.area))];const chartSvg=buildIcaoEiComparisonChartSvg(rows,{width:980,height:360});el.innerHTML=`<div class="visit-sync-note" style="margin-bottom:8px">Başlangıç EI/SAT değerleri son resmî Full PQ Status State Snapshot durumunu esas alır. Bu hesap ziyaret sırasında çalışma amaçlıdır. ICAO'nun resmî sonuçları kesinleşmeden “ICAO Resmî EI Veri Yönetimi” tarihçesine otomatik aktarılmaz.${areaFilter!=='all'?` Overall satırı, yalnızca <b>${escapeHtml(areaFilter)}</b> alanında taslak/çalışma Satisfactory PQ'ların Overall EI'ye olası katkısını gösterir.`:''}</div><div style="overflow-x:auto"><table class="icao-ei-table icvm-ei-summary-table"><thead><tr><th>Alan</th><th>Uygulanabilir PQ</th><th>Mevcut Resmî SAT</th><th>Taslak/Çalışma Satisfactory PQ</th><th>Mevcut EI</th><th>Taslak/Çalışma EI</th><th>Değişim</th></tr></thead><tbody>${rows.map(r=>`<tr><td><b>${escapeHtml(r.area)}</b></td><td>${r.total}</td><td>${r.baselineSat}</td><td class="icao-ei-positive">+${r.validatedNew}</td><td>${formatOfficialEiPct(r.baselinePct)}</td><td><b>${formatOfficialEiPct(r.newPct)}</b></td><td class="${r.delta>0?'icao-ei-positive':''}">${formatOfficialEiDelta(r.delta)}</td></tr>`).join('')}</tbody></table></div>${chartSvg?`<div style="margin-top:12px;padding:10px;border:1px solid #e2e8f0;border-radius:12px;background:#fff;overflow-x:auto"><div style="font-size:11px;font-weight:700;color:#0f172a;margin-bottom:6px">EI Değişim Sütun Grafiği</div>${chartSvg}</div>`:''}`;updateIcaoVisitKpis(visit);
     }
     function getActiveIcaoOfficialVisitRecord(){
         return activeIcaoOfficialVisitId&&icaoVisits[activeIcaoOfficialVisitId]?{id:activeIcaoOfficialVisitId,...icaoVisits[activeIcaoOfficialVisitId]}:null;
@@ -4115,7 +4121,7 @@ const I18N = {
                 'CE':String(p.ce||m.ce||'').trim(),
                 'Doğrulama Türü':String(p.verificationType||m.tur||'').trim(),
                 'ICAO / ICVM Sonucu':ICAO_VALIDATION_STATUSES[status]||status,
-                'Sonuç Tarihi':r.resultDate||'',
+                'Sonuç Tarihi':r.resultDate||'','ICAO Taslak PQ Sonucu':r.draftResult||'','İtiraz / Yorum Durumu':r.objectionStatus||'none','İtiraz / Yorum Tarihi':r.objectionDate||'','ICAO Nihai PQ Sonucu':r.finalResult||'','İtiraz / Yorum Notu':fullTextForExcel(r.objectionNotes||''),
                 'PQ Sorusu (ENG)':fullTextForExcel(p.question||m.soru||''),
                 'PQ Sorusu (TR)':fullTextForExcel(p.questionTr||m.soruTr||''),
                 'Bulgu (ENG)':fullTextForExcel(p.finding||m.bulgu||''),
@@ -4147,10 +4153,10 @@ const I18N = {
             'Alan':r.area,
             'Uygulanabilir PQ':r.total,
             'Mevcut Resmî SAT':r.baselineSat,
-            'ICVM’de Kapatılan Yeni PQ':r.validatedNew,
+            'Taslak/Çalışma Satisfactory PQ':r.validatedNew,
             'Geçici Yeni SAT':r.newSat,
             'Mevcut Resmî EI':formatOfficialEiPct(r.baselinePct),
-            'Geçici ICVM Sonrası EI':formatOfficialEiPct(r.newPct),
+            'Taslak/Çalışma EI':formatOfficialEiPct(r.newPct),
             'Değişim':formatOfficialEiDelta(r.delta)
         }));
     }
@@ -4359,7 +4365,7 @@ const I18N = {
             return Number.isFinite(n)?n:0;
         };
         const rowBaseline=r=>parsePctValue(r.baselinePct ?? r['baselinePct'] ?? r['Mevcut Resmî EI'] ?? 0);
-        const rowNew=r=>parsePctValue(r.newPct ?? r['newPct'] ?? r['Geçici ICVM Sonrası EI'] ?? 0);
+        const rowNew=r=>parsePctValue(r.newPct ?? r['newPct'] ?? r['Taslak/Çalışma EI'] ?? 0);
         const maxVal=Math.max(100,...data.map(r=>Math.max(rowNew(r),rowBaseline(r))));
         const yMax=Math.max(100,Math.ceil(maxVal/10)*10);
         const groupW=plotW/data.length;
@@ -4393,7 +4399,7 @@ const I18N = {
             labels += `<text x="${(xGroup+groupW/2).toFixed(1)}" y="${(top+plotH+64).toFixed(1)}" font-size="9" text-anchor="middle" fill="${delta>0?'#166534':'#64748b'}">Δ ${delta.toFixed(2).replace('.',',')} puan</text>`;
         });
         const legendY=14;
-        const legend=`<rect x="${left+10}" y="${legendY}" width="12" height="12" rx="2" fill="${baselineColor}"/><text x="${left+28}" y="${legendY+10}" font-size="10" fill="${textColor}">Mevcut Resmî EI</text><rect x="${left+180}" y="${legendY}" width="12" height="12" rx="2" fill="${newColor}"/><text x="${left+198}" y="${legendY+10}" font-size="10" fill="${textColor}">Geçici ICVM Sonrası EI</text>`;
+        const legend=`<rect x="${left+10}" y="${legendY}" width="12" height="12" rx="2" fill="${baselineColor}"/><text x="${left+28}" y="${legendY+10}" font-size="10" fill="${textColor}">Mevcut Resmî EI</text><rect x="${left+180}" y="${legendY}" width="12" height="12" rx="2" fill="${newColor}"/><text x="${left+198}" y="${legendY+10}" font-size="10" fill="${textColor}">Taslak/Çalışma EI</text>`;
         return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}"><rect x="0" y="0" width="${width}" height="${height}" fill="#ffffff"/>${grid}<line x1="${left}" y1="${top+plotH}" x2="${left+plotW}" y2="${top+plotH}" stroke="#94a3b8" stroke-width="1.2"/>${labels}${bars}${legend}</svg>`;
     }
 
@@ -4432,11 +4438,11 @@ const I18N = {
             content.push({text:'Aktif ekran filtresine uygun denetim alanı verisi bulunamadı.',italics:true,color:'#64748b',margin:[0,0,0,8]});
         }
 
-        // SAYFA 2: ICVM Geçici EI Etki Özeti
-        content.push({text:'ICVM Geçici EI Etki Özeti',style:'sectionHeader',pageBreak:'before'});
+        // SAYFA 2: Taslak / Çalışma EI Etki Özeti
+        content.push({text:'Taslak / Çalışma EI Etki Özeti',style:'sectionHeader',pageBreak:'before'});
         if(eiRows.length){
-            const eiBody=[[{text:'Alan',bold:true,fillColor:'#f1f5f9',alignment:'center'},{text:'Uyg. PQ',bold:true,fillColor:'#f1f5f9',alignment:'center'},{text:'Mevcut SAT',bold:true,fillColor:'#f1f5f9',alignment:'center'},{text:'Yeni PQ',bold:true,fillColor:'#f1f5f9',alignment:'center'},{text:'Mevcut EI',bold:true,fillColor:'#f1f5f9',alignment:'center'},{text:'ICVM Sonrası',bold:true,fillColor:'#f1f5f9',alignment:'center'},{text:'Değişim',bold:true,fillColor:'#f1f5f9',alignment:'center'}]];
-            eiRows.forEach(r=>eiBody.push([{text:r['Alan'],alignment:'center'},{text:r['Uygulanabilir PQ'],alignment:'center'},{text:r['Mevcut Resmî SAT'],alignment:'center'},{text:r['ICVM’de Kapatılan Yeni PQ'],alignment:'center'},{text:r['Mevcut Resmî EI'],alignment:'center'},{text:r['Geçici ICVM Sonrası EI'],alignment:'center'},{text:r['Değişim'],alignment:'center'}]));
+            const eiBody=[[{text:'Alan',bold:true,fillColor:'#f1f5f9',alignment:'center'},{text:'Uyg. PQ',bold:true,fillColor:'#f1f5f9',alignment:'center'},{text:'Mevcut SAT',bold:true,fillColor:'#f1f5f9',alignment:'center'},{text:'Yeni PQ',bold:true,fillColor:'#f1f5f9',alignment:'center'},{text:'Mevcut EI',bold:true,fillColor:'#f1f5f9',alignment:'center'},{text:'Taslak/Çalışma',bold:true,fillColor:'#f1f5f9',alignment:'center'},{text:'Değişim',bold:true,fillColor:'#f1f5f9',alignment:'center'}]];
+            eiRows.forEach(r=>eiBody.push([{text:r['Alan'],alignment:'center'},{text:r['Uygulanabilir PQ'],alignment:'center'},{text:r['Mevcut Resmî SAT'],alignment:'center'},{text:r['Taslak/Çalışma Satisfactory PQ'],alignment:'center'},{text:r['Mevcut Resmî EI'],alignment:'center'},{text:r['Taslak/Çalışma EI'],alignment:'center'},{text:r['Değişim'],alignment:'center'}]));
             content.push({table:{headerRows:1,widths:['auto','auto','auto','auto','auto','auto','auto'],body:eiBody},layout:'lightHorizontalLines',margin:[0,0,0,10]});
             content.push({svg:buildIcaoEiComparisonChartSvg(eiRows,{width:760,height:330}),width:760,margin:[0,2,0,12]});
         }else{
@@ -4524,17 +4530,17 @@ const I18N = {
             content.push({text:'Seçili denetim alanı kapsamında veri bulunamadı.',italics:true,color:'#64748b',margin:[0,0,0,8]});
         }
 
-        // SAYFA 2: ICVM Geçici EI Etki Özeti
-        content.push({text:'ICVM Geçici EI Etki Özeti',style:'sectionHeader',pageBreak:'before'});
+        // SAYFA 2: Taslak / Çalışma EI Etki Özeti
+        content.push({text:'Taslak / Çalışma EI Etki Özeti',style:'sectionHeader',pageBreak:'before'});
         if(eiRows.length){
-            const eiBody=[[{text:'Alan',bold:true,fillColor:'#f1f5f9',alignment:'center'},{text:'Uyg. PQ',bold:true,fillColor:'#f1f5f9',alignment:'center'},{text:'Mevcut SAT',bold:true,fillColor:'#f1f5f9',alignment:'center'},{text:'Yeni PQ',bold:true,fillColor:'#f1f5f9',alignment:'center'},{text:'Mevcut EI',bold:true,fillColor:'#f1f5f9',alignment:'center'},{text:'ICVM Sonrası',bold:true,fillColor:'#f1f5f9',alignment:'center'},{text:'Değişim',bold:true,fillColor:'#f1f5f9',alignment:'center'}]];
+            const eiBody=[[{text:'Alan',bold:true,fillColor:'#f1f5f9',alignment:'center'},{text:'Uyg. PQ',bold:true,fillColor:'#f1f5f9',alignment:'center'},{text:'Mevcut SAT',bold:true,fillColor:'#f1f5f9',alignment:'center'},{text:'Yeni PQ',bold:true,fillColor:'#f1f5f9',alignment:'center'},{text:'Mevcut EI',bold:true,fillColor:'#f1f5f9',alignment:'center'},{text:'Taslak/Çalışma',bold:true,fillColor:'#f1f5f9',alignment:'center'},{text:'Değişim',bold:true,fillColor:'#f1f5f9',alignment:'center'}]];
             eiRows.forEach(r=>eiBody.push([
                 {text:String(r['Alan']||''),alignment:'center'},
                 {text:String(r['Uygulanabilir PQ']??''),alignment:'center'},
                 {text:String(r['Mevcut Resmî SAT']??''),alignment:'center'},
-                {text:String(r['ICVM’de Kapatılan Yeni PQ']??''),alignment:'center'},
+                {text:String(r['Taslak/Çalışma Satisfactory PQ']??''),alignment:'center'},
                 {text:String(r['Mevcut Resmî EI']||''),alignment:'center'},
-                {text:String(r['Geçici ICVM Sonrası EI']||''),alignment:'center'},
+                {text:String(r['Taslak/Çalışma EI']||''),alignment:'center'},
                 {text:String(r['Değişim']||''),alignment:'center'}
             ]));
             content.push({table:{headerRows:1,widths:['auto','auto','auto','auto','auto','auto','auto'],body:eiBody},layout:'lightHorizontalLines',margin:[0,0,0,10]});
@@ -7255,7 +7261,8 @@ const I18N = {
         const el = document.getElementById('eiAssessmentTimeline');
         if (!el) return;
         if (!rows || !rows.length) {
-            el.innerHTML = '<div class="ei-assessment-empty">Assessment Event kaydı bulunamadı. EI katmanları geçici olarak Excel EI referansı ve ICAO kapatma kayıtlarından hesaplanıyor.</div>';
+            el.innerHTML = '<div class="ei-assessment-empty">Resmî Assessment Event / State Snapshot kaydı bulunamadı.</div>';
+            const pending=document.getElementById('eiPendingAssessmentNotice');if(pending)pending.innerHTML='';
             return;
         }
         let prev = null;
@@ -7275,6 +7282,11 @@ const I18N = {
                 <div class="event-meta">${escapeHtml(dashboardAssessmentDateLabel(row))}<br>${escapeHtml(dashboardAssessmentScopeLabel(row))}</div>${scopeHtml}
             </div>`;
         }).join('');
+        const pendingEl=document.getElementById('eiPendingAssessmentNotice');
+        if(pendingEl){
+            let pending=null;try{pending=typeof window.getLatestPendingAssessment==='function'?window.getLatestPendingAssessment():null;}catch(e){pending=null;}
+            if(pending){const snap=pending.snapshot||{},pub=Number(snap.overall&&snap.overall.publishedEi!=null?snap.overall.publishedEi:snap.overall&&snap.overall.ei),hasEi=Number.isFinite(pub),metrics=pending.eventMetrics||{},scopeTxt=metrics.scopeApplicable!=null?`${metrics.scopeSatisfactory??'-'}/${metrics.scopeApplicable} kapsam PQ`:'';pendingEl.innerHTML=`<div style="border:1px dashed #a855f7;background:#faf5ff;border-radius:10px;padding:10px 12px;color:#581c87;font-size:11px;"><b>🟣 Son ICAO değerlendirmesi: ${escapeHtml(pending.name||pending.type||'Assessment')}</b> · ${escapeHtml(pending.resultStatus==='draft'?'Taslak':'Geçici')}${hasEi?` · yayımlanan taslak EI <b>%${pub.toFixed(2)}</b>`:''}${scopeTxt?` · ${escapeHtml(scopeTxt)}`:''}<br><span style="color:#7e22ce">Bu kayıt güncel resmî EI çizgisini değiştirmez. OLF Full PQ Status final snapshot yayımlandığında açıkça bu assessment'a bağlanmalıdır.</span></div>`;}else pendingEl.innerHTML='';
+        }
     }
 
     function assessmentAreaState(rows, area, fallbackBasePct) {
