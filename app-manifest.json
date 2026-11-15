@@ -1,8 +1,8 @@
 {
   "app": "USOAP CMA CAP Takip",
-  "version": "18-phase15-role-access-control",
+  "version": "18.1-phase15-pq-metadata-firebase-key-hotfix",
   "baseline": "index_visit_hub_pq_version_database(2).html",
-  "buildDate": "2026-11-14",
+  "buildDate": "2026-11-15",
   "features": [
     "assessment-event-model",
     "ei-snapshot-model",
@@ -80,7 +80,8 @@
     "live-role-deactivation",
     "access-audit-trail",
     "user-area-work-scope",
-    "access-control-pdf-excel-export"
+    "access-control-pdf-excel-export",
+    "firebase-safe-pq-concept-alias-keys"
   ],
   "architecture": {
     "index": "index.html",

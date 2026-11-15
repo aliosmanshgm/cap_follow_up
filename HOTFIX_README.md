@@ -1,18 +1,18 @@
-# Faz 7 v10.2 - Ziyaret Yönetimi Hub Hotfix
+# Faz 15 v18.1 – PQ Metadata / Firebase Key Hotfix
 
-Bu hotfix, Operasyon > Ziyaret Yönetimi menüsünün açılmaması sorununu giderir.
+## Sorun
+PQ sürüm/revizyon metadata güncellemesi Firebase'e başarıyla yazıldıktan sonra otomatik CAP↔PQ lineage indeksi yeniden kuruluyordu. PQ Concept içindeki `aliases` nesnesinde `9.001` gibi PQ numaraları doğrudan Firebase child key olarak kullanıldığı için Realtime Database `.` karakterini reddediyordu.
 
-## Düzeltmeler
-- Ana Ziyaret Yönetimi butonu doğrudan `switchTab('visits')` rotasına bağlandı.
-- `openVisitHubSafe()` fallback'i `js/app.js` içine eklendi.
-- `visit-hub.js` paket içine özellikle dahil edildi; dosya eksikliği/404 olasılığı giderildi.
-- `app.js` ve `visit-hub.js` cache-bust sürümleri v10.2 olarak güncellendi.
+Bu nedenle kullanıcı hata görmesine rağmen ana metadata değişikliği Firebase'de kalıyordu; sayfa yenilendiğinde değişiklik görünüyordu.
 
-## GitHub'a uygulama
-ZIP içeriğini repository köküne çıkarın ve aynı adlı dosyaların üzerine yazın.
-Commit ve Push origin işlemlerinden sonra sayfayı Ctrl+F5 ile yenileyin.
+## Düzeltme
+- Concept alias anahtarı artık Firebase-safe biçimde saklanır: `9_001`.
+- Gerçek PQ numarası değer olarak korunur: `"9_001": "9.001"`.
+- CAP↔PQ concept / instance / lineage semantiği değişmez.
+- Firebase Rules değişikliği gerekmez.
+- Veri migrasyonu gerekmez; bir sonraki lineage rebuild mevcut concept indeksini güvenli formatta yeniden üretir.
 
-## Beklenen test
-1. Operasyon > Ziyaret Yönetimi tıklanınca Ziyaret Planlama & Kayıtlar ekranı açılmalı.
-2. Üst Hub başlığında Planlama > Hazırlık > Saha Çalışması > Takip > Sonuç & Rapor > Geçmiş & Analiz aşamaları görünmeli.
-3. Aşama düğmeleri ilgili ekranlara geçmeli.
+## Değişen dosyalar
+- `js/modules/pq-linkage.js`
+- `index.html` (cache-bust)
+- `app-manifest.json`

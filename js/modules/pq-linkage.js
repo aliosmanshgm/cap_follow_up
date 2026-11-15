@@ -71,7 +71,7 @@
 
           const c=conceptRecords[cid]||(conceptRecords[cid]={conceptId:cid,area,firstSeen:null,lastSeen:null,instances:{},aliases:{},parentConceptIds:{},successorConceptIds:{},status:'historical'});
           const inst={instanceId:p.instanceId,editionKey:edition.key,year:String(edition.year||''),revision:String(edition.revision||''),pq,changeType:declaredType||'',assessmentMode:p.assessmentMode||'',ce:p.ce||'',sspComponent:p.sspComponent||''};
-          c.instances[p.instanceId]=inst;c.aliases[pq]=true;
+          c.instances[p.instanceId]=inst;c.aliases[safeKey(pq)]=pq;
           if(!c.firstSeen||rank<parseEditionRank(c.firstSeen))c.firstSeen={editionKey:edition.key,year:String(edition.year||''),revision:String(edition.revision||''),pq};
           if(!c.lastSeen||rank>=parseEditionRank(c.lastSeen))c.lastSeen={editionKey:edition.key,year:String(edition.year||''),revision:String(edition.revision||''),pq};
           for(const pc of p.lineage.parentConceptIds)c.parentConceptIds[pc]=true;
