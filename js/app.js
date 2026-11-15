@@ -436,7 +436,7 @@ const I18N = {
             if(tabId === 'validation-readiness' && typeof renderValidationReadiness==='function') renderValidationReadiness();
             if(tabId === 'smart') updateSmartManagementPanel(getFilteredData(), window.currentAnalyticsModel || null);
             if(tabId === 'quality') { updateDataQualityCenter(getFilteredData()); if(typeof window.renderSystemIntegrityCenter==='function') setTimeout(()=>window.renderSystemIntegrityCenter(true),0); }
-            if(tabId === 'pq-library') { renderIcaoPqLibraryModule(); setTimeout(()=>{ if(typeof window.isIcaoPqLibraryLoaded==='function' && window.isIcaoPqLibraryLoaded()){ clearFastPqLibraryPreview(); cacheLivePqLibraryCatalog(); } else renderFastPqLibraryCachePreview(); },0); }
+            if(tabId === 'pq-library') renderIcaoPqLibraryModule();
             if(tabId === 'drive-documents' && typeof window.renderDriveDocumentsCenter==='function') window.renderDriveDocumentsCenter();
             if(tabId === 'visits') renderVisitModule();
             if(tabId === 'visit-scope') renderVisitScopeModule();
@@ -502,7 +502,7 @@ const I18N = {
     // ================================================================
     // STABILIZASYON PAKETI 1
     // ================================================================
-    const APP_RELEASE = Object.freeze({version:'1.0.0-rc1.4.8',label:'v1.0 RC1.4.8',buildDate:'2026-11-15',baseline:'RC1.4.7 + Fast Bootstrap / PQ Library Preload',cacheTag:'20261115-v1.0-rc1.4.8'});
+    const APP_RELEASE = Object.freeze({version:'1.0.0-rc1.4.9',label:'v1.0 RC1.4.9',buildDate:'2026-11-15',baseline:'RC1.4.7 stable load order + RC1.4.8 performance rollback',cacheTag:'20261115-v1.0-rc1.4.9'});
     const STABILIZATION_VERSION = APP_RELEASE.label;
     window.USOAP_APP_RELEASE = APP_RELEASE;
     const stabilizationState = {
@@ -513,199 +513,15 @@ const I18N = {
         lastHealthSnapshot: null
     };
 
-    // RC1.4.8 - Hızlı başlangıç / ön yükleme katmanı.
-    // Amaç: Dashboard Assessment kartlarını ve PQ Library görünümünü büyük icao_system
-    // payload'ını beklemeden mümkün olduğunca erken göstermek. Önbellek yalnız aynı UID
-    // için ve kısa bootstrap penceresinde kullanılır; canlı Firebase verisi geldiğinde yerini alır.
-    const FAST_BOOTSTRAP_WINDOW_MS = 15000;
-    const FAST_CACHE_MAX_AGE_MS = 24 * 60 * 60 * 1000;
-    let fastBootstrapUntil = 0;
-    let pqLibraryWarmupTimer = null;
 
-    function fastCacheUserKey(name) {
-        const uid = (firebase.auth().currentUser && firebase.auth().currentUser.uid) || 'anonymous';
-        return `usoap_rc148_${name}_${uid}`;
-    }
-    function fastCacheRead(name, maxAge = FAST_CACHE_MAX_AGE_MS) {
-        try {
-            const raw = localStorage.getItem(fastCacheUserKey(name));
-            if (!raw) return null;
-            const parsed = JSON.parse(raw);
-            if (!parsed || !parsed.savedAt) return null;
-            if (maxAge && (Date.now() - Number(parsed.savedAt)) > maxAge) return null;
-            return parsed;
-        } catch (_) { return null; }
-    }
-    function fastCacheWrite(name, payload) {
-        try {
-            localStorage.setItem(fastCacheUserKey(name), JSON.stringify({savedAt:Date.now(), ...payload}));
-            return true;
-        } catch (error) {
-            console.warn('Hızlı önbellek yazılamadı:', name, error && error.message || error);
-            return false;
+    // RC1.4.9 performance hotfix: RC1.4.8 hızlı-bootstrap denemesinin yerel cache kalıntılarını temizle.
+    // Eski cache artık okunmaz; bu temizlik yalnız bir kez, küçük bir localStorage taraması yapar.
+    try {
+        for (let i = localStorage.length - 1; i >= 0; i--) {
+            const key = localStorage.key(i);
+            if (key && key.startsWith('usoap_rc148_')) localStorage.removeItem(key);
         }
-    }
-    function fastBootstrapActive() { return Date.now() < fastBootstrapUntil; }
-
-    function installAssessmentFastCacheFallback() {
-        const timelineFn = window.getOfficialAssessmentTimelineWithSnapshots;
-        if (typeof timelineFn === 'function' && !timelineFn.__usoapFastWrapped) {
-            const wrapped = function(...args) {
-                let live = [];
-                try { live = timelineFn.apply(this,args) || []; } catch (_) { live = []; }
-                if (Array.isArray(live) && live.length) {
-                    fastCacheWrite('assessment_timeline',{rows:live});
-                    return live;
-                }
-                if (fastBootstrapActive()) {
-                    const cached = fastCacheRead('assessment_timeline');
-                    if (cached && Array.isArray(cached.rows) && cached.rows.length) return cached.rows;
-                }
-                return live;
-            };
-            wrapped.__usoapFastWrapped = true;
-            wrapped.__usoapOriginal = timelineFn;
-            window.getOfficialAssessmentTimelineWithSnapshots = wrapped;
-        }
-        const pendingFn = window.getLatestPendingAssessment;
-        if (typeof pendingFn === 'function' && !pendingFn.__usoapFastWrapped) {
-            const wrappedPending = function(...args) {
-                let live = null;
-                try { live = pendingFn.apply(this,args) || null; } catch (_) { live = null; }
-                if (live) {
-                    fastCacheWrite('pending_assessment',{record:live});
-                    return live;
-                }
-                if (fastBootstrapActive()) {
-                    const cached = fastCacheRead('pending_assessment');
-                    if (cached && cached.record) return cached.record;
-                }
-                return live;
-            };
-            wrappedPending.__usoapFastWrapped = true;
-            wrappedPending.__usoapOriginal = pendingFn;
-            window.getLatestPendingAssessment = wrappedPending;
-        }
-    }
-
-    function cacheDashboardVisitSummaries(summaries) {
-        if (!Array.isArray(summaries) || !summaries.length) return;
-        const safe = summaries.map(s => ({
-            visit:s.visit || {}, scopeCount:Number(s.scopeCount||0), satisfactory:Number(s.satisfactory||0),
-            notSatisfactory:Number(s.notSatisfactory||0), followUp:Number(s.followUp||0),
-            notEvaluated:Number(s.notEvaluated||0), evaluated:Number(s.evaluated||0), impact:s.impact || null
-        }));
-        fastCacheWrite('official_visit_summaries',{summaries:safe});
-    }
-
-    function fastPqValue(obj, aliases) {
-        if (!obj || typeof obj !== 'object') return '';
-        const normalized = Object.fromEntries(Object.entries(obj).map(([k,v])=>[String(k).toLowerCase().replace(/[^a-z0-9]/g,''),v]));
-        for (const alias of aliases) {
-            const key=String(alias).toLowerCase().replace(/[^a-z0-9]/g,'');
-            const v=normalized[key];
-            if (v !== undefined && v !== null && typeof v !== 'object' && String(v).trim() !== '') return String(v).trim();
-        }
-        return '';
-    }
-    function fastPqCatalogFromSnapshot(root) {
-        const best = new Map(), seen = new WeakSet();
-        const walk = (node, depth=0) => {
-            if (!node || typeof node !== 'object' || depth > 8 || seen.has(node)) return;
-            seen.add(node);
-            if (!Array.isArray(node)) {
-                const pq = normalizePQ(fastPqValue(node,['pq','pqNo','pqNumber','number','protocolQuestionNo','protocolQuestionNumber']));
-                if (/^\d{1,2}\.\d{3}$/.test(pq)) {
-                    const area=fastPqValue(node,['area','alan','auditArea','auditField']);
-                    const mode=fastPqValue(node,['verificationType','onOffSite','onsiteOffsite','tur','mode']);
-                    const ce=fastPqValue(node,['ce','criticalElement','sspComponent']);
-                    const ppq=fastPqValue(node,['ppq','isPpq','priorityPq']);
-                    let change=fastPqValue(node,['changeType','change','relation','lineageRelation','amendmentSummary','summaryOfAmendments']);
-                    if (!change && node.lineage && typeof node.lineage==='object') change=fastPqValue(node.lineage,['relation','changeType','summary']);
-                    const question=fastPqValue(node,['question','soru','protocolQuestion']);
-                    const row={pq,area,mode,ce,ppq,change,question};
-                    const score=[area,mode,ce,ppq,change,question].filter(Boolean).length;
-                    const prev=best.get(pq); if(!prev || score>prev._score) best.set(pq,{...row,_score:score});
-                }
-            }
-            if (Array.isArray(node)) node.forEach(x=>walk(x,depth+1));
-            else Object.values(node).forEach(x=>{ if(x&&typeof x==='object') walk(x,depth+1); });
-        };
-        try { walk(root); } catch (_) {}
-        return Array.from(best.values()).map(({_score,...x})=>x).sort((a,b)=>sortPQs(a.pq,b.pq));
-    }
-    function cacheLivePqLibraryCatalog() {
-        try {
-            if (typeof window.getIcaoPqLibrarySnapshot !== 'function') return false;
-            if (typeof window.isIcaoPqLibraryLoaded === 'function' && !window.isIcaoPqLibraryLoaded()) return false;
-            const snapshot=window.getIcaoPqLibrarySnapshot();
-            const rows=fastPqCatalogFromSnapshot(snapshot);
-            if (!rows.length) return false;
-            fastCacheWrite('pq_catalog',{rows});
-            return true;
-        } catch (_) { return false; }
-    }
-    function renderFastPqLibraryCachePreview() {
-        const loaded = typeof window.isIcaoPqLibraryLoaded === 'function' ? !!window.isIcaoPqLibraryLoaded() : false;
-        if (loaded) { cacheLivePqLibraryCatalog(); return false; }
-        const cached=fastCacheRead('pq_catalog');
-        if(!cached || !Array.isArray(cached.rows) || !cached.rows.length) return false;
-        const body=document.getElementById('pqDbCatalogBody'), count=document.getElementById('pqDbCatalogCount');
-        if(!body || !count) return false;
-        const q=String((document.getElementById('pqDbCatalogSearch')||{}).value||'').trim().toLocaleLowerCase('tr-TR');
-        const mode=String((document.getElementById('pqDbCatalogMode')||{}).value||'all');
-        const ce=String((document.getElementById('pqDbCatalogCe')||{}).value||'all');
-        const ppq=String((document.getElementById('pqDbCatalogPpq')||{}).value||'all');
-        let rows=cached.rows.filter(r=>{
-            if(mode!=='all' && String(r.mode||'').toLowerCase()!==mode.toLowerCase())return false;
-            if(ce!=='all' && String(r.ce||'').toLowerCase()!==ce.toLowerCase())return false;
-            const p=String(r.ppq||'').toLowerCase();
-            if(ppq==='yes' && !['yes','evet','true','1','ppq'].includes(p))return false;
-            if(ppq==='no' && ['yes','evet','true','1','ppq'].includes(p))return false;
-            if(q && ![r.pq,r.area,r.mode,r.ce,r.ppq,r.change,r.question].join(' ').toLocaleLowerCase('tr-TR').includes(q))return false;
-            return true;
-        });
-        body.innerHTML=rows.map(r=>`<tr style="opacity:.88" title="Önbellekten önizleme; canlı PQ Veri Tabanı senkronize ediliyor"><td><b>${escapeHtml(r.pq)}</b></td><td>${escapeHtml(r.mode||'-')}</td><td>${escapeHtml(r.ce||r.area||'-')}</td><td>${escapeHtml(r.ppq||'-')}</td><td>${escapeHtml(r.change||'-')}</td></tr>`).join('');
-        count.textContent=`${rows.length} PQ · önbellek`;
-        body.style.pointerEvents='none';
-        let note=document.getElementById('pqDbFastLoadNote');
-        if(!note){note=document.createElement('div');note.id='pqDbFastLoadNote';note.style.cssText='margin:0 0 8px;padding:7px 10px;border:1px dashed #60a5fa;border-radius:8px;background:#eff6ff;color:#1d4ed8;font-size:10px;';const view=document.getElementById('pqDbViewCatalog');if(view)view.insertBefore(note,view.firstChild);}
-        if(note)note.textContent=`⚡ ${rows.length} PQ son yerel önbellekten gösteriliyor. Canlı ICAO PQ Veri Tabanı arka planda senkronize ediliyor.`;
-        return true;
-    }
-    function clearFastPqLibraryPreview() {
-        const body=document.getElementById('pqDbCatalogBody'); if(body)body.style.pointerEvents='';
-        const note=document.getElementById('pqDbFastLoadNote'); if(note)note.remove();
-    }
-    function warmIcaoPqLibraryInBackground() {
-        try {
-            if (typeof window.renderIcaoPqLibraryModule === 'function') window.renderIcaoPqLibraryModule();
-        } catch (error) { console.warn('PQ Library arka plan ön yüklemesi başlatılamadı:', error); }
-        clearInterval(pqLibraryWarmupTimer);
-        let attempts=0;
-        pqLibraryWarmupTimer=setInterval(()=>{
-            attempts++;
-            const loaded=typeof window.isIcaoPqLibraryLoaded==='function' && window.isIcaoPqLibraryLoaded();
-            if(loaded){
-                clearInterval(pqLibraryWarmupTimer);pqLibraryWarmupTimer=null;
-                cacheLivePqLibraryCatalog();clearFastPqLibraryPreview();
-                if(document.getElementById('tab-pq-library')?.classList.contains('active')){
-                    try{window.renderIcaoPqLibraryModule();}catch(_){}
-                }
-                return;
-            }
-            if(attempts>=20){clearInterval(pqLibraryWarmupTimer);pqLibraryWarmupTimer=null;}
-        },750);
-    }
-    function beginFastBootstrap() {
-        fastBootstrapUntil=Date.now()+FAST_BOOTSTRAP_WINDOW_MS;
-        installAssessmentFastCacheFallback();
-        warmIcaoPqLibraryInBackground();
-        // Modüller canlı veriyi aldıktan sonra bir sonraki giriş için küçük cache'leri tazele.
-        [1200,3000,7000,12000].forEach(ms=>setTimeout(()=>{installAssessmentFastCacheFallback();cacheLivePqLibraryCatalog();},ms));
-    }
-    window.renderFastPqLibraryCachePreview=renderFastPqLibraryCachePreview;
-    window.cacheLivePqLibraryCatalog=cacheLivePqLibraryCatalog;
+    } catch (_) {}
 
     function showAppRuntimeToast(message, type = 'info') {
         let toast = document.getElementById('appRuntimeToast');
@@ -879,7 +695,7 @@ const I18N = {
         add('word', 'Word okuma motoru', (typeof JSZip !== 'undefined') ? 'ok' : 'error', (typeof JSZip !== 'undefined') ? 'JSZip hazır.' : 'Word ayrıştırma kütüphanesi yüklenemedi.');
         add('charts', 'Grafik motoru', (typeof Chart !== 'undefined') ? 'ok' : 'warn', (typeof Chart !== 'undefined') ? 'Chart.js hazır.' : 'Grafik kütüphanesi yüklenemedi.');
         const assetVersionIssues = getLocalAssetVersionIssues();
-        add('release-build', 'Release / cache bütünlüğü', assetVersionIssues.length ? 'error' : 'ok', assetVersionIssues.length ? `RC1.4.8 cache etiketiyle eşleşmeyen ${assetVersionIssues.length} yerel asset: ${assetVersionIssues.slice(0,6).join(', ')}` : `${APP_RELEASE.label} · build ${APP_RELEASE.buildDate} · bütün yerel assetler ${APP_RELEASE.cacheTag}.`);
+        add('release-build', 'Release / cache bütünlüğü', assetVersionIssues.length ? 'error' : 'ok', assetVersionIssues.length ? `RC1.4.9 cache etiketiyle eşleşmeyen ${assetVersionIssues.length} yerel asset: ${assetVersionIssues.slice(0,6).join(', ')}` : `${APP_RELEASE.label} · build ${APP_RELEASE.buildDate} · bütün yerel assetler ${APP_RELEASE.cacheTag}.`);
         let storageOk=true; try{localStorage.setItem('__usoap_rc_probe','1');localStorage.removeItem('__usoap_rc_probe');}catch(_){storageOk=false;}
         add('browser-storage', 'Tarayıcı yerel depolama', storageOk ? 'ok' : 'warn', storageOk ? 'localStorage kullanılabilir.' : 'localStorage kapalı; çevrimdışı cache ve bazı tercihler kalıcı olmayabilir.');
         const originalDocMode=String(window.PQ_ORIGINAL_DOCUMENT_STORAGE_MODE||'external').toLowerCase();
@@ -1111,11 +927,7 @@ const I18N = {
                 }
                 if (typeof window.hideAccessDeniedGate === 'function') window.hideAccessDeniedGate();
                 document.getElementById('mainAppContainer').style.display = 'flex';
-                // RC1.4.8: küçük/operasyonel kaynakları büyük icao_system yükünden önce başlat.
-                // Böylece Assessment kartları ve PQ Library ağ isteği daha erken başlar.
-                beginFastBootstrap();
-                startVisitFirebaseListener(); startVisitUnitSettingsListener(); if(typeof startResponsibilityRegistryListener==='function')startResponsibilityRegistryListener(); if(typeof startStateComplianceListener==='function')startStateComplianceListener(); if(typeof startAssessmentEventListener==='function')startAssessmentEventListener(); startIcaoOfficialEiListener(); if(typeof startValidationReadinessListener==='function')startValidationReadinessListener();
-                loadFromLocalStorage();
+                loadFromLocalStorage(); startVisitFirebaseListener(); startVisitUnitSettingsListener(); if(typeof startResponsibilityRegistryListener==='function')startResponsibilityRegistryListener(); if(typeof startStateComplianceListener==='function')startStateComplianceListener(); if(typeof startAssessmentEventListener==='function')startAssessmentEventListener(); startIcaoOfficialEiListener(); if(typeof startValidationReadinessListener==='function')startValidationReadinessListener();
                 if (typeof window.applyAccessControlUi === 'function') setTimeout(()=>window.applyAccessControlUi(), 0);
             } else {
                 stopVisitFirebaseListener(); stopVisitUnitSettingsListener(); if(typeof stopResponsibilityRegistryListener==='function')stopResponsibilityRegistryListener(); if(typeof stopStateComplianceListener==='function')stopStateComplianceListener(); stopIcaoOfficialEiListener(); if(typeof stopAssessmentEventListener==='function')stopAssessmentEventListener(); if(typeof stopValidationReadinessListener==='function')stopValidationReadinessListener();
@@ -3749,7 +3561,6 @@ const I18N = {
             if(typeof window.renderSystemIntegrityCenter==='function'&&document.getElementById('tab-quality')?.classList.contains('active')) window.renderSystemIntegrityCenter(true);
             if(typeof window.renderActionCenterDashboardSummary==='function') window.renderActionCenterDashboardSummary();
             if(document.getElementById('tab-dashboard')?.classList.contains('active')) render();
-            try{const _rows=getDashboardAssessmentRows();const _summaries=getDashboardIcaoOfficialVisitSummaries(_rows);if(_summaries.length)cacheDashboardVisitSummaries(_summaries);}catch(_){}
             if(typeof window.renderActionCenter==='function'&&document.getElementById('tab-actions')?.classList.contains('active')) window.renderActionCenter();
         };
         visitFirebaseRef.on('value', visitFirebaseCallback, error => {
@@ -7921,16 +7732,10 @@ const I18N = {
 
     function getDashboardIcaoOfficialVisitSummaries(officialRows=[]) {
         let visits=[];try{visits=getIcaoOfficialVisits();}catch(_){visits=[];}
-        const live=visits.map(getDashboardIcaoVisitResultSummary).filter(Boolean).filter(summary=>{
+        return visits.map(getDashboardIcaoVisitResultSummary).filter(Boolean).filter(summary=>{
             if(!summary.scopeCount)return false;
             return !(officialRows||[]).some(row=>dashboardVisitMatchesAssessmentRow(summary.visit,row));
         }).sort((a,b)=>(visitSafeDate(a.visit.actualEnd||a.visit.plannedEnd||a.visit.actualStart||a.visit.plannedStart)?.getTime()||0)-(visitSafeDate(b.visit.actualEnd||b.visit.plannedEnd||b.visit.actualStart||b.visit.plannedStart)?.getTime()||0));
-        if(live.length){cacheDashboardVisitSummaries(live);return live;}
-        if(fastBootstrapActive()){
-            const cached=fastCacheRead('official_visit_summaries');
-            if(cached&&Array.isArray(cached.summaries)&&cached.summaries.length)return cached.summaries;
-        }
-        return live;
     }
 
     function getLatestDashboardIcaoVisitSummary() {
@@ -7960,7 +7765,6 @@ const I18N = {
     }
 
     function renderDashboardAssessmentTimeline(rows) {
-        installAssessmentFastCacheFallback();
         const el = document.getElementById('eiAssessmentTimeline');
         if (!el) return;
         rows = Array.isArray(rows) ? rows : [];
@@ -8207,13 +8011,8 @@ const I18N = {
         const visit=getLatestDashboardIcaoVisitSummary();
         const result={release:APP_RELEASE.label,verificationTypeSample:null,officialVisit:visit?{name:visit.visit.visitName||visit.visit.icaoVisitType,scope:visit.scopeCount,satisfactory:visit.satisfactory,notSatisfactory:visit.notSatisfactory,followUp:visit.followUp,notEvaluated:visit.notEvaluated,draftEi:visit.impact?visit.impact.newPct:null,newSat:visit.impact?visit.impact.newSat:null,total:visit.impact?visit.impact.total:null}:null,pendingNoticeUsesVisit:!!visit};
         try{const first=Object.keys(pqMasterData||{})[0];if(first)result.verificationTypeSample={pq:first,type:getCommonVerificationType(first)};}catch(_){}
-        result.passed=APP_RELEASE.label.includes('RC1.4.8')&&(!visit||visit.scopeCount>=visit.satisfactory);
-        console.log('RC1.4.8 dashboard öz denetimi:',result);return result;
-    };
-    window.runFastBootstrapSelfCheck=function(){
-        const cachedTimeline=fastCacheRead('assessment_timeline'),cachedVisits=fastCacheRead('official_visit_summaries'),cachedPq=fastCacheRead('pq_catalog');
-        const result={release:APP_RELEASE.label,bootstrapActive:fastBootstrapActive(),assessmentCacheRows:cachedTimeline&&Array.isArray(cachedTimeline.rows)?cachedTimeline.rows.length:0,visitCacheRows:cachedVisits&&Array.isArray(cachedVisits.summaries)?cachedVisits.summaries.length:0,pqCatalogCacheRows:cachedPq&&Array.isArray(cachedPq.rows)?cachedPq.rows.length:0,pqLibraryLoaded:typeof window.isIcaoPqLibraryLoaded==='function'?window.isIcaoPqLibraryLoaded():null};
-        result.passed=APP_RELEASE.label.includes('RC1.4.8');console.log('RC1.4.8 hızlı başlangıç öz denetimi:',result);return result;
+        result.passed=APP_RELEASE.label.includes('RC1.4.9')&&(!visit||visit.scopeCount>=visit.satisfactory);
+        console.log('RC1.4.9 dashboard öz denetimi:',result);return result;
     };
 
     window.runSimulator = function() {
