@@ -502,7 +502,7 @@ const I18N = {
     // ================================================================
     // STABILIZASYON PAKETI 1
     // ================================================================
-    const APP_RELEASE = Object.freeze({version:'1.0.0-rc1.4.9',label:'v1.0 RC1.4.9',buildDate:'2026-11-15',baseline:'RC1.4.7 stable load order + RC1.4.8 performance rollback',cacheTag:'20261115-v1.0-rc1.4.9'});
+    const APP_RELEASE = Object.freeze({version:'1.0.0-rc1.4.10',label:'v1.0 RC1.4.10',buildDate:'2026-11-15',baseline:'RC1.4.9 stable + CAP/Excel upload recovery',cacheTag:'20261115-v1.0-rc1.4.10'});
     const STABILIZATION_VERSION = APP_RELEASE.label;
     window.USOAP_APP_RELEASE = APP_RELEASE;
     const stabilizationState = {
@@ -695,7 +695,7 @@ const I18N = {
         add('word', 'Word okuma motoru', (typeof JSZip !== 'undefined') ? 'ok' : 'error', (typeof JSZip !== 'undefined') ? 'JSZip hazır.' : 'Word ayrıştırma kütüphanesi yüklenemedi.');
         add('charts', 'Grafik motoru', (typeof Chart !== 'undefined') ? 'ok' : 'warn', (typeof Chart !== 'undefined') ? 'Chart.js hazır.' : 'Grafik kütüphanesi yüklenemedi.');
         const assetVersionIssues = getLocalAssetVersionIssues();
-        add('release-build', 'Release / cache bütünlüğü', assetVersionIssues.length ? 'error' : 'ok', assetVersionIssues.length ? `RC1.4.9 cache etiketiyle eşleşmeyen ${assetVersionIssues.length} yerel asset: ${assetVersionIssues.slice(0,6).join(', ')}` : `${APP_RELEASE.label} · build ${APP_RELEASE.buildDate} · bütün yerel assetler ${APP_RELEASE.cacheTag}.`);
+        add('release-build', 'Release / cache bütünlüğü', assetVersionIssues.length ? 'error' : 'ok', assetVersionIssues.length ? `RC1.4.10 cache etiketiyle eşleşmeyen ${assetVersionIssues.length} yerel asset: ${assetVersionIssues.slice(0,6).join(', ')}` : `${APP_RELEASE.label} · build ${APP_RELEASE.buildDate} · bütün yerel assetler ${APP_RELEASE.cacheTag}.`);
         let storageOk=true; try{localStorage.setItem('__usoap_rc_probe','1');localStorage.removeItem('__usoap_rc_probe');}catch(_){storageOk=false;}
         add('browser-storage', 'Tarayıcı yerel depolama', storageOk ? 'ok' : 'warn', storageOk ? 'localStorage kullanılabilir.' : 'localStorage kapalı; çevrimdışı cache ve bazı tercihler kalıcı olmayabilir.');
         const originalDocMode=String(window.PQ_ORIGINAL_DOCUMENT_STORAGE_MODE||'external').toLowerCase();
@@ -1040,7 +1040,7 @@ const I18N = {
                 pqMasterData = {}; if (Array.isArray(data.pqMasterData)) { data.pqMasterData.forEach(item => { pqMasterData[item.key] = item.data; }); }
                 stripLegacyPqMasterDecisionFields(pqMasterData);
                 dailyPQNotes = {}; if (Array.isArray(data.dailyPQNotes)) { data.dailyPQNotes.forEach(item => { dailyPQNotes[item.key] = item.note; }); }
-                loadedFiles = new Set(data.loadedFiles || []); window.loadedWordAreas = new Set(data.loadedWordAreas || []); loadedExcelFile = data.loadedExcelFile || null; savedManagementNotes = data.managementNotes || ""; dailyReviewedSet = new Set(data.dailyReviewed || []); dailyReviewedPQs = new Set(data.dailyReviewedPQs || []); kanbanWorkflowStages = {}; if (Array.isArray(data.kanbanWorkflowStages)) { data.kanbanWorkflowStages.forEach(item => { if(item && item.key) kanbanWorkflowStages[item.key] = item.value; }); } else { kanbanWorkflowStages = data.kanbanWorkflowStages || {}; } 
+                loadedFiles = new Set(data.loadedFiles || []); window.loadedWordAreas = new Set(data.loadedWordAreas || []); loadedExcelFile = data.loadedExcelFile || null; savedManagementNotes = data.managementNotes || ""; dailyReviewedSet = new Set(data.dailyReviewed || []); dailyReviewedPQs = new Set(data.dailyReviewedPQs || []); reconcileLoadedCapFileRegistry(); kanbanWorkflowStages = {}; if (Array.isArray(data.kanbanWorkflowStages)) { data.kanbanWorkflowStages.forEach(item => { if(item && item.key) kanbanWorkflowStages[item.key] = item.value; }); } else { kanbanWorkflowStages = data.kanbanWorkflowStages || {}; } 
                 document.getElementById('managementNotes').value = savedManagementNotes;
                 window_loadedReportDate = data.reportDate ? new Date(data.reportDate) : null;
                 updateDynamicSubtitle();
@@ -1157,12 +1157,40 @@ const I18N = {
         }
     }
     
-    function removeWordFile(fileName) { loadedFiles.delete(fileName); rawData = rawData.filter(d => d.sourceFile !== fileName); recalculateGlobalStateFromFiles(); refreshAllFilters(); saveToLocalStorage(); renderFileList(); render(); }
+    function clearCapMasterFieldsForSource(fileName) {
+        const target=String(fileName||'');
+        Object.values(pqMasterData||{}).forEach(m=>{
+            if(!m || typeof m!=='object' || String(m.capSourceFile||'')!==target) return;
+            if(String(m.capFindingSource||'')==='cap_word') delete m.bulgu;
+            delete m.capProtocolStatus;
+            delete m.capProtocolReferences;
+            delete m.capFindingSource;
+            delete m.capSourceFile;
+            delete m.capProtocolImportedAt;
+        });
+    }
+    function cleanupCapSourceBeforeReimport(fileName) {
+        const target=String(fileName||'');
+        rawData = (rawData||[]).filter(d=>String((d||{}).sourceFile||'')!==target);
+        clearCapMasterFieldsForSource(target);
+        loadedFiles.delete(target);
+    }
+    function reconcileLoadedCapFileRegistry() {
+        const actual=new Set();
+        (rawData||[]).forEach(d=>{const f=String((d||{}).sourceFile||'').trim();if(f)actual.add(f);});
+        Object.values(pqMasterData||{}).forEach(m=>{const f=String((m||{}).capSourceFile||'').trim();if(f)actual.add(f);});
+        const before=Array.from(loadedFiles||[]);
+        loadedFiles=new Set(actual);
+        return {before,after:Array.from(actual),removed:before.filter(x=>!actual.has(x))};
+    }
+    window.reconcileLoadedCapFileRegistry=reconcileLoadedCapFileRegistry;
+    function removeWordFile(fileName) { cleanupCapSourceBeforeReimport(fileName); recalculateGlobalStateFromFiles(); refreshAllFilters(); saveToLocalStorage({immediate:true}); renderFileList(); render(); }
     function removeExcelFile() { loadedExcelFile = null; renderFileList(); saveToLocalStorage(); render(); }
 
 
     function downloadTemplate() {
         try {
+            if (typeof XLSX === 'undefined') throw new Error('Excel kütüphanesi (XLSX) yüklenemedi. Sayfayı Ctrl+F5 ile yenileyiniz.');
             if (typeof XLSX === 'undefined') throw new Error('Excel kütüphanesi yüklenemedi.');
 
             const headers = ['PQ No', 'Denetim Alanı', 'Sorumlu', 'PQ Sorusu (TR)', 'Bulgu (TR)'];
@@ -1647,43 +1675,47 @@ const I18N = {
     document.getElementById('docxInput').addEventListener('change', async (e) => {
         const files = Array.from(e.target.files || []);
         if (!files.length) return;
+        if (typeof JSZip === 'undefined') {
+            alert('CAP Word okuyucu (JSZip) yüklenemedi. İnternet/CDN bağlantısını kontrol edip sayfayı Ctrl+F5 ile yenileyiniz.');
+            e.target.value='';
+            return;
+        }
         showLoading('Word dosyaları hazırlanıyor...', `${files.length} dosya seçildi.`);
         await yieldToBrowser();
         try {
-            const duplicateIndex = makeCapDuplicateIndexes();
+            let importedFiles=0, replacedFiles=0, totalPq=0, totalActions=0;
             for (let i = 0; i < files.length; i++) {
                 const file = files[i];
-                if (loadedFiles.has(file.name)) {
-                    setLoadingMessage('Word dosyası zaten yüklü.', `${file.name} atlandı (${i + 1}/${files.length}).`);
+                const existed = loadedFiles.has(file.name)
+                    || (rawData||[]).some(d=>String((d||{}).sourceFile||'')===file.name)
+                    || Object.values(pqMasterData||{}).some(m=>String((m||{}).capSourceFile||'')===file.name);
+                if (existed) {
+                    cleanupCapSourceBeforeReimport(file.name);
+                    replacedFiles++;
+                    setLoadingMessage(`Word kaynağı yenileniyor (${i + 1}/${files.length})`, `${file.name} eski ayrıştırılmış kayıtları temizlendi.`);
                     await yieldToBrowser();
-                    continue;
                 }
                 try {
                     setLoadingMessage(`Word dosyası açılıyor (${i + 1}/${files.length})`, file.name);
-                    await yieldToBrowser();
                     const zip = await JSZip.loadAsync(file);
                     await yieldToBrowser();
-                    const documentFile = zip.file("word/document.xml");
-                    if (!documentFile) throw new Error("word/document.xml bulunamadı. Dosya geçerli bir DOCX olmayabilir.");
-
+                    const documentFile = zip.file('word/document.xml');
+                    if (!documentFile) throw new Error('word/document.xml bulunamadı. Dosya geçerli bir DOCX olmayabilir.');
                     setLoadingMessage(`Word içeriği okunuyor (${i + 1}/${files.length})`, file.name);
-                    const xml = await documentFile.async("string");
+                    const xml = await documentFile.async('string');
                     await yieldToBrowser();
-
-                    setLoadingMessage(`Word XML ayrıştırılıyor (${i + 1}/${files.length})`, file.name);
-                    const xmlDoc = new DOMParser().parseFromString(xml, "text/xml");
-                    await yieldToBrowser();
-
+                    const xmlDoc = new DOMParser().parseFromString(xml, 'text/xml');
+                    const duplicateIndex = makeCapDuplicateIndexes();
                     const stats = await parseDocxCapTables(xmlDoc, file.name, { duplicateIndex });
                     loadedFiles.add(file.name);
+                    importedFiles++; totalPq+=Number(stats.pqSections||0); totalActions+=Number(stats.addedActions||0);
                     setLoadingMessage(`Word dosyası işlendi (${i + 1}/${files.length})`, `${file.name}: ${stats.pqSections} PQ · ${stats.addedActions} eylem · ${stats.addedEmptyCaps} boş CAP`);
                     await yieldToBrowser();
                 } catch (err) {
-                    console.error("DOCX parse error:", err);
+                    console.error('DOCX parse error:', err);
                     alert(`${file.name} okunurken hata oluştu: ${err.message || err}`);
                 }
             }
-            setLoadingMessage('Veriler hazırlanıyor...', 'Dosya listesi, filtreler ve gösterge panelleri güncelleniyor.');
             recalculateGlobalStateFromFiles();
             renderFileList();
             await yieldToBrowser();
@@ -1691,15 +1723,19 @@ const I18N = {
             await yieldToBrowser();
             if(window.refreshCapPqLinkage)window.refreshCapPqLinkage({persist:false,silent:true});
             if(typeof window.enrichPqMasterFromPqLibrary==='function')window.enrichPqMasterFromPqLibrary();
-            saveToLocalStorage();
+            saveToLocalStorage({immediate:true});
+            const persisted=await flushPendingSystemSave(false);
             await yieldToBrowser();
             render();
+            if(typeof showAppRuntimeToast==='function') {
+                showAppRuntimeToast(`CAP Word: ${importedFiles} dosya işlendi${replacedFiles?` · ${replacedFiles} kaynak yenilendi`:''} · ${totalPq} PQ · ${totalActions} eylem${persisted?' · Firebase kaydı doğrulandı':' · Firebase kaydı bekliyor'}.`, persisted?'success':'warn');
+            }
         } catch(e) {
             console.error(e);
-            alert("Word dosyasını okurken bir hata oluştu: " + e.message);
+            alert('Word dosyasını okurken bir hata oluştu: ' + e.message);
         } finally {
             hideLoading();
-            e.target.value = "";
+            e.target.value = '';
         }
     });
     
@@ -1707,6 +1743,11 @@ const I18N = {
     document.getElementById('excelInput').addEventListener('change', async (e) => {
         const file = e.target.files[0];
         if (!file) return;
+        if (typeof XLSX === 'undefined') {
+            alert('Excel okuyucu (XLSX) yüklenemedi. İnternet/CDN bağlantısını kontrol edip sayfayı Ctrl+F5 ile yenileyiniz.');
+            e.target.value='';
+            return;
+        }
         showLoading('PQ ek bilgi dosyası okunuyor...', file.name);
         await yieldToBrowser();
         try {
@@ -1770,11 +1811,12 @@ const I18N = {
             await yieldToBrowser();
             refreshAllFilters();
             await yieldToBrowser();
-            saveToLocalStorage();
+            saveToLocalStorage({immediate:true});
+            const persisted = await flushPendingSystemSave(false);
             await yieldToBrowser();
             render();
             if (typeof showAppRuntimeToast === 'function') {
-                showAppRuntimeToast(`PQ ek bilgi yüklendi: ${jsonData.length} satır. Legacy kapanış/validasyon alanları dikkate alınmadı.`, 'success');
+                showAppRuntimeToast(`PQ ek bilgi yüklendi: ${jsonData.length} satır · ${trQuestionImported} TR soru · ${trFindingImported} TR bulgu${persisted?' · Firebase kaydı doğrulandı':' · Firebase kaydı bekliyor'}.`, persisted?'success':'warn');
             }
         } catch (err) {
             console.error(err);
@@ -8011,8 +8053,8 @@ const I18N = {
         const visit=getLatestDashboardIcaoVisitSummary();
         const result={release:APP_RELEASE.label,verificationTypeSample:null,officialVisit:visit?{name:visit.visit.visitName||visit.visit.icaoVisitType,scope:visit.scopeCount,satisfactory:visit.satisfactory,notSatisfactory:visit.notSatisfactory,followUp:visit.followUp,notEvaluated:visit.notEvaluated,draftEi:visit.impact?visit.impact.newPct:null,newSat:visit.impact?visit.impact.newSat:null,total:visit.impact?visit.impact.total:null}:null,pendingNoticeUsesVisit:!!visit};
         try{const first=Object.keys(pqMasterData||{})[0];if(first)result.verificationTypeSample={pq:first,type:getCommonVerificationType(first)};}catch(_){}
-        result.passed=APP_RELEASE.label.includes('RC1.4.9')&&(!visit||visit.scopeCount>=visit.satisfactory);
-        console.log('RC1.4.9 dashboard öz denetimi:',result);return result;
+        result.passed=APP_RELEASE.label.includes('RC1.4.10')&&(!visit||visit.scopeCount>=visit.satisfactory);
+        console.log('RC1.4.10 dashboard öz denetimi:',result);return result;
     };
 
     window.runSimulator = function() {
