@@ -110,6 +110,18 @@
     function pqDbAreaEntries(edition){return Object.entries((edition&&edition.areas)||{}).map(([area,v])=>({area,...(v||{})})).sort((a,b)=>{const ai=PQDB_AREAS.indexOf(a.area),bi=PQDB_AREAS.indexOf(b.area);if(ai>=0||bi>=0)return(ai<0?999:ai)-(bi<0?999:bi);return a.area.localeCompare(b.area);});}
     function pqDbPqList(areaData){return Object.values((areaData&&areaData.pqs)||{}).filter(Boolean).sort((a,b)=>String(a.pq||'').localeCompare(String(b.pq||''),undefined,{numeric:true}));}
     function pqDbAmendments(areaData){return Object.values((areaData&&areaData.amendments)||{}).filter(Boolean);}
+    function pqDbIsNoChangeAmendment(a){
+        const type=String((a&&a.type)||'').trim().toLowerCase().replace(/[\s_-]+/g,' ');
+        const desc=String((a&&a.description)||'').trim().toLowerCase();
+        const oldPq=String((a&&a.oldPq)||'').trim(),newPq=String((a&&a.newPq)||'').trim();
+        if(['no change','no changes','unchanged','none'].includes(type))return true;
+        if(/\bno changes?\b/.test(desc)||/\bunchanged\b/.test(desc))return true;
+        // Legacy parser fallback: some unchanged rows were stored as Revised when no amendment mark/description existed.
+        if(oldPq&&newPq&&oldPq===newPq&&!desc&&(type===''||type==='revised'))return true;
+        return false;
+    }
+    function pqDbEffectiveAmendments(areaData){return pqDbAmendments(areaData).filter(a=>!pqDbIsNoChangeAmendment(a));}
+    function pqDbNoChangeAmendments(areaData){return pqDbAmendments(areaData).filter(pqDbIsNoChangeAmendment);}
     function pqDbEditionLabel(e){return e?`Sürüm ${e.year||'?'} · ${pqDbRevisionLabel(e.revision)}`:'-';}
     function pqDbFlattenRecords(){const out=[];pqDbEditionEntries().forEach(e=>pqDbAreaEntries(e).forEach(a=>out.push({editionKey:e.key,edition:e,area:a.area,areaData:a})));return out;}
     function pqDbChangeClass(v){const x=String(v||'').toLowerCase();if(x==='no change')return'no-change';return x.replace(/\s+/g,'-');}
@@ -117,15 +129,15 @@
     function pqDbControlLabel(p){return String((p&&p.sspComponent)?'SSP Component':'CE');}
 
     function renderPqDbKpis(){
-        const eds=pqDbEditionEntries(),areas=eds.flatMap(e=>pqDbAreaEntries(e)),pqs=areas.flatMap(a=>pqDbPqList(a)),changes=areas.flatMap(a=>pqDbAmendments(a));
+        const eds=pqDbEditionEntries(),areas=eds.flatMap(e=>pqDbAreaEntries(e)),pqs=areas.flatMap(a=>pqDbPqList(a)),changes=areas.flatMap(a=>pqDbEffectiveAmendments(a));
         const vals={pqDbKpiEditions:eds.length,pqDbKpiAreas:areas.length,pqDbKpiPqs:pqs.length,pqDbKpiOnsite:pqs.filter(p=>p.assessmentMode==='On-site').length,pqDbKpiPpq:pqs.filter(p=>p.ppq).length,pqDbKpiChanges:changes.length,pqDbKpiConcepts:Object.keys((icaoPqLibrary&&icaoPqLibrary.concepts)||{}).length};Object.entries(vals).forEach(([id,v])=>{const e=document.getElementById(id);if(e)e.textContent=String(v);});
     }
     function pqDbAreaMeta(area){return PQDB_AREA_META[area]||{icon:'📘',name:area,short:area,range:''};}
     function pqDbAreaRows(area){return pqDbFlattenRecords().filter(r=>r.area===area).sort((a,b)=>String(b.edition.year||'').localeCompare(String(a.edition.year||''),undefined,{numeric:true})||String(b.edition.revision||'').localeCompare(String(a.edition.revision||''),undefined,{numeric:true}));}
     function pqDbAreaActiveContext(area,rows){
         const active=pqDbActiveAreaRecord(area),activeRow=active?rows.find(r=>r.editionKey===active.editionKey):null,latest=rows[0]||null,current=activeRow||latest;
-        const a=current&&current.areaData||{},pqs=pqDbPqList(a),amendments=pqDbAmendments(a);
-        return {active,activeRow,current,pqs,amendments,onSite:pqs.filter(p=>p.assessmentMode==='On-site').length,offSite:pqs.filter(p=>p.assessmentMode==='Off-site').length,ppq:pqs.filter(p=>p.ppq).length};
+        const a=current&&current.areaData||{},pqs=pqDbPqList(a),amendments=pqDbAmendments(a),changes=pqDbEffectiveAmendments(a),noChanges=pqDbNoChangeAmendments(a);
+        return {active,activeRow,current,pqs,amendments,changes,noChanges,onSite:pqs.filter(p=>p.assessmentMode==='On-site').length,offSite:pqs.filter(p=>p.assessmentMode==='Off-site').length,ppq:pqs.filter(p=>p.ppq).length};
     }
     window.getPqLibrarySummary=function(){
         const editions=pqDbEditionEntries();
@@ -158,13 +170,13 @@
         if(!pqDbSelectedArea||!areas.includes(pqDbSelectedArea)){pqDbSelectedArea=areas.find(a=>pqDbAreaRows(a).length)||PQDB_AREAS[0];}
         const cards=areas.map(area=>{
             const rows=pqDbAreaRows(area),ctx=pqDbAreaActiveContext(area,rows),m=pqDbAreaMeta(area),cur=ctx.current,a=cur&&cur.areaData||{},has=!!cur,isSelected=area===pqDbSelectedArea;
-            const ver=cur?String(cur.edition.year||'?'):'—',rev=cur?pqDbRevisionLabel(cur.edition.revision):'Kayıt yok',date=a.publicationDate||'',changeCount=ctx.amendments.length;
+            const ver=cur?String(cur.edition.year||'?'):'—',rev=cur?pqDbRevisionLabel(cur.edition.revision):'Kayıt yok',date=a.publicationDate||'',changeCount=ctx.changes.length,noChangeCount=ctx.noChanges.length;
             return `<button type="button" class="pqdb-area-card area-${escapeHtml(area.toLowerCase())} ${isSelected?'selected':''} ${has?'has-data':'empty'}" onclick="pqDbSelectArea('${escapeHtml(area)}')">
                 <div class="pqdb-area-card-top"><span class="pqdb-area-icon">${m.icon}</span><span class="pqdb-area-code">${escapeHtml(area)}</span><span class="pqdb-area-range">${escapeHtml(m.range)}</span></div>
                 <div class="pqdb-area-card-name">${escapeHtml(m.short)}</div>
                 <div class="pqdb-area-card-version"><span>Aktif / güncel</span><strong>${escapeHtml(ver)}</strong><em>${escapeHtml(rev)}</em></div>
                 <div class="pqdb-area-card-metrics"><span><b>${ctx.pqs.length}</b> PQ</span><span><b>${ctx.onSite}</b> On-site</span><span><b>${ctx.offSite}</b> Off-site</span><span><b>${ctx.ppq}</b> PPQ</span></div>
-                <div class="pqdb-area-card-foot"><span>${has?`${rows.length} kayıt · ${changeCount} değişiklik`:'Henüz PQ dokümanı yüklenmedi'}</span>${ctx.activeRow?'<b class="pqdb-card-active">AKTİF</b>':''}</div>
+                <div class="pqdb-area-card-foot"><span>${has?`${rows.length} kayıt · ${changeCount} değişiklik${noChangeCount?` · ${noChangeCount} değişmedi`:''}`:'Henüz PQ dokümanı yüklenmedi'}</span>${ctx.activeRow?'<b class="pqdb-card-active">AKTİF</b>':''}</div>
                 ${date?`<div class="pqdb-area-card-date">Belge: ${escapeHtml(date)}</div>`:''}
             </button>`;
         }).join('');
@@ -177,12 +189,12 @@
             detailBody=Object.keys(versions).sort((a,b)=>String(b).localeCompare(String(a),undefined,{numeric:true})).map(version=>{
                 const revRows=versions[version].sort((a,b)=>String(b.edition.revision||'').localeCompare(String(a.edition.revision||''),undefined,{numeric:true}));
                 return `<section class="pqdb-version-block"><div class="pqdb-version-block-head"><div><span class="version-label">Sürüm</span><strong>${escapeHtml(version)}</strong></div><span>${revRows.length} revizyon/kayıt</span></div><div class="pqdb-revision-list">${revRows.map(r=>{
-                    const a=r.areaData||{},sd=a.sourceDocument||{},isActive=!!(active&&active.editionKey===r.editionKey),pqCount=pqDbPqList(a).length,amendments=pqDbAmendments(a).length,cloud=sd.status==='stored'?'☁️ Kaynak DOCX':sd.status==='external-planned'?'🔗 Harici arşiv planlı':'🗄️ Yapılandırılmış veri';
-                    return `<article class="pqdb-revision-row ${isActive?'active-record':''}"><div class="pqdb-revision-main"><div class="pqdb-revision-heading"><b>${escapeHtml(pqDbRevisionLabel(r.edition.revision))}</b>${isActive?'<span class="pqdb-badge new">AKTİF</span>':''}</div><div class="pqdb-revision-file">${escapeHtml(a.sourceFile||'-')}</div>${a.note?`<div class="pqdb-revision-note">${escapeHtml(a.note)}</div>`:''}</div><div class="pqdb-revision-meta"><span><b>${pqCount}</b> PQ</span><span><b>${amendments}</b> amendment</span><span>Belge tarihi: <b>${escapeHtml(a.publicationDate||'-')}</b></span><span>${escapeHtml(cloud)}</span></div><div class="pqdb-version-actions"><button type="button" class="btn-outline" onclick="openPqDbEdition('${escapeHtml(r.editionKey)}','${escapeHtml(area)}')">📋 Katalog</button><button type="button" class="btn-outline" onclick="openPqDbMetadataEdit('${escapeHtml(r.editionKey)}','${escapeHtml(area)}')">✏️ Metadata</button>${isActive?'':`<button type="button" class="btn-outline pqdb-active-btn" onclick="setPqDbActiveAreaRecord('${escapeHtml(r.editionKey)}','${escapeHtml(area)}')">✓ Aktif Yap</button>`}</div></article>`;
+                    const a=r.areaData||{},sd=a.sourceDocument||{},isActive=!!(active&&active.editionKey===r.editionKey),pqCount=pqDbPqList(a).length,changes=pqDbEffectiveAmendments(a).length,noChanges=pqDbNoChangeAmendments(a).length,cloud=sd.status==='stored'?'☁️ Kaynak DOCX':sd.status==='external-planned'?'🔗 Harici arşiv planlı':'🗄️ Yapılandırılmış veri';
+                    return `<article class="pqdb-revision-row ${isActive?'active-record':''}"><div class="pqdb-revision-main"><div class="pqdb-revision-heading"><b>${escapeHtml(pqDbRevisionLabel(r.edition.revision))}</b>${isActive?'<span class="pqdb-badge new">AKTİF</span>':''}</div><div class="pqdb-revision-file">${escapeHtml(a.sourceFile||'-')}</div>${a.note?`<div class="pqdb-revision-note">${escapeHtml(a.note)}</div>`:''}</div><div class="pqdb-revision-meta"><span><b>${pqCount}</b> PQ</span><span><b>${changes}</b> değişiklik</span>${noChanges?`<span><b>${noChanges}</b> değişmedi</span>`:''}<span>Belge tarihi: <b>${escapeHtml(a.publicationDate||'-')}</b></span><span>${escapeHtml(cloud)}</span></div><div class="pqdb-version-actions"><button type="button" class="btn-outline" onclick="openPqDbEdition('${escapeHtml(r.editionKey)}','${escapeHtml(area)}')">📋 Katalog</button><button type="button" class="btn-outline" onclick="openPqDbMetadataEdit('${escapeHtml(r.editionKey)}','${escapeHtml(area)}')">✏️ Metadata</button>${isActive?'':`<button type="button" class="btn-outline pqdb-active-btn" onclick="setPqDbActiveAreaRecord('${escapeHtml(r.editionKey)}','${escapeHtml(area)}')">✓ Aktif Yap</button>`}</div></article>`;
                 }).join('')}</div></section>`;
             }).join('');
         }
-        const detail=`<section class="pqdb-area-detail area-${escapeHtml(area.toLowerCase())}"><div class="pqdb-area-detail-head"><div class="pqdb-area-detail-title"><span class="pqdb-area-detail-icon">${m.icon}</span><div><div class="pqdb-area-detail-code">${escapeHtml(area)} <span>${escapeHtml(m.range)}</span></div><h4>${escapeHtml(m.name)}</h4></div></div><div class="pqdb-area-detail-actions"><button type="button" class="btn-outline" onclick="openPqDbAreaCatalog('${escapeHtml(area)}')" ${rows.length?'':'disabled'}>📋 Aktif Kataloğu Aç</button><button type="button" class="btn-outline" onclick="openPqDbAreaCompare('${escapeHtml(area)}')" ${rows.length>1?'':'disabled'}>🔀 Sürüm Kıyasla</button><button type="button" onclick="document.getElementById('pqDbDocxInput').click()">📄 Yeni DOCX</button></div></div>${rows.length?`<div class="pqdb-area-detail-summary"><span><b>${ctx.pqs.length}</b> Aktif PQ</span><span><b>${ctx.onSite}</b> On-site</span><span><b>${ctx.offSite}</b> Off-site</span><span><b>${ctx.ppq}</b> PPQ</span><span><b>${ctx.amendments.length}</b> Amendment</span><span><b>${rows.length}</b> Sürüm/revizyon kaydı</span></div>`:''}<div class="pqdb-area-detail-body">${detailBody}</div></section>`;
+        const detail=`<section class="pqdb-area-detail area-${escapeHtml(area.toLowerCase())}"><div class="pqdb-area-detail-head"><div class="pqdb-area-detail-title"><span class="pqdb-area-detail-icon">${m.icon}</span><div><div class="pqdb-area-detail-code">${escapeHtml(area)} <span>${escapeHtml(m.range)}</span></div><h4>${escapeHtml(m.name)}</h4></div></div><div class="pqdb-area-detail-actions"><button type="button" class="btn-outline" onclick="openPqDbAreaCatalog('${escapeHtml(area)}')" ${rows.length?'':'disabled'}>📋 Aktif Kataloğu Aç</button><button type="button" class="btn-outline" onclick="openPqDbAreaCompare('${escapeHtml(area)}')" ${rows.length>1?'':'disabled'}>🔀 Sürüm Kıyasla</button><button type="button" onclick="document.getElementById('pqDbDocxInput').click()">📄 Yeni DOCX</button></div></div>${rows.length?`<div class="pqdb-area-detail-summary"><span><b>${ctx.pqs.length}</b> Aktif PQ</span><span><b>${ctx.onSite}</b> On-site</span><span><b>${ctx.offSite}</b> Off-site</span><span><b>${ctx.ppq}</b> PPQ</span><span><b>${ctx.changes.length}</b> Değişiklik</span>${ctx.noChanges.length?`<span><b>${ctx.noChanges.length}</b> Değişmedi</span>`:''}<span><b>${rows.length}</b> Sürüm/revizyon kaydı</span></div>`:''}<div class="pqdb-area-detail-body">${detailBody}</div></section>`;
         grid.innerHTML=`<div class="pqdb-area-card-grid">${cards}</div>${detail}`;
     }
     function openPqDbEdition(key,area){setPqDbView('catalog');const sel=document.getElementById('pqDbCatalogEdition');if(sel)sel.value=key;pqDbCatalogEditionChanged(false);const areaSel=document.getElementById('pqDbCatalogArea');if(areaSel&&area&&[...areaSel.options].some(o=>o.value===area))areaSel.value=area;pqDbCatalogEditionChanged();}

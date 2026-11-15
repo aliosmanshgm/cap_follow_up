@@ -1,6 +1,6 @@
 {
   "app": "USOAP CMA CAP Takip",
-  "version": "18.2-phase15-ssp-pq-ui-hotfix",
+  "version": "18.3-phase15-pq-change-count-hotfix",
   "baseline": "index_visit_hub_pq_version_database(2).html",
   "buildDate": "2026-11-15",
   "features": [
@@ -84,7 +84,10 @@
     "firebase-safe-pq-concept-alias-keys",
     "ssp-pq-library-area-support",
     "ssp-9xxx-range-display",
-    "ssp-metadata-edit-support"
+    "ssp-metadata-edit-support",
+    "pq-effective-change-count-excludes-no-change",
+    "pq-change-nochange-separated-display",
+    "pq-parser-unchanged-row-classification"
   ],
   "architecture": {
     "index": "index.html",

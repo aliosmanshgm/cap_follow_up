@@ -143,15 +143,18 @@
     for(let i=0;i<norm.length;i++)if(aNorm.some(a=>a.length>=4&&norm[i].includes(a)))return i;
     return-1;
   }
-  function amendmentTypeFromColumns(row,cols,description){
+  function amendmentTypeFromColumns(row,cols,description,oldPq,newPq){
     const tests=[['New',cols.new],['Revised',cols.revised],['Deleted',cols.deleted],['Merged',cols.merged],['No change',cols.noChange]];
     for(const [name,idx] of tests){if(idx>=0&&/[✔✓xX]/.test(String(row[idx]||'')))return name;}
-    const desc=String(description||'');
-    if(/\bno change\b/i.test(desc))return'No change';
+    const desc=String(description||'').trim();
+    if(/\bno changes?\b/i.test(desc)||/\bunchanged\b/i.test(desc))return'No change';
     if(/deleted and merged/i.test(desc))return'Deleted';
     if(/\bnew pq\b/i.test(desc))return'New';
     if(/merged with/i.test(desc))return'Merged';
     if(/deleted/i.test(desc))return'Deleted';
+    if(oldPq&&newPq&&oldPq===newPq&&!desc)return'No change';
+    if(!oldPq&&newPq)return'New';
+    if(oldPq&&!newPq)return'Deleted';
     return'Revised';
   }
   function parseAmendmentTable(table,meta){
@@ -177,7 +180,7 @@
       const oldPq=normalizePQ(r[0]||''),newPq=normalizePQ(r[1]||'');
       if(!oldPq&&!newPq)continue;
       const descIndex=r.length-1,description=String(r[descIndex]||'').trim();
-      records.push({id:String(records.length+1),oldPq,newPq,type:amendmentTypeFromColumns(r,cols,description),description});
+      records.push({id:String(records.length+1),oldPq,newPq,type:amendmentTypeFromColumns(r,cols,description,oldPq,newPq),description});
     }
     return{records,meta:ameta};
   }
