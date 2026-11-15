@@ -157,6 +157,15 @@
     if(oldPq&&!newPq)return'Deleted';
     return'Revised';
   }
+  function summarizeAmendmentGroup(rows){
+    const types=(rows||[]).map(r=>String((r&&r.type)||'').trim());
+    if(types.includes('Merged'))return'Merged';
+    if(types.includes('New'))return'New';
+    if(types.includes('Revised'))return'Revised';
+    if(types.length&&types.every(t=>t==='No change'))return'No change';
+    if(types.includes('No change')&&!types.some(t=>['Merged','New','Revised'].includes(t)))return'No change';
+    return types.find(Boolean)||'';
+  }
   function parseAmendmentTable(table,meta){
     const trs=tableRows(table),rows=trs.map(rowTexts);
     if(!rows.length)return null;
@@ -251,8 +260,14 @@
     }
     pqs=[...dedup.values()];
 
-    const byNew=new Map(amendments.filter(a=>a.newPq).map(a=>[a.newPq,a]));
-    pqs=pqs.map(p=>{const a=byNew.get(p.pq);return a?{...p,previousPq:a.oldPq||'',changeType:a.type||'',changeDescription:a.description||''}:p;});
+    const byNew=new Map();
+    for(const a of amendments.filter(a=>a.newPq)){if(!byNew.has(a.newPq))byNew.set(a.newPq,[]);byNew.get(a.newPq).push(a);}
+    pqs=pqs.map(p=>{
+      const rows=byNew.get(p.pq)||[];if(!rows.length)return p;
+      const previousPqs=[...new Set(rows.map(a=>a.oldPq).filter(Boolean))];
+      const descriptions=[...new Set(rows.map(a=>String(a.description||'').trim()).filter(Boolean))];
+      return{...p,previousPq:previousPqs[0]||'',previousPqs,changeType:summarizeAmendmentGroup(rows),changeDescription:descriptions.join(' | ')};
+    });
 
     if(!pqs.length){
       const headers=diagnostics.headers.filter(Boolean);
@@ -299,7 +314,10 @@
     if(missingCe)warnings.push(`${missingCe} PQ'da CE boş veya beklenen CE-1…CE-8 formatında değil.`);
     if(missingSspComponent)warnings.push(`${missingSspComponent} SSP PQ'sunda SSP Component boş.`);
     if(!amendments.length)warnings.push('Summary of Amendments tablosu bulunmadı veya boş.');
-    const metrics={pqCount:pqs.length,onSite:pqs.filter(p=>p.onSite).length,offSite:pqs.filter(p=>!p.onSite).length,ppq:pqs.filter(p=>p.ppq).length,auditorNotes:pqs.filter(p=>p.auditorNote).length,amendments:amendments.length,missingQuestion,missingGuidance,missingRefs,missingCe,missingSspComponent};
+    const changeCounts={New:0,Revised:0,Merged:0,'No change':0,Unknown:0};
+    for(const p of pqs){const t=String(p.changeType||'').trim();if(Object.prototype.hasOwnProperty.call(changeCounts,t))changeCounts[t]++;else changeCounts.Unknown++;}
+    const deletedCount=new Set(amendments.filter(a=>a.type==='Deleted'&&!a.newPq&&a.oldPq).map(a=>a.oldPq)).size;
+    const metrics={pqCount:pqs.length,onSite:pqs.filter(p=>p.onSite).length,offSite:pqs.filter(p=>!p.onSite).length,ppq:pqs.filter(p=>p.ppq).length,auditorNotes:pqs.filter(p=>p.auditorNote).length,amendments:amendments.length,amendmentTypes:{newCount:changeCounts.New,revisedCount:changeCounts.Revised,mergedCount:changeCounts.Merged,noChangeCount:changeCounts['No change'],unknownCount:changeCounts.Unknown,deletedCount},missingQuestion,missingGuidance,missingRefs,missingCe,missingSspComponent};
     return{valid:errors.length===0,errors,warnings,metrics};
   }
   window.PQDocxParser={parseFile,parseXml,validate,normalizePQ};

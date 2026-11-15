@@ -1,6 +1,6 @@
 {
   "app": "USOAP CMA CAP Takip",
-  "version": "18.3-phase15-pq-change-count-hotfix",
+  "version": "18.4-phase15-pq-change-distribution-hotfix",
   "baseline": "index_visit_hub_pq_version_database(2).html",
   "buildDate": "2026-11-15",
   "features": [
