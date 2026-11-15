@@ -13,7 +13,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.10/pdfmake.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.10/vfs_fonts.js"></script>
-    <link rel="stylesheet" href="css/app.css?v=20261115-v1.0-rc1.2">
+    <link rel="stylesheet" href="css/app.css?v=20261115-v1.0-rc1.3">
 </head>
 <body>
 
@@ -79,7 +79,7 @@
                         <button class="legacy-route-btn" onclick="switchTab('past')" id="btn-tab-past">Geciken</button>
                         <button class="legacy-route-btn" onclick="switchTab('kanban')" id="btn-tab-kanban">Kanban</button>
                         <button class="legacy-route-btn" onclick="switchTab('empty-caps')" id="btn-tab-empty-caps">CAP Eksiklikleri</button>
-                        <button class="legacy-route-btn" onclick="switchTab('icao-closed')" id="btn-tab-icao-closed">ICAO Kapatılanlar</button>
+                        <button class="legacy-route-btn" onclick="switchTab('icao-closed')" id="btn-tab-icao-closed">Resmî Satisfactory PQ'lar</button>
                     </div>
                     <button class="tab-btn" onclick="switchTab('validation-readiness')" id="btn-tab-validation-readiness">🎯 Validasyon Hazırlığı</button>
                     <button class="tab-btn" type="button" onclick="return switchTab('visits')" id="btn-tab-visit-hub">🧭 Ziyaret Yönetimi</button>
@@ -149,7 +149,7 @@
                 <button onclick="toggleFiltersPanel()" class="btn-outline header-primary-action">🔎 Filtreler</button>
                 <button type="button" id="activeScreenPdfBtn" onclick="exportPDF()" style="background:#dc2626;" title="Aktif ekranı PDF olarak dışa aktar">📄 Ekran PDF</button>
                 <button id="activeScreenExcelBtn" onclick="exportExcel()" style="background:#059669;" title="Aktif ekranı Excel olarak dışa aktar">📊 Ekran Excel</button>
-                <button type="button" id="appReleaseBadge" class="system-connection-badge ok release-badge" onclick="openSystemHealthModal()" title="Release Candidate sistem kontrolünü aç">RC1.2 · v1.0</button>
+                <button type="button" id="appReleaseBadge" class="system-connection-badge ok release-badge" onclick="openSystemHealthModal()" title="Release Candidate sistem kontrolünü aç">RC1.3 · v1.0</button>
                 <button type="button" id="systemConnectionBadge" class="system-connection-badge checking" onclick="openSystemHealthModal()" title="Sistem bağlantı ve kayıt durumunu görüntüle">⚪ Kontrol ediliyor</button>
                 <div class="more-actions-wrap">
                     <button class="btn-outline" onclick="toggleMoreActions(event)">⚙️ Diğer <span style="font-size:10px;">▼</span></button>
@@ -195,11 +195,11 @@
                         <div id="stateSnapshotStatusDataPanel" class="icao-ei-status"></div>
                     </section>
                     <section class="data-panel-card" style="border-style:dashed;">
-                        <h4>🧳 Legacy Excel Master <span style="font-size:9px;color:var(--warn);">(opsiyonel / geçiş)</span></h4>
-                        <p style="font-size:10px;color:var(--muted);line-height:1.45;margin:0 0 8px;">Yeni kaynak-of-truth değildir. Yalnız eski TR metin, sorumluluk ve tarihsel validasyon/kapanış bilgisini taşımak için kullanılır; PQ yapısı ve EI bunun üzerinden yönetilmez.</p>
+                        <h4>🧩 PQ Ek Bilgi / TR-Fallback <span style="font-size:9px;color:var(--muted);">(opsiyonel)</span></h4>
+                        <p style="font-size:10px;color:var(--muted);line-height:1.45;margin:0 0 8px;">Yalnız PQ bazında Türkçe soru/bulgu metni ile sorumlu fallback bilgisini taşır. Resmî S/NS/N-A, EI, ziyaret kapsamı ve validasyon sonucu bu dosyadan üretilmez.</p>
                         <div style="display:flex;gap:6px;align-items:center;">
                             <input type="file" id="excelInput" accept=".xlsx, .xls">
-                            <button onclick="downloadTemplate()" class="btn-outline" title="Legacy migration dosyası dışa aktar">📦 Legacy Dışa Aktar</button>
+                            <button onclick="downloadTemplate()" class="btn-outline" title="PQ ek bilgi şablonunu dışa aktar">📄 Şablon / Dışa Aktar</button>
                         </div>
                         <div id="excelFileList" class="file-list-container"></div>
                         <div id="eiStatusTxt" style="margin-top:6px;font-size:11px;display:none;"></div>
@@ -360,10 +360,9 @@
                 <div style="margin-top:12px;border-top:1px solid var(--border);padding-top:10px;">
                     <label>Findings-only dosyada denominator kaynağı</label>
                     <select id="icaoEiAutoDenominator" onchange="recalculateIcaoEiAutoPreview()">
-                        <option value="latest">Son resmî EI snapshot → yoksa EI Referans Excel</option>
-                        <option value="master">EI Referans Excel / baseEIData</option>
+                        <option value="latest">Son resmî State Snapshot</option>
                     </select>
-                    <div class="icao-ei-auto-help">Tam PQ durum export'unda bu seçim kullanılmaz. StateLivePQFindings gibi yalnız bulgu dosyalarında benzersiz bulgu PQ sayısı denominator'dan düşülür.</div>
+                    <div class="icao-ei-auto-help">Findings-only dosyalarda denominator yalnız son resmî State Snapshot üzerinden alınır; legacy EI Referans Excel kullanılmaz.</div>
                 </div>
                 <div id="icaoEiAutoStatusText" class="icao-ei-status" aria-live="polite">Kaynak seçiniz.</div>
             </section>
@@ -410,7 +409,7 @@
                     <button type="button" class="ready-filter-btn" data-ready-filter="evidence_waiting" onclick="applyReadyFilter('evidence_waiting')"><span class="ready-filter-icon">📎</span><span>Kanıt Bekleyenler</span></button>
                     <button type="button" class="ready-filter-btn" data-ready-filter="empty_cap" onclick="applyReadyFilter('empty_cap')"><span class="ready-filter-icon">🕳️</span><span>CAP Yok / Eylem Boş</span></button>
                     <button type="button" class="ready-filter-btn" data-ready-filter="missing_office" onclick="applyReadyFilter('missing_office')"><span class="ready-filter-icon">🏢</span><span>Sorumlu Ofisi Eksik</span></button>
-                    <button type="button" class="ready-filter-btn navigation" data-ready-action="official_closed" onclick="applyReadyFilter('official_closed')"><span class="ready-filter-icon">🏆</span><span>ICAO Kapatılanlar</span></button>
+                    <button type="button" class="ready-filter-btn navigation" data-ready-action="official_closed" onclick="applyReadyFilter('official_closed')"><span class="ready-filter-icon">🏆</span><span>Resmî Satisfactory PQ'lar</span></button>
                 </div>
                 <div id="activeReadyFilterInfo" class="active-ready-filter-info"></div>
                 <p class="ready-filter-help">Hazır filtre, alan, CE, ofis, personel, doğrulama türü ve arama seçimleriyle birlikte çalışır. Yeni bir hazır filtre seçildiğinde yalnızca çakışabilecek durum ve tarih seçimleri temizlenir.</p>
@@ -435,9 +434,9 @@
             </div>
 
             <div class="control-group" style="background: rgba(234, 179, 8, 0.05); padding: 8px; border-radius: 6px; border: 1px dashed #eab308;">
-                <label style="color: #ca8a04;">🏆 ICAO Validasyon Durumu</label>
+                <label style="color: #ca8a04;">📊 Resmî PQ Durumu</label>
                 <div class="checkbox-list" id="icaoValidationFilterList" style="border-color: #fde047; min-height: auto;">
-                    <label><input type="checkbox" value="icao-closed" onchange="render()"><span style="font-weight:bold; color:#a16207;">🏆 ICAO Tarafından Resmen Kapatılanlar</span></label>
+                    <label><input type="checkbox" value="icao-closed" onchange="render()"><span style="font-weight:bold; color:#a16207;">✓ State Snapshot: Satisfactory</span></label>
                 </div>
             </div>
 
@@ -1835,7 +1834,7 @@
 
                 <div class="visit-scope-toolbar">
                     <div><label>PQ / bulgu / CAP / ofis ara</label><input id="visitScopeSearch" type="text" placeholder="PQ, soru, bulgu, eylem veya ofis..." oninput="renderVisitScopeCandidates()"></div>
-                    <div><label>Kapsam havuzu</label><select id="visitScopePoolFilter" onchange="renderVisitScopeCandidates()"><option value="auto">Otomatik (ziyaret türüne göre)</option><option value="open_cap">Yalnız ICAO açık CAP'ler</option><option value="nonvalidated">Tüm ICAO valide edilmemiş PQ'lar</option><option value="all">Tüm uygun PQ'lar</option></select></div>
+                    <div><label>Kapsam havuzu</label><select id="visitScopePoolFilter" onchange="renderVisitScopeCandidates()"><option value="auto">Otomatik (tüm uygun PQ'lar)</option><option value="open_cap">CAP bilgisi bulunan PQ'lar</option><option value="nonvalidated">Bu ziyarette nihai sonucu girilmemiş PQ'lar</option><option value="all">Tüm uygun PQ'lar</option></select></div>
                     <div><label>Durum görünümü</label><select id="visitScopeStatusFilter" onchange="renderVisitScopeCandidates()"><option value="all">Tüm durumlar</option><option value="open">Açık PQ'lar</option><option value="late">Gecikmiş adımı olanlar</option><option value="date_risk">Tarih riski olanlar</option><option value="cap_completed">CAP tamamlandı</option><option value="official">ICAO kapattı</option><option value="no_cap">CAP yok / boş</option></select></div>
                     <div><label>Adım görünümü</label><select id="visitScopeStepFilter" onchange="renderVisitScopeCandidates()"><option value="all">Tüm adımlar</option><option value="open">Yalnız açık</option><option value="late">Yalnız gecikmiş</option><option value="date_risk">Yalnız tarih riski</option><option value="done">Yalnız tamamlanan</option></select></div>
                     <button type="button" class="btn-outline" onclick="clearVisitScopeLocalFilters()">✖ Görünüm filtrelerini temizle</button>
@@ -2361,7 +2360,7 @@
         <div id="tab-icao-closed" class="tab-content">
             <div class="table-wrapper" style="border: 1px solid #fde047;">
                 <h4 style="margin: 0; padding: 15px; background: rgba(234, 179, 8, 0.1); border-bottom: 2px solid #eab308; color: #ca8a04; font-size: 14px;">
-                    🏆 ICAO Tarafından Kapatılanlar (Excel Kayıtları)
+                    ✓ Resmî Satisfactory PQ'lar (State Snapshot)
                 </h4>
                 <p style="padding: 10px 15px 0 15px; margin:0; font-size: 12px; color: var(--muted);">Not: Bu tablodaki PQ'lar, Excel dosyasında "ICAO KAPATTI MI" sütunu "EVET" olarak işaretlenmiş olanlardır. "Bulgu" olmaktan çıktıkları için ana listeleri ve grafikleri etkilemezler (sadece Güncel EI hesabı gibi genel istatistiklere dahil olurlar). Yalnızca takip amaçlı listelenmektedir.</p>
                 <div style="padding: 15px;" id="icaoClosedListContainer"></div>
@@ -2522,26 +2521,26 @@
 </div>
 
 
-<script src="js/app.js?v=20261115-v1.0-rc1.2"></script>
-<script src="js/modules/access-control.js?v=20261115-v1.0-rc1.2"></script>
-<script src="js/modules/visit-sync.js?v=20261115-v1.0-rc1.2"></script>
-<script src="js/modules/visit-hub.js?v=20261115-v1.0-rc1.2"></script>
-<script src="js/modules/state-compliance.js?v=20261115-v1.0-rc1.2"></script>
-<script src="js/modules/assessment-events.js?v=20261115-v1.0-rc1.2"></script>
-<script src="js/modules/official-ei-management.js?v=20261115-v1.0-rc1.2"></script>
-<script src="js/modules/official-ei-automation.js?v=20261115-v1.0-rc1.2"></script>
-<script src="js/parsers/pq-docx-parser.js?v=20261115-v1.0-rc1.2"></script>
-<script src="js/modules/pq-linkage.js?v=20261115-v1.0-rc1.2"></script>
-<script src="js/modules/validation-readiness.js?v=20261115-v1.0-rc1.2"></script>
-<script src="js/modules/assessment-impact.js?v=20261115-v1.0-rc1.2"></script>
-<script src="js/modules/management-shell.js?v=20261115-v1.0-rc1.2"></script>
-<script src="js/modules/drive-documents.js?v=20261115-v1.0-rc1.2"></script>
-<script src="js/services/pq-repository.js?v=20261115-v1.0-rc1.2"></script>
-<script src="js/modules/pq-library.js?v=20261115-v1.0-rc1.2"></script>
-<script src="js/modules/responsibility-registry.js?v=20261115-v1.0-rc1.2"></script>
-<script src="js/modules/system-integrity.js?v=20261115-v1.0-rc1.2"></script>
-<script src="js/modules/action-center.js?v=20261115-v1.0-rc1.2"></script>
-<script src="js/modules/notification-center.js?v=20261115-v1.0-rc1.2"></script>
-<script src="js/modules/reporting-center.js?v=20261115-v1.0-rc1.2"></script>
+<script src="js/app.js?v=20261115-v1.0-rc1.3"></script>
+<script src="js/modules/access-control.js?v=20261115-v1.0-rc1.3"></script>
+<script src="js/modules/visit-sync.js?v=20261115-v1.0-rc1.3"></script>
+<script src="js/modules/visit-hub.js?v=20261115-v1.0-rc1.3"></script>
+<script src="js/modules/state-compliance.js?v=20261115-v1.0-rc1.3"></script>
+<script src="js/modules/assessment-events.js?v=20261115-v1.0-rc1.3"></script>
+<script src="js/modules/official-ei-management.js?v=20261115-v1.0-rc1.3"></script>
+<script src="js/modules/official-ei-automation.js?v=20261115-v1.0-rc1.3"></script>
+<script src="js/parsers/pq-docx-parser.js?v=20261115-v1.0-rc1.3"></script>
+<script src="js/modules/pq-linkage.js?v=20261115-v1.0-rc1.3"></script>
+<script src="js/modules/validation-readiness.js?v=20261115-v1.0-rc1.3"></script>
+<script src="js/modules/assessment-impact.js?v=20261115-v1.0-rc1.3"></script>
+<script src="js/modules/management-shell.js?v=20261115-v1.0-rc1.3"></script>
+<script src="js/modules/drive-documents.js?v=20261115-v1.0-rc1.3"></script>
+<script src="js/services/pq-repository.js?v=20261115-v1.0-rc1.3"></script>
+<script src="js/modules/pq-library.js?v=20261115-v1.0-rc1.3"></script>
+<script src="js/modules/responsibility-registry.js?v=20261115-v1.0-rc1.3"></script>
+<script src="js/modules/system-integrity.js?v=20261115-v1.0-rc1.3"></script>
+<script src="js/modules/action-center.js?v=20261115-v1.0-rc1.3"></script>
+<script src="js/modules/notification-center.js?v=20261115-v1.0-rc1.3"></script>
+<script src="js/modules/reporting-center.js?v=20261115-v1.0-rc1.3"></script>
 </body>
 </html>
