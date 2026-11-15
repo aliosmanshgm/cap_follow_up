@@ -8,7 +8,7 @@ const read = p => fs.readFileSync(path.join(root,p),'utf8');
 const exists = p => fs.existsSync(path.join(root,p));
 const html = read('index.html');
 const manifest = JSON.parse(read('app-manifest.json'));
-const expectedCache = '20261115-v1.0-rc1';
+const expectedCache = '20261115-v1.0-rc1.1';
 const failures=[]; const warnings=[]; const passes=[];
 const pass=(name,detail='')=>passes.push({name,detail});
 const fail=(name,detail='')=>failures.push({name,detail});
@@ -61,7 +61,7 @@ const btnNoTab=[...btns].filter(x=>!tabs.has(x)&&!virtual.has(x));
 (tabsNoBtn.length||btnNoTab.length)?fail('Tab / Hub rotaları',`tabsNoBtn=${tabsNoBtn.join(',')} btnNoTab=${btnNoTab.join(',')}`):pass('Tab / Hub rotaları',`${tabs.size} ekran + ${virtual.size} sanal Hub`);
 
 // 7. Manifest / release
-manifest.version==='1.0.0-rc1'?pass('Manifest sürümü',manifest.version):fail('Manifest sürümü',String(manifest.version));
+manifest.version==='1.0.0-rc1.1'?pass('Manifest sürümü',manifest.version):fail('Manifest sürümü',String(manifest.version));
 manifest.releaseChannel==='release-candidate'?pass('Release channel','release-candidate'):fail('Release channel',String(manifest.releaseChannel));
 
 // 8. Public OAuth pages
@@ -70,7 +70,7 @@ const privacy=read('privacy.html');
 /drive\.file/i.test(privacy)?pass('Privacy Drive scope açıklaması'):warn('Privacy Drive scope açıklaması','drive.file ifadesi bulunamadı');
 
 // 9. Firebase Rules security assertions
-const rules=JSON.parse(read('firebase/database.rules.phase16.json')).rules;
+const rules=JSON.parse(read('firebase/database.rules.rc1_1.json')).rules;
 rules['.read']===false&&rules['.write']===false?pass('Firebase root deny'):fail('Firebase root deny','root read/write false değil');
 const userWrite=rules.icao_access_control?.users?.['$uid']?.['.write']||'';
 /user.*owner/i.test(userWrite)&&/manager/.test(userWrite)&&/!root\.child\('icao_access_control\/users'\)\.exists\(\)/.test(userWrite)?pass('Access bootstrap + yönetici sınırı'):fail('Access bootstrap + yönetici sınırı',userWrite.slice(0,240));
@@ -85,6 +85,11 @@ const actionManual=rules.icao_action_center?.manual?.['.write']||'';
 const notif=rules.icao_notification_center?.users?.['$uid']?.['.write']||'';
 /auth\.uid === \$uid/.test(notif)?pass('Bildirim kullanıcı izolasyonu'):fail('Bildirim kullanıcı izolasyonu',notif);
 
+const stateRules=rules.icao_state_snapshots||{};
+stateRules['.read']&&stateRules['.write']&&!String(stateRules['.write']).includes("'specialist'")?pass('State Snapshot rol sınırı'):fail('State Snapshot rol sınırı');
+const respRules=rules.icao_responsibility_registry||{};
+respRules['.read']&&respRules['.write']&&!String(respRules['.write']).includes("'specialist'")?pass('Sorumluluk registry rol sınırı'):fail('Sorumluluk registry rol sınırı');
+
 // 10. Source-code regression guards
 const pqLib=read('js/modules/pq-library.js');
 const parser=read('js/parsers/pq-docx-parser.js');
@@ -95,10 +100,18 @@ const drive=read('js/modules/drive-documents.js');
 /summarizeAmendmentGroup/.test(parser)&&/oldPq===newPq&&!desc/.test(parser)?pass('PQ parser No change/Merged koruması'):fail('PQ parser No change/Merged koruması');
 /replace\(\/\[\.#\$\\\[\\\]\\\/\]\/g,'_'\)/.test(linkage)?pass('Firebase-safe PQ alias key'):warn('Firebase-safe PQ alias key','regex imzası doğrulanamadı');
 /https:\/\/www\.googleapis\.com\/auth\/drive\.file/.test(drive)?pass('Google Drive dar kapsam'):fail('Google Drive dar kapsam');
+
+const stateCompliance=read('js/modules/state-compliance.js');
+const officialMgmt=read('js/modules/official-ei-management.js');
+const responsibility=read('js/modules/responsibility-registry.js');
+/state_snapshots|icao_state_snapshots/.test(stateCompliance)&&/compareStateComplianceSnapshots/.test(stateCompliance)?pass('State Snapshot source-of-truth modülü'):fail('State Snapshot source-of-truth modülü');
+/eventMetrics/.test(officialMgmt)&&/scopeApplicable/.test(officialMgmt)&&/stateSnapshotId/.test(officialMgmt)?pass('Assessment scope / Overall ayrımı'):fail('Assessment scope / Overall ayrımı');
+/PQ Concept ID/.test(responsibility)&&/icao_responsibility_registry/.test(responsibility)?pass('Sorumluluk registry'):fail('Sorumluluk registry');
+/parseCapProtocolRow/.test(read('js/app.js'))&&/capFindingSource/.test(read('js/app.js'))?pass('CAP Word PROTOCOL FINDING kaynağı'):fail('CAP Word PROTOCOL FINDING kaynağı');
 /localStorage[^\n]*(?:accessToken|refreshToken)|sessionStorage[^\n]*(?:accessToken|refreshToken)/i.test(drive)?fail('Drive token kalıcılığı','token storage paterni bulundu'):pass('Drive token kalıcılığı','erişim tokenı yalnız bellek state içinde');
 
 // 11. Module self-check exports exist in source
-for(const fn of ['runPqLibrarySelfCheck','runDriveDocumentsSelfCheck','runVisitHubSelfCheck','runValidationReadinessSelfCheck','runAssessmentImpactSelfCheck','runSystemIntegritySelfCheck','runActionCenterSelfCheck','runNotificationCenterSelfCheck','runReportingCenterSelfCheck','runAccessControlSelfCheck']){
+for(const fn of ['runStateComplianceSelfCheck','runResponsibilityRegistrySelfCheck','runOfficialEiSourceOfTruthSelfCheck','runPqLibrarySelfCheck','runDriveDocumentsSelfCheck','runVisitHubSelfCheck','runValidationReadinessSelfCheck','runAssessmentImpactSelfCheck','runSystemIntegritySelfCheck','runActionCenterSelfCheck','runNotificationCenterSelfCheck','runReportingCenterSelfCheck','runAccessControlSelfCheck']){
   jsText.includes(`window.${fn}`)?pass(`SelfCheck ${fn}`):fail(`SelfCheck ${fn}`,'export yok');
 }
 

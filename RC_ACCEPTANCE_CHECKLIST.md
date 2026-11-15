@@ -1,62 +1,60 @@
-# v1.0 RC1 — Canlı Kabul Kontrol Listesi
+# v1.0 RC1.1 — Canlı Kabul Kontrol Listesi
 
-Bu liste GitHub Pages üzerinde gerçek Firebase verisiyle bir kez uygulanmalıdır. Statik ve sentetik testler otomatik olarak çalıştırılmıştır; aşağıdaki maddeler gerçek servis/hesap gerektirdiği için canlı kontroldür.
+## A. Release / servis
+- [ ] Üst rozet `RC1.1 · v1.0` gösteriyor.
+- [ ] Firebase Auth giriş başarılı.
+- [ ] Sistem Sağlığı RC blokajı 0 veya açıklanmış veri eksiklerine indirildi.
+- [ ] Google Drive bağlantısı varsa mevcut OAuth akışı çalışıyor.
 
-## A. Dağıtım ve temel açılış
-- [ ] `firebase/database.rules.phase16.json` Realtime Database Rules olarak Publish edildi.
-- [ ] Changed ZIP repository köküne çıkarıldı ve GitHub Pages deploy başarılı.
-- [ ] Ctrl+F5 sonrası üst çubukta `RC1 · v1.0` rozeti görülüyor.
-- [ ] Sistem Kontrolü > `RC Kabul Öz Denetimi` çalışıyor ve **RC blokajı = 0**.
-- [ ] Browser Console'da uygulama kaynaklı uncaught error yok.
+## B. PQ Word / PQ DB
+- [ ] LEG–AGA ve SSP kartları açılıyor.
+- [ ] SSP `9.xxx` gösterimi doğru.
+- [ ] Revised / Merged / New / No change / Deleted dağılımları doğru.
+- [ ] PQ yapısal alanları legacy Excel'e ihtiyaç olmadan görüntüleniyor.
 
-## B. PQ Veri Tabanı
-- [ ] LEG–AGA kartları ve SSP kartı açılıyor.
-- [ ] SSP kartı `9.xxx` gösteriyor; metadata düzenlemede SSP seçilebiliyor.
-- [ ] PEL kartında gerçek veri için beklenen dağılım kontrol edildi (referans: 35 Revised, 2 Merged, 11 New, 52 No change; Deleted kaynağa göre).
-- [ ] ORG'de gerçek değişiklik yoksa Revised/Merged/New = 0 ve No change doğru görünüyor.
-- [ ] Metadata güncellemesinde `invalid key (9.001)` hatası oluşmuyor.
-- [ ] `Firebase Lineage İndeksini Yeniden Kur` işlemi hata vermiyor.
+## C. CAP Word
+- [ ] CAP Word yükleniyor.
+- [ ] PQ eşleşiyor.
+- [ ] Protocol Question görüntüleniyor.
+- [ ] Critical Element görüntüleniyor.
+- [ ] `PROTOCOL FINDING` CAP Word'den geliyor.
+- [ ] CAP adımları ve hedef tarihler korunuyor.
 
-## C. CAP / Validasyon / Ziyaret zinciri
-- [ ] Bir CAP kaydı PQ Concept ile bağlı görünüyor.
-- [ ] Tamamlanmış uygun CAP validasyon adayı olarak görünüyor.
-- [ ] Aday bir ziyarete atanabiliyor ve ziyaret scope'una PQ/CAP snapshot ekleniyor.
-- [ ] Ziyaret Yönetimi Hub 6 aşamada açılıyor: Planlama / Hazırlık / Saha / Takip / Sonuç / Geçmiş.
-- [ ] Ziyaret PDF/Excel çıktısı alınabiliyor.
+## D. Full PQ Status / State Snapshot
+- [ ] Full Status dosyası sistem tarafından full-status olarak tanınıyor.
+- [ ] Her PQ S / NS / NA olarak normalize ediliyor.
+- [ ] Overall Satisfactory ve Applicable otomatik hesaplanıyor.
+- [ ] Overall EI formülle otomatik hesaplanıyor.
+- [ ] LEG–AGA alan S / Applicable / EI değerleri otomatik hesaplanıyor.
+- [ ] SSP Overall EI denominator'ına dahil edilmiyor.
+- [ ] Önceki snapshot ile status transition özeti oluşuyor.
 
-## D. EI / Assessment
-- [ ] Resmî EI kayıtları açılıyor.
-- [ ] Assessment Event + EI Snapshot bağlantısı Sistem Bütünlüğünde kritik hata üretmiyor.
-- [ ] EI & Değerlendirme ekranında CMAA → OSVA → ICVM kronolojisi doğru.
-- [ ] Kapsam dışı alanlar yeniden değerlendirilmiş gibi gösterilmiyor.
-- [ ] Draft/Provisional ve projeksiyon resmî EI'den ayrı.
+## E. Assessment Event / EI ayrımı
+- [ ] ICVM `60/85` gibi ziyaret kapsam sayıları Event Scope Metrics olarak gösteriliyor.
+- [ ] Bu değerler State Overall S / Applicable alanına yazılmıyor.
+- [ ] Event tarihinden sonra uygun Full Status snapshot varsa otomatik bağlanıyor.
+- [ ] Overall/alan EI State Snapshot'tan read-only geliyor.
+- [ ] Published Final Report EI varsa calculated EI ile reconciliation durumu gösteriliyor.
+- [ ] Draft Report kaynağı `Official/Final` ile çelişiyorsa Veri Kalitesi uyarı veriyor.
 
-## E. Google Drive
-- [ ] Doküman & Kanıt Merkezi açılıyor.
-- [ ] Google Drive bağlantısı production OAuth ile kuruluyor.
-- [ ] Bir test dosyası Drive'a yükleniyor ve metadata Firebase'de oluşuyor.
-- [ ] CAP/PQ/Ziyaret bağlamından `Kanıtlar / Belgeler` yönlendirmesi doğru kaydı açıyor.
-- [ ] Oturum kapatılıp açıldığında Drive access token kalıcı olarak saklanmış görünmüyor; yeniden yetkilendirme gerektiğinde normal akış çalışıyor.
+## F. Validasyon / CAP otomasyonu
+- [ ] Latest State Snapshot'ta `S` olan PQ Validasyon Adayı havuzunda açık kalmıyor.
+- [ ] Legacy `ICAO KAPATTI MI` işareti olmadan da Satisfactory state etkili oluyor.
+- [ ] Ziyaret / validasyon bağlantıları Concept/Instance lineage üzerinden korunuyor.
 
-## F. Rol / Yetki
-- [ ] Sistem Sahibi tam yetkili.
-- [ ] Yönetici owner kaydını değiştiremiyor.
-- [ ] Koordinatör PQ/EI ve global Drive/Aksiyon ayarlarını değiştirebiliyor.
-- [ ] Uzman CAP/validasyon/ziyaret/doküman/görev kaydı yazabiliyor ancak PQ/EI ve global Drive/Aksiyon ayarlarını değiştiremiyor.
-- [ ] Görüntüleyici veri değiştiremiyor.
-- [ ] Pasife alınan kullanıcı açık oturumda erişimini kaybediyor.
+## G. Responsibility Registry
+- [ ] Registry opsiyonel; yüklenmeden sistem çalışıyor.
+- [ ] Registry şablonu indirilebiliyor.
+- [ ] Concept ID ile eşlenen sorumlu PQ sürüm değişiminde korunuyor.
+- [ ] Legacy Master sorumlu alanı yalnız fallback olarak kullanılıyor.
 
-## G. Aksiyon / Bildirim / Raporlama
-- [ ] Gecikmiş CAP/ziyaret işleri Aksiyon Merkezi'nde görünüyor.
-- [ ] Bildirim Merkezi okunmamış/kritik sayaçları doğru.
-- [ ] Yönetici, ICAO Teknik, Validasyon/Ziyaret ve Haftalık rapor profilleri açılıyor.
-- [ ] PDF ve Excel dışa aktarma çalışıyor.
+## H. Legacy Master
+- [ ] Legacy Master yüklenmese de PQ/CAP/EI normal akışı çalışıyor.
+- [ ] Legacy import PQ Word/PQ DB yapısal alanlarının üzerine yazmıyor.
+- [ ] Legacy EI_Referans yeni resmî EI üretmiyor.
 
-## H. Arşiv / geri yükleme
-- [ ] Anlık arşiv oluşturuluyor.
-- [ ] Test amaçlı küçük bir değişiklik sonrası arşiv geri yükleme çalışıyor.
-- [ ] Geri yükleme sonrası CAP↔PQ linkage ve ekranlar yeniden render oluyor.
-
-## Kabul ölçütü
-- **Blokaj:** herhangi bir veri kaybı, yetki aşımı, ana modülün açılmaması, Firebase write hatası veya resmî EI/projeksiyon karışması.
-- **RC kabul:** blokaj = 0. Görsel/minör uyarılar ayrı backlog'a alınabilir.
+## I. Yetki / güvenlik
+- [ ] Görüntüleyici yazamıyor.
+- [ ] Uzman normal CAP/ziyaret/doküman görevlerinde çalışabiliyor.
+- [ ] Koordinatör ve üstü State Snapshot / Official EI işlemlerini yapabiliyor.
+- [ ] Firebase Rules yeni state/responsibility yollarını koruyor.

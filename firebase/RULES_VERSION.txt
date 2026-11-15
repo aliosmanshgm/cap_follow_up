@@ -1,3 +1,4 @@
 USOAP CMA CAP Takip Realtime Database Rules
-Version: phase16-v1.0-rc1
+Version: v1.0-rc1.1-source-of-truth
 Date: 2026-11-15
+File: database.rules.rc1_1.json

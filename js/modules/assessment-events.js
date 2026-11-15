@@ -76,30 +76,27 @@
         if(explicitAreas.length)return explicitAreas;
         return [];
     }
+    function linkedStateSnapshot(record){try{return record&&record.stateSnapshotId&&typeof window.getStateComplianceSnapshotById==='function'?window.getStateComplianceSnapshotById(record.stateSnapshotId):null;}catch(_){return null;}}
     function areaSnapshot(record,scopeAreas){
-        const source=record&&record.areas||{};
-        const counts=record&&record.areaCounts||{};
-        const out={};
+        const state=linkedStateSnapshot(record),source=record&&record.areas||{},counts=record&&record.areaCounts||{},out={};
         AREAS.forEach(area=>{
-            const c=counts[area]||{};
+            const stateCount=state&&state.counts&&state.counts.areas&&state.counts.areas[area];
+            const c=stateCount||counts[area]||{};
             const satisfactory=intOrNull(c.satisfactory),applicable=intOrNull(c.applicable);
-            const explicitEi=num(source[area]);
-            out[area]=clean({
-                ei: explicitEi!==null?explicitEi:calcEi(satisfactory,applicable),
-                satisfactory,
-                applicable,
-                inScope:scopeAreas.includes(area)
-            });
-        });
-        return out;
+            const explicitEi=num(stateCount&&stateCount.ei!==undefined?stateCount.ei:source[area]);
+            out[area]=clean({ei:explicitEi!==null?explicitEi:calcEi(satisfactory,applicable),satisfactory,applicable,notSatisfactory:intOrNull(c.notSatisfactory),notApplicable:intOrNull(c.notApplicable),inScope:scopeAreas.includes(area),stateSource:state?'state_snapshot':(stateCount?'area_counts':'legacy')});
+        });return out;
     }
     function normalizeOfficialRecord(recordId,record){
         const eventId=eventIdForOfficial(recordId),snapshotId=snapshotIdForOfficial(recordId);
         const scopeAreas=defaultScopeForLegacy(record);
-        const overallSatisfactory=intOrNull(record.overallSatisfactory);
-        const overallApplicable=intOrNull(record.overallApplicable);
+        const state=linkedStateSnapshot(record),stateOverall=state&&state.counts&&state.counts.overall||{};
+        const overallSatisfactory=intOrNull(state?stateOverall.satisfactory:record.overallSatisfactory);
+        const overallApplicable=intOrNull(state?stateOverall.applicable:record.overallApplicable);
+        const calculatedOverall=num(state?stateOverall.ei:(record.calculated&&record.calculated.overallEI));
+        const publishedOverall=num(record.published&&record.published.overallEI);
         const explicitOverall=num(record.overallEI);
-        const overallEi=explicitOverall!==null?explicitOverall:calcEi(overallSatisfactory,overallApplicable);
+        const overallEi=publishedOverall!==null?publishedOverall:(calculatedOverall!==null?calculatedOverall:(explicitOverall!==null?explicitOverall:calcEi(overallSatisfactory,overallApplicable)));
         const status=statusOf(record);
         const startDate=record.startDate||record.assessmentDate||'';
         const endDate=record.endDate||record.assessmentDate||'';
@@ -126,6 +123,9 @@
             isDeleted:record.isDeleted===true,
             linkedSnapshotId:snapshotId,
             linkedOfficialEiRecordId:String(recordId),
+            eventMetrics:record.eventMetrics||{},
+            stateSnapshotId:record.stateSnapshotId||'',
+            reconciliation:record.reconciliation||{},
             sourceLink:commonSource
         });
         const snapshotCore=clean({
@@ -141,8 +141,11 @@
             scopeAreas,
             pqVersion,
             pqRevision,
-            overall:{ei:overallEi,satisfactory:overallSatisfactory,applicable:overallApplicable},
+            overall:{ei:overallEi,satisfactory:overallSatisfactory,applicable:overallApplicable,calculatedEi:calculatedOverall,publishedEi:publishedOverall},
             areas:areaSnapshot(record,scopeAreas),
+            stateSnapshotId:record.stateSnapshotId||'',
+            sourceOfTruth:record.sourceOfTruth||{},
+            reconciliation:record.reconciliation||{},
             source:record.source||'',
             notes:record.notes||'',
             active:record.active!==false,

@@ -2,7 +2,7 @@
 // Phase 8 v11: PQ -> CAP -> Validation -> Visit -> Assessment/EI consistency checks
 (function(){
   'use strict';
-  const MODULE_VERSION='system-integrity-v11';
+  const MODULE_VERSION='system-integrity-v12-source-of-truth';
   const AREAS=['LEG','ORG','PEL','OPS','AIR','AIG','ANS','AGA'];
   const SEVERITIES={
     critical:{label:'Kritik',weight:4},
@@ -173,10 +173,16 @@
         if(Math.abs(calc-ei)>0.05)addIssue('ei','medium','ei-math-mismatch',name,'EI yüzdesi ile Satisfactory / Applicable PQ oranı arasında matematiksel fark var.',`${sat}/${app} = %${calc.toFixed(2)}; kayıt %${ei.toFixed(2)}`,'Kaynağın resmî ICAO raporu olduğunu doğrulayın; manuel override varsa gerekçesini not alanına ekleyin.',{route:'official-ei',label:'EI Kaydını İncele'});
       }
     });
+    officialRecords.forEach(r=>{
+      const source=text(r.source).toLocaleLowerCase('tr-TR'),status=text(r.resultStatus).toLowerCase();
+      if(status==='official'&&source.includes('draft report'))addIssue('ei','medium','official-draft-source',r.name||r.id,'Kayıt Resmî/Final işaretli ancak kaynak alanı Draft Report içeriyor.',r.source||'-','Final rapor yayımlandıysa kaynak referansını güncelleyin; yayımlanmadıysa sonuç statüsünü Draft/Provisional yapın.',{route:'official-ei',label:'EI Kaydını İncele'});
+      if(r.eventMetrics&&Number(r.eventMetrics.scopeApplicable)>0&&Number(r.overallApplicable)>0&&Number(r.eventMetrics.scopeApplicable)===Number(r.overallApplicable)&&!r.stateSnapshotId)addIssue('ei','high','scope-used-as-overall',r.name||r.id,'Ziyaret kapsamındaki Applicable PQ ile State Overall Applicable PQ aynı alanda tutuluyor olabilir. Event Scope metriği Overall denominator değildir.',`Scope Applicable: ${r.eventMetrics.scopeApplicable} · Overall Applicable: ${r.overallApplicable}`,'Full PQ Status State Snapshot bağlayın; ziyaret kapsam sayısını Event Scope Metrics alanında bırakın.',{route:'official-ei',label:'Source of Truth Kaydını Aç'});
+      if(r.reconciliation&&r.reconciliation.status==='mismatch')addIssue('ei','medium','published-calculated-mismatch',r.name||r.id,'OLF State Snapshot hesabı ile ICAO yayımlanan EI arasında uzlaştırma farkı var.',`Fark: ${r.reconciliation.overallDifference??'-'} puan`,'Snapshot tarihi, PQ sürümü/revizyonu ve Final Report kaynağını kontrol edin.',{route:'official-ei',label:'Uzlaştırmayı İncele'});
+    });
     let latest=null; try{latest=typeof window.getLatestOfficialAssessmentSnapshot==='function'?window.getLatestOfficialAssessmentSnapshot():null;}catch(_){ }
     const latestOverall=obj(latest&&latest.snapshot&&latest.snapshot.overall);
-    if(latest&&!(Number(latestOverall.applicable)>0))addIssue('ei','high','latest-denominator-missing',latest.name||latest.id||'Son resmî EI','Son resmî EI snapshot’ında Applicable PQ denominator bilgisi yok. Validasyon adayı EI projeksiyonları güvenilir hesaplanamaz.',`EI: ${latestOverall.ei??'-'} · Applicable: ${latestOverall.applicable??'-'}`,'Son resmî ICAO sonucunun Satisfactory / Applicable PQ sayılarını girin.',{route:'official-ei',label:'Resmî EI Kaydını Tamamla'});
-    addCheck('ei','assessment-sync','Assessment Event / EI Snapshot senkronu',!issues.some(i=>i.domain==='ei'&&['critical','high'].includes(i.severity)),`${officialRecords.length} resmî EI kaydı · ${assessments.length} assessment event kontrol edildi.`);
+    if(latest&&!(Number(latestOverall.applicable)>0))addIssue('ei','high','latest-denominator-missing',latest.name||latest.id||'Son resmî EI','Son resmî EI snapshot’ında State-wide Applicable PQ denominator bilgisi yok. Ziyaret kapsamındaki PQ sayıları Overall denominator değildir.',`EI: ${latestOverall.ei??'-'} · Applicable: ${latestOverall.applicable??'-'}`,'Ziyaret sonrası tüm PQ statülerini içeren OLF Full Status dosyasını State Snapshot olarak yükleyin ve Assessment Event kaydına bağlayın.',{route:'official-ei',label:'State Snapshot / EI Kaydını Aç'});
+    const stateCount=typeof window.getStateComplianceSnapshots==='function'?window.getStateComplianceSnapshots().length:0;addCheck('ei','assessment-sync','Assessment Event / State Snapshot / EI senkronu',!issues.some(i=>i.domain==='ei'&&['critical','high'].includes(i.severity)),`${officialRecords.length} resmî EI kaydı · ${assessments.length} assessment event · ${stateCount} State Snapshot kontrol edildi.`);
 
     const severityCounts={critical:0,high:0,medium:0,low:0}; issues.forEach(i=>severityCounts[i.severity]=(severityCounts[i.severity]||0)+1);
     const domainCounts={}; Object.keys(DOMAINS).forEach(d=>domainCounts[d]={issues:0,critical:0,high:0,medium:0,low:0,checks:0,healthy:0});

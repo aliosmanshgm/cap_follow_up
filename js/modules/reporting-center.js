@@ -54,7 +54,7 @@
     return{
       raw,groups,pqRows,totalPq:pqRows.length,completedPq:pqRows.filter(x=>x.complete).length,openPq:pqRows.filter(x=>!x.complete).length,
       totalSteps:pqRows.reduce((s,x)=>s+x.steps,0),doneSteps:pqRows.reduce((s,x)=>s+x.done,0),lateSteps:pqRows.reduce((s,x)=>s+x.late,0),
-      officialClosed:Object.entries(master).filter(([,m])=>m&&m.isIcaoClosed&&areaPass(m.alan)).length,
+      officialClosed:Object.entries(master).filter(([pq,m])=>m&&(typeof window.isPqEffectivelyOfficiallyClosed==='function'?window.isPqEffectivelyOfficiallyClosed(pq,m):m.isIcaoClosed)&&areaPass(m.alan)).length,
       overdue:pqRows.filter(x=>x.late>0).sort((a,b)=>b.late-a.late||a.pq.localeCompare(b.pq,'tr',{numeric:true})),
       completed:pqRows.filter(x=>x.complete)
     };

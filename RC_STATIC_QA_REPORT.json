@@ -1,9 +1,9 @@
 {
-  "release": "1.0.0-rc1",
-  "generatedAt": "2026-11-15T14:28:47.333Z",
+  "release": "1.0.0-rc1.1",
+  "generatedAt": "2026-11-15T16:00:27.788Z",
   "passed": true,
   "counts": {
-    "passes": 37,
+    "passes": 46,
     "warnings": 0,
     "failures": 0
   },
@@ -12,23 +12,23 @@
   "passes": [
     {
       "name": "HTML duplicate IDs",
-      "detail": "877/877 benzersiz"
+      "detail": "903/903 benzersiz"
     },
     {
       "name": "Yerel asset referansları",
-      "detail": "23 referans mevcut"
+      "detail": "25 referans mevcut"
     },
     {
       "name": "RC cache etiketi",
-      "detail": "20 yerel asset 20261115-v1.0-rc1"
+      "detail": "22 yerel asset 20261115-v1.0-rc1.1"
     },
     {
       "name": "JavaScript syntax",
-      "detail": "20 dosya"
+      "detail": "22 dosya"
     },
     {
       "name": "Inline handler fonksiyonları",
-      "detail": "467 handler"
+      "detail": "479 handler"
     },
     {
       "name": "Tab / Hub rotaları",
@@ -36,7 +36,7 @@
     },
     {
       "name": "Manifest sürümü",
-      "detail": "1.0.0-rc1"
+      "detail": "1.0.0-rc1.1"
     },
     {
       "name": "Release channel",
@@ -83,6 +83,14 @@
       "detail": ""
     },
     {
+      "name": "State Snapshot rol sınırı",
+      "detail": ""
+    },
+    {
+      "name": "Sorumluluk registry rol sınırı",
+      "detail": ""
+    },
+    {
       "name": "SSP / 9.xxx PQ referansı",
       "detail": ""
     },
@@ -103,8 +111,36 @@
       "detail": ""
     },
     {
+      "name": "State Snapshot source-of-truth modülü",
+      "detail": ""
+    },
+    {
+      "name": "Assessment scope / Overall ayrımı",
+      "detail": ""
+    },
+    {
+      "name": "Sorumluluk registry",
+      "detail": ""
+    },
+    {
+      "name": "CAP Word PROTOCOL FINDING kaynağı",
+      "detail": ""
+    },
+    {
       "name": "Drive token kalıcılığı",
       "detail": "erişim tokenı yalnız bellek state içinde"
+    },
+    {
+      "name": "SelfCheck runStateComplianceSelfCheck",
+      "detail": ""
+    },
+    {
+      "name": "SelfCheck runResponsibilityRegistrySelfCheck",
+      "detail": ""
+    },
+    {
+      "name": "SelfCheck runOfficialEiSourceOfTruthSelfCheck",
+      "detail": ""
     },
     {
       "name": "SelfCheck runPqLibrarySelfCheck",
@@ -148,7 +184,7 @@
     },
     {
       "name": "Boyut index.html",
-      "detail": "244 KB"
+      "detail": "252 KB"
     },
     {
       "name": "Boyut css/app.css",
@@ -156,7 +192,7 @@
     },
     {
       "name": "Boyut js/app.js",
-      "detail": "892 KB"
+      "detail": "900 KB"
     }
   ]
 }

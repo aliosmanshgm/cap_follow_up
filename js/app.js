@@ -3,13 +3,13 @@ const I18N = {
             loadingText: 'Veriler İşleniyor... Lütfen Bekleyin.',
             appSubtitle: 'Analiz için lütfen Word (.docx) belgelerini yükleyiniz.',
             lblWord: '1️⃣ Orijinal Word Dosyaları (.docx)',
-            lblExcel: '2️⃣ Excel Master Veri (.xlsx)'
+            lblExcel: 'Legacy Excel Master (.xlsx)'
         },
         en: {
             loadingText: 'Processing Data... Please Wait.',
             appSubtitle: 'Please upload Word (.docx) documents for analysis.',
             lblWord: '1️⃣ Original Word Files (.docx)',
-            lblExcel: '2️⃣ Excel Master Data (.xlsx)'
+            lblExcel: 'Legacy Excel Master (.xlsx)'
         }
     };
     let currentUiLang = localStorage.getItem('usoapUiLang') === 'en' ? 'en' : 'tr';
@@ -78,7 +78,40 @@ const I18N = {
     // Değişkenler
     window.toggleFiltersPanel = function() { document.getElementById('rightFiltersPanel').classList.toggle('open'); };
     window.activeSmartTags = new Set(); 
-    let window_loadedReportDate = null; let rawData = []; let pqMasterData = {}; let baseEIData = {}; let loadedFiles = new Set(); let charts = {};
+    let window_loadedReportDate = null; let rawData = []; let pqMasterData = {}; let baseEIData = {}; let legacyEIReferenceData = {}; let loadedFiles = new Set(); let charts = {};
+    window.currentEiSourceKind = window.currentEiSourceKind || 'none';
+    window.setBaseEiDataFromStateSnapshot = function(snapshot) {
+        if(!snapshot || !snapshot.counts || !snapshot.counts.areas) return false;
+        const next={};
+        ICAO_GLOBAL_ORDER.forEach(area=>{
+            const c=(snapshot.counts.areas||{})[area]||{};
+            const total=Number(c.applicable||0), sat=Number(c.satisfactory||0);
+            if(total>0) next[area]={total, sat, afterSat:sat, source:'state_snapshot', snapshotId:snapshot.id||'', snapshotDate:snapshot.snapshotDate||''};
+        });
+        if(!Object.keys(next).length) return false;
+        baseEIData=next; window.currentEiSourceKind='state_snapshot';
+        try{document.getElementById('eiOverallProgressPanel').style.display='grid';document.getElementById('eiChartPanel').style.display='block';}catch(_){}
+        try{refreshAllFilters();renderFileList();render();}catch(_){}
+        return true;
+    };
+    window.getCurrentEiBaseData = function(){ return baseEIData || {}; };
+    window.getLegacyEiReferenceData = function(){ return legacyEIReferenceData || {}; };
+    function isPqEffectivelyOfficiallyClosed(pq, master) {
+        const m = master || pqMasterData[pq] || {};
+        try {
+            if (typeof window.isPqOfficiallySatisfactory === 'function' && window.isPqOfficiallySatisfactory(pq, m.alan || '', m)) return true;
+        } catch (_) {}
+        return m.isIcaoClosed === true;
+    }
+    window.isPqEffectivelyOfficiallyClosed = isPqEffectivelyOfficiallyClosed;
+    window.getPqEffectiveOfficialState = function(pq, master) {
+        const m = master || pqMasterData[pq] || {};
+        try {
+            const state = typeof window.getCurrentPqState === 'function' ? window.getCurrentPqState(pq, m.alan || '', m) : null;
+            if (state) return {status:state.status, source:'state_snapshot', snapshot:typeof window.getLatestStateComplianceSnapshot==='function'?window.getLatestStateComplianceSnapshot():null, state};
+        } catch (_) {}
+        return {status:m.isIcaoClosed===true?'S':'UNKNOWN', source:m.isIcaoClosed===true?'legacy_master':'none', state:null};
+    };
     const chartBarValuePlugin = {
         id: 'chartBarValuePlugin',
         afterDatasetsDraw(chart) {
@@ -455,7 +488,7 @@ const I18N = {
     // ================================================================
     // STABILIZASYON PAKETI 1
     // ================================================================
-    const APP_RELEASE = Object.freeze({version:'1.0.0-rc1',label:'v1.0 RC1',buildDate:'2026-11-15',baseline:'Phase 15 v18.5',cacheTag:'20261115-v1.0-rc1'});
+    const APP_RELEASE = Object.freeze({version:'1.0.0-rc1.1',label:'v1.0 RC1.1',buildDate:'2026-11-15',baseline:'Phase 16 RC1',cacheTag:'20261115-v1.0-rc1.1'});
     const STABILIZATION_VERSION = APP_RELEASE.label;
     window.USOAP_APP_RELEASE = APP_RELEASE;
     const stabilizationState = {
@@ -638,7 +671,7 @@ const I18N = {
         add('word', 'Word okuma motoru', (typeof JSZip !== 'undefined') ? 'ok' : 'error', (typeof JSZip !== 'undefined') ? 'JSZip hazır.' : 'Word ayrıştırma kütüphanesi yüklenemedi.');
         add('charts', 'Grafik motoru', (typeof Chart !== 'undefined') ? 'ok' : 'warn', (typeof Chart !== 'undefined') ? 'Chart.js hazır.' : 'Grafik kütüphanesi yüklenemedi.');
         const assetVersionIssues = getLocalAssetVersionIssues();
-        add('release-build', 'Release / cache bütünlüğü', assetVersionIssues.length ? 'error' : 'ok', assetVersionIssues.length ? `RC1 cache etiketiyle eşleşmeyen ${assetVersionIssues.length} yerel asset: ${assetVersionIssues.slice(0,6).join(', ')}` : `${APP_RELEASE.label} · build ${APP_RELEASE.buildDate} · bütün yerel assetler ${APP_RELEASE.cacheTag}.`);
+        add('release-build', 'Release / cache bütünlüğü', assetVersionIssues.length ? 'error' : 'ok', assetVersionIssues.length ? `RC1.1 cache etiketiyle eşleşmeyen ${assetVersionIssues.length} yerel asset: ${assetVersionIssues.slice(0,6).join(', ')}` : `${APP_RELEASE.label} · build ${APP_RELEASE.buildDate} · bütün yerel assetler ${APP_RELEASE.cacheTag}.`);
         let storageOk=true; try{localStorage.setItem('__usoap_rc_probe','1');localStorage.removeItem('__usoap_rc_probe');}catch(_){storageOk=false;}
         add('browser-storage', 'Tarayıcı yerel depolama', storageOk ? 'ok' : 'warn', storageOk ? 'localStorage kullanılabilir.' : 'localStorage kapalı; çevrimdışı cache ve bazı tercihler kalıcı olmayabilir.');
         const originalDocMode=String(window.PQ_ORIGINAL_DOCUMENT_STORAGE_MODE||'external').toLowerCase();
@@ -647,8 +680,11 @@ const I18N = {
         const assessmentEvents = assessmentReady ? Object.values(window.icaoAssessmentEvents || {}).filter(x => x && !x.isDeleted).length : 0;
         const assessmentSnapshots = assessmentReady ? Object.values(window.icaoEiSnapshots || {}).filter(x => x && !x.isDeleted).length : 0;
         add('assessment-model', 'Assessment Event / EI Snapshot modeli', assessmentReady ? 'ok' : 'warn', assessmentReady ? `${assessmentEvents} değerlendirme olayı, ${assessmentSnapshots} EI snapshot hazır.` : 'Assessment Event modülü yüklenemedi.');
+        const stateCheck = runModuleSelfCheck('runStateComplianceSelfCheck');
+        const stateLatest = typeof window.getLatestStateComplianceSnapshot==='function' ? window.getLatestStateComplianceSnapshot() : null;
+        add('state-compliance', 'State Compliance Snapshot / EI Source of Truth', !stateCheck.available?'error':(stateCheck.passed?'ok':'warn'), stateCheck.available ? (stateLatest ? `Full PQ Status kaynağı hazır · ${stateLatest.snapshotDate||'-'} · ${stateLatest.counts&&stateLatest.counts.overall&&stateLatest.counts.overall.satisfactory!=null?stateLatest.counts.overall.satisfactory:'-'}/${stateLatest.counts&&stateLatest.counts.overall&&stateLatest.counts.overall.applicable!=null?stateLatest.counts.overall.applicable:'-'} S/Applicable.` : 'Modül hazır; henüz Full PQ Status State Snapshot yüklenmedi.') : 'State Compliance modülü yüklenemedi.');
         const eiAutomationReady = typeof window.runIcaoEiAutomationSelfCheck === 'function';
-        add('official-ei-automation', 'ICAO Resmî EI otomasyonu', eiAutomationReady ? 'ok' : 'warn', eiAutomationReady ? 'OLF/StateLive ve ICAO ziyaret sonucu otomasyon modülü hazır.' : 'EI otomasyon modülü yüklenemedi.');
+        add('official-ei-automation', 'ICAO EI kaynak otomasyonu', eiAutomationReady ? 'ok' : 'warn', eiAutomationReady ? 'Full PQ Status → State Snapshot; ziyaret → Event Scope Metrics; findings-only → analitik önizleme kuralları hazır.' : 'EI otomasyon modülü yüklenemedi.');
         const notificationReady = typeof window.runNotificationCenterSelfCheck === 'function';
         const notificationSummary = notificationReady && typeof window.getNotificationCenterSummary === 'function' ? window.getNotificationCenterSummary() : null;
         add('notification-center', 'Bildirim & Otomasyon Merkezi', notificationReady ? 'ok' : 'warn', notificationReady ? `${notificationSummary ? notificationSummary.unread : 0} okunmamış, ${notificationSummary ? notificationSummary.critical : 0} kritik bildirim.` : 'Bildirim Merkezi modülü yüklenemedi.');
@@ -657,6 +693,8 @@ const I18N = {
         add('access-control', 'Kullanıcı & Yetki Yönetimi', accessReady && accessCheck && accessCheck.passed ? 'ok' : 'warn', accessReady ? `${accessCheck && accessCheck.role ? accessCheck.role : 'rol yok'} · ${accessCheck && accessCheck.active ? 'aktif' : 'pasif'} · istemci yazma koruması: ${accessCheck && accessCheck.writeGuard ? 'açık' : 'sunucu kuralları'}` : 'Yetki modülü yüklenemedi.');
         const rcModules = [
             ['pq-library','PQ Veri Tabanı / SSP / dağılım','runPqLibrarySelfCheck'],
+            ['responsibility-registry','Sorumluluk Listesi','runResponsibilityRegistrySelfCheck'],
+            ['official-ei-source','EI Source of Truth / event-scope ayrımı','runOfficialEiSourceOfTruthSelfCheck'],
             ['drive-documents','Google Drive Doküman Merkezi','runDriveDocumentsSelfCheck'],
             ['visit-hub','Ziyaret Yönetimi Hub','runVisitHubSelfCheck'],
             ['validation-readiness','Validasyon Hazırlığı','runValidationReadinessSelfCheck'],
@@ -848,17 +886,17 @@ const I18N = {
                     catch (error) { console.error('Yetki profili yüklenemedi:', error); accessResult = {allowed:false, reason:'rules-or-access', error:error && error.message}; }
                 }
                 if (!accessResult.allowed) {
-                    stopVisitFirebaseListener(); stopVisitUnitSettingsListener(); stopIcaoOfficialEiListener(); if(typeof stopAssessmentEventListener==='function')stopAssessmentEventListener(); if(typeof stopValidationReadinessListener==='function')stopValidationReadinessListener();
+                    stopVisitFirebaseListener(); stopVisitUnitSettingsListener(); if(typeof stopResponsibilityRegistryListener==='function')stopResponsibilityRegistryListener(); if(typeof stopStateComplianceListener==='function')stopStateComplianceListener(); stopIcaoOfficialEiListener(); if(typeof stopAssessmentEventListener==='function')stopAssessmentEventListener(); if(typeof stopValidationReadinessListener==='function')stopValidationReadinessListener();
                     document.getElementById('loadingOverlay').style.display = 'none';
                     if (typeof window.showAccessDeniedGate === 'function') window.showAccessDeniedGate(accessResult);
                     return;
                 }
                 if (typeof window.hideAccessDeniedGate === 'function') window.hideAccessDeniedGate();
                 document.getElementById('mainAppContainer').style.display = 'flex';
-                loadFromLocalStorage(); startVisitFirebaseListener(); startVisitUnitSettingsListener(); if(typeof startAssessmentEventListener==='function')startAssessmentEventListener(); startIcaoOfficialEiListener(); if(typeof startValidationReadinessListener==='function')startValidationReadinessListener();
+                loadFromLocalStorage(); startVisitFirebaseListener(); startVisitUnitSettingsListener(); if(typeof startResponsibilityRegistryListener==='function')startResponsibilityRegistryListener(); if(typeof startStateComplianceListener==='function')startStateComplianceListener(); if(typeof startAssessmentEventListener==='function')startAssessmentEventListener(); startIcaoOfficialEiListener(); if(typeof startValidationReadinessListener==='function')startValidationReadinessListener();
                 if (typeof window.applyAccessControlUi === 'function') setTimeout(()=>window.applyAccessControlUi(), 0);
             } else {
-                stopVisitFirebaseListener(); stopVisitUnitSettingsListener(); stopIcaoOfficialEiListener(); if(typeof stopAssessmentEventListener==='function')stopAssessmentEventListener(); if(typeof stopValidationReadinessListener==='function')stopValidationReadinessListener();
+                stopVisitFirebaseListener(); stopVisitUnitSettingsListener(); if(typeof stopResponsibilityRegistryListener==='function')stopResponsibilityRegistryListener(); if(typeof stopStateComplianceListener==='function')stopStateComplianceListener(); stopIcaoOfficialEiListener(); if(typeof stopAssessmentEventListener==='function')stopAssessmentEventListener(); if(typeof stopValidationReadinessListener==='function')stopValidationReadinessListener();
                 if (typeof window.accessControlReset === 'function') window.accessControlReset(); if (typeof window.hideAccessDeniedGate === 'function') window.hideAccessDeniedGate();
                 document.getElementById('loadingOverlay').style.display = 'none'; document.getElementById('mainAppContainer').style.display = 'none'; document.getElementById('loginOverlay').style.display = 'flex';
             }
@@ -1079,103 +1117,28 @@ const I18N = {
             eiStatusTxt.style.display = "none";
         } else {
             eContainer.innerHTML = `<div class="file-badge" style="border-color: var(--ok); background: rgba(16, 185, 129, 0.05);"><span class="truncate" style="max-width: 150px;" title="${escapeHtml(loadedExcelFile)}">📊 ${escapeHtml(loadedExcelFile)}</span><span class="file-remove-btn" onclick="removeExcelFile()">✕</span></div>`;
-            eiStatusTxt.innerHTML = `<span style="color:var(--primary); font-weight:600;">${Object.keys(pqMasterData).length} PQ eşleşti.</span><span style="color:var(--ok); font-weight:600;">${Object.keys(baseEIData).length > 0 ? " | 🚀 EI Aktif" : ""}</span>`;
+            eiStatusTxt.innerHTML = `<span style="color:var(--primary); font-weight:600;">Legacy kayıt: ${Object.keys(pqMasterData).length} PQ.</span><span style="color:var(--muted); font-weight:600;"> Yapısal PQ/EI source-of-truth değildir.</span>`;
             eiStatusTxt.style.display = "block";
         }
     }
     
     function removeWordFile(fileName) { loadedFiles.delete(fileName); rawData = rawData.filter(d => d.sourceFile !== fileName); recalculateGlobalStateFromFiles(); refreshAllFilters(); saveToLocalStorage(); renderFileList(); render(); }
-    function removeExcelFile() { loadedExcelFile = null; pqMasterData = {}; baseEIData = {}; document.getElementById('eiOverallProgressPanel').style.display = "none"; document.getElementById('eiChartPanel').style.display = "none"; rawData = rawData.filter(d => d.sourceFile !== "Excel Kapanış Arşivi" && d.sourceFile !== "Excel Master"); refreshAllFilters(); saveToLocalStorage(); renderFileList(); render(); }
+    function removeExcelFile() { loadedExcelFile = null; legacyEIReferenceData = {}; if(window.currentEiSourceKind!=='state_snapshot') baseEIData = {}; document.getElementById('eiOverallProgressPanel').style.display = "none"; document.getElementById('eiChartPanel').style.display = "none"; rawData = rawData.filter(d => d.sourceFile !== "Excel Kapanış Arşivi" && d.sourceFile !== "Excel Master"); if(typeof window.enrichPqMasterFromPqLibrary==='function')window.enrichPqMasterFromPqLibrary(); if(typeof window.applyResponsibilityRegistryToMaster==='function')window.applyResponsibilityRegistryToMaster(); refreshAllFilters(); saveToLocalStorage(); renderFileList(); render(); }
 
 
     function downloadTemplate() {
         try {
             if (typeof XLSX === 'undefined') throw new Error('Excel kütüphanesi yüklenemedi.');
-
-            const headers = [
-                'PQ No', 'Denetim Alanı', 'CE', 'PQ Sorusu', 'Bulgu',
-                'Doğrulama Türü', 'ICAO Değerlendirmesi', 'Sorumlu',
-                'GÜNLÜK RAPORA EKLE', 'RAPOR NOTU', 'ICAO KAPATTI MI',
-                'VALIDASYON GÖREVİ', 'PQ Sorusu (TR)', 'Bulgu (TR)'
-            ];
-
-            const pqKeys = Object.keys(pqMasterData || {}).sort((a, b) => {
-                if (typeof sortPQs === 'function') return sortPQs(a, b);
-                return String(a).localeCompare(String(b), 'tr', { numeric: true, sensitivity: 'base' });
-            });
-
-            const excelRows = [headers];
-            pqKeys.forEach(pq => {
-                const m = pqMasterData[pq] || {};
-                excelRows.push([
-                    pq,
-                    m.alan || '',
-                    m.ce || '',
-                    m.soru || '',
-                    m.bulgu || '',
-                    m.tur || '',
-                    m.degerlendirme || '',
-                    m.sorumlu || '',
-                    (typeof dailyReviewedPQs !== 'undefined' && dailyReviewedPQs.has(pq)) ? 'EVET' : '',
-                    (typeof dailyPQNotes !== 'undefined' && dailyPQNotes[pq]) ? dailyPQNotes[pq] : '',
-                    m.isIcaoClosed ? 'EVET' : '',
-                    m.validasyonGorevi || '',
-                    m.soruTr || '',
-                    m.bulguTr || ''
-                ]);
-            });
-
-            const wb = XLSX.utils.book_new();
-            const wsMaster = XLSX.utils.aoa_to_sheet(excelRows);
-            wsMaster['!cols'] = [
-                {wch:12},{wch:18},{wch:10},{wch:55},{wch:70},{wch:20},{wch:24},
-                {wch:24},{wch:20},{wch:45},{wch:18},{wch:24},{wch:55},{wch:70}
-            ];
-            wsMaster['!freeze'] = { xSplit: 0, ySplit: 1 };
-            if (excelRows.length > 1) wsMaster['!autofilter'] = { ref: `A1:N${excelRows.length}` };
-            XLSX.utils.book_append_sheet(wb, wsMaster, 'Excel_Veri');
-
-            const defaultAreas = ['LEG','ORG','PEL','OPS','AIR','AIG','ANS','AGA'];
-            const areaKeys = Object.keys(baseEIData || {});
-            const areas = (areaKeys.length ? areaKeys : defaultAreas).slice().sort((a,b) => {
-                if (typeof sortAreas === 'function') return sortAreas(a,b);
-                return defaultAreas.indexOf(a) - defaultAreas.indexOf(b);
-            });
-            const eiRows = [['DENETİM ALANI','UYGULANABİLİR TOPLAM PQ','MEVCUT SATISFACTORY','AFTER VALIDASYON']];
-            areas.forEach((area, idx) => {
-                const b = (baseEIData || {})[area] || {};
-                const rowNo = idx + 2;
-                eiRows.push([
-                    area,
-                    Number.isFinite(Number(b.total)) && Number(b.total) > 0 ? Number(b.total) : '',
-                    Number.isFinite(Number(b.sat)) && Number(b.sat) >= 0 ? Number(b.sat) : '',
-                    { f: `C${rowNo}+(COUNTIFS(Excel_Veri!B:B,EI_Referans!A${rowNo},Excel_Veri!K:K,"EVET"))` }
-                ]);
-            });
-            const wsEi = XLSX.utils.aoa_to_sheet(eiRows);
-            wsEi['!cols'] = [{wch:20},{wch:26},{wch:24},{wch:22}];
-            wsEi['!freeze'] = { xSplit: 0, ySplit: 1 };
-            XLSX.utils.book_append_sheet(wb, wsEi, 'EI_Referans');
-
-            const infoRows = [
-                ['PQ Excel Master Şablonu'],
-                ['Kullanım', 'Excel_Veri sayfasındaki satırları güncelleyip uygulamaya tekrar yükleyebilirsiniz.'],
-                ['TR alanları', 'PQ Sorusu (TR) ve Bulgu (TR) sütunları Türkçe karşılıklar içindir.'],
-                ['Önemli', 'ICAO KAPATTI MI sütununda EVET yazılan PQ, EI_Referans validasyon hesabına dahil edilir.'],
-                ['Not', pqKeys.length ? 'Bu dosya uygulamada mevcut olan Master verinin dışa aktarılmış kopyasıdır.' : 'Master veri yüklü olmadığı için boş şablon oluşturulmuştur.']
-            ];
-            const wsInfo = XLSX.utils.aoa_to_sheet(infoRows);
-            wsInfo['!cols'] = [{wch:24},{wch:95}];
-            XLSX.utils.book_append_sheet(wb, wsInfo, 'Kullanım');
-
-            XLSX.writeFile(wb, 'PQ_Excel_Master_Sablonu_TR_Ekli.xlsx');
-            if (typeof showAppRuntimeToast === 'function') {
-                showAppRuntimeToast(pqKeys.length ? `Excel Master dışa aktarıldı: ${pqKeys.length} PQ.` : 'Boş Excel Master şablonu indirildi.', 'success');
-            }
-        } catch (err) {
-            console.error('Excel Master şablon dışa aktarma hatası:', err);
-            alert('Excel Master şablonu oluşturulamadı: ' + (err.message || err));
-        }
+            const headers = ['PQ No','Denetim Alanı (Legacy)','CE (Legacy)','PQ Sorusu (Legacy)','Bulgu (Legacy)','Doğrulama Türü (Legacy)','ICAO Değerlendirmesi (Legacy)','Sorumlu','GÜNLÜK RAPORA EKLE','RAPOR NOTU','ICAO KAPATTI MI (Legacy)','VALIDASYON GÖREVİ (Legacy)','PQ Sorusu (TR)','Bulgu (TR)'];
+            const pqKeys=Object.keys(pqMasterData||{}).sort((a,b)=>typeof sortPQs==='function'?sortPQs(a,b):String(a).localeCompare(String(b),'tr',{numeric:true}));
+            const rows=[headers];
+            pqKeys.forEach(pq=>{const m=pqMasterData[pq]||{};rows.push([pq,m.alan||'',m.ce||'',m.soru||'',m.bulgu||'',m.tur||'',m.degerlendirme||'',m.sorumlu||'',(typeof dailyReviewedPQs!=='undefined'&&dailyReviewedPQs.has(pq))?'EVET':'',(typeof dailyPQNotes!=='undefined'&&dailyPQNotes[pq])?dailyPQNotes[pq]:'',m.isIcaoClosed?'EVET':'',m.validasyonGorevi||'',m.soruTr||'',m.bulguTr||'']);});
+            const wb=XLSX.utils.book_new(),ws=XLSX.utils.aoa_to_sheet(rows);ws['!cols']=[{wch:12},{wch:20},{wch:14},{wch:55},{wch:70},{wch:24},{wch:28},{wch:28},{wch:20},{wch:45},{wch:24},{wch:30},{wch:55},{wch:70}];ws['!freeze']={xSplit:0,ySplit:1};if(rows.length>1)ws['!autofilter']={ref:`A1:N${rows.length}`};XLSX.utils.book_append_sheet(wb,ws,'Excel_Veri');
+            const info=[['Legacy PQ Master / Migration Export'],['Amaç','Bu dosya yeni source-of-truth değildir. Yalnız geçiş, TR metin, sorumluluk ve tarihsel validasyon/kapanış verisini taşımak için korunur.'],['PQ yapısı','PQ No/alan/CE/soru/On-Off-site/PPQ/referans/sürüm bilgileri PQ Word / PQ Veri Tabanından alınır.'],['CAP / Finding','Finding ve CAP adımları CAP Word kaynağından alınır.'],['EI','Overall ve alan EI bu dosyadan hesaplanmaz. Full PQ Status → State Compliance Snapshot esas kaynaktır.'],['ICAO KAPATTI MI','Legacy bilgi olarak korunur; güncel resmî PQ statüsü latest State Snapshot tarafından belirlenir.'],['Not',pqKeys.length?`Mevcut legacy kayıtların dışa aktarımı: ${pqKeys.length} PQ.`:'Boş legacy migration şablonu.']];
+            const infoWs=XLSX.utils.aoa_to_sheet(info);infoWs['!cols']=[{wch:26},{wch:105}];XLSX.utils.book_append_sheet(wb,infoWs,'Kullanim');
+            XLSX.writeFile(wb,'PQ_Legacy_Master_Migration.xlsx');
+            if(typeof showAppRuntimeToast==='function')showAppRuntimeToast(pqKeys.length?`Legacy Master dışa aktarıldı: ${pqKeys.length} PQ.`:'Boş Legacy Master migration şablonu indirildi.','success');
+        } catch(err){console.error('Legacy Excel dışa aktarma hatası:',err);alert('Legacy Excel oluşturulamadı: '+(err.message||err));}
     }
     window.downloadTemplate = downloadTemplate;
     function clearAllData() { if(confirm("Tüm bulut verileri silinecek. Emin misiniz?")) { db.ref('icao_system').remove().then(() => { location.reload(); }); } }
@@ -1438,6 +1401,47 @@ const I18N = {
         return `${pq}||${step}||${(action || '').slice(0, 500)}`;
     }
 
+    function inferAreaFromPqNumber(pq) {
+        const prefix = String(pq || '').split('.')[0];
+        const map = { '1':'LEG','2':'ORG','3':'PEL','4':'OPS','5':'AIR','6':'AIG','7':'ANS','8':'AGA','9':'SSP' };
+        return map[prefix] || '';
+    }
+
+    function parseCapProtocolRow(cellTexts, detectedPQ) {
+        const cells = (cellTexts || []).map(v => cleanDocxCellText(v || ''));
+        const pq = normalizePQ(detectedPQ || '');
+        if (!pq || cells.length < 5) return null;
+        const pqIndex = cells.findIndex(v => normalizePQ((String(v).match(/\d{1,2}\.\d{3}/) || [])[0] || '') === pq);
+        if (pqIndex < 0) return null;
+        const pqCell = cells[pqIndex] || '';
+        const question = pqCell.replace(new RegExp('^\\s*' + pq.replace('.', '\\.') + '\\s*'), '').trim();
+        const finding = cells[pqIndex + 1] || '';
+        const ce = cells.find(v => /^CE-?\d+$/i.test(String(v).trim())) || '';
+        const status = cells.find(v => /^(?:Not\s+Satisfactory|Satisfactory|Not\s+Applicable|N\/?A)$/i.test(String(v).trim())) || '';
+        const references = pqIndex > 0 ? (cells[0] || '') : '';
+        return { pq, question, finding, ce, status, references, area: inferAreaFromPqNumber(pq) };
+    }
+
+    function mergeCapProtocolIntoMaster(section, fileName) {
+        if (!section || !section.pq) return;
+        const pq = normalizePQ(section.pq);
+        if (!pq) return;
+        const meta = section.protocol || {};
+        const m = pqMasterData[pq] || {};
+        pqMasterData[pq] = {
+            ...m,
+            alan: m.alan || meta.area || inferAreaFromPqNumber(pq),
+            ce: m.ce || meta.ce || '',
+            soru: m.soru || meta.question || '',
+            bulgu: meta.finding || m.bulgu || '',
+            capProtocolStatus: meta.status || m.capProtocolStatus || '',
+            capProtocolReferences: meta.references || m.capProtocolReferences || '',
+            capFindingSource: meta.finding ? 'cap_word' : (m.capFindingSource || ''),
+            capSourceFile: fileName || m.capSourceFile || '',
+            capProtocolImportedAt: new Date().toISOString()
+        };
+    }
+
     function mergeEvidenceReferenceText(currentValue, newValue) {
         const a = String(currentValue || '').trim();
         const b = String(newValue || '').trim();
@@ -1465,6 +1469,7 @@ const I18N = {
         if (!section || !section.pq || section.pq === "Bilinmeyen PQ") return result;
 
         const indexes = duplicateIndex || makeCapDuplicateIndexes();
+        mergeCapProtocolIntoMaster(section, fileName);
         let filledSteps = section.tempSteps.filter(s => !s.isPlaceholder);
         if (filledSteps.length > 0) {
             filledSteps.forEach(s => {
@@ -1532,7 +1537,7 @@ const I18N = {
 
                 if (detectedPQ) {
                     finalizeCurrentSection();
-                    currentSection = { pq: detectedPQ, tempSteps: [], hasCapMarker: false, hasProtocolMarker: true };
+                    currentSection = { pq: detectedPQ, tempSteps: [], hasCapMarker: false, hasProtocolMarker: true, protocol: parseCapProtocolRow(cellTexts, detectedPQ) };
                     stats.pqSections++;
                 } else if (currentSection) {
                     if (rowText.includes("CAP Action Items")) currentSection.hasCapMarker = true;
@@ -1612,6 +1617,7 @@ const I18N = {
             refreshAllFilters();
             await yieldToBrowser();
             if(window.refreshCapPqLinkage)window.refreshCapPqLinkage({persist:false,silent:true});
+            if(typeof window.enrichPqMasterFromPqLibrary==='function')window.enrichPqMasterFromPqLibrary();
             saveToLocalStorage();
             await yieldToBrowser();
             render();
@@ -1647,7 +1653,7 @@ const I18N = {
             const hasQuestionTrHeader=looseHeaders.some(h=>['PQ SORUSU TR','SORU TR','PQ QUESTION TR'].includes(h));
             const hasFindingTrHeader=looseHeaders.some(h=>['BULGU TR','FINDING TR','AÇIKLAMA TR'].includes(h));
             let trQuestionImported=0,trFindingImported=0,trBothImported=0;
-            if(!isBackupFile) pqMasterData = {};
+            if(!isBackupFile && !Object.keys(pqMasterData||{}).length) pqMasterData = {};
             
             for (let i = 0; i < jsonData.length; i++) {
                 const row = jsonData[i];
@@ -1668,18 +1674,22 @@ const I18N = {
                             if(String(soruTr||'').trim()) trQuestionImported++;
                             if(String(bulguTr||'').trim()) trFindingImported++;
                             if(String(soruTr||'').trim()&&String(bulguTr||'').trim()) trBothImported++;
+                            const existingMaster=pqMasterData[pqStr]||{};
                             pqMasterData[pqStr] = {
-                                alan: alan,
-                                ce: getCol(row, ['CE', 'KRİTİK', 'CRITICAL']),
-                                soru: soruEng,
-                                soruTr: soruTr,
-                                bulgu: bulguEng,
-                                bulguTr: bulguTr,
-                                tur: getCol(row, ['TÜR', 'TYPE', 'DOĞRULAMA']),
-                                degerlendirme: getCol(row, ['DEĞERLENDİRME', 'STATUS', 'ICAO', 'DURUM']),
-                                sorumlu: getCol(row, ['SORUMLU', 'PERSONEL']),
-                                isIcaoClosed: isIcaoClosed,
-                                validasyonGorevi: validasyonGorevi || "Belirtilmedi"
+                                ...existingMaster,
+                                // PQ yapısal alanlarında PQ Word / PQ DB önceliklidir. Legacy Excel yalnız boş alanlarda fallback sağlar.
+                                alan: existingMaster.alan || alan,
+                                ce: existingMaster.ce || getCol(row, ['CE', 'KRİTİK', 'CRITICAL']),
+                                soru: existingMaster.soru || soruEng,
+                                soruTr: String(soruTr||'').trim() || existingMaster.soruTr || '',
+                                bulgu: existingMaster.bulgu || bulguEng,
+                                bulguTr: String(bulguTr||'').trim() || existingMaster.bulguTr || '',
+                                tur: existingMaster.tur || getCol(row, ['TÜR', 'TYPE', 'DOĞRULAMA']),
+                                degerlendirme: existingMaster.degerlendirme || getCol(row, ['DEĞERLENDİRME', 'STATUS', 'ICAO', 'DURUM']),
+                                sorumlu: getCol(row, ['SORUMLU', 'PERSONEL']) || existingMaster.sorumlu || '',
+                                isIcaoClosed: existingMaster.isIcaoClosed===true || isIcaoClosed,
+                                validasyonGorevi: validasyonGorevi || existingMaster.validasyonGorevi || "Belirtilmedi",
+                                legacyMasterSource:{fileName:file.name, importedAt:new Date().toISOString()}
                             };
                         }
 
@@ -1694,7 +1704,7 @@ const I18N = {
                     }
                 }
                 if (i % 100 === 0) {
-                    setLoadingMessage('Excel master verisi işleniyor...', `${i + 1}/${jsonData.length} satır kontrol edildi.`);
+                    setLoadingMessage('Legacy Excel migration verisi işleniyor...', `${i + 1}/${jsonData.length} satır kontrol edildi.`);
                     await yieldToBrowser();
                 }
             }
@@ -1727,7 +1737,7 @@ const I18N = {
                 await yieldToBrowser();
                 const wsEI = wb.Sheets[eiSheetName];
                 const jsonEI = XLSX.utils.sheet_to_json(wsEI);
-                baseEIData = {};
+                legacyEIReferenceData = {};
                 for (let i = 0; i < jsonEI.length; i++) {
                     const row = jsonEI[i];
                     let alan = row['DENETİM ALANI'] || row['ALAN'] || row['AREA'];
@@ -1736,9 +1746,17 @@ const I18N = {
                     let afterRaw = getCol(row, ['AFTER VALIDASYON', 'AFTER VALIDATION', 'VALIDASYON SONRASI', 'SONRASI SATISFACTORY', 'POST VALIDATION']);
                     let afterSat = parseInt(afterRaw);
                     if(alan && !isNaN(total) && !isNaN(sat)) {
-                        baseEIData[alan.toString().trim().toUpperCase()] = { total, sat, afterSat: !isNaN(afterSat) ? afterSat : null };
+                        legacyEIReferenceData[alan.toString().trim().toUpperCase()] = { total, sat, afterSat: !isNaN(afterSat) ? afterSat : null, source:'legacy_ei_reference' };
                     }
                     if (i % 50 === 0) await yieldToBrowser();
+                }
+                const currentState=typeof window.getLatestStateComplianceSnapshot==='function'?window.getLatestStateComplianceSnapshot():null;
+                if(currentState){
+                    window.setBaseEiDataFromStateSnapshot(currentState);
+                    showAppRuntimeToast('Legacy EI_Referans okundu ancak EI baseline State Snapshot kaynağından korunuyor.','warn');
+                } else {
+                    baseEIData = JSON.parse(JSON.stringify(legacyEIReferenceData));
+                    if(Object.keys(baseEIData).length) window.currentEiSourceKind='legacy_ei_reference';
                 }
 
                 if (Object.keys(baseEIData).length > 0) {
@@ -1769,6 +1787,7 @@ const I18N = {
             refreshAllFilters();
             await yieldToBrowser();
             if(window.refreshCapPqLinkage)window.refreshCapPqLinkage({persist:false,silent:true});
+            if(typeof window.enrichPqMasterFromPqLibrary==='function')window.enrichPqMasterFromPqLibrary();
             saveToLocalStorage();
             await yieldToBrowser();
             render();
@@ -1788,11 +1807,11 @@ const I18N = {
         
         let closedPQs = [];
         Object.keys(pqMasterData).forEach(pq => {
-            if(pqMasterData[pq] && pqMasterData[pq].isIcaoClosed) { closedPQs.push({ pq: pq, ...pqMasterData[pq] }); }
+            if(pqMasterData[pq] && isPqEffectivelyOfficiallyClosed(pq,pqMasterData[pq])) { closedPQs.push({ pq: pq, ...pqMasterData[pq], effectiveOfficialSource:(window.getPqEffectiveOfficialState(pq,pqMasterData[pq])||{}).source }); }
         });
 
         if(closedPQs.length === 0) {
-            container.innerHTML = `<div style="text-align:center; color:var(--muted); font-size:12px; padding:20px;">Excel master dosyasında henüz ICAO tarafından kapatılmış (EVET olarak işaretlenmiş) bir PQ bulunmamaktadır.</div>`;
+            container.innerHTML = `<div style="text-align:center; color:var(--muted); font-size:12px; padding:20px;">Son State Snapshot / legacy fallback itibarıyla Satisfactory durumda bir PQ bulunmamaktadır.</div>`;
             return;
         }
 
@@ -1937,7 +1956,7 @@ const I18N = {
             const matchSearch = d.pq.includes(search) || d.action.toLowerCase().includes(search) || d.office.toLowerCase().includes(search) || (excel.bulgu && excel.bulgu.toLowerCase().includes(search)) || (excel.bulguTr && String(excel.bulguTr).toLocaleLowerCase('tr-TR').includes(search)) || (excel.soru && String(excel.soru).toLowerCase().includes(search)) || (excel.soruTr && String(excel.soruTr).toLocaleLowerCase('tr-TR').includes(search)) || (excel.sorumlu && excel.sorumlu.toLowerCase().includes(search)) || (excel.ce && excel.ce.toLowerCase().includes(search)) || (d.note && d.note.toLowerCase().includes(search)); 
             const matchStatus = statusVals.includes('all') || statusVals.includes(statType); 
             let matchPqStatus = pqStatusVals.includes('all'); if (!matchPqStatus) { if (pqStatusVals.includes('pq-done') && pqCompletionMap[d.pq]) matchPqStatus = true; if (pqStatusVals.includes('pq-open') && !pqCompletionMap[d.pq]) matchPqStatus = true; }
-            let matchIcaoValidation = true; if (!icaoValidationVals.includes('all') && icaoValidationVals.includes('icao-closed')) { if (!excel.isIcaoClosed) matchIcaoValidation = false; }
+            let matchIcaoValidation = true; if (!icaoValidationVals.includes('all') && icaoValidationVals.includes('icao-closed')) { if (!isPqEffectivelyOfficiallyClosed(d.pq,excel)) matchIcaoValidation = false; }
             const matchPerson = personVals.includes('all') || personVals.includes(excel.sorumlu); const matchType = typeVals.includes('all') || typeVals.includes(excel.tur); const matchOffice = officeVals.includes('all') || officeVals.includes(d.office.trim()); const matchArea = areaVals.includes('all') || areaVals.includes(excel.alan); const matchCE = ceVals.includes('all') || ceVals.includes(excel.ce); const matchIcao = icaoVals.includes('all') || icaoVals.includes(excel.degerlendirme); 
             let matchDate = true; if (dStartObj || dEndObj) { if (d.estDate && d.estDate !== "Kapatıldı") { let itemDate = parseDateObj(d.estDate); if (itemDate) { if (dStartObj && itemDate < dStartObj) matchDate = false; if (dEndObj && itemDate > dEndObj) matchDate = false; } else matchDate = false; } else { matchDate = false; } }
             let matchTags = true;
@@ -2077,7 +2096,7 @@ const I18N = {
         const canCloseByProjection = !!projectionDate && usable.length > 0 && !allDone && missingDates === 0 && datedOpenItems.length === openSteps && !!latestOpenDate && latestOpenDate.getTime() <= projectionDate.getTime();
 
         let status = COMMON_PQ_STATUS.OPEN;
-        if (master.isIcaoClosed) status = COMMON_PQ_STATUS.OFFICIAL_CLOSED;
+        if (isPqEffectivelyOfficiallyClosed(pq,master)) status = COMMON_PQ_STATUS.OFFICIAL_CLOSED;
         else if (usable.length === 0) status = COMMON_PQ_STATUS.NO_CAP;
         else if (allDone) status = COMMON_PQ_STATUS.CAP_COMPLETED;
         else if (canCloseByProjection) status = COMMON_PQ_STATUS.PROJECTED_CLOSABLE;
@@ -2204,7 +2223,7 @@ const I18N = {
 
             incrementCommonCounter(model.pq, verificationType);
             incrementCommonCounter(isCompleted ? model.pq.completed : model.pq.open, verificationType);
-            if (master.isIcaoClosed) model.pq.officialClosed++;
+            if (isPqEffectivelyOfficiallyClosed(pq,master)) model.pq.officialClosed++;
             if (!items.some(isUsableCapStep)) model.pq.noUsableCap++;
 
             if (!model.areas[area]) model.areas[area] = createCommonAreaRecord(area);
@@ -2403,8 +2422,8 @@ const I18N = {
 
     // ================================================================
     // VERI KALITESI MERKEZI
-    // Word CAP ve Excel master verilerini ortak, kural bazli bir kalite
-    // modelinde birlestirir. Aktif filtreler korunur; master-only PQ'lar
+    // CAP Word, PQ Word/PQ DB ve sorumluluk kaynaklarını ortak, kural bazli bir kalite
+    // modelinde birlestirir. Legacy Excel ana kaynak değildir; master-view yalnız birleşik görünüm sağlar.
     // eylem-ozel filtre yoksa kapsama dahil edilir.
     // ================================================================
     const DATA_QUALITY_SEVERITIES = Object.freeze({
@@ -2416,18 +2435,18 @@ const I18N = {
 
     const DATA_QUALITY_CATEGORIES = Object.freeze({
         missing_cap: { label: 'CAP Kaydı Yok / Boş', severity: 'critical', description: 'PQ için kullanılabilir CAP adımı bulunmuyor.' },
-        missing_master: { label: 'Excel Master Eşleşmesi Yok', severity: 'critical', description: 'Word CAP kaydının Excel master karşılığı bulunmuyor.' },
+        missing_master: { label: 'PQ Master / PQ DB Eşleşmesi Yok', severity: 'critical', description: 'CAP kaydının PQ Word / PQ Veri Tabanı karşılığı bulunmuyor.' },
         missing_action: { label: 'CAP Eylem Metni Eksik', severity: 'critical', description: 'Adım var ancak eylem metni boş veya yer tutucu.' },
         missing_date: { label: 'Hedef Tarih Eksik', severity: 'high', description: 'Açık CAP adımında hedef tarih bulunmuyor.' },
         invalid_date: { label: 'Hedef Tarih Geçersiz', severity: 'high', description: 'Tarih alanı dolu fakat geçerli tarihe dönüştürülemiyor.' },
         missing_office: { label: 'Sorumlu Ofis Eksik', severity: 'high', description: 'CAP adımı için sorumlu ofis belirtilmemiş.' },
         duplicate_step: { label: 'Mükerrer Adım Numarası', severity: 'high', description: 'Aynı PQ içinde aynı adım numarası birden fazla kullanılmış.' },
         duplicate_action: { label: 'Mükerrer CAP Metni', severity: 'high', description: 'Aynı PQ içinde aynı veya neredeyse aynı CAP metni tekrarlanıyor.' },
-        missing_area: { label: 'Denetim Alanı Eksik', severity: 'high', description: 'Excel master kaydında denetim alanı eksik veya varsayılan değerde.' },
+        missing_area: { label: 'Denetim Alanı Eksik', severity: 'high', description: 'PQ Word / PQ Veri Tabanı kaydında denetim alanı eksik veya varsayılan değerde.' },
         invalid_pq: { label: 'PQ Numarası Formatı Geçersiz', severity: 'high', description: 'PQ numarası beklenen 1.001 / 12.001 formatında değil.' },
-        missing_ce: { label: 'CE Bilgisi Eksik', severity: 'medium', description: 'Excel master kaydında kritik element bilgisi yok.' },
-        missing_owner: { label: 'PQ Sorumlusu Eksik', severity: 'medium', description: 'Excel master kaydında PQ sorumlusu belirtilmemiş.' },
-        missing_finding: { label: 'Bulgu Metni Eksik', severity: 'medium', description: 'Excel master kaydında bulgu/açıklama metni yok.' },
+        missing_ce: { label: 'CE Bilgisi Eksik', severity: 'medium', description: 'PQ Word / PQ Veri Tabanı kaydında kritik element bilgisi yok.' },
+        missing_owner: { label: 'PQ Sorumlusu Eksik', severity: 'medium', description: 'Sorumluluk Listesi / organizasyonel sahiplik kaydında PQ sorumlusu belirtilmemiş.' },
+        missing_finding: { label: 'Bulgu Metni Eksik', severity: 'medium', description: 'CAP Word kaydında PROTOCOL FINDING / bulgu metni bulunmuyor.' },
         missing_type: { label: 'Doğrulama Türü Eksik', severity: 'medium', description: 'On-Site / Off-Site doğrulama türü belirtilmemiş.' },
         completion_date_conflict: { label: 'Tamamlanma / Tarih Çelişkisi', severity: 'medium', description: 'Tamamlanan adımın tarihi eksik, geçersiz veya gelecekte.' },
         invalid_step: { label: 'Adım Numarası Formatı', severity: 'medium', description: 'CAP adım numarası sayısal standartta değil.' },
@@ -2478,7 +2497,7 @@ const I18N = {
         if (!personVals.includes('all') && !personVals.includes(master.sorumlu)) return false;
         if (!typeVals.includes('all') && !typeVals.includes(master.tur)) return false;
         if (!icaoVals.includes('all') && !icaoVals.includes(master.degerlendirme)) return false;
-        if (!validationVals.includes('all') && validationVals.includes('icao-closed') && !master.isIcaoClosed) return false;
+        if (!validationVals.includes('all') && validationVals.includes('icao-closed') && !isPqEffectivelyOfficiallyClosed(pq,master)) return false;
 
         if (search) {
             const haystack = [
@@ -2556,6 +2575,11 @@ const I18N = {
             const hasMaster = Object.prototype.hasOwnProperty.call(pqMasterData, pq);
             const master = pqMasterData[pq] || {};
             const rows = groups[pq] || [];
+            const pqLibraryLoaded = typeof window.isIcaoPqLibraryLoaded === 'function' ? window.isIcaoPqLibraryLoaded() : false;
+            let hasPqDbMatch = master.pqAuthoritySource === 'pq_word_library';
+            if (!hasPqDbMatch && pqLibraryLoaded && typeof window.findPqLibraryReference === 'function') {
+                try { hasPqDbMatch = !!window.findPqLibraryReference(pq, master.alan || ''); } catch (_) {}
+            }
 
             if (!/^\d{1,2}\.\d{3}$/.test(String(pq || ''))) {
                 addIssue(
@@ -2566,11 +2590,11 @@ const I18N = {
                 );
             }
 
-            if (!hasMaster) {
+            if (rows.length && pqLibraryLoaded && !hasPqDbMatch) {
                 addIssue(
-                    'missing_master', pq, '', 'Excel Master', 'Kayıt yok',
-                    'Word CAP kaydı için Excel master eşleşmesi bulunamadı.',
-                    'PQ numarasını ve Excel master satırını kontrol edin.',
+                    'missing_master', pq, '', 'PQ Word / PQ DB', 'Eşleşme yok',
+                    'CAP Word kaydı için aktif PQ Word / PQ Veri Tabanı eşleşmesi bulunamadı.',
+                    'PQ numarasını, aktif sürümü ve CAP↔PQ lineage eşleşmesini kontrol edin.',
                     rows[0] || null, master
                 );
             }
@@ -2579,32 +2603,33 @@ const I18N = {
                 if (dqIsMissing(master.alan, ['DİĞER', 'DIGER'])) {
                     addIssue('missing_area', pq, '', 'Denetim Alanı', master.alan || 'Boş',
                         'Denetim alanı eksik veya varsayılan değerde.',
-                        'Excel master kaydına AGA, ANS, AIR, OPS vb. gerçek alanı girin.', null, master);
+                        'PQ Word / PQ Veri Tabanı metadata kaydını kontrol edin.', null, master);
                 }
                 if (dqIsMissing(master.ce)) {
                     addIssue('missing_ce', pq, '', 'CE', master.ce || 'Boş',
                         'Kritik element bilgisi eksik.',
-                        'Excel master kaydında CE bilgisini tamamlayın.', null, master);
+                        'PQ Word / PQ Veri Tabanı kaydındaki CE bilgisini kontrol edin.', null, master);
                 }
                 if (dqIsMissing(master.sorumlu)) {
+                    const responsibilityConfigured = !!(window.icaoResponsibilityRegistry && Object.keys((window.icaoResponsibilityRegistry||{}).records||{}).length);
                     addIssue('missing_owner', pq, '', 'PQ Sorumlusu', master.sorumlu || 'Boş',
-                        'PQ sorumlusu belirtilmemiş.',
-                        'Sorumlu personel/birim bilgisini master veride tamamlayın.', null, master);
+                        responsibilityConfigured ? 'Yüklenen Sorumluluk Listesinde bu PQ için sorumlu eşleşmesi bulunmuyor.' : 'Sorumluluk Listesi henüz yüklenmedi; bu alan EI/PQ source-of-truth için zorunlu değildir.',
+                        responsibilityConfigured ? 'PQ Concept ID veya PQ No + Alan eşleşmesini sorumluluk listesinde kontrol edin.' : 'İhtiyaç halinde ayrı Sorumluluk Listesi yükleyin.', null, master, responsibilityConfigured ? 'medium' : 'low');
                 }
                 if (dqIsMissing(master.bulgu)) {
                     addIssue('missing_finding', pq, '', 'Bulgu', master.bulgu || 'Boş',
                         'Bulgu veya açıklama metni eksik.',
-                        'ICAO bulgu metnini Excel master kaydına ekleyin.', null, master);
+                        'CAP Word belgesindeki PROTOCOL FINDING bölümünü kontrol edin ve CAP Word dosyasını yeniden yükleyin.', null, master);
                 }
                 if (dqIsMissing(master.tur)) {
                     addIssue('missing_type', pq, '', 'Doğrulama Türü', master.tur || 'Boş',
                         'Doğrulama türü eksik.',
-                        'On-Site / Off-Site bilgisini tamamlayın.', null, master);
+                        'PQ Word / PQ Veri Tabanındaki On-site / Off-site bilgisini kontrol edin.', null, master);
                 }
             }
 
             // ICAO tarafından resmî kapatılan PQ'lar için CAP yokluğu sorun sayılmaz.
-            if (master.isIcaoClosed) return;
+            if (isPqEffectivelyOfficiallyClosed(pq,master)) return;
 
             const usableRows = rows.filter(isUsableCapStep);
             if (!usableRows.length) {
@@ -2876,7 +2901,7 @@ const I18N = {
             return;
         }
         const master = pqMasterData[pq] || {};
-        alert(`PQ ${pq} için Word/CAP satırı bulunmuyor.\nAlan: ${master.alan || '-'}\nCE: ${master.ce || '-'}\nExcel master kaydı kontrol edilmelidir.`);
+        alert(`PQ ${pq} için CAP Word satırı bulunmuyor.\nAlan: ${master.alan || '-'}\nCE: ${master.ce || '-'}\nCAP Word ve PQ Veri Tabanı eşleşmesi kontrol edilmelidir.`);
     };
 
     function buildDataQualitySummaryRows(model) {
@@ -3754,7 +3779,7 @@ const I18N = {
     function getIcaoVisitScopePqs(visit){
         return getVisitScopeStoredPqs(visit).filter(p=>{
             const pq=String((p||{}).pq||''); const master=pqMasterData[pq]||{};
-            if(!pq || master.isIcaoClosed) return false;
+            if(!pq || isPqEffectivelyOfficiallyClosed(pq,master)) return false;
             const hasCurrent=(rawData||[]).some(r=>r&&String(r.pq||'')===pq&&isUsableCapStep(r));
             const hasStored=getVisitScopeStoredSteps(visit).some(s=>s&&String(s.pq||'')===pq);
             return (rawData||[]).length ? hasCurrent : (hasCurrent||hasStored);
@@ -3801,7 +3826,7 @@ const I18N = {
         const after=getBaseAfterValidationSat(b);
         if(after!==null)return after;
         // Son güvenlik: resmen ICAO tarafından kapatılmış PQ sayısını base satisfactory üzerine ekle.
-        const closedCount=Object.values(pqMasterData||{}).filter(m=>m&&m.isIcaoClosed&&normalizeAreaKey(m.alan)===key).length;
+        const closedCount=Object.entries(pqMasterData||{}).filter(([pq,m])=>m&&isPqEffectivelyOfficiallyClosed(pq,m)&&normalizeAreaKey(m.alan)===key).length;
         return Math.min(Number(b.total||Infinity),Number(b.sat||0)+closedCount);
     }
     function getIcaoOfficialVisitImpactModel(visit,scopeOverride=null){
@@ -3814,10 +3839,10 @@ const I18N = {
             const t=Number((bucket&&bucket.total)||b.total||0),sat=getIcaoOfficialBaselineSat(area,baselineModel);
             areas[area]={area,total:t,baselineSat:sat,validatedNew:0};total+=t;baseline+=sat;
         });
-        scopePqs.forEach(p=>{const pq=String(p.pq||''),area=normalizeAreaKey(p.area||(pqMasterData[pq]||{}).alan),m=pqMasterData[pq]||{},r=recordMap.get(pq);if(!area||!areas[area]||m.isIcaoClosed)return;if(r&&r.status==='validated'){areas[area].validatedNew++;validatedNew++;}});
+        scopePqs.forEach(p=>{const pq=String(p.pq||''),area=normalizeAreaKey(p.area||(pqMasterData[pq]||{}).alan),m=pqMasterData[pq]||{},r=recordMap.get(pq);if(!area||!areas[area]||isPqEffectivelyOfficiallyClosed(pq,m))return;if(r&&r.status==='validated'){areas[area].validatedNew++;validatedNew++;}});
         Object.values(areas).forEach(a=>{a.newSat=Math.min(a.total,a.baselineSat+a.validatedNew);a.baselinePct=ratioPct(a.baselineSat,a.total);a.newPct=ratioPct(a.newSat,a.total);a.delta=a.newPct-a.baselinePct;});
         const newSat=Math.min(total,baseline+validatedNew);
-        return {scopePqs,records,areas,total,baselineSat:baseline,validatedNew,newSat,baselinePct:ratioPct(baseline,total),newPct:ratioPct(newSat,total),delta:ratioPct(newSat,total)-ratioPct(baseline,total),baselineSource:'ICAO validasyonları sonrası resmî durum'};
+        return {scopePqs,records,areas,total,baselineSat:baseline,validatedNew,newSat,baselinePct:ratioPct(baseline,total),newPct:ratioPct(newSat,total),delta:ratioPct(newSat,total)-ratioPct(baseline,total),baselineSource:window.currentEiSourceKind==='state_snapshot'?'Son State Compliance Snapshot':'Legacy EI referans / validasyon fallback'};
     }
     function getSelectedIcaoVisitAreaFilter(){
         const el=document.getElementById('icaoVisitAreaFilter');
@@ -3932,7 +3957,7 @@ const I18N = {
     }
     function updateIcaoTranslationStatus(visit){
         const el=document.getElementById('icaoVisitTranslationStatus');if(!el)return;
-        if(!visit){el.textContent='Türkçe PQ metinleri Excel master yüklendiğinde burada kontrol edilir.';return;}
+        if(!visit){el.textContent='Türkçe PQ/bulgu metinleri mevcut kaynaklardan (CAP/PQ/legacy çeviri) burada kontrol edilir.';return;}
         const pqs=getIcaoVisitAreaScopedPqs(visit);let qOk=0,fOk=0,both=0;
         pqs.forEach(p=>{const m=pqMasterData[String(p.pq||'')]||{},q=String(m.soruTr||p.questionTr||'').trim(),f=String(m.bulguTr||p.findingTr||'').trim();if(q)qOk++;if(f)fOk++;if(q&&f)both++;});
         const total=pqs.length,pct=total?((both/total)*100).toFixed(1).replace('.',','):'0,0';
@@ -4062,10 +4087,10 @@ const I18N = {
         const steps=getIcaoVisitPqSteps(visit,pq),stepEl=document.getElementById('icaoValidationSteps');if(stepEl)stepEl.innerHTML=steps.length?steps.map(s=>`<div class="icao-valid-step"><b>Step ${escapeHtml(s.step||'-')}</b> — ${escapeHtml(s.action||s.capText||s.description||'-')}<br><span style="color:var(--muted)">${escapeHtml(s.office||'-')} | ${escapeHtml(s.estDate||'-')} | ${escapeHtml(s.statusLabel||s.progress||'')}</span>${s.evidenceReference?`<br><span style="color:var(--text)"><b>📎 EVIDENCE REFERENCE:</b> ${escapeHtml(s.evidenceReference)}</span>`:''}</div>`).join(''):'<div class="icao-valid-step">Bu PQ için gösterilecek CAP Step kaydı bulunamadı.</div>';
         renderIcaoValidationImpactForPq(visit,pq);renderIcaoOfficialVisitPqList();
     }
-    function renderIcaoValidationImpactForPq(visit,pq){const el=document.getElementById('icaoValidationEiImpact');if(!el)return;const m=pqMasterData[pq]||{},area=normalizeAreaKey(m.alan),base=baseEIData[area]||{},baselineModel=getIcaoOfficialBaselineModel(),bucket=baselineModel&&baselineModel.areas?baselineModel.areas[area]:null,total=Number((bucket&&bucket.total)||base.total||0),sat=getIcaoOfficialBaselineSat(area,baselineModel),r=getIcaoValidationForPq(visit,pq),eligible=!m.isIcaoClosed&&r&&r.status==='validated';const before=ratioPct(sat,total),after=ratioPct(Math.min(total,sat+(eligible?1:0)),total);el.innerHTML=`<b>EI etkisi</b><br>Mevcut resmî ${escapeHtml(area||'-')} EI <span style="font-size:9px;color:var(--muted)">(ICAO validasyonları sonrası)</span>: <b>${formatOfficialEiPct(before)}</b>${eligible?` → bu PQ ICVM'de kapatıldığı için geçici hesapta <b>${formatOfficialEiPct(after)}</b> <span class="icao-ei-positive">(${formatOfficialEiDelta(after-before)})</span>`:' · Bu PQ henüz EI artışına dahil edilmez.'}${m.isIcaoClosed?'<br><span style="color:var(--danger)">Bu PQ daha önce ICAO tarafından kapatılmıştır; yeniden EI etkisi oluşturamaz.</span>':''}`;}
+    function renderIcaoValidationImpactForPq(visit,pq){const el=document.getElementById('icaoValidationEiImpact');if(!el)return;const m=pqMasterData[pq]||{},alreadyOfficial=isPqEffectivelyOfficiallyClosed(pq,m),area=normalizeAreaKey(m.alan),base=baseEIData[area]||{},baselineModel=getIcaoOfficialBaselineModel(),bucket=baselineModel&&baselineModel.areas?baselineModel.areas[area]:null,total=Number((bucket&&bucket.total)||base.total||0),sat=getIcaoOfficialBaselineSat(area,baselineModel),r=getIcaoValidationForPq(visit,pq),eligible=!alreadyOfficial&&r&&r.status==='validated';const before=ratioPct(sat,total),after=ratioPct(Math.min(total,sat+(eligible?1:0)),total);el.innerHTML=`<b>EI etkisi</b><br>Mevcut resmî ${escapeHtml(area||'-')} EI: <b>${formatOfficialEiPct(before)}</b>${eligible?` → ziyaret sonucu geçici etkisi <b>${formatOfficialEiPct(after)}</b> <span class="icao-ei-positive">(${formatOfficialEiDelta(after-before)})</span>`:' · Bu PQ henüz yeni EI artışına dahil edilmez.'}${alreadyOfficial?'<br><span style="color:var(--danger)">Bu PQ son State Snapshot / legacy kayıt itibarıyla zaten Satisfactory; yeniden EI etkisi oluşturamaz.</span>':''}`;}
     function resetIcaoValidationForm(){activeIcaoValidationPq=null;const f=document.getElementById('icaoValidationForm'),e=document.getElementById('icaoValidationEmpty');if(f)f.style.display='none';if(e)e.style.display='block';renderIcaoOfficialVisitPqList();}
     async function saveIcaoValidationRecord(event){
-        if(event)event.preventDefault();const user=firebase.auth().currentUser;if(!user)return alert('Kayıt için yetkili giriş gereklidir.');const visitId=activeIcaoOfficialVisitId,pq=(document.getElementById('icaoValidationPq')||{}).value;if(!visitId||!pq)return alert('Ziyaret ve PQ seçiniz.');const visit=icaoVisits[visitId]||{},m=pqMasterData[pq]||{};if(m.isIcaoClosed)return alert('Bu PQ daha önce ICAO tarafından kapatılmıştır. Yeniden validasyon sonucu ile EI etkisi oluşturulamaz.');
+        if(event)event.preventDefault();const user=firebase.auth().currentUser;if(!user)return alert('Kayıt için yetkili giriş gereklidir.');const visitId=activeIcaoOfficialVisitId,pq=(document.getElementById('icaoValidationPq')||{}).value;if(!visitId||!pq)return alert('Ziyaret ve PQ seçiniz.');const visit=icaoVisits[visitId]||{},m=pqMasterData[pq]||{};if(isPqEffectivelyOfficiallyClosed(pq,m))return alert('Bu PQ son resmî State Snapshot / legacy kayıt itibarıyla zaten Satisfactory durumdadır. Yeniden validasyon sonucu ile EI etkisi oluşturulamaz.');
         const val=id=>((document.getElementById(id)||{}).value||'').trim(),status=val('icaoValidationStatus')||'not_evaluated';const actor=getCurrentVisitUser(),now=new Date().toISOString(),key=icaoValidationKey(pq),existing=((visit.icaoValidation||{}).records||{})[key]||{};
         const record={pq,area:normalizeAreaKey(m.alan),status,resultDate:val('icaoValidationResultDate'),evidence:val('icaoValidationEvidence'),evidenceAutoSnapshot:'',icaoComment:val('icaoValidationComment'),additionalRequest:val('icaoValidationAdditionalRequest'),responsibleUnit:val('icaoValidationResponsibleUnit'),followUpDate:val('icaoValidationFollowUpDate'),notes:val('icaoValidationNotes'),eiEligible:status==='validated',baselineOfficialClosed:false,isDeleted:false,createdAt:existing.createdAt||now,createdBy:existing.createdBy||actor,updatedAt:now,updatedBy:actor,moduleVersion:'icao-official-visit-validation-v1.2'};
         const btn=document.getElementById('icaoValidationSaveButton');if(btn){btn.disabled=true;btn.textContent='Kaydediliyor...';}try{const updates={};updates[`icao_visits/${visitId}/icaoValidation/records/${key}`]=window.visitFirebaseSafeValue?window.visitFirebaseSafeValue(record):record;updates[`icao_visits/${visitId}/icaoValidation/updatedAt`]=now;updates[`icao_visits/${visitId}/icaoValidation/updatedBy`]=actor;updates[`icao_visits/${visitId}/icaoValidation/moduleVersion`]='icao-official-visit-validation-v1.2';addVisitAuditToUpdates(updates,visitId,'icao_validation',pq,existing.createdAt?'update':'create',existing,record,status==='validated'?'PQ/CAP ICVM kapsamında kapatıldı / validated olarak kaydedildi.':'PQ/CAP ICVM validasyon sonucu güncellendi.',now,actor,{pq});await db.ref().update(updates);const verify=await db.ref(`icao_visits/${visitId}/icaoValidation/records/${key}`).once('value');if(!verify.exists())throw new Error('Firebase yazma doğrulaması başarısız.');clearTimeout(icaoValidationDraftTimer);icaoValidationDraftTimer=null;clearIcaoValidationTextDraft();showAppRuntimeToast(status==='validated'?'CAP sonucu kaydedildi; geçici EI etkisine dahil edildi.':'ICVM değerlendirme kaydı Firebase üzerinde kaydedildi.','success');renderIcaoOfficialVisitModule(true);selectIcaoValidationPq(pq);}catch(err){console.error(err);alert('ICVM değerlendirme kaydı kaydedilemedi: '+(err.message||err));}finally{if(btn){btn.disabled=false;btn.textContent='💾 CAP Sonucunu Kaydet';}}
@@ -4569,7 +4594,7 @@ const I18N = {
         const candidates = [];
         allPqs.forEach(pq => {
             const master = pqMasterData[pq] || {};
-            if (isIcaoOfficialVisit(visit) && master.isIcaoClosed) return;
+            if (isIcaoOfficialVisit(visit) && isPqEffectivelyOfficiallyClosed(pq,master)) return;
             const area = String(master.alan || 'DİĞER').trim().toUpperCase();
             if (areas.size && !areas.has(area)) return;
             const sourceRows = rawData.filter(r => r && r.pq === pq);
@@ -4602,7 +4627,7 @@ const I18N = {
     function visitScopeHasOpenIcaoCap(item, visit) {
         if (!item || !item.pq) return false;
         const master = item.master || pqMasterData[item.pq] || {};
-        if (master.isIcaoClosed) return false;
+        if (isPqEffectivelyOfficiallyClosed(item.pq,master)) return false;
         // Güncel CAP verisi yüklüyse onu esas al; veri yoksa ziyaretin saklı snapshot'ını emniyet ağı olarak kullan.
         if ((rawData || []).length) return (item.actionItems || []).length > 0;
         return (item.actionItems || []).length > 0 || visitScopeHasStoredCap(visit,item.pq);
@@ -4617,7 +4642,7 @@ const I18N = {
         return buildVisitScopeCandidates().filter(item=>{
             const master=item.master||pqMasterData[item.pq]||{};
             if(pool==='open_cap') return visitScopeHasOpenIcaoCap(item,visit);
-            if(pool==='nonvalidated') return !master.isIcaoClosed;
+            if(pool==='nonvalidated') return !isPqEffectivelyOfficiallyClosed(item.pq,master);
             return true;
         });
     }
@@ -4748,7 +4773,7 @@ const I18N = {
         const count=document.getElementById('visitScopeListCount'); if(count)count.textContent=`${candidates.length} PQ`;
         const syncNote=document.getElementById('visitScopeSyncNote');
         if(syncNote && visit && isIcaoOfficialVisit(visit)){
-            const allNonValidated=buildVisitScopeCandidates().filter(x=>!(x.master||{}).isIcaoClosed).length;
+            const allNonValidated=buildVisitScopeCandidates().filter(x=>!isPqEffectivelyOfficiallyClosed(x.pq,x.master||{})).length;
             const openCaps=buildVisitScopeCandidates().filter(x=>visitScopeHasOpenIcaoCap(x,visit)).length;
             syncNote.textContent=`${visit.visitName||'ICAO ziyareti'} | ICAO valide edilmemiş PQ: ${allNonValidated} | Açık CAP bulunan PQ: ${openCaps} | Varsayılan ICVM havuzu: yalnız açık CAP'ler.`;
         }
@@ -6862,19 +6887,22 @@ const I18N = {
             if (explicitTask) addValidationTaskToModel(model, explicitTask);
 
             if (m.isIcaoClosed) {
-                let task = normalizeValidationTaskName(m.validasyonGorevi, true);
-                addValidationTaskToModel(model, task);
-                model.areas[area].icaoClosed++;
-                model.scope.icaoClosed++;
-                addValidationClosureToBucket(model.areas[area], task, pq);
-                addValidationClosureToBucket(model.scope, task, pq);
+                // Full PQ Status State Snapshot zaten resmî S/NS durumunu içerir; legacy kapanışları ikinci kez numerator'a ekleme.
+                if(window.currentEiSourceKind!=='state_snapshot'){
+                    let task = normalizeValidationTaskName(m.validasyonGorevi, true);
+                    addValidationTaskToModel(model, task);
+                    model.areas[area].icaoClosed++;
+                    model.scope.icaoClosed++;
+                    addValidationClosureToBucket(model.areas[area], task, pq);
+                    addValidationClosureToBucket(model.scope, task, pq);
+                }
             }
         });
 
         let groups = groupRowsByPQ(sourceRows || []);
         Object.keys(groups).forEach(pq => {
             let m = pqMasterData[pq] || {};
-            if (m.isIcaoClosed) return;
+            if (isPqEffectivelyOfficiallyClosed(pq,m)) return;
 
             let area = normalizeAreaKey(m.alan);
             if (!area || !model.areas[area]) return;
@@ -7507,7 +7535,7 @@ const I18N = {
 
         Object.keys(groups).forEach(pq => {
             let m = pqMasterData[pq] || {};
-            if (m.isIcaoClosed) return;
+            if (isPqEffectivelyOfficiallyClosed(pq,m)) return;
             let pqArea = normalizeAreaKey(m.alan);
             if (area !== 'GLOBAL' && pqArea !== area) return;
             if (area === 'GLOBAL' && (!pqArea || !baseEIData[pqArea])) return;
@@ -7623,7 +7651,7 @@ const I18N = {
         const selectedGroups = groupRowsByPQ(selectedRows);
         selectedPQs.forEach(pq => {
             let m = pqMasterData[pq] || {};
-            if (m.isIcaoClosed && !selectedGroups[pq]) selectedGroups[pq] = [{ pq, step: 'ICAO-VAL', action: '🏆 ICAO validasyonu ile kapatıldı.', office: 'SHGM / ICAO', estDate: 'Kapatıldı', progress: '100% Completed', note: '' }];
+            if (isPqEffectivelyOfficiallyClosed(pq,m) && !selectedGroups[pq]) selectedGroups[pq] = [{ pq, step: 'ICAO-VAL', action: '🏆 ICAO validasyonu ile kapatıldı.', office: 'SHGM / ICAO', estDate: 'Kapatıldı', progress: '100% Completed', note: '' }];
         });
         return { analysis, support, upcoming, past, missingDateRows, allUpcoming, allPast, allMissingDateRows, upcomingAllCount: allUpcoming.length, pastAllCount: allPast.length, missingDateAllCount: allMissingDateRows.length, selectedPQs, selectedGroups, filteredScopeRows };
     }
@@ -7703,7 +7731,7 @@ const I18N = {
         }
         const rows = [
             row('cmaa', 'CMAA (Başlangıç)', baseSat, 'cmaa', 'Resmî başlangıç', 'CMAA aşamasındaki ilk resmî EI ve açık bulgu sayısı.'),
-            row('official', 'ICAO Validasyonları Sonrası', officialSat, 'official', 'Resmî validasyon', 'Excel EI_Referans / AFTER VALIDASYON ve ICAO kapatılan PQ etkisi.'),
+            row('official', 'Son Resmî State Snapshot', officialSat, 'official', window.currentEiSourceKind==='state_snapshot'?'Full PQ Status State Snapshot':'Legacy EI fallback', window.currentEiSourceKind==='state_snapshot'?'S/NS/N-A durumları tüm PQ statü snapshotından otomatik hesaplanır.':'State Snapshot yoksa yalnız geriye dönük legacy fallback kullanılır.'),
             row('local', 'Kapatılması Beklenen Bulgu', localSat, 'local', 'ICAO validasyonu bekleyen CAP', 'Tüm CAP adımları tamamlanan ancak henüz ICAO validasyonu ile resmileşmeyen PQ/bulgu sayısı.'),
             row('projected', 'Tüm CAP\'ler Tamamlanmışlar Dahil', projectedSat, 'projected', 'Potansiyel senaryo', 'Mevcut açık CAP havuzunun tamamının olumlu kapanacağı varsayımı.')
         ];
@@ -7805,7 +7833,7 @@ const I18N = {
             const items = bundle.selectedGroups[pq] || [];
             const m = pqMasterData[pq] || {};
             const usable = items.filter(isUsableCapStep);
-            const isDone = m.isIcaoClosed || (usable.length > 0 && usable.every(x => getStatus(x).type === 'done'));
+            const isDone = isPqEffectivelyOfficiallyClosed(pq,m) || (usable.length > 0 && usable.every(x => getStatus(x).type === 'done'));
             const area = normalizeAreaKey(m.alan) || 'DİĞER';
             if (area !== lastArea) { html += `<h3 style="margin:16px 0 8px 0; color:var(--primary); border-bottom:1px solid var(--border); padding-bottom:5px;">${escapeHtml(area)} DENETİM ALANI</h3>`; lastArea = area; }
             const pqNote = dailyPQNotes[pq] || '';
@@ -8265,13 +8293,13 @@ const I18N = {
                 'CE': m.ce || '',
                 'Doğrulama Türü': m.tur || '',
                 'PQ Sorumlusu': m.sorumlu || '',
-                'ICAO Kapattı mı': m.isIcaoClosed ? 'EVET' : 'HAYIR',
+                'Resmî PQ Durumu': isPqEffectivelyOfficiallyClosed(pq,m) ? 'SATISFACTORY' : 'AÇIK / NS',
                 'Validasyon Görevi': m.validasyonGorevi || '',
                 'CAP Adımı': usable.length,
                 'Tamamlanan Adım': done,
                 'Gecikmiş Adım': late,
                 'PQ İlerleme %': usable.length ? ((done / usable.length) * 100).toFixed(2) : '0.00',
-                'PQ Durumu': m.isIcaoClosed ? 'ICAO KAPATTI' : (usable.length > 0 && done === usable.length ? 'TAMAMLANDI' : 'AÇIK'),
+                'PQ Durumu': isPqEffectivelyOfficiallyClosed(pq,m) ? 'RESMÎ SATISFACTORY' : (usable.length > 0 && done === usable.length ? 'TAMAMLANDI' : 'AÇIK'),
                 'Öngörülen PQ Kapanış Tarihi': closure.closureDate ? formatExactDate(closure.closureDate) : '',
                 'İlk Hedef Tarih': nextDates[0] ? formatExactDate(nextDates[0]) : '',
                 'Son Hedef Tarih': nextDates[nextDates.length - 1] ? formatExactDate(nextDates[nextDates.length - 1]) : '',
@@ -9106,7 +9134,7 @@ ${formatOfficialEiDelta(delta)}`,fontSize:8});
 
         commonModel.standardized.actionItems.forEach(action => {
             const s = areaStats[action.area];
-            if (!s || action.master.isIcaoClosed || !action.isUsable) return;
+            if (!s || isPqEffectivelyOfficiallyClosed(action.pq,action.master) || !action.isUsable) return;
             s.totalSteps++;
             if (action.code === COMMON_ACTION_STATUS.COMPLETED.code) {
                 s.doneSteps++;
@@ -9142,7 +9170,7 @@ ${formatOfficialEiDelta(delta)}`,fontSize:8});
 
         const officialClosedRows = Object.keys(pqMasterData || {}).filter(pq => {
             const m = pqMasterData[pq] || {};
-            return m.isIcaoClosed && strategicMasterInAreas(m, areas);
+            return isPqEffectivelyOfficiallyClosed(pq,m) && strategicMasterInAreas(m, areas);
         }).sort(sortPQs).map(pq => {
             const m = pqMasterData[pq] || {};
             return {
@@ -9499,7 +9527,7 @@ ${formatOfficialEiDelta(delta)}`,fontSize:8});
             ctx.title = 'CAP Eksiklikleri Raporu'; ctx.fileName = 'CAP_Eksiklikleri_Detayli.xlsx'; ctx.mode = 'empty'; ctx.rows = getVisibleCapDeficiencyIssues(getFilteredData());
         } else if (activeTab === 'tab-icao-closed') {
             ctx.title = 'ICAO Tarafından Kapatılan PQ Raporu'; ctx.fileName = 'ICAO_Kapatilanlar_Detayli.xlsx'; ctx.mode = 'icao';
-            Object.keys(pqMasterData).forEach(pq => { if (pqMasterData[pq] && pqMasterData[pq].isIcaoClosed) ctx.rows.push({ pq, ...pqMasterData[pq] }); });
+            Object.keys(pqMasterData).forEach(pq => { if (pqMasterData[pq] && isPqEffectivelyOfficiallyClosed(pq,pqMasterData[pq])) ctx.rows.push({ pq, ...pqMasterData[pq], effectiveOfficialSource:(window.getPqEffectiveOfficialState(pq,pqMasterData[pq])||{}).source }); });
             ctx.rows.sort((a,b) => sortAreas(a.alan,b.alan) || sortPQs(a.pq,b.pq));
         } else if (activeTab === 'tab-assessment-impact') {
             ctx.title = 'ICAO Değerlendirme Dönemleri ve EI Etki Analizi'; ctx.fileName = 'ICAO_Degerlendirme_Donemleri_EI_Etki_Analizi.xlsx'; ctx.mode = 'assessment_impact'; ctx.rows = [];
@@ -10316,7 +10344,7 @@ Mevcut: ${issue.currentValue || 'Boş'}`), fontSize:8},
             let m = pMaster[pq] || {};
             let area = normalizeAreaKey(m.alan);
             if (!area || !analysis.areaRows[area]) return;
-            if (m.isIcaoClosed) {
+            if (isPqEffectivelyOfficiallyClosed(pq,m)) {
                 analysis.icaoClosed++;
                 analysis.areaRows[area].icaoClosed++;
                 addClosedPQ(pq, m, 'ICAO Validasyonu');
@@ -10339,7 +10367,7 @@ Mevcut: ${issue.currentValue || 'Boş'}`), fontSize:8},
 
         Object.keys(groups).forEach(pq => {
             let m = pMaster[pq] || {};
-            if (m.isIcaoClosed) return;
+            if (isPqEffectivelyOfficiallyClosed(pq,m)) return;
             let area = normalizeAreaKey(m.alan);
             if (!area || !analysis.areaRows[area]) return;
             analysis.areaRows[area].activePQs.add(pq);

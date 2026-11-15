@@ -225,3 +225,13 @@ Tam kural dosyası: `firebase/database.rules.phase15.json`.
 
 ## Faz 16 / v1.0 RC1
 Release Candidate dağıtımında tek güncel Rules kaynağı `database.rules.phase16.json` dosyasıdır. Bu sürüm Phase 15 rol modelini korur ve Drive/Aksiyon global ayarları ile erişim talebi/lastLogin kurallarını sertleştirir.
+
+
+## RC1.1 – EI Source of Truth & Sorumluluk Registry
+
+Bu sürümde iki ayrı kaynak kökü kullanılır:
+
+- `icao_state_snapshots`: Full PQ Status (S / NS / N-A) dosyalarından üretilen State Compliance Snapshot. Overall ve alan EI hesabının sayısal source-of-truth katmanıdır.
+- `icao_responsibility_registry`: PQ Concept ID / PQ No + Alan üzerinden organizasyonel sorumluluk eşleşmeleri. PQ yapısı, CAP veya EI verisi içermez.
+
+Her iki kök aktif authenticated kullanıcılarca okunabilir; yazma owner / manager / coordinator ile sınırlıdır. Güncel tam Rules dosyası: `firebase/database.rules.rc1_1.json`.

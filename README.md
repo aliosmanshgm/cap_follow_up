@@ -1,3 +1,31 @@
+# USOAP CMA CAP Takip — v1.0 RC1.1
+
+## EI Source of Truth & State Compliance Snapshot
+
+RC1.1, EI ve PQ durum yönetimini mükerrer legacy Excel alanlarından çıkarıp kaynak-otorite modeline taşır. Normal kullanımda ana girdiler **PQ Word + CAP Word + Full PQ Status Excel**; isteğe bağlı olarak **Responsibility Registry** ve ICAO assessment/final report kaynaklarıdır.
+
+### Ana ilkeler
+- **PQ Word / PQ DB**: PQ yapısı, CE, soru, On/Off-site, PPQ, referans, version/revision/lineage.
+- **CAP Word**: Protocol Finding + CAP adımları ve CAP içeriği.
+- **Full PQ Status**: S / NS / N-A state snapshot; Overall ve alan EI'nin sayısal kaynağı.
+- **Assessment Event**: visit scope, validated PQ ve event-specific metrics.
+- **ICAO Final Report**: published EI; calculated snapshot ile reconciliation.
+- **Responsibility Registry**: kişi/birim sahipliği.
+- **Legacy Excel Master**: migration/fallback only; yeni EI üretmez.
+
+### RC1.1 dosyaları
+- `SOURCE_OF_TRUTH_MODEL.md` — kaynak otorite modeli
+- `RC1_1_DEPLOYMENT.md` — dağıtım ve ilk veri testi
+- `RC_ACCEPTANCE_CHECKLIST.md` — canlı kabul listesi
+- `RELEASE_NOTES_v1.0_RC1_1.md` — sürüm notları
+- `RC1_1_SOURCE_QA_REPORT.json` — gerçek CAP Word / legacy master kaynak QA
+- `firebase/database.rules.rc1_1.json` — güncel Realtime Database Rules
+
+### Firebase
+RC1.1 için `firebase/database.rules.rc1_1.json` kullanılmalıdır. Yeni yollar: `icao_state_snapshots` ve `icao_responsibility_registry`. Firebase Storage gerekmez.
+
+---
+
 # USOAP CMA CAP Takip — v1.0 RC1
 
 ## Faz 16 — Stabilizasyon, Güvenlik ve Release Candidate

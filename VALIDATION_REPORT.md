@@ -1,3 +1,29 @@
+# v1.0 RC1.1 — Source of Truth Doğrulama Raporu
+
+## Veri modeli doğrulamaları
+- Assessment Event scope metriği ile State-wide Overall S / Applicable ayrıldı.
+- Full PQ Status → State Compliance Snapshot → Overall/alan EI hesabı bağlandı.
+- Post-event snapshot otomatik bağlantısı eklendi.
+- Published Final Report EI ile calculated EI reconciliation eklendi.
+- Latest State Snapshot Satisfactory durumu Validasyon Adayı/closure mantığında legacy Excel'den öncelikli.
+- Legacy Excel Master migration/fallback moduna alındı; `EI_Referans` yeni resmî EI üretmiyor.
+- Responsibility Registry ayrı kaynak olarak eklendi.
+- CAP Word `PROTOCOL FINDING` ayrıştırması eklendi.
+
+## Gerçek kaynak QA
+- `TurkiyeAGACAP20260630000000000.docx`: 59 protocol row / 59 soru / 59 finding başarıyla ayrıştırıldı.
+- `PQ_Excel_Master_Sablonu.xlsx`: 355 legacy bulgulu kayıt, 33 legacy closure kaydı analiz edildi; dosya yeni modelde yalnız migration/fallback olarak değerlendirildi.
+
+## Otomatik testler
+- `tools/rc-check.mjs`: sonuç paketteki `RC_STATIC_QA_REPORT.json` dosyasına yazılır.
+- `tools/rc-domain-tests.mjs`: PQ değişiklik dağılımı ve parser domain invariant'larını doğrular.
+- Tüm JS dosyaları `node --check` ile doğrulanır.
+
+## Kabul kriteri
+RC1.1 canlı kabulünde özellikle şu ayrım doğrulanmalıdır: ICVM gibi bir event'teki `60/85` scope değeri State Overall denominator olarak kullanılmamalı; post-event Full Status snapshot State-wide S / Applicable / EI değerlerini sağlamalıdır.
+
+---
+
 # Faz 14 v17 — Bildirim & Otomasyon Merkezi Doğrulama Raporu
 
 ## Kapsam

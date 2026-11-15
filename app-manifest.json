@@ -1,6 +1,6 @@
 {
   "app": "USOAP CMA CAP Takip",
-  "version": "1.0.0-rc1",
+  "version": "1.0.0-rc1.1",
   "baseline": "index_visit_hub_pq_version_database(2).html",
   "buildDate": "2026-11-15",
   "features": [
@@ -96,7 +96,16 @@
     "static-regression-checker",
     "pq-distribution-invariant-check",
     "drive-token-persistence-check",
-    "firebase-rules-security-assertions"
+    "firebase-rules-security-assertions",
+    "state-compliance-snapshot-source-of-truth",
+    "full-pq-status-state-snapshot",
+    "assessment-event-scope-metrics-separation",
+    "official-ei-published-reconciliation",
+    "automatic-post-event-snapshot-linking",
+    "legacy-master-migration-only",
+    "responsibility-registry",
+    "cap-word-protocol-finding-import",
+    "state-snapshot-validation-candidate-auto-close"
   ],
   "architecture": {
     "index": "index.html",
@@ -108,6 +117,7 @@
       "js/modules/access-control.js",
       "js/modules/visit-sync.js",
       "js/modules/visit-hub.js",
+      "js/modules/state-compliance.js",
       "js/modules/assessment-events.js",
       "js/modules/official-ei-management.js",
       "js/modules/official-ei-automation.js",
@@ -119,6 +129,7 @@
       "js/modules/drive-documents.js",
       "js/services/pq-repository.js",
       "js/modules/pq-library.js",
+      "js/modules/responsibility-registry.js",
       "js/modules/system-integrity.js",
       "js/modules/action-center.js",
       "js/modules/notification-center.js",
@@ -126,5 +137,5 @@
     ]
   },
   "releaseChannel": "release-candidate",
-  "previousVersion": "18.5-phase15-pq-card-distribution-hotfix"
+  "previousVersion": "1.0.0-rc1"
 }

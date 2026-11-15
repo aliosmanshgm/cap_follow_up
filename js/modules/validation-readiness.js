@@ -2,7 +2,7 @@
     'use strict';
 
     const PATH='icao_validation_readiness';
-    const MODULE_VERSION='validation-readiness-v1-phase4';
+    const MODULE_VERSION='validation-readiness-v2-state-snapshot';
     const AREAS=['LEG','ORG','PEL','OPS','AIR','AIG','ANS','AGA'];
     let readinessRef=null,readinessCallback=null;
     let activeCandidateKey='';
@@ -51,7 +51,8 @@
         const out=[];
         for(const pq of pqs){
             const master=(pqMasterData||{})[pq]||{};
-            if(master.isIcaoClosed)continue;
+            const officiallySatisfactory=(typeof window.isPqEffectivelyOfficiallyClosed==='function'?window.isPqEffectivelyOfficiallyClosed(pq,master):master.isIcaoClosed===true);
+            if(officiallySatisfactory)continue;
             const area=areaOf(pq);if(!AREAS.includes(area))continue;
             const rows=usableRows(pq);if(!rows.length)continue;
             const statuses=rows.map(r=>typeof classifyCommonActionStatus==='function'?classifyCommonActionStatus(r):{code:''});

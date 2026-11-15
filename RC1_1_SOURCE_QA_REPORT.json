@@ -1,0 +1,124 @@
+{
+  "capWord": {
+    "file": "TurkiyeAGACAP20260630000000000.docx",
+    "protocolRowsParsed": 59,
+    "nonEmptyFinding": 59,
+    "nonEmptyQuestion": 59,
+    "sample": [
+      {
+        "pq": "8.001",
+        "ce": "CE-2",
+        "status": "Not Satisfactory",
+        "question": "Has the State promulgated specific operating regulations to transpose the provisions of Annex 14?",
+        "finding": "The Republic of Turkiye has promulgated operating regulations to transpose the provisions of Annex 14, Volume I; however, the content of the regulations is not sufficient enough to cover aerodrome design and operations. For example, provisions related to runway surface condition(s) for use in the runway condition report were not incorporated into “Airport Safety Standards Instruction, Revision No. 3 dated 09/01/2024 (SHT-HES)”. Moreover, all recommendations of Annex 14, Volume I have been converted to Standards without having a national policy for the transposition of the Recommended Practices of Annex 14 to the Chicago Convention."
+      },
+      {
+        "pq": "8.003",
+        "ce": "CE-2",
+        "status": "Not Satisfactory",
+        "question": "Has the State implemented procedures for the amendment of its specific regulations, taking into consideration ICAO provisions and their amendments?",
+        "finding": "The Republic of Turkiye has developed procedures for the amendment of its specific operating regulations, taking into consideration ICAO provisions and their amendments. However, the procedures are not elaborated in detail and do not provide timelines to ensure that regulations are amended in a timely manner whenever an Annex 14 amendments are received. It was also noted that the latest amendments to Annex 14 are not appropriately transposed to the current operating regulations."
+      },
+      {
+        "pq": "8.015",
+        "ce": "CE-2",
+        "status": "Not Satisfactory",
+        "question": "Has the State implemented procedures for identifying and notifying differences, if any, to ICAO?",
+        "finding": "The Republic of Turkiye had promulgated procedures for identifying and notifying differences to ICAO; however, there were lack of evidence for its effective and timely implementation with respect to Annex 14 Volume I and II."
+      }
+    ],
+    "passed": true
+  },
+  "legacyMaster": {
+    "file": "PQ_Excel_Master_Sablonu.xlsx",
+    "sheets": [
+      "Excel_Veri",
+      "EI_Referans"
+    ],
+    "rows": 355,
+    "closedYes": 33,
+    "validationTasks": {
+      "4-8 Mayıs 2026 AIR/OPS Off-site ICVM": 33
+    },
+    "headers": [
+      "PQ No",
+      "Denetim Alanı",
+      "CE",
+      "PQ Sorusu",
+      "Bulgu",
+      "Doğrulama Türü",
+      "ICAO Değerlendirmesi",
+      "Sorumlu",
+      "GÜNLÜK RAPORA EKLE",
+      "RAPOR NOTU",
+      "ICAO KAPATTI MI",
+      "VALIDASYON GÖREVİ"
+    ],
+    "areaRows": {
+      "LEG": 3,
+      "ORG": 6,
+      "PEL": 24,
+      "OPS": 39,
+      "AIR": 70,
+      "AIG": 62,
+      "ANS": 92,
+      "AGA": 59
+    },
+    "eiReferencePreview": [
+      [
+        "DENETİM ALANI",
+        "UYGULANABİLİR TOPLAM PQ",
+        "MEVCUT SATISFACTORY",
+        "AFTER VALIDASYON"
+      ],
+      [
+        "LEG",
+        22,
+        19,
+        "=C2+(COUNTIFS(Excel_Veri!B:B,EI_Referans!A2,Excel_Veri!K:K,\"EVET\"))"
+      ],
+      [
+        "ORG",
+        12,
+        6,
+        "=C3+(COUNTIFS(Excel_Veri!B:B,EI_Referans!A3,Excel_Veri!K:K,\"EVET\"))"
+      ],
+      [
+        "PEL",
+        82,
+        58,
+        "=C4+(COUNTIFS(Excel_Veri!B:B,EI_Referans!A4,Excel_Veri!K:K,\"EVET\"))"
+      ],
+      [
+        "OPS",
+        122,
+        83,
+        "=C5+(COUNTIFS(Excel_Veri!B:B,EI_Referans!A5,Excel_Veri!K:K,\"EVET\"))"
+      ],
+      [
+        "AIR",
+        155,
+        85,
+        "=C6+(COUNTIFS(Excel_Veri!B:B,EI_Referans!A6,Excel_Veri!K:K,\"EVET\"))"
+      ],
+      [
+        "AIG",
+        83,
+        21,
+        "=C7+(COUNTIFS(Excel_Veri!B:B,EI_Referans!A7,Excel_Veri!K:K,\"EVET\"))"
+      ],
+      [
+        "ANS",
+        116,
+        24,
+        "=C8+(COUNTIFS(Excel_Veri!B:B,EI_Referans!A8,Excel_Veri!K:K,\"EVET\"))"
+      ],
+      [
+        "AGA",
+        128,
+        69,
+        "=C9+(COUNTIFS(Excel_Veri!B:B,EI_Referans!A9,Excel_Veri!K:K,\"EVET\"))"
+      ]
+    ]
+  }
+}
