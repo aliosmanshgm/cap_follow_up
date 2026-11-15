@@ -502,7 +502,7 @@ const I18N = {
     // ================================================================
     // STABILIZASYON PAKETI 1
     // ================================================================
-    const APP_RELEASE = Object.freeze({version:'1.0.0-rc1.4.5',label:'v1.0 RC1.4.5',buildDate:'2026-11-15',baseline:'RC1.4.4 + Detailed PDF Summary / Objection Table',cacheTag:'20261115-v1.0-rc1.4.5'});
+    const APP_RELEASE = Object.freeze({version:'1.0.0-rc1.4.6',label:'v1.0 RC1.4.6',buildDate:'2026-11-15',baseline:'RC1.4.5 + PQ Library Deep Link / Return Context',cacheTag:'20261115-v1.0-rc1.4.6'});
     const STABILIZATION_VERSION = APP_RELEASE.label;
     window.USOAP_APP_RELEASE = APP_RELEASE;
     const stabilizationState = {
@@ -685,7 +685,7 @@ const I18N = {
         add('word', 'Word okuma motoru', (typeof JSZip !== 'undefined') ? 'ok' : 'error', (typeof JSZip !== 'undefined') ? 'JSZip hazır.' : 'Word ayrıştırma kütüphanesi yüklenemedi.');
         add('charts', 'Grafik motoru', (typeof Chart !== 'undefined') ? 'ok' : 'warn', (typeof Chart !== 'undefined') ? 'Chart.js hazır.' : 'Grafik kütüphanesi yüklenemedi.');
         const assetVersionIssues = getLocalAssetVersionIssues();
-        add('release-build', 'Release / cache bütünlüğü', assetVersionIssues.length ? 'error' : 'ok', assetVersionIssues.length ? `RC1.4.4 cache etiketiyle eşleşmeyen ${assetVersionIssues.length} yerel asset: ${assetVersionIssues.slice(0,6).join(', ')}` : `${APP_RELEASE.label} · build ${APP_RELEASE.buildDate} · bütün yerel assetler ${APP_RELEASE.cacheTag}.`);
+        add('release-build', 'Release / cache bütünlüğü', assetVersionIssues.length ? 'error' : 'ok', assetVersionIssues.length ? `RC1.4.6 cache etiketiyle eşleşmeyen ${assetVersionIssues.length} yerel asset: ${assetVersionIssues.slice(0,6).join(', ')}` : `${APP_RELEASE.label} · build ${APP_RELEASE.buildDate} · bütün yerel assetler ${APP_RELEASE.cacheTag}.`);
         let storageOk=true; try{localStorage.setItem('__usoap_rc_probe','1');localStorage.removeItem('__usoap_rc_probe');}catch(_){storageOk=false;}
         add('browser-storage', 'Tarayıcı yerel depolama', storageOk ? 'ok' : 'warn', storageOk ? 'localStorage kullanılabilir.' : 'localStorage kapalı; çevrimdışı cache ve bazı tercihler kalıcı olmayabilir.');
         const originalDocMode=String(window.PQ_ORIGINAL_DOCUMENT_STORAGE_MODE||'external').toLowerCase();
@@ -4093,27 +4093,138 @@ const I18N = {
         const order=['pq','pqno','pqnumber','area','alan','ce','criticalelement','verificationtype','tur','onsiteoffsite','ppq','isppq','pqconceptid','conceptid','question','soru','questiontr','sorutr','protocolquestion','protocolquestiontr','evidenceguide','evidenceguidetr','evidenceguidance','evidenceguidancetr','icaoreference','icaoreferences','references','version','pqversion','amendment','lineage','sourcepqref','currentpqref','status','active','isactive'];
         const i=order.indexOf(k);return i<0?1000:i;
     }
+    const ICAO_PQ_LIBRARY_RETURN_KEY='icao_pq_library_return_context_v1';
+    function readIcaoPqLibraryReturnContext(){
+        try{return JSON.parse(sessionStorage.getItem(ICAO_PQ_LIBRARY_RETURN_KEY)||'null');}catch(_){return null;}
+    }
+    function writeIcaoPqLibraryReturnContext(ctx){
+        try{sessionStorage.setItem(ICAO_PQ_LIBRARY_RETURN_KEY,JSON.stringify(ctx||{}));}catch(_){}
+        window.icaoPqLibraryReturnContext=ctx||null;
+    }
+    function clearIcaoPqLibraryReturnContext(){
+        try{sessionStorage.removeItem(ICAO_PQ_LIBRARY_RETURN_KEY);}catch(_){}
+        window.icaoPqLibraryReturnContext=null;
+    }
     function renderIcaoPqReferencePanelFromPqData(){
         const panel=document.getElementById('icaoPqReferencePanel');if(!panel)return;
-        const visit=getActiveIcaoOfficialVisitRecord();
-        const pq=String(activeIcaoValidationPq||'');
+        const visit=getActiveIcaoOfficialVisitRecord(),pq=String(activeIcaoValidationPq||'');
         if(!visit||!pq){panel.innerHTML='<div class="icao-visit-empty">PQ referansı için soldan bir PQ seçiniz.</div>';return;}
-        const scope=getIcaoVisitScopePqs(visit).find(p=>String(p.pq)===pq)||{};
-        const mode=getIcaoPqTextLanguage();
-        const bundle=buildIcaoPqReferenceRecord(pq,scope);
-        const fields=flattenIcaoPqReferenceObject(bundle.record).filter(f=>icaoPqReferenceFieldVisible(f.path,mode));
-        fields.sort((a,b)=>icaoPqReferencePriority(a.path)-icaoPqReferencePriority(b.path)||String(a.path).localeCompare(String(b.path),'tr'));
-        const rows=fields.map(f=>{
-            const value=icaoPqReferenceFormatValue(f.value);
-            return `<div style="display:grid;grid-template-columns:minmax(145px,0.32fr) minmax(0,0.68fr);gap:10px;padding:9px 0;border-bottom:1px solid var(--border)"><div><div style="font-size:10px;font-weight:800;color:var(--text)">${escapeHtml(icaoPqReferencePrettyLabel(f.path))}</div><div style="font-size:8px;color:var(--muted);margin-top:2px;word-break:break-all">${escapeHtml(f.path)}</div></div><div style="white-space:pre-wrap;word-break:break-word;line-height:1.48;color:var(--text)">${escapeHtml(value)}</div></div>`;
-        }).join('');
-        panel.innerHTML=`<div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start;flex-wrap:wrap;margin-bottom:10px"><div><b>PQ ${escapeHtml(pq)} — ICAO PQ Veri Tabanı</b><div style="font-size:9px;color:var(--muted);margin-top:3px">Kaynak: ${escapeHtml(bundle.source)} · Dil: ${escapeHtml(mode==='both'?'ENG + TR':mode.toUpperCase())}</div></div><div style="display:flex;gap:5px;flex-wrap:wrap"><span class="icao-visit-meta-chip">${fields.length} veri alanı</span><span class="icao-visit-meta-chip">${bundle.libraryMatched?'PQ DB eşleşti':'Fallback'}</span></div></div><div style="font-size:9px;color:var(--muted);padding:7px 9px;margin-bottom:6px;border:1px solid var(--border);border-radius:8px;background:rgba(148,163,184,0.05)">Dil seçimi yalnız dil bağımlı metin alanlarını filtreler. PQ numarası, alan, CE, doğrulama türü, PPQ, ICAO referansları, Evidence Guide metadata/sürüm/amendment/lineage ve veri tabanında bulunan diğer dil-bağımsız alanlar her zaman gösterilir.</div>${rows||'<div class="icao-visit-empty">Bu PQ için görüntülenecek PQ Veri Tabanı alanı bulunamadı.</div>'}`;
+        panel.innerHTML=`<div style="padding:14px;border:1px solid var(--border);border-radius:10px;background:rgba(37,99,235,.04)"><b>PQ ${escapeHtml(pq)} için resmî PQ referansı</b><div style="margin-top:6px;font-size:10px;line-height:1.5;color:var(--muted)">Protocol Question, Guidance for Review of Evidence, Note(s) to the auditor, ICAO References, Summary of Amendments, sürüm/lineage, PPQ ve diğer PQ metadata alanları mevcut ICAO PQ Veri Tabanı → PQ Ayrıntısı ekranından gösterilir.</div><button type="button" style="margin-top:10px" onclick="openIcaoValidationPqReferenceInLibrary()">📚 PQ Ayrıntısını Aç ↗</button></div>`;
+    }
+    function getIcaoPqLibraryHint(record,keys){
+        const wanted=new Set((keys||[]).map(k=>normalizeIcaoPqReferenceKey(k)));
+        const fields=flattenIcaoPqReferenceObject(record||{});
+        const hit=fields.find(f=>wanted.has(normalizeIcaoPqReferenceKey(f.path))&&String(f.value??'').trim());
+        return hit?String(hit.value).trim():'';
+    }
+    function selectPqLibraryOption(select,candidates){
+        if(!select)return false;
+        const vals=(candidates||[]).map(v=>String(v||'').trim()).filter(Boolean);
+        if(!vals.length)return false;
+        const options=Array.from(select.options||[]);
+        const norm=v=>String(v||'').trim().toLocaleLowerCase('tr-TR');
+        for(const candidate of vals){
+            const exact=options.find(o=>norm(o.value)===norm(candidate)||norm(o.textContent)===norm(candidate));
+            if(exact){select.value=exact.value;return true;}
+        }
+        for(const candidate of vals){
+            const partial=options.find(o=>norm(o.value).includes(norm(candidate))||norm(o.textContent).includes(norm(candidate)));
+            if(partial){select.value=partial.value;return true;}
+        }
+        return false;
+    }
+    function ensureIcaoPqLibraryReturnBar(ctx){
+        const bar=document.getElementById('pqDbValidationReturnBar');if(!bar)return;
+        const title=document.getElementById('pqDbValidationReturnTitle'),meta=document.getElementById('pqDbValidationReturnMeta');
+        bar.style.display='flex';
+        if(title)title.textContent=`PQ ${ctx.pq||'-'} · Validasyon Çalışmasından açıldı`;
+        if(meta)meta.textContent=`Ziyaret: ${ctx.visitName||'-'} · Alan: ${ctx.area||'-'} · Geri dönüş aynı ziyaret ve aynı PQ bağlamını açar.`;
+    }
+    function hideIcaoPqLibraryReturnBar(){const bar=document.getElementById('pqDbValidationReturnBar');if(bar)bar.style.display='none';}
+    function activateIcaoPqLibraryCatalog(){
+        if(typeof window.setPqDbView==='function'){try{window.setPqDbView('catalog');return;}catch(e){console.warn(e);}}
+        const btn=document.querySelector('[data-pqdb-view="catalog"]');if(btn)btn.click();
+    }
+    function catalogRowMatchesPq(row,pq){
+        if(!row)return false;
+        const first=(row.cells&&row.cells.length?row.cells[0].textContent:row.textContent)||'';
+        const clean=String(first).replace(/^\s*PQ\s*/i,'').trim();
+        return normalizePQ(clean)===normalizePQ(pq)||normalizePQ(first)===normalizePQ(pq);
+    }
+    function clickPqLibraryCatalogRow(row){
+        if(!row)return false;
+        const direct=row.querySelector('[data-pq],[data-pq-no],[onclick],button,a');
+        const target=direct||row;
+        try{target.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true,view:window}));return true;}catch(_){try{target.click();return true;}catch(__){return false;}}
+    }
+    function focusIcaoPqInLibraryCatalog(ctx,attempt=0){
+        if(!ctx||!ctx.pq)return;
+        ensureIcaoPqLibraryReturnBar(ctx);
+        activateIcaoPqLibraryCatalog();
+        const search=document.getElementById('pqDbCatalogSearch');
+        let areaSelect=document.getElementById('pqDbCatalogArea');
+        const editionSelect=document.getElementById('pqDbCatalogEdition');
+        const editionChanged=!!(editionSelect&&ctx.editionHint&&selectPqLibraryOption(editionSelect,[ctx.editionHint]));
+        if(editionChanged&&typeof window.pqDbCatalogEditionChanged==='function'){try{window.pqDbCatalogEditionChanged();}catch(e){console.warn('PQ sürüm seçimi uygulanamadı:',e);}}
+        areaSelect=document.getElementById('pqDbCatalogArea');
+        if(areaSelect&&ctx.area)selectPqLibraryOption(areaSelect,[ctx.area]);
+        if(search)search.value=ctx.pq;
+        if(typeof window.renderIcaoPqLibraryModule==='function'){
+            try{window.renderIcaoPqLibraryModule();}catch(e){console.warn('PQ Kataloğu yenilenemedi:',e);}
+        }
+        setTimeout(()=>{
+            const body=document.getElementById('pqDbCatalogBody');
+            const rows=body?Array.from(body.querySelectorAll('tr')):[];
+            const row=rows.find(r=>catalogRowMatchesPq(r,ctx.pq));
+            if(row){
+                clickPqLibraryCatalogRow(row);
+                setTimeout(()=>{
+                    const detail=document.getElementById('pqDbDetail');
+                    if(detail){
+                        detail.scrollIntoView({behavior:'smooth',block:'start'});
+                        const txt=String(detail.textContent||'');
+                        if(!txt.includes(ctx.pq)&&attempt<8)setTimeout(()=>focusIcaoPqInLibraryCatalog(ctx,attempt+1),120);
+                    }
+                },120);
+                return;
+            }
+            if(attempt<24){setTimeout(()=>focusIcaoPqInLibraryCatalog(ctx,attempt+1),140);}
+            else showAppRuntimeToast(`PQ ${ctx.pq} katalogda otomatik açılamadı; arama alanı PQ numarasıyla filtrelendi.`,'error');
+        },110);
+    }
+    function openIcaoValidationPqReferenceInLibrary(){
+        const visit=getActiveIcaoOfficialVisitRecord(),pq=String(activeIcaoValidationPq||'');
+        if(!visit)return alert('Önce bir ICAO resmî ziyareti seçiniz.');
+        if(!pq)return alert('PQ Referansı için önce soldaki listeden bir PQ seçiniz.');
+        if(icaoValidationDraftTimer){clearTimeout(icaoValidationDraftTimer);icaoValidationDraftTimer=null;saveIcaoValidationTextDraft();}
+        const scope=getIcaoVisitScopePqs(visit).find(p=>String(p.pq||'')===pq)||{},m=pqMasterData[pq]||{};
+        const bundle=buildIcaoPqReferenceRecord(pq,scope),editionHint=getIcaoPqLibraryHint(bundle.record,['editionKey','edition','versionKey','pqEditionKey']);
+        const ctx={visitId:visit.id,pq,visitName:visit.visitName||'ICAO ziyareti',area:normalizeAreaKey(scope.area||m.alan||''),areaFilter:getSelectedIcaoVisitAreaFilter(),search:((document.getElementById('icaoVisitSearch')||{}).value||''),statusFilter:((document.getElementById('icaoVisitStatusFilter')||{}).value||'all'),language:getIcaoPqTextLanguage(),editionHint,openedAt:new Date().toISOString()};
+        writeIcaoPqLibraryReturnContext(ctx);
+        switchTab('pq-library');
+        ensureIcaoPqLibraryReturnBar(ctx);
+        setTimeout(()=>focusIcaoPqInLibraryCatalog(ctx,0),80);
+    }
+    function returnToIcaoValidationFromPqLibrary(){
+        const ctx=window.icaoPqLibraryReturnContext||readIcaoPqLibraryReturnContext();
+        if(!ctx||!ctx.visitId){hideIcaoPqLibraryReturnBar();return switchTab('icao-visit-validation');}
+        activeIcaoOfficialVisitId=ctx.visitId;
+        switchTab('icao-visit-validation');
+        const visitSelect=document.getElementById('icaoOfficialVisitSelect');if(visitSelect)visitSelect.value=ctx.visitId;
+        renderIcaoOfficialVisitModule(true);
+        const areaSelect=document.getElementById('icaoVisitAreaFilter');if(areaSelect&&ctx.areaFilter&&Array.from(areaSelect.options).some(o=>o.value===ctx.areaFilter))areaSelect.value=ctx.areaFilter;
+        const search=document.getElementById('icaoVisitSearch');if(search)search.value=ctx.search||'';
+        const status=document.getElementById('icaoVisitStatusFilter');if(status&&ctx.statusFilter)status.value=ctx.statusFilter;
+        if(ctx.language)setIcaoPqTextLanguage(ctx.language);
+        renderIcaoOfficialVisitPqList();renderIcaoOfficialVisitEiSummary();
+        if(typeof window.setIcaoVisitWorkspaceMode==='function'){try{window.setIcaoVisitWorkspaceMode('validation');}catch(_){} }
+        setTimeout(()=>{selectIcaoValidationPq(ctx.pq);const list=document.getElementById('icaoOfficialVisitPqList');if(list){const active=list.querySelector('.icao-visit-pq.active');if(active)active.scrollIntoView({behavior:'smooth',block:'center'});}},50);
+        clearIcaoPqLibraryReturnContext();hideIcaoPqLibraryReturnBar();
     }
     window.renderIcaoPqReferencePanelFromPqData=renderIcaoPqReferencePanelFromPqData;
-    document.addEventListener('click',event=>{
-        const btn=event.target&&event.target.closest?event.target.closest('[data-icao-mode="reference"]'):null;
-        if(btn)setTimeout(()=>renderIcaoPqReferencePanelFromPqData(),0);
-    });
+    window.openIcaoValidationPqReferenceInLibrary=openIcaoValidationPqReferenceInLibrary;
+    window.returnToIcaoValidationFromPqLibrary=returnToIcaoValidationFromPqLibrary;
+
     function updateIcaoTranslationStatus(visit){
         const el=document.getElementById('icaoVisitTranslationStatus');if(!el)return;
         if(!visit){el.textContent='Türkçe PQ/bulgu metinleri mevcut kaynaklardan (CAP/PQ/legacy çeviri) burada kontrol edilir.';return;}
