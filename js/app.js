@@ -502,7 +502,7 @@ const I18N = {
     // ================================================================
     // STABILIZASYON PAKETI 1
     // ================================================================
-    const APP_RELEASE = Object.freeze({version:'1.0.0-rc1.4.6',label:'v1.0 RC1.4.6',buildDate:'2026-11-15',baseline:'RC1.4.5 + PQ Library Deep Link / Return Context',cacheTag:'20261115-v1.0-rc1.4.6'});
+    const APP_RELEASE = Object.freeze({version:'1.0.0-rc1.4.7',label:'v1.0 RC1.4.7',buildDate:'2026-11-15',baseline:'RC1.4.6 + Official Visit Dashboard Draft Projection',cacheTag:'20261115-v1.0-rc1.4.7'});
     const STABILIZATION_VERSION = APP_RELEASE.label;
     window.USOAP_APP_RELEASE = APP_RELEASE;
     const stabilizationState = {
@@ -685,7 +685,7 @@ const I18N = {
         add('word', 'Word okuma motoru', (typeof JSZip !== 'undefined') ? 'ok' : 'error', (typeof JSZip !== 'undefined') ? 'JSZip hazır.' : 'Word ayrıştırma kütüphanesi yüklenemedi.');
         add('charts', 'Grafik motoru', (typeof Chart !== 'undefined') ? 'ok' : 'warn', (typeof Chart !== 'undefined') ? 'Chart.js hazır.' : 'Grafik kütüphanesi yüklenemedi.');
         const assetVersionIssues = getLocalAssetVersionIssues();
-        add('release-build', 'Release / cache bütünlüğü', assetVersionIssues.length ? 'error' : 'ok', assetVersionIssues.length ? `RC1.4.6 cache etiketiyle eşleşmeyen ${assetVersionIssues.length} yerel asset: ${assetVersionIssues.slice(0,6).join(', ')}` : `${APP_RELEASE.label} · build ${APP_RELEASE.buildDate} · bütün yerel assetler ${APP_RELEASE.cacheTag}.`);
+        add('release-build', 'Release / cache bütünlüğü', assetVersionIssues.length ? 'error' : 'ok', assetVersionIssues.length ? `RC1.4.7 cache etiketiyle eşleşmeyen ${assetVersionIssues.length} yerel asset: ${assetVersionIssues.slice(0,6).join(', ')}` : `${APP_RELEASE.label} · build ${APP_RELEASE.buildDate} · bütün yerel assetler ${APP_RELEASE.cacheTag}.`);
         let storageOk=true; try{localStorage.setItem('__usoap_rc_probe','1');localStorage.removeItem('__usoap_rc_probe');}catch(_){storageOk=false;}
         add('browser-storage', 'Tarayıcı yerel depolama', storageOk ? 'ok' : 'warn', storageOk ? 'localStorage kullanılabilir.' : 'localStorage kapalı; çevrimdışı cache ve bazı tercihler kalıcı olmayabilir.');
         const originalDocMode=String(window.PQ_ORIGINAL_DOCUMENT_STORAGE_MODE||'external').toLowerCase();
@@ -1968,9 +1968,23 @@ const I18N = {
 
     function getCommonVerificationType(pq) {
         const master = pqMasterData[pq] || {};
-        const type = (master.tur || '').toUpperCase();
-        if (type.includes('ON-SITE')) return 'onSite';
-        if (type.includes('OFF-SITE')) return 'offSite';
+        const values = [master.tur, master.verificationType, master.onOffSite];
+        // RC1.4.7: Sadeleştirilmiş Excel artık doğrulama türünü taşımıyor.
+        // On/Off-site bilgisi için otoritatif PQ Veri Tabanına geri dön.
+        try {
+            const resolved = typeof getIcaoPqLibraryRecordForReference === 'function'
+                ? getIcaoPqLibraryRecordForReference(pq, master.alan || '') : null;
+            const record = resolved && resolved.record ? resolved.record : null;
+            if (record) {
+                values.push(record.verificationType, record.tur, record.onOffSite, record.onsiteOffsite,
+                    record['On/Off-site'], record['ON/OFF-SITE'], record.assessmentMode, record.mode);
+                const cur = record.currentPqRef && typeof record.currentPqRef === 'object' ? record.currentPqRef : null;
+                if (cur) values.push(cur.verificationType, cur.tur, cur.onOffSite, cur.onsiteOffsite, cur['On/Off-site'], cur.mode);
+            }
+        } catch (_) {}
+        const type = values.filter(v => v !== undefined && v !== null).map(v => String(v).trim().toUpperCase()).find(Boolean) || '';
+        if (type.includes('ON-SITE') || type.includes('ONSITE') || type === 'ON SITE') return 'onSite';
+        if (type.includes('OFF-SITE') || type.includes('OFFSITE') || type === 'OFF SITE') return 'offSite';
         return 'other';
     }
 
@@ -3536,6 +3550,7 @@ const I18N = {
             if(typeof window.refreshCapHubSummary==='function') window.refreshCapHubSummary();
             if(typeof window.renderSystemIntegrityCenter==='function'&&document.getElementById('tab-quality')?.classList.contains('active')) window.renderSystemIntegrityCenter(true);
             if(typeof window.renderActionCenterDashboardSummary==='function') window.renderActionCenterDashboardSummary();
+            if(document.getElementById('tab-dashboard')?.classList.contains('active')) render();
             if(typeof window.renderActionCenter==='function'&&document.getElementById('tab-actions')?.classList.contains('active')) window.renderActionCenter();
         };
         visitFirebaseRef.on('value', visitFirebaseCallback, error => {
@@ -6520,7 +6535,8 @@ const I18N = {
         if (stats.pqs.total === 0 && stats.actions.total === 0) { document.getElementById('pqDetails').innerHTML = ""; document.getElementById('actionDetails').innerHTML = ""; document.getElementById('lateDetails').innerHTML = ""; document.getElementById('doneDetails').innerHTML = ""; document.getElementById('pendingDetails').innerHTML = ""; } 
         else {
             let pqExtra = stats.pqs.completed.total > 0 ? `<br><div style="margin-top:6px; font-size:12px; background: rgba(16, 185, 129, 0.1); padding: 6px 8px; border-radius: 4px; border: 1px solid rgba(16, 185, 129, 0.2);"><span style="color:var(--ok); font-weight:bold;">✅ PQ TAMAMLANDI (${stats.pqs.completed.total})</span><br><span style="font-weight:normal; font-size:11px; color:var(--text);"><b>Dağılım:</b> ${stats.pqs.completed.onSite} / ${stats.pqs.completed.offSite} Off-Site</span></div>` : "";
-            document.getElementById('pqDetails').innerHTML = `<b>Dağılım:</b> ${stats.pqs.onSite} On-Site / ${stats.pqs.offSite} Off-Site ${pqExtra}`; document.getElementById('actionDetails').innerHTML = `<b>Dağılım:</b> ${stats.actions.onSite} On-Site / ${stats.actions.offSite} Off-Site`; document.getElementById('lateDetails').innerHTML = `<b>Dağılım:</b> ${stats.late.onSite} On-Site / ${stats.late.offSite} Off-Site`; document.getElementById('doneDetails').innerHTML = `<b>Dağılım:</b> ${stats.done.onSite} On-Site / ${stats.done.offSite} Off-Site`; document.getElementById('pendingDetails').innerHTML = `<b>Dağılım:</b> ${stats.pending.onSite} On-Site / ${stats.pending.offSite} Off-Site`;
+            const icaoVisitProjection = buildDashboardIcaoVisitProjectionHtml();
+            document.getElementById('pqDetails').innerHTML = `<b>Dağılım:</b> ${stats.pqs.onSite} On-Site / ${stats.pqs.offSite} Off-Site ${pqExtra}${icaoVisitProjection}`; document.getElementById('actionDetails').innerHTML = `<b>Dağılım:</b> ${stats.actions.onSite} On-Site / ${stats.actions.offSite} Off-Site`; document.getElementById('lateDetails').innerHTML = `<b>Dağılım:</b> ${stats.late.onSite} On-Site / ${stats.late.offSite} Off-Site`; document.getElementById('doneDetails').innerHTML = `<b>Dağılım:</b> ${stats.done.onSite} On-Site / ${stats.done.offSite} Off-Site`; document.getElementById('pendingDetails').innerHTML = `<b>Dağılım:</b> ${stats.pending.onSite} On-Site / ${stats.pending.offSite} Off-Site`;
         }
 
         renderTable(filteredData, groups); updateCharts(filteredData, analytics); updateAreaSummary(filteredData, analytics); updateWarnings(filteredData, analytics); updatePastTasks(filteredData, analytics); updateEIProjections(filteredData); renderIcaoOfficialChart(); updateSmartManagementPanel(filteredData, analytics); updateDataQualityCenter(filteredData); if(typeof window.renderSystemIntegrityCenter==='function'&&document.getElementById('tab-quality')?.classList.contains('active'))window.renderSystemIntegrityCenter(); renderKanban(filteredData, analytics);
@@ -7655,16 +7671,96 @@ const I18N = {
         return 'Kapsam belirtilmedi';
     }
 
+    function dashboardAssessmentTypeKey(value) {
+        return String(value || '').trim().toUpperCase().replace(/[^A-Z0-9]+/g,'');
+    }
+
+    function dashboardIcaoVisitTypeKey(visit) {
+        return dashboardAssessmentTypeKey((visit && visit.icaoVisitType) || (visit && visit.visitName) || 'ICAO');
+    }
+
+    function dashboardDateMonthKey(value) {
+        const d=visitSafeDate(value);
+        return d ? `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}` : '';
+    }
+
+    function dashboardVisitMatchesAssessmentRow(visit,row) {
+        if(!visit||!row)return false;
+        const visitType=dashboardIcaoVisitTypeKey(visit);
+        const rowType=dashboardAssessmentTypeKey(row.type||row.name||'');
+        if(visitType && rowType && !(rowType.includes(visitType)||visitType.includes(rowType)))return false;
+        const visitMonth=dashboardDateMonthKey(visit.actualEnd||visit.plannedEnd||visit.actualStart||visit.plannedStart);
+        const rowMonth=dashboardDateMonthKey(row.assessmentDate||row.endDate||row.startDate);
+        return !visitMonth || !rowMonth || visitMonth===rowMonth;
+    }
+
+    function getDashboardIcaoVisitResultSummary(visit) {
+        if(!visit)return null;
+        const scope=getIcaoVisitScopePqs(visit), records=getIcaoValidationRecords(visit), map=new Map(records.map(r=>[String(r.pq||''),r]));
+        let satisfactory=0,notSatisfactory=0,followUp=0,notEvaluated=0;
+        scope.forEach(p=>{
+            const pq=String((p||{}).pq||''),r=map.get(pq);
+            if(!r){notEvaluated++;return;}
+            const final=String(r.finalResult||'').toLowerCase(),draft=String(r.draftResult||'').toLowerCase(),status=String(r.status||'not_evaluated');
+            if(isIcaoWorkingSatisfactory(r)){satisfactory++;return;}
+            if(final==='not_satisfactory'||final==='notsatisfactory'||final==='ns'||draft==='not_satisfactory'||draft==='notsatisfactory'||draft==='ns'||status==='open') {notSatisfactory++;return;}
+            if(status==='not_evaluated'&&!final&&!draft){notEvaluated++;return;}
+            followUp++;
+        });
+        let impact=null;try{impact=getIcaoOfficialVisitImpactModel(visit,scope);}catch(_){}
+        return {
+            visit,
+            scopeCount:scope.length,
+            satisfactory,
+            notSatisfactory,
+            followUp,
+            notEvaluated,
+            evaluated:Math.max(0,scope.length-notEvaluated),
+            impact
+        };
+    }
+
+    function getDashboardIcaoOfficialVisitSummaries(officialRows=[]) {
+        let visits=[];try{visits=getIcaoOfficialVisits();}catch(_){visits=[];}
+        return visits.map(getDashboardIcaoVisitResultSummary).filter(Boolean).filter(summary=>{
+            if(!summary.scopeCount)return false;
+            return !(officialRows||[]).some(row=>dashboardVisitMatchesAssessmentRow(summary.visit,row));
+        }).sort((a,b)=>(visitSafeDate(a.visit.actualEnd||a.visit.plannedEnd||a.visit.actualStart||a.visit.plannedStart)?.getTime()||0)-(visitSafeDate(b.visit.actualEnd||b.visit.plannedEnd||b.visit.actualStart||b.visit.plannedStart)?.getTime()||0));
+    }
+
+    function getLatestDashboardIcaoVisitSummary() {
+        const all=getDashboardIcaoOfficialVisitSummaries(getDashboardAssessmentRows());
+        if(!all.length)return null;
+        return all[all.length-1];
+    }
+
+    function dashboardPublishedDraftEiForVisit(visit) {
+        let pending=null;try{pending=typeof window.getLatestPendingAssessment==='function'?window.getLatestPendingAssessment():null;}catch(_){}
+        if(!pending)return null;
+        const vType=dashboardIcaoVisitTypeKey(visit),pType=dashboardAssessmentTypeKey(pending.type||pending.name||'');
+        if(vType&&pType&&!(pType.includes(vType)||vType.includes(pType)))return null;
+        const snap=pending.snapshot||{},n=Number(snap.overall&&snap.overall.publishedEi!=null?snap.overall.publishedEi:snap.overall&&snap.overall.ei);
+        return Number.isFinite(n)?n:null;
+    }
+
+    function buildDashboardIcaoVisitProjectionHtml() {
+        const s=getLatestDashboardIcaoVisitSummary();
+        if(!s)return '';
+        const v=s.visit||{},impact=s.impact||{},published=dashboardPublishedDraftEiForVisit(v),draftEi=Number.isFinite(published)?published:Number(impact.newPct),officialEi=Number(impact.baselinePct),newSat=Number(impact.newSat),total=Number(impact.total),newly=Number(impact.validatedNew||0);
+        const resultParts=[`${s.satisfactory}/${s.scopeCount} Satisfactory`];
+        if(s.notSatisfactory)resultParts.push(`${s.notSatisfactory} açık/NS`);
+        if(s.followUp)resultParts.push(`${s.followUp} takip/inceleme`);
+        if(s.notEvaluated)resultParts.push(`${s.notEvaluated} değerlendirilmedi`);
+        return `<div id="dashboardIcaoVisitProjection" style="margin-top:8px;font-size:11px;background:#faf5ff;padding:8px 9px;border-radius:6px;border:1px dashed #a855f7;text-align:left;min-width:190px;max-width:290px"><div style="color:#7e22ce;font-weight:800">🟣 ${escapeHtml((v.icaoVisitType||'ICAO')+' Resmî Ziyareti')} · TASLAK</div><div style="margin-top:4px;color:var(--text)"><b>${escapeHtml(resultParts.join(' · '))}</b></div>${Number.isFinite(draftEi)?`<div style="margin-top:3px">Beklenen/taslak Overall EI: <b>%${draftEi.toFixed(2)}</b>${Number.isFinite(newSat)&&Number.isFinite(total)?` · ${newSat}/${total} S`:''}</div>`:''}${Number.isFinite(officialEi)?`<div style="color:var(--muted);margin-top:2px">Güncel resmî EI: %${officialEi.toFixed(2)}${newly>0?` · taslakta +${newly} yeni Satisfactory`:''}</div>`:''}<div style="color:#7e22ce;margin-top:4px;font-size:9px">Ziyaret kaydından hesaplanan çalışma sonucudur; final State Snapshot değildir.</div></div>`;
+    }
+
     function renderDashboardAssessmentTimeline(rows) {
         const el = document.getElementById('eiAssessmentTimeline');
         if (!el) return;
-        if (!rows || !rows.length) {
-            el.innerHTML = '<div class="ei-assessment-empty">Resmî Assessment Event / State Snapshot kaydı bulunamadı.</div>';
-            const pending=document.getElementById('eiPendingAssessmentNotice');if(pending)pending.innerHTML='';
-            return;
-        }
+        rows = Array.isArray(rows) ? rows : [];
+        const draftVisits=getDashboardIcaoOfficialVisitSummaries(rows);
         let prev = null;
-        el.innerHTML = rows.map((row, index) => {
+        const officialHtml = rows.map((row, index) => {
             const value = typeof window.getAssessmentMetricValue === 'function' ? window.getAssessmentMetricValue(row, 'Overall') : null;
             const delta = value !== null && prev !== null ? Math.round((value - prev) * 100) / 100 : null;
             if (value !== null) prev = value;
@@ -7672,18 +7768,33 @@ const I18N = {
             const deltaHtml = delta === null ? '' : `<span class="event-delta ${deltaClass}">${delta > 0 ? '+' : ''}${delta.toLocaleString('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:2})} puan</span>`;
             const scope = Array.isArray(row.scopeAreas) ? row.scopeAreas : [];
             const scopeHtml = scope.length ? `<div class="event-scope">${scope.map(a=>`<span class="scope-chip">${escapeHtml(a)}</span>`).join('')}</div>` : '';
-            const cls = index === 0 ? 'baseline' : index === rows.length - 1 ? 'latest' : '';
+            const cls = index === 0 ? 'baseline' : index === rows.length - 1 && !draftVisits.length ? 'latest' : '';
             const overall = value === null ? 'EI yok' : `%${value.toLocaleString('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:2})}`;
-            return `<div class="ei-assessment-card ${cls}">
-                <div class="event-top"><div class="event-name">${escapeHtml(row.name || row.type || 'ICAO Değerlendirmesi')}</div><span class="event-type">${escapeHtml(row.type || 'OTHER')}</span></div>
-                <div class="event-ei">${overall}${deltaHtml}</div>
-                <div class="event-meta">${escapeHtml(dashboardAssessmentDateLabel(row))}<br>${escapeHtml(dashboardAssessmentScopeLabel(row))}</div>${scopeHtml}
-            </div>`;
+            return `<div class="ei-assessment-card ${cls}"><div class="event-top"><div class="event-name">${escapeHtml(row.name || row.type || 'ICAO Değerlendirmesi')}</div><span class="event-type">${escapeHtml(row.type || 'OTHER')}</span></div><div class="event-ei">${overall}${deltaHtml}</div><div class="event-meta">${escapeHtml(dashboardAssessmentDateLabel(row))}<br>${escapeHtml(dashboardAssessmentScopeLabel(row))}</div>${scopeHtml}</div>`;
         }).join('');
+        const draftHtml=draftVisits.map((s,index)=>{
+            const v=s.visit||{},impact=s.impact||{},published=dashboardPublishedDraftEiForVisit(v),draftEi=Number.isFinite(published)?published:Number(impact.newPct),resultParts=[`${s.satisfactory} S`,`${s.notSatisfactory} NS/açık`];
+            if(s.followUp)resultParts.push(`${s.followUp} takip`);if(s.notEvaluated)resultParts.push(`${s.notEvaluated} bekleyen`);
+            const scope=visitArrayValue(v.areas).map(normalizeAreaKey).filter(Boolean);
+            const scopeHtml=scope.length?`<div class="event-scope">${scope.map(a=>`<span class="scope-chip">${escapeHtml(a)}</span>`).join('')}</div>`:'';
+            return `<div class="ei-assessment-card latest" style="border:1px dashed #a855f7;background:#faf5ff"><div class="event-top"><div class="event-name">${escapeHtml(v.visitName||((v.icaoVisitType||'ICAO')+' Resmî Ziyareti'))}</div><span class="event-type" style="background:#f3e8ff;color:#7e22ce">${escapeHtml((v.icaoVisitType||'ICAO')+' · TASLAK')}</span></div><div class="event-ei" style="color:#7e22ce">${Number.isFinite(draftEi)?`%${draftEi.toFixed(2)}`:'EI bekleniyor'}</div><div class="event-meta">${escapeHtml(formatVisitDateRange(v.actualStart||v.plannedStart,v.actualEnd||v.plannedEnd))}<br><b>${s.scopeCount} kapsam PQ</b> · ${escapeHtml(resultParts.join(' · '))}</div>${scopeHtml}<div style="font-size:9px;color:#7e22ce;margin-top:6px">ICAO Resmî Ziyareti çalışma/taslak kaydı · resmî EI çizgisini değiştirmez</div></div>`;
+        }).join('');
+        if(!officialHtml&&!draftHtml){
+            el.innerHTML = '<div class="ei-assessment-empty">Resmî Assessment Event / State Snapshot veya ICAO Resmî Ziyareti kaydı bulunamadı.</div>';
+        }else el.innerHTML=officialHtml+draftHtml;
         const pendingEl=document.getElementById('eiPendingAssessmentNotice');
         if(pendingEl){
-            let pending=null;try{pending=typeof window.getLatestPendingAssessment==='function'?window.getLatestPendingAssessment():null;}catch(e){pending=null;}
-            if(pending){const snap=pending.snapshot||{},pub=Number(snap.overall&&snap.overall.publishedEi!=null?snap.overall.publishedEi:snap.overall&&snap.overall.ei),hasEi=Number.isFinite(pub),metrics=pending.eventMetrics||{},scopeTxt=metrics.scopeApplicable!=null?`${metrics.scopeSatisfactory??'-'}/${metrics.scopeApplicable} kapsam PQ`:'';pendingEl.innerHTML=`<div style="border:1px dashed #a855f7;background:#faf5ff;border-radius:10px;padding:10px 12px;color:#581c87;font-size:11px;"><b>🟣 Son ICAO değerlendirmesi: ${escapeHtml(pending.name||pending.type||'Assessment')}</b> · ${escapeHtml(pending.resultStatus==='draft'?'Taslak':'Geçici')}${hasEi?` · yayımlanan taslak EI <b>%${pub.toFixed(2)}</b>`:''}${scopeTxt?` · ${escapeHtml(scopeTxt)}`:''}<br><span style="color:#7e22ce">Bu kayıt güncel resmî EI çizgisini değiştirmez. OLF Full PQ Status final snapshot yayımlandığında açıkça bu assessment'a bağlanmalıdır.</span></div>`;}else pendingEl.innerHTML='';
+            const latestVisit=draftVisits.length?draftVisits[draftVisits.length-1]:null;
+            if(latestVisit){
+                const v=latestVisit.visit||{},impact=latestVisit.impact||{},published=dashboardPublishedDraftEiForVisit(v),draftEi=Number.isFinite(published)?published:Number(impact.newPct);
+                pendingEl.innerHTML=`<div style="border:1px dashed #a855f7;background:#faf5ff;border-radius:10px;padding:10px 12px;color:#581c87;font-size:11px;"><b>🟣 Son ICAO Resmî Ziyareti: ${escapeHtml(v.visitName||v.icaoVisitType||'ICAO')}</b> · Taslak/çalışma${Number.isFinite(draftEi)?` · beklenen EI <b>%${draftEi.toFixed(2)}</b>`:''} · <b>${latestVisit.satisfactory}/${latestVisit.scopeCount} Satisfactory</b>${latestVisit.notSatisfactory?` · ${latestVisit.notSatisfactory} açık/NS`:''}${latestVisit.followUp?` · ${latestVisit.followUp} takip/inceleme`:''}${latestVisit.notEvaluated?` · ${latestVisit.notEvaluated} değerlendirilmedi`:''}<br><span style="color:#7e22ce">Kapsam ve sonuç sayıları doğrudan ICAO Resmî Ziyareti kaydından alınır. Bu taslak sonuç güncel resmî EI çizgisini değiştirmez; final OLF Full PQ Status State Snapshot yayımlandığında resmîleşir.</span></div>`;
+            } else {
+                let pending=null;try{pending=typeof window.getLatestPendingAssessment==='function'?window.getLatestPendingAssessment():null;}catch(e){pending=null;}
+                if(pending){
+                    const snap=pending.snapshot||{},pub=Number(snap.overall&&snap.overall.publishedEi!=null?snap.overall.publishedEi:snap.overall&&snap.overall.ei),hasEi=Number.isFinite(pub);
+                    pendingEl.innerHTML=`<div style="border:1px dashed #a855f7;background:#faf5ff;border-radius:10px;padding:10px 12px;color:#581c87;font-size:11px;"><b>🟣 Son ICAO değerlendirmesi: ${escapeHtml(pending.name||pending.type||'Assessment')}</b> · ${escapeHtml(pending.resultStatus==='draft'?'Taslak':'Geçici')}${hasEi?` · yayımlanan taslak EI <b>%${pub.toFixed(2)}</b>`:''}<br><span style="color:#7e22ce">Assessment Event içindeki kapsam oranı burada gösterilmez; kapsam/sonuç sayıları için ICAO Resmî Ziyareti kaydı esas alınır. Final State Snapshot yayımlandığında resmî EI çizgisine bağlanır.</span></div>`;
+                }else pendingEl.innerHTML='';
+            }
         }
     }
 
@@ -7787,7 +7898,9 @@ const I18N = {
                     readinessText=` Validasyon hazırlığı: <b>${Number(rs.ready||0)}</b> hazır, <b>${Number(rs.assigned||0)}</b> ziyarete atanmış${Number(rs.hold||0)>0?`, <b>${Number(rs.hold||0)}</b> bekletiliyor`:''}.`;
                 }
             }catch(e){}
-            meta.innerHTML = `<b>Metodoloji:</b> Resmî EI yalnız Assessment Event/EI Snapshot sonucuyla değişir. <b>${candidateCount}</b> PQ'nun tüm CAP adımları tamamlanmış olup henüz ICAO validasyonu beklediği için yeşil alan yalnız projeksiyondur. <b>${openCapCount}</b> PQ ise açık CAP havuzundaki teorik ilave potansiyeldir.${readinessText}${latestEvent?` Son resmî değerlendirme: <b>${escapeHtml(latestEvent.name||latestEvent.type||'-')}</b> (${escapeHtml(dashboardAssessmentDateLabel(latestEvent))}).`:''}`;
+            const draftVisitSummary=getLatestDashboardIcaoVisitSummary(),draftVisitImpact=draftVisitSummary&&draftVisitSummary.impact?draftVisitSummary.impact:null;
+            const draftVisitText=draftVisitSummary?` ICAO Resmî Ziyareti taslağı: <b>${draftVisitSummary.satisfactory}/${draftVisitSummary.scopeCount}</b> Satisfactory${draftVisitSummary.notSatisfactory?`, <b>${draftVisitSummary.notSatisfactory}</b> açık/NS`:''}${draftVisitImpact&&Number.isFinite(Number(draftVisitImpact.newPct))?` · beklenen Overall EI <b>%${Number(draftVisitImpact.newPct).toFixed(2)}</b>`:''}.`:'';
+            meta.innerHTML = `<b>Metodoloji:</b> Resmî EI yalnız Assessment Event/EI Snapshot sonucuyla değişir. <b>${candidateCount}</b> PQ'nun tüm CAP adımları tamamlanmış olup henüz ICAO validasyonu beklediği için yeşil alan yalnız projeksiyondur. <b>${openCapCount}</b> PQ ise açık CAP havuzundaki teorik ilave potansiyeldir.${draftVisitText}${readinessText}${latestEvent?` Son resmî değerlendirme: <b>${escapeHtml(latestEvent.name||latestEvent.type||'-')}</b> (${escapeHtml(dashboardAssessmentDateLabel(latestEvent))}).`:''}`;
         }
 
         let sAreas = getCheckedValues('areaFilterList');
@@ -7883,6 +7996,14 @@ const I18N = {
         });
         renderEiAreaAssessmentTable(assessmentRows,window.currentAreaEIData);
     }
+
+    window.runRc147DashboardSelfCheck=function(){
+        const visit=getLatestDashboardIcaoVisitSummary();
+        const result={release:APP_RELEASE.label,verificationTypeSample:null,officialVisit:visit?{name:visit.visit.visitName||visit.visit.icaoVisitType,scope:visit.scopeCount,satisfactory:visit.satisfactory,notSatisfactory:visit.notSatisfactory,followUp:visit.followUp,notEvaluated:visit.notEvaluated,draftEi:visit.impact?visit.impact.newPct:null,newSat:visit.impact?visit.impact.newSat:null,total:visit.impact?visit.impact.total:null}:null,pendingNoticeUsesVisit:!!visit};
+        try{const first=Object.keys(pqMasterData||{})[0];if(first)result.verificationTypeSample={pq:first,type:getCommonVerificationType(first)};}catch(_){}
+        result.passed=APP_RELEASE.label.includes('RC1.4.7')&&(!visit||visit.scopeCount>=visit.satisfactory);
+        console.log('RC1.4.7 dashboard öz denetimi:',result);return result;
+    };
 
     window.runSimulator = function() {
         let area = document.getElementById('simAreaSelect').value;
