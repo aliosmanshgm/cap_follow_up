@@ -502,7 +502,7 @@ const I18N = {
     // ================================================================
     // STABILIZASYON PAKETI 1
     // ================================================================
-    const APP_RELEASE = Object.freeze({version:'1.0.0-rc1.4.1',label:'v1.0 RC1.4.1',buildDate:'2026-11-15',baseline:'RC1.4 Bulk PQ Assessment + PQ Reference Deduplication',cacheTag:'20261115-v1.0-rc1.4.1'});
+    const APP_RELEASE = Object.freeze({version:'1.0.0-rc1.4.2',label:'v1.0 RC1.4.2',buildDate:'2026-11-15',baseline:'RC1.4.1 + Validation Context / PQ Reference Separation',cacheTag:'20261115-v1.0-rc1.4.2'});
     const STABILIZATION_VERSION = APP_RELEASE.label;
     window.USOAP_APP_RELEASE = APP_RELEASE;
     const stabilizationState = {
@@ -685,7 +685,7 @@ const I18N = {
         add('word', 'Word okuma motoru', (typeof JSZip !== 'undefined') ? 'ok' : 'error', (typeof JSZip !== 'undefined') ? 'JSZip hazır.' : 'Word ayrıştırma kütüphanesi yüklenemedi.');
         add('charts', 'Grafik motoru', (typeof Chart !== 'undefined') ? 'ok' : 'warn', (typeof Chart !== 'undefined') ? 'Chart.js hazır.' : 'Grafik kütüphanesi yüklenemedi.');
         const assetVersionIssues = getLocalAssetVersionIssues();
-        add('release-build', 'Release / cache bütünlüğü', assetVersionIssues.length ? 'error' : 'ok', assetVersionIssues.length ? `RC1.4.1 cache etiketiyle eşleşmeyen ${assetVersionIssues.length} yerel asset: ${assetVersionIssues.slice(0,6).join(', ')}` : `${APP_RELEASE.label} · build ${APP_RELEASE.buildDate} · bütün yerel assetler ${APP_RELEASE.cacheTag}.`);
+        add('release-build', 'Release / cache bütünlüğü', assetVersionIssues.length ? 'error' : 'ok', assetVersionIssues.length ? `RC1.4.2 cache etiketiyle eşleşmeyen ${assetVersionIssues.length} yerel asset: ${assetVersionIssues.slice(0,6).join(', ')}` : `${APP_RELEASE.label} · build ${APP_RELEASE.buildDate} · bütün yerel assetler ${APP_RELEASE.cacheTag}.`);
         let storageOk=true; try{localStorage.setItem('__usoap_rc_probe','1');localStorage.removeItem('__usoap_rc_probe');}catch(_){storageOk=false;}
         add('browser-storage', 'Tarayıcı yerel depolama', storageOk ? 'ok' : 'warn', storageOk ? 'localStorage kullanılabilir.' : 'localStorage kapalı; çevrimdışı cache ve bazı tercihler kalıcı olmayabilir.');
         const originalDocMode=String(window.PQ_ORIGINAL_DOCUMENT_STORAGE_MODE||'external').toLowerCase();
@@ -887,8 +887,10 @@ const I18N = {
     window.runBulkPqAssessmentSelfCheck=function(){
         const ids=['icaoBulkAssessButton','icaoBulkAssessmentModal','visitWorkspaceBulkAssessButton','visitWorkspaceBulkAssessmentModal'];
         const funcs=['saveIcaoBulkAssessment','selectAllVisibleIcaoBulkPqs','saveVisitWorkspaceBulkAssessment','selectAllVisibleVisitWorkspaceBulkPqs'];
-        const result={passed:ids.every(id=>!!document.getElementById(id))&&funcs.every(n=>typeof window[n]==='function'||typeof eval(n)==='function'),ui:Object.fromEntries(ids.map(id=>[id,!!document.getElementById(id)])),functions:Object.fromEntries(funcs.map(n=>[n,typeof window[n]==='function'||typeof eval(n)==='function'])),icaoSelected:icaoBulkSelectedPqs.size,internalSelected:visitWorkspaceBulkSelectedPqs.size};
-        console.log('RC1.4.1 Toplu PQ Değerlendirme / PQ Referansı öz denetimi:',result);return result;
+        const summary=document.getElementById('icaoValidationSummary'),steps=document.getElementById('icaoValidationSteps'),status=document.getElementById('icaoValidationStatus');
+        const orderOk=!!(summary&&steps&&status&&(summary.compareDocumentPosition(steps)&Node.DOCUMENT_POSITION_FOLLOWING)&&(steps.compareDocumentPosition(status)&Node.DOCUMENT_POSITION_FOLLOWING));
+        const result={passed:ids.every(id=>!!document.getElementById(id))&&funcs.every(n=>typeof window[n]==='function'||typeof eval(n)==='function')&&orderOk&&typeof renderIcaoPqReferencePanelFromPqData==='function',ui:Object.fromEntries(ids.map(id=>[id,!!document.getElementById(id)])),functions:Object.fromEntries(funcs.map(n=>[n,typeof window[n]==='function'||typeof eval(n)==='function'])),icaoSelected:icaoBulkSelectedPqs.size,internalSelected:visitWorkspaceBulkSelectedPqs.size,validationOrder:orderOk,pqReferenceCleanRenderer:typeof renderIcaoPqReferencePanelFromPqData==='function'};
+        console.log('RC1.4.2 Validasyon bağlamı / PQ Referansı öz denetimi:',result);return result;
     };
 
 
@@ -3899,16 +3901,20 @@ const I18N = {
         const pq=String(activeIcaoValidationPq);
         const scope=getIcaoVisitScopePqs(visit).find(p=>String(p.pq)===pq);if(!scope)return;
         const m=pqMasterData[pq]||{},summary=document.getElementById('icaoValidationSummary');if(!summary)return;
-        // RC1.4.1: PQ ENG/TR metinlerinin tek görüntü kaynağı PQ Referansı panelidir.
-        // Validasyon Çalışması yalnız seçili PQ bağlamını ve ziyaret değerlendirmesini gösterir.
-        summary.innerHTML=`<div style="display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap"><b>PQ ${escapeHtml(pq)} — ${escapeHtml(scope.area||m.alan||'-')}</b><span style="font-size:9px;color:var(--muted)">PQ metni: PQ Referansı</span></div><div style="color:var(--muted);margin-top:7px">ENG/TR PQ sorusu ve bulgu metinleri <b>PQ Referansı</b> sekmesinde PQ Veri Tabanı kaynağından gösterilir. Bu bölüm yalnız validasyon/ziyaret sonucunun kaydı içindir.</div>`;
+        // RC1.4.2: Validasyon Çalışması önce mevcut CAP bulgusunu, ardından CAP Step'lerini gösterir.
+        // PQ soru/referans bilgileri yalnız PQ Referansı panelinde tutulur.
+        const finding=String(scope.finding||m.bulgu||scope.findingTr||m.bulguTr||'').trim();
+        const source=String(m.capSourceFile||scope.sourceFile||'CAP Word / ziyaret kapsamı').trim();
+        summary.innerHTML=`<div style="display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:7px"><b>Türkiye / mevcut CAP bulgusu</b><span style="font-size:9px;color:var(--muted)">PQ ${escapeHtml(pq)} · ${escapeHtml(scope.area||m.alan||'-')}</span></div><div style="white-space:pre-wrap;line-height:1.5;color:var(--text)">${escapeHtml(finding||'Mevcut CAP bulgusu bulunamadı.')}</div><div style="margin-top:7px;font-size:9px;color:var(--muted)">Kaynak: ${escapeHtml(source||'CAP Word / ziyaret kapsamı')}</div>`;
     }
+
     function setIcaoPqTextLanguage(mode){
         if(!['en','tr','both'].includes(mode))mode='both';
         const el=document.getElementById('icaoVisitTextLanguage');if(el)el.value=mode;
         localStorage.setItem(ICAO_PQ_TEXT_LANGUAGE_KEY,mode);
         updateIcaoPqLanguageButtons(mode);
         renderActiveIcaoPqTextSummary();
+        if(typeof renderIcaoPqReferencePanelFromPqData==='function')renderIcaoPqReferencePanelFromPqData();
         showAppRuntimeToast(`PQ metin dili: ${mode==='both'?'ENG + TR':mode.toUpperCase()}`,'info');
     }
     function handleIcaoVisitLanguageChange(){
@@ -3933,14 +3939,30 @@ const I18N = {
         const add=(label,body,missing=false)=>blocks.push(`<div class="icao-pq-text-block"><div class="icao-pq-text-label">${escapeHtml(label)}${missing?'<span class="icao-pq-text-missing">TR çeviri yok · ENG gösteriliyor</span>':''}</div><div class="icao-pq-text-body">${escapeHtml(body||'-')}</div></div>`);
         if(mode==='en'||mode==='both'){
             add('PQ Question (ENG)',t.questionEn||'-');
-            add('Finding (ENG)',t.findingEn||'-');
         }
         if(mode==='tr'||mode==='both'){
             add('PQ Sorusu (TR)',t.questionTr||t.questionEn||'-',!t.questionTr&&!!t.questionEn);
-            add('Bulgu (TR)',t.findingTr||t.findingEn||'-',!t.findingTr&&!!t.findingEn);
         }
         return blocks.join('');
     }
+    function renderIcaoPqReferencePanelFromPqData(){
+        const panel=document.getElementById('icaoPqReferencePanel');if(!panel)return;
+        const visit=getActiveIcaoOfficialVisitRecord();
+        const pq=String(activeIcaoValidationPq||'');
+        if(!visit||!pq){panel.innerHTML='<div class="icao-visit-empty">PQ referansı için soldan bir PQ seçiniz.</div>';return;}
+        const scope=getIcaoVisitScopePqs(visit).find(p=>String(p.pq)===pq)||{};
+        const m=pqMasterData[pq]||{},link=m.pqLink||{};
+        const area=normalizeAreaKey(scope.area||m.alan||'')||'-';
+        const ce=String(scope.ce||m.ce||'-').trim()||'-';
+        const verification=String(scope.verificationType||m.tur||'-').trim()||'-';
+        const concept=String(scope.pqConceptId||link.pqConceptId||m.pqConceptId||'').trim();
+        panel.innerHTML=`<div style="display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px"><div><b>PQ ${escapeHtml(pq)}</b><div style="font-size:9px;color:var(--muted);margin-top:3px">PQ Veri Tabanı referansı</div></div><div style="display:flex;gap:5px;flex-wrap:wrap"><span class="icao-visit-meta-chip">${escapeHtml(area)}</span><span class="icao-visit-meta-chip">CE: ${escapeHtml(ce)}</span><span class="icao-visit-meta-chip">${escapeHtml(verification)}</span>${concept?`<span class="icao-visit-meta-chip">Concept: ${escapeHtml(concept)}</span>`:''}</div></div>${buildIcaoPqTextSummaryHtml(pq,scope)}`;
+    }
+    window.renderIcaoPqReferencePanelFromPqData=renderIcaoPqReferencePanelFromPqData;
+    document.addEventListener('click',event=>{
+        const btn=event.target&&event.target.closest?event.target.closest('[data-icao-mode="reference"]'):null;
+        if(btn)setTimeout(()=>renderIcaoPqReferencePanelFromPqData(),0);
+    });
     function updateIcaoTranslationStatus(visit){
         const el=document.getElementById('icaoVisitTranslationStatus');if(!el)return;
         if(!visit){el.textContent='Türkçe PQ/bulgu metinleri mevcut kaynaklardan (CAP/PQ/legacy çeviri) burada kontrol edilir.';return;}
@@ -4137,7 +4159,7 @@ const I18N = {
     function selectIcaoValidationPq(pq){
         const visit=activeIcaoOfficialVisitId&&icaoVisits[activeIcaoOfficialVisitId]?{id:activeIcaoOfficialVisitId,...icaoVisits[activeIcaoOfficialVisitId]}:null;if(!visit)return;
         if(activeIcaoValidationPq&&String(activeIcaoValidationPq)!==String(pq)&&icaoValidationDraftTimer){clearTimeout(icaoValidationDraftTimer);icaoValidationDraftTimer=null;saveIcaoValidationTextDraft();}
-        activeIcaoValidationPq=String(pq);const scope=getIcaoVisitScopePqs(visit).find(p=>String(p.pq)===String(pq));if(!scope)return;renderIcaoPqReferencePanel();
+        activeIcaoValidationPq=String(pq);const scope=getIcaoVisitScopePqs(visit).find(p=>String(p.pq)===String(pq));if(!scope)return;renderIcaoPqReferencePanelFromPqData();
         const m=pqMasterData[pq]||{},r=getIcaoValidationForPq(visit,pq)||{};document.getElementById('icaoValidationEmpty').style.display='none';document.getElementById('icaoValidationForm').style.display='block';document.getElementById('icaoValidationPq').value=pq;populateIcaoValidationStatus();
         const set=(id,v)=>{const e=document.getElementById(id);if(e)e.value=v||''};
         let evidenceValue=r.evidence||'';
@@ -4146,7 +4168,7 @@ const I18N = {
         if(r.evidenceAutoSnapshot&&normalizeIcaoEvidenceReference(evidenceValue)===normalizeIcaoEvidenceReference(r.evidenceAutoSnapshot)) evidenceValue='';
         set('icaoValidationStatus',r.status||'not_evaluated');set('icaoValidationResultDate',r.resultDate);set('icaoValidationDraftResult',r.draftResult||'');set('icaoValidationObjectionStatus',r.objectionStatus||'none');set('icaoValidationObjectionDate',r.objectionDate||'');set('icaoValidationFinalResult',r.finalResult||'');set('icaoValidationObjectionNotes',r.objectionNotes||'');set('icaoValidationEvidence',evidenceValue);set('icaoValidationComment',r.icaoComment);set('icaoValidationAdditionalRequest',r.additionalRequest);set('icaoValidationResponsibleUnit',r.responsibleUnit);set('icaoValidationFollowUpDate',r.followUpDate);set('icaoValidationNotes',r.notes);
         updateIcaoValidationDraftInfo('Metin alanlarındaki değişiklikler tarayıcıda taslak olarak korunur.');restoreIcaoValidationTextDraft(r);refreshIcaoValidationTextareas();
-        const evidenceInfo=document.getElementById('icaoValidationEvidenceAutoInfo');if(evidenceInfo)evidenceInfo.textContent='Step bazlı EVIDENCE REFERENCE bilgileri aşağıdaki salt okunur CAP Step bölümünde gösterilir. Bu alan otomatik doldurulmaz.';
+        const evidenceInfo=document.getElementById('icaoValidationEvidenceAutoInfo');if(evidenceInfo)evidenceInfo.textContent='Step bazlı EVIDENCE REFERENCE bilgileri yukarıdaki salt okunur CAP Step bölümünde gösterilir. Bu alan otomatik doldurulmaz.';
         renderActiveIcaoPqTextSummary();
         const steps=getIcaoVisitPqSteps(visit,pq),stepEl=document.getElementById('icaoValidationSteps');if(stepEl)stepEl.innerHTML=steps.length?steps.map(s=>`<div class="icao-valid-step"><b>Step ${escapeHtml(s.step||'-')}</b> — ${escapeHtml(s.action||s.capText||s.description||'-')}<br><span style="color:var(--muted)">${escapeHtml(s.office||'-')} | ${escapeHtml(s.estDate||'-')} | ${escapeHtml(s.statusLabel||s.progress||'')}</span>${s.evidenceReference?`<br><span style="color:var(--text)"><b>📎 EVIDENCE REFERENCE:</b> ${escapeHtml(s.evidenceReference)}</span>`:''}</div>`).join(''):'<div class="icao-valid-step">Bu PQ için gösterilecek CAP Step kaydı bulunamadı.</div>';
         renderIcaoValidationImpactForPq(visit,pq);renderIcaoOfficialVisitPqList();

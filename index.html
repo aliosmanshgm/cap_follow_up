@@ -13,7 +13,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.10/pdfmake.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.10/vfs_fonts.js"></script>
-    <link rel="stylesheet" href="css/app.css?v=20261115-v1.0-rc1.4.1">
+    <link rel="stylesheet" href="css/app.css?v=20261115-v1.0-rc1.4.2">
 </head>
 <body>
 
@@ -149,7 +149,7 @@
                 <button onclick="toggleFiltersPanel()" class="btn-outline header-primary-action">🔎 Filtreler</button>
                 <button type="button" id="activeScreenPdfBtn" onclick="exportPDF()" style="background:#dc2626;" title="Aktif ekranı PDF olarak dışa aktar">📄 Ekran PDF</button>
                 <button id="activeScreenExcelBtn" onclick="exportExcel()" style="background:#059669;" title="Aktif ekranı Excel olarak dışa aktar">📊 Ekran Excel</button>
-                <button type="button" id="appReleaseBadge" class="system-connection-badge ok release-badge" onclick="openSystemHealthModal()" title="Release Candidate sistem kontrolünü aç">RC1.4.1 · v1.0</button>
+                <button type="button" id="appReleaseBadge" class="system-connection-badge ok release-badge" onclick="openSystemHealthModal()" title="Release Candidate sistem kontrolünü aç">RC1.4.2 · v1.0</button>
                 <button type="button" id="systemConnectionBadge" class="system-connection-badge checking" onclick="openSystemHealthModal()" title="Sistem bağlantı ve kayıt durumunu görüntüle">⚪ Kontrol ediliyor</button>
                 <div class="more-actions-wrap">
                     <button class="btn-outline" onclick="toggleMoreActions(event)">⚙️ Diğer <span style="font-size:10px;">▼</span></button>
@@ -1766,6 +1766,8 @@
                         <form id="icaoValidationForm" style="display:none" onsubmit="saveIcaoValidationRecord(event)">
                             <input type="hidden" id="icaoValidationPq">
                             <div id="icaoValidationSummary" class="icao-valid-summary"></div>
+                            <div style="margin-top:12px"><b style="font-size:11px;color:var(--muted)">CAP Step'leri — mevcut CAP eylemleri</b><div id="icaoValidationSteps" class="icao-valid-steps"></div></div>
+                            <div style="margin:14px 0 8px;padding-top:12px;border-top:1px solid var(--border);font-size:11px;font-weight:800;color:var(--text)">Çalışma / ziyaret sonucu ve değerlendirme</div>
                             <div class="icao-valid-grid">
                                 <div class="icao-valid-field"><label>Çalışma / ziyaret sonucu</label><select id="icaoValidationStatus" required></select></div>
                                 <div class="icao-valid-field"><label>Sonuç tarihi</label><input id="icaoValidationResultDate" type="date"></div>
@@ -1774,14 +1776,13 @@
                                 <div class="icao-valid-field"><label>İtiraz / yorum tarihi</label><input id="icaoValidationObjectionDate" type="date"></div>
                                 <div class="icao-valid-field"><label>ICAO nihai PQ sonucu</label><select id="icaoValidationFinalResult"><option value="">Henüz yok</option><option value="satisfactory">Satisfactory</option><option value="not_satisfactory">Not Satisfactory</option><option value="no_change">No change</option></select></div>
                                 <div class="icao-valid-field full"><label>İtiraz / yorum referansı ve notu</label><textarea id="icaoValidationObjectionNotes" rows="3" placeholder="ICAO'ya iletilen yorum/itiraz, referans, gerekçe ve takip notu" oninput="handleIcaoValidationTextInput(this)"></textarea></div>
-                                <div class="icao-valid-field full"><label>ICAO'ya sunulan kanıt / uygulama kanıtı</label><div class="icvm-textarea-wrap" data-textarea-wrap="icaoValidationEvidence"><textarea id="icaoValidationEvidence" placeholder="Ziyaret sırasında fiilen sunulan ek/özel kanıt veya uygulama kanıtı varsa manuel olarak giriniz." oninput="handleIcaoValidationTextInput(this)"></textarea><div class="icvm-textarea-toolbar"><button type="button" onclick="icaoValidationTextAction('icaoValidationEvidence','timestamp')">🕒 Zaman</button><button type="button" onclick="icaoValidationTextAction('icaoValidationEvidence','copy')">📋 Kopyala</button><button type="button" onclick="icaoValidationTextAction('icaoValidationEvidence','expand')">⛶ Büyüt</button><button type="button" onclick="icaoValidationTextAction('icaoValidationEvidence','clear')">🧹 Temizle</button><span class="icvm-textarea-meta" id="icaoValidationEvidenceCount">0 karakter</span></div></div><div style="margin-top:5px"><span id="icaoValidationEvidenceAutoInfo" style="font-size:9px;color:var(--muted)">Step bazlı EVIDENCE REFERENCE bilgileri aşağıdaki salt okunur CAP Step bölümünde gösterilir. Bu alan otomatik doldurulmaz.</span></div></div>
+                                <div class="icao-valid-field full"><label>ICAO'ya sunulan kanıt / uygulama kanıtı</label><div class="icvm-textarea-wrap" data-textarea-wrap="icaoValidationEvidence"><textarea id="icaoValidationEvidence" placeholder="Ziyaret sırasında fiilen sunulan ek/özel kanıt veya uygulama kanıtı varsa manuel olarak giriniz." oninput="handleIcaoValidationTextInput(this)"></textarea><div class="icvm-textarea-toolbar"><button type="button" onclick="icaoValidationTextAction('icaoValidationEvidence','timestamp')">🕒 Zaman</button><button type="button" onclick="icaoValidationTextAction('icaoValidationEvidence','copy')">📋 Kopyala</button><button type="button" onclick="icaoValidationTextAction('icaoValidationEvidence','expand')">⛶ Büyüt</button><button type="button" onclick="icaoValidationTextAction('icaoValidationEvidence','clear')">🧹 Temizle</button><span class="icvm-textarea-meta" id="icaoValidationEvidenceCount">0 karakter</span></div></div><div style="margin-top:5px"><span id="icaoValidationEvidenceAutoInfo" style="font-size:9px;color:var(--muted)">Step bazlı EVIDENCE REFERENCE bilgileri yukarıdaki salt okunur CAP Step bölümünde gösterilir. Bu alan otomatik doldurulmaz.</span></div></div>
                                 <div class="icao-valid-field full"><label>ICAO görüşü / ziyaret notu</label><div class="icvm-textarea-wrap" data-textarea-wrap="icaoValidationComment"><textarea id="icaoValidationComment" placeholder="ICAO uzmanının değerlendirmesi, görüşme notu veya teyit edilen husus" oninput="handleIcaoValidationTextInput(this)"></textarea><div class="icvm-textarea-toolbar"><button type="button" onclick="icaoValidationTextAction('icaoValidationComment','timestamp')">🕒 Zaman</button><button type="button" onclick="icaoValidationTextAction('icaoValidationComment','copy')">📋 Kopyala</button><button type="button" onclick="icaoValidationTextAction('icaoValidationComment','expand')">⛶ Büyüt</button><button type="button" onclick="icaoValidationTextAction('icaoValidationComment','clear')">🧹 Temizle</button><span class="icvm-textarea-meta" id="icaoValidationCommentCount">0 karakter</span></div></div></div>
                                 <div class="icao-valid-field full"><label>Ek kanıt / açıklama talebi</label><div class="icvm-textarea-wrap" data-textarea-wrap="icaoValidationAdditionalRequest"><textarea id="icaoValidationAdditionalRequest" placeholder="İlave belge, açıklama veya ziyaret sonrası talep" oninput="handleIcaoValidationTextInput(this)"></textarea><div class="icvm-textarea-toolbar"><button type="button" onclick="icaoValidationTextAction('icaoValidationAdditionalRequest','timestamp')">🕒 Zaman</button><button type="button" onclick="icaoValidationTextAction('icaoValidationAdditionalRequest','copy')">📋 Kopyala</button><button type="button" onclick="icaoValidationTextAction('icaoValidationAdditionalRequest','expand')">⛶ Büyüt</button><button type="button" onclick="icaoValidationTextAction('icaoValidationAdditionalRequest','clear')">🧹 Temizle</button><span class="icvm-textarea-meta" id="icaoValidationAdditionalRequestCount">0 karakter</span></div></div></div>
                                 <div class="icao-valid-field"><label>Sorumlu SHGM birimi</label><input id="icaoValidationResponsibleUnit" type="text" placeholder="Birim / koordinatörlük"></div>
                                 <div class="icao-valid-field"><label>Sonraki işlem / takip tarihi</label><input id="icaoValidationFollowUpDate" type="date"></div>
                                 <div class="icao-valid-field full"><label>İç not</label><div class="icvm-textarea-wrap" data-textarea-wrap="icaoValidationNotes"><textarea id="icaoValidationNotes" placeholder="SHGM iç kullanım notu" oninput="handleIcaoValidationTextInput(this)"></textarea><div class="icvm-textarea-toolbar"><button type="button" onclick="icaoValidationTextAction('icaoValidationNotes','timestamp')">🕒 Zaman</button><button type="button" onclick="icaoValidationTextAction('icaoValidationNotes','copy')">📋 Kopyala</button><button type="button" onclick="icaoValidationTextAction('icaoValidationNotes','expand')">⛶ Büyüt</button><button type="button" onclick="icaoValidationTextAction('icaoValidationNotes','clear')">🧹 Temizle</button><span class="icvm-textarea-meta" id="icaoValidationNotesCount">0 karakter</span></div></div></div>
                             </div>
-                            <div style="margin-top:12px"><b style="font-size:11px;color:var(--muted)">CAP Step'leri — bilgi amaçlı</b><div id="icaoValidationSteps" class="icao-valid-steps"></div></div>
                             <div id="icaoValidationEiImpact" class="icao-ei-impact"></div>
                             <div class="icao-valid-actions"><span id="icaoValidationDraftInfo" class="icvm-draft-info">Metin alanlarındaki değişiklikler tarayıcıda taslak olarak korunur.</span><button type="button" class="btn-outline" onclick="resetIcaoValidationForm()">Formu Temizle</button><button type="submit" id="icaoValidationSaveButton">💾 CAP Sonucunu Kaydet</button></div>
                         </form>
@@ -2591,26 +2592,26 @@
 </div>
 
 
-<script src="js/app.js?v=20261115-v1.0-rc1.4.1"></script>
-<script src="js/modules/access-control.js?v=20261115-v1.0-rc1.4.1"></script>
-<script src="js/modules/visit-sync.js?v=20261115-v1.0-rc1.4.1"></script>
-<script src="js/modules/visit-hub.js?v=20261115-v1.0-rc1.4.1"></script>
-<script src="js/modules/state-compliance.js?v=20261115-v1.0-rc1.4.1"></script>
-<script src="js/modules/assessment-events.js?v=20261115-v1.0-rc1.4.1"></script>
-<script src="js/modules/official-ei-management.js?v=20261115-v1.0-rc1.4.1"></script>
-<script src="js/modules/official-ei-automation.js?v=20261115-v1.0-rc1.4.1"></script>
-<script src="js/parsers/pq-docx-parser.js?v=20261115-v1.0-rc1.4.1"></script>
-<script src="js/modules/pq-linkage.js?v=20261115-v1.0-rc1.4.1"></script>
-<script src="js/modules/validation-readiness.js?v=20261115-v1.0-rc1.4.1"></script>
-<script src="js/modules/assessment-impact.js?v=20261115-v1.0-rc1.4.1"></script>
-<script src="js/modules/management-shell.js?v=20261115-v1.0-rc1.4.1"></script>
-<script src="js/modules/drive-documents.js?v=20261115-v1.0-rc1.4.1"></script>
-<script src="js/services/pq-repository.js?v=20261115-v1.0-rc1.4.1"></script>
-<script src="js/modules/pq-library.js?v=20261115-v1.0-rc1.4.1"></script>
-<script src="js/modules/responsibility-registry.js?v=20261115-v1.0-rc1.4.1"></script>
-<script src="js/modules/system-integrity.js?v=20261115-v1.0-rc1.4.1"></script>
-<script src="js/modules/action-center.js?v=20261115-v1.0-rc1.4.1"></script>
-<script src="js/modules/notification-center.js?v=20261115-v1.0-rc1.4.1"></script>
-<script src="js/modules/reporting-center.js?v=20261115-v1.0-rc1.4.1"></script>
+<script src="js/app.js?v=20261115-v1.0-rc1.4.2"></script>
+<script src="js/modules/access-control.js?v=20261115-v1.0-rc1.4.2"></script>
+<script src="js/modules/visit-sync.js?v=20261115-v1.0-rc1.4.2"></script>
+<script src="js/modules/visit-hub.js?v=20261115-v1.0-rc1.4.2"></script>
+<script src="js/modules/state-compliance.js?v=20261115-v1.0-rc1.4.2"></script>
+<script src="js/modules/assessment-events.js?v=20261115-v1.0-rc1.4.2"></script>
+<script src="js/modules/official-ei-management.js?v=20261115-v1.0-rc1.4.2"></script>
+<script src="js/modules/official-ei-automation.js?v=20261115-v1.0-rc1.4.2"></script>
+<script src="js/parsers/pq-docx-parser.js?v=20261115-v1.0-rc1.4.2"></script>
+<script src="js/modules/pq-linkage.js?v=20261115-v1.0-rc1.4.2"></script>
+<script src="js/modules/validation-readiness.js?v=20261115-v1.0-rc1.4.2"></script>
+<script src="js/modules/assessment-impact.js?v=20261115-v1.0-rc1.4.2"></script>
+<script src="js/modules/management-shell.js?v=20261115-v1.0-rc1.4.2"></script>
+<script src="js/modules/drive-documents.js?v=20261115-v1.0-rc1.4.2"></script>
+<script src="js/services/pq-repository.js?v=20261115-v1.0-rc1.4.2"></script>
+<script src="js/modules/pq-library.js?v=20261115-v1.0-rc1.4.2"></script>
+<script src="js/modules/responsibility-registry.js?v=20261115-v1.0-rc1.4.2"></script>
+<script src="js/modules/system-integrity.js?v=20261115-v1.0-rc1.4.2"></script>
+<script src="js/modules/action-center.js?v=20261115-v1.0-rc1.4.2"></script>
+<script src="js/modules/notification-center.js?v=20261115-v1.0-rc1.4.2"></script>
+<script src="js/modules/reporting-center.js?v=20261115-v1.0-rc1.4.2"></script>
 </body>
 </html>
