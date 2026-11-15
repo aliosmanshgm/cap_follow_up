@@ -13,7 +13,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.10/pdfmake.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.10/vfs_fonts.js"></script>
-    <link rel="stylesheet" href="css/app.css?v=20261114-phase15-access-v18">
+    <link rel="stylesheet" href="css/app.css?v=20261115-phase15-ssp-pq-ui-v18-2">
 </head>
 <body>
 
@@ -2052,7 +2052,7 @@
                         <div id="pqDbViewCatalog" class="pqdb-view">
                             <div class="pqdb-toolbar">
                                 <div><label>Sürüm / Revizyon</label><select id="pqDbCatalogEdition" onchange="pqDbCatalogEditionChanged()"></select></div>
-                                <div><label>Denetim Alanı</label><select id="pqDbCatalogArea" onchange="pqDbCatalogEditionChanged()"></select></div>
+                                <div><label>Alan / SSP</label><select id="pqDbCatalogArea" onchange="pqDbCatalogEditionChanged()"></select></div>
                                 <div><label>Değerlendirme Türü</label><select id="pqDbCatalogMode" onchange="renderIcaoPqLibraryModule()"><option value="all">Tümü</option><option value="On-site">On-site</option><option value="Off-site">Off-site</option></select></div>
                                 <div><label>CE</label><select id="pqDbCatalogCe" onchange="renderIcaoPqLibraryModule()"><option value="all">Tüm CE'ler</option></select></div>
                                 <div><label>PPQ</label><select id="pqDbCatalogPpq" onchange="renderIcaoPqLibraryModule()"><option value="all">Tümü</option><option value="yes">PPQ</option><option value="no">PPQ Değil</option></select></div>
@@ -2074,7 +2074,7 @@
                             <div class="pqdb-compare-head">
                                 <div><label>Hedef Sürüm</label><select id="pqDbCompareTarget" onchange="pqDbCompareTargetChanged()"></select></div>
                                 <div><label>Referans / Önceki Sürüm</label><select id="pqDbCompareBase" onchange="renderIcaoPqLibraryModule()"></select></div>
-                                <div><label>Denetim Alanı</label><select id="pqDbCompareArea" onchange="pqDbCompareTargetChanged()"></select></div>
+                                <div><label>Alan / SSP</label><select id="pqDbCompareArea" onchange="pqDbCompareTargetChanged()"></select></div>
                                 <button type="button" onclick="renderIcaoPqLibraryModule()">Kıyasla</button>
                             </div>
                             <div class="pqdb-change-kpis">
@@ -2355,7 +2355,7 @@
         <div class="modal-header">
             <div>
                 <h3 style="margin:0;color:var(--primary);font-size:16px;">📄 ICAO PQ Word Belgelerini Doğrula</h3>
-                <div class="pqdb-import-subtitle">Otomatik algılanan <b>Denetim Alanı, Sürüm, Revizyon ve Belge Tarihi</b> bilgilerini Firebase'e kaydetmeden önce kontrol edin ve gerekiyorsa düzeltin.</div>
+                <div class="pqdb-import-subtitle">Otomatik algılanan <b>Alan / SSP, Sürüm, Revizyon ve Belge Tarihi</b> bilgilerini Firebase'e kaydetmeden önce kontrol edin ve gerekiyorsa düzeltin.</div>
             </div>
             <button type="button" class="right-panel-close" onclick="closePqDbImportPreview()">✖</button>
         </div>
@@ -2409,7 +2409,7 @@
         <input type="hidden" id="pqDbMetadataSourceEdition">
         <input type="hidden" id="pqDbMetadataSourceArea">
         <div class="pq-library-meta-grid">
-            <div class="control-group"><label>Denetim Alanı</label><select id="pqDbMetadataArea"><option>LEG</option><option>ORG</option><option>PEL</option><option>OPS</option><option>AIR</option><option>AIG</option><option>ANS</option><option>AGA</option></select></div>
+            <div class="control-group"><label>Alan / SSP</label><select id="pqDbMetadataArea"><option>LEG</option><option>ORG</option><option>PEL</option><option>OPS</option><option>AIR</option><option>AIG</option><option>ANS</option><option>AGA</option><option>SSP</option></select></div>
             <div class="control-group"><label>Sürüm</label><input id="pqDbMetadataVersion" type="text" placeholder="Örn: 2024"></div>
             <div class="control-group"><label>Revizyon</label><input id="pqDbMetadataRevision" type="text" placeholder="Örn: 2 veya İlk Yayın"></div>
             <div class="control-group"><label>Kaynak Belge Tarihi</label><input id="pqDbMetadataPublicationDate" type="date"></div>
@@ -2490,7 +2490,7 @@
 <script src="js/modules/management-shell.js?v=20261114-phase15-access-v18"></script>
 <script src="js/modules/drive-documents.js?v=20261114-phase15-access-v18"></script>
 <script src="js/services/pq-repository.js?v=20261114-phase15-access-v18"></script>
-<script src="js/modules/pq-library.js?v=20261114-phase15-access-v18"></script>
+<script src="js/modules/pq-library.js?v=20261115-phase15-ssp-pq-ui-v18-2"></script>
 <script src="js/modules/system-integrity.js?v=20261114-phase15-access-v18"></script>
 <script src="js/modules/action-center.js?v=20261114-phase15-access-v18"></script>
 <script src="js/modules/notification-center.js?v=20261114-phase15-access-v18"></script>

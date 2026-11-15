@@ -1,6 +1,6 @@
 {
   "app": "USOAP CMA CAP Takip",
-  "version": "18.1-phase15-pq-metadata-firebase-key-hotfix",
+  "version": "18.2-phase15-ssp-pq-ui-hotfix",
   "baseline": "index_visit_hub_pq_version_database(2).html",
   "buildDate": "2026-11-15",
   "features": [
@@ -81,7 +81,10 @@
     "access-audit-trail",
     "user-area-work-scope",
     "access-control-pdf-excel-export",
-    "firebase-safe-pq-concept-alias-keys"
+    "firebase-safe-pq-concept-alias-keys",
+    "ssp-pq-library-area-support",
+    "ssp-9xxx-range-display",
+    "ssp-metadata-edit-support"
   ],
   "architecture": {
     "index": "index.html",

@@ -8,7 +8,8 @@
     let pqDbLoaded=false;
     const PQDB_STORAGE_KEY='icao_pq_library_v1';
     const PQDB_ACTIVE_EDITION_KEY='icao_pq_library_active_edition'; // legacy fallback
-    const PQDB_AREAS=['LEG','ORG','PEL','OPS','AIR','AIG','ANS','AGA'];
+    const PQDB_AUDIT_AREAS=['LEG','ORG','PEL','OPS','AIR','AIG','ANS','AGA'];
+    const PQDB_AREAS=[...PQDB_AUDIT_AREAS,'SSP'];
     const PQDB_AREA_META={
         LEG:{icon:'⚖️',name:'Primary Aviation Legislation and Civil Aviation Regulations',short:'Mevzuat',range:'1.xxx'},
         ORG:{icon:'🏛️',name:'Civil Aviation Organization',short:'Organizasyon',range:'2.xxx'},
@@ -17,7 +18,8 @@
         AIR:{icon:'🛠️',name:'Airworthiness of Aircraft',short:'Uçuşa Elverişlilik',range:'5.xxx'},
         AIG:{icon:'🔎',name:'Aircraft Accident and Incident Investigation',short:'Kaza/Olay İnceleme',range:'6.xxx'},
         ANS:{icon:'🗼',name:'Air Navigation Services',short:'Hava Seyrüsefer',range:'7.xxx'},
-        AGA:{icon:'🛬',name:'Aerodromes and Ground Aids',short:'Havaalanları',range:'8.xxx'}
+        AGA:{icon:'🛬',name:'Aerodromes and Ground Aids',short:'Havaalanları',range:'8.xxx'},
+        SSP:{icon:'📘',name:'State Safety Programme',short:'State Safety Programme',range:'9.xxx'}
     };
     let pqDbSelectedArea='';
     function pqDbNormalizeRevision(v){v=String(v||'').trim();if(!v||/^(ilk\s*yay[ıi]n|initial\s*(issue|release)|original)$/i.test(v))return'0';const m=v.match(/(?:rev(?:ision)?\.?|revizyon)\s*(?:no\.?|#)?\s*[:\-]?\s*([A-Za-z0-9._-]+)/i);return m?m[1]:v;}
@@ -128,7 +130,7 @@
     window.getPqLibrarySummary=function(){
         const editions=pqDbEditionEntries();
         const loadedAreas=new Set();let activeAreas=0,totalPqs=0;
-        for(const area of PQDB_AREAS){
+        for(const area of PQDB_AUDIT_AREAS){
             const rows=pqDbAreaRows(area);if(rows.length)loadedAreas.add(area);
             const ctx=pqDbAreaActiveContext(area,rows);if(ctx.activeRow||ctx.current){if(ctx.activeRow)activeAreas++;totalPqs+=ctx.pqs.length;}
         }
@@ -335,7 +337,7 @@
     async function savePqDbMetadataEdit(){
         if(!window.PQRepository||typeof window.PQRepository.updateMetadata!=='function')return alert('PQ repository metadata güncelleme servisi yüklenemedi.');
         const read=id=>((document.getElementById(id)||{}).value||'').trim(),sourceEditionKey=read('pqDbMetadataSourceEdition'),sourceArea=read('pqDbMetadataSourceArea'),area=read('pqDbMetadataArea').toUpperCase(),year=read('pqDbMetadataVersion'),revision=pqDbNormalizeRevision(read('pqDbMetadataRevision')),publicationDate=read('pqDbMetadataPublicationDate'),note=read('pqDbMetadataNote'),active=!!((document.getElementById('pqDbMetadataActive')||{}).checked);
-        if(!PQDB_AREAS.includes(area))return alert('Denetim alanı LEG, ORG, PEL, OPS, AIR, AIG, ANS veya AGA olmalıdır.');if(!/^20\d{2}$/.test(year))return alert('Sürüm 4 haneli yıl olarak girilmelidir. Örn: 2024');
+        if(!PQDB_AREAS.includes(area))return alert('Alan LEG, ORG, PEL, OPS, AIR, AIG, ANS, AGA veya SSP olmalıdır.');if(!/^20\d{2}$/.test(year))return alert('Sürüm 4 haneli yıl olarak girilmelidir. Örn: 2024');
         try{showLoading('PQ sürüm/revizyon bilgileri güncelleniyor...',`${sourceArea} → ${area}`);await window.PQRepository.updateMetadata({sourceEditionKey,sourceArea,meta:{area,year,revision,publicationDate,note,active}});if(window.PQRepository.rebuildLinkageIndex)await window.PQRepository.rebuildLinkageIndex({onProgress:p=>{try{setLoadingMessage('PQ lineage indeksi güncelleniyor...',p.message||'');}catch(_){}}});closePqDbMetadataEditModal();pqDbLoaded=false;await loadIcaoPqLibrary(true);setPqDbView('versions');showAppRuntimeToast('PQ sürüm/revizyon bilgileri ve kalıcı bağlantılar Firebase’de güncellendi.','success');}catch(err){console.error(err);alert('PQ sürüm/revizyon bilgileri güncellenemedi: '+(err.message||err));}finally{hideLoading();}
     }
     window.savePqDbMetadataEdit=savePqDbMetadataEdit;
