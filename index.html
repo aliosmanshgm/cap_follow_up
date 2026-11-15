@@ -13,7 +13,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.10/pdfmake.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.10/vfs_fonts.js"></script>
-    <link rel="stylesheet" href="css/app.css?v=20261115-v1.0-rc1.3">
+    <link rel="stylesheet" href="css/app.css?v=20261115-v1.0-rc1.4">
 </head>
 <body>
 
@@ -149,7 +149,7 @@
                 <button onclick="toggleFiltersPanel()" class="btn-outline header-primary-action">🔎 Filtreler</button>
                 <button type="button" id="activeScreenPdfBtn" onclick="exportPDF()" style="background:#dc2626;" title="Aktif ekranı PDF olarak dışa aktar">📄 Ekran PDF</button>
                 <button id="activeScreenExcelBtn" onclick="exportExcel()" style="background:#059669;" title="Aktif ekranı Excel olarak dışa aktar">📊 Ekran Excel</button>
-                <button type="button" id="appReleaseBadge" class="system-connection-badge ok release-badge" onclick="openSystemHealthModal()" title="Release Candidate sistem kontrolünü aç">RC1.3 · v1.0</button>
+                <button type="button" id="appReleaseBadge" class="system-connection-badge ok release-badge" onclick="openSystemHealthModal()" title="Release Candidate sistem kontrolünü aç">RC1.4 · v1.0</button>
                 <button type="button" id="systemConnectionBadge" class="system-connection-badge checking" onclick="openSystemHealthModal()" title="Sistem bağlantı ve kayıt durumunu görüntüle">⚪ Kontrol ediliyor</button>
                 <div class="more-actions-wrap">
                     <button class="btn-outline" onclick="toggleMoreActions(event)">⚙️ Diğer <span style="font-size:10px;">▼</span></button>
@@ -1728,7 +1728,7 @@
                     <button type="button" data-icao-mode="impact" onclick="setIcaoVisitWorkspaceMode('impact')">📈 EI &amp; Son Durum</button>
                 </div>
                 <div class="icao-visit-kpis">
-                    <div class="icao-visit-kpi"><strong id="icaoVisitKpiPq">0</strong><span>Kapsamdaki açık PQ</span></div>
+                    <div class="icao-visit-kpi"><strong id="icaoVisitKpiPq">0</strong><span>Kapsamdaki PQ</span></div>
                     <div class="icao-visit-kpi ok"><strong id="icaoVisitKpiValidated">0</strong><span>Taslak/çalışma S</span></div>
                     <div class="icao-visit-kpi danger"><strong id="icaoVisitKpiOpen">0</strong><span>CAP açık kaldı</span></div>
                     <div class="icao-visit-kpi warn"><strong id="icaoVisitKpiEvidence">0</strong><span>Ek kanıt / takip</span></div>
@@ -1751,6 +1751,12 @@
                             <select id="icaoVisitTextLanguage" style="display:none" aria-hidden="true"><option value="both">ENG + TR</option><option value="en">ENG</option><option value="tr">TR</option></select>
                         </div>
                         <div id="icaoVisitTranslationStatus" class="icao-translation-status">Türkçe PQ/finding metinleri PQ Veri Tabanı, CAP Word ve varsa legacy TR kaynağı üzerinden burada kontrol edilir.</div>
+                        <div id="icaoBulkToolbar" style="display:flex;gap:7px;align-items:center;flex-wrap:wrap;margin:9px 0;padding:9px;border:1px solid var(--border);border-radius:9px;background:rgba(37,99,235,0.04);">
+                            <b id="icaoBulkSelectedCount" style="font-size:11px;color:var(--primary);margin-right:auto;">0 PQ seçildi</b>
+                            <button type="button" class="btn-outline" onclick="selectAllVisibleIcaoBulkPqs()">☑️ Görünenleri Seç</button>
+                            <button type="button" class="btn-outline" onclick="clearIcaoBulkSelection()">✖ Seçimi Temizle</button>
+                            <button type="button" id="icaoBulkAssessButton" onclick="openIcaoBulkAssessmentModal()" disabled>🧾 Seçili PQ'ları Toplu Değerlendir</button>
+                        </div>
                         <div id="icaoOfficialVisitPqList" class="icao-visit-list"><div class="icao-visit-empty">Ziyaret seçildiğinde kapsamdaki PQ'lar burada gösterilecektir.</div></div>
                     </section>
                     <section class="icao-visit-panel">
@@ -1934,6 +1940,12 @@
                     <section class="visit-work-panel">
                         <div class="visit-work-panel-head"><h4>Ziyaret Kapsamı</h4><span id="visitWorkspaceTargetCount" class="smart-scope">0 hedef</span></div>
                         <div class="visit-work-target-search"><input id="visitWorkspaceTargetSearch" type="text" placeholder="PQ, Step, CAP veya ofis ara..." oninput="renderVisitWorkspaceTargets()"></div>
+                        <div id="visitWorkspaceBulkToolbar" style="display:flex;gap:7px;align-items:center;flex-wrap:wrap;margin:8px 0;padding:8px;border:1px solid var(--border);border-radius:9px;background:rgba(16,185,129,0.04);">
+                            <b id="visitWorkspaceBulkSelectedCount" style="font-size:11px;color:var(--ok);margin-right:auto;">0 PQ seçildi</b>
+                            <button type="button" class="btn-outline" onclick="selectAllVisibleVisitWorkspaceBulkPqs()">☑️ Görünen PQ'ları Seç</button>
+                            <button type="button" class="btn-outline" onclick="clearVisitWorkspaceBulkSelection()">✖ Seçimi Temizle</button>
+                            <button type="button" id="visitWorkspaceBulkAssessButton" onclick="openVisitWorkspaceBulkAssessmentModal()" disabled>🧾 Toplu Değerlendir</button>
+                        </div>
                         <div id="visitWorkspaceTargetList" class="visit-work-target-list"><div class="visit-work-empty">Önce bir ziyaret seçiniz.</div></div>
                     </section>
 
@@ -1995,6 +2007,64 @@
                         </div>
                     </section>
                 </div>
+            </div>
+        </div>
+
+
+        <div id="icaoBulkAssessmentModal" class="modal" style="z-index:12070;" onclick="if(event.target===this) closeIcaoBulkAssessmentModal()">
+            <div class="modal-content" style="max-width:980px;">
+                <div class="modal-header">
+                    <div><h3 style="margin:0;color:var(--primary);">🧾 ICAO Toplu PQ Değerlendirme</h3><div style="font-size:11px;color:var(--muted);margin-top:4px;">Yalnız işaretlenen alanlar seçili PQ kayıtlarına uygulanır. İşaretlenmeyen mevcut bilgiler aynen korunur.</div></div>
+                    <button type="button" class="btn-outline" onclick="closeIcaoBulkAssessmentModal()">✖</button>
+                </div>
+                <form id="icaoBulkAssessmentForm" onsubmit="saveIcaoBulkAssessment(event)">
+                    <div id="icaoBulkPreview" class="visit-sync-note" style="margin-bottom:10px;"></div>
+                    <div class="icao-valid-grid">
+                        <div class="icao-valid-field"><label><input type="checkbox" data-icao-bulk-field="status" data-target="icaoBulkStatus" onchange="syncIcaoBulkFieldState()"> Çalışma / ziyaret sonucu</label><select id="icaoBulkStatus" disabled></select></div>
+                        <div class="icao-valid-field"><label><input type="checkbox" data-icao-bulk-field="resultDate" data-target="icaoBulkResultDate" onchange="syncIcaoBulkFieldState()"> Sonuç tarihi</label><input id="icaoBulkResultDate" type="date" disabled></div>
+                        <div class="icao-valid-field"><label><input type="checkbox" data-icao-bulk-field="draftResult" data-target="icaoBulkDraftResult" onchange="syncIcaoBulkFieldState()"> ICAO taslak PQ sonucu</label><select id="icaoBulkDraftResult" disabled><option value="">Belirtilmedi / temizle</option><option value="satisfactory">Satisfactory</option><option value="not_satisfactory">Not Satisfactory</option><option value="no_change">No change</option><option value="pending">Değerlendirmede</option></select></div>
+                        <div class="icao-valid-field"><label><input type="checkbox" data-icao-bulk-field="finalResult" data-target="icaoBulkFinalResult" onchange="syncIcaoBulkFieldState()"> ICAO nihai PQ sonucu</label><select id="icaoBulkFinalResult" disabled><option value="">Henüz yok / temizle</option><option value="satisfactory">Satisfactory</option><option value="not_satisfactory">Not Satisfactory</option><option value="no_change">No change</option></select></div>
+                        <div class="icao-valid-field"><label><input type="checkbox" data-icao-bulk-field="objectionStatus" data-target="icaoBulkObjectionStatus" onchange="syncIcaoBulkFieldState()"> İtiraz / yorum durumu</label><select id="icaoBulkObjectionStatus" disabled><option value="none">Yok</option><option value="planned">Hazırlanıyor</option><option value="submitted">ICAO'ya iletildi</option><option value="under_review">ICAO değerlendirmesinde</option><option value="accepted">Kabul edildi</option><option value="rejected">Kabul edilmedi</option><option value="withdrawn">Geri çekildi</option></select></div>
+                        <div class="icao-valid-field"><label><input type="checkbox" data-icao-bulk-field="objectionDate" data-target="icaoBulkObjectionDate" onchange="syncIcaoBulkFieldState()"> İtiraz / yorum tarihi</label><input id="icaoBulkObjectionDate" type="date" disabled></div>
+                        <div class="icao-valid-field"><label><input type="checkbox" data-icao-bulk-field="responsibleUnit" data-target="icaoBulkResponsibleUnit" onchange="syncIcaoBulkFieldState()"> Sorumlu SHGM birimi</label><input id="icaoBulkResponsibleUnit" type="text" placeholder="Birim / koordinatörlük" disabled></div>
+                        <div class="icao-valid-field"><label><input type="checkbox" data-icao-bulk-field="followUpDate" data-target="icaoBulkFollowUpDate" onchange="syncIcaoBulkFieldState()"> Sonraki işlem / takip tarihi</label><input id="icaoBulkFollowUpDate" type="date" disabled></div>
+                        <div class="icao-valid-field full"><label><input type="checkbox" data-icao-bulk-field="objectionNotes" data-target="icaoBulkObjectionNotes" onchange="syncIcaoBulkFieldState()"> İtiraz / yorum referansı ve notu</label><textarea id="icaoBulkObjectionNotes" rows="2" disabled></textarea></div>
+                        <div class="icao-valid-field full"><label><input type="checkbox" data-icao-bulk-field="evidence" data-target="icaoBulkEvidence" onchange="syncIcaoBulkFieldState()"> ICAO'ya sunulan kanıt / uygulama kanıtı</label><textarea id="icaoBulkEvidence" rows="2" disabled></textarea></div>
+                        <div class="icao-valid-field full"><label><input type="checkbox" data-icao-bulk-field="icaoComment" data-target="icaoBulkComment" onchange="syncIcaoBulkFieldState()"> ICAO görüşü / ziyaret notu</label><textarea id="icaoBulkComment" rows="2" disabled></textarea></div>
+                        <div class="icao-valid-field full"><label><input type="checkbox" data-icao-bulk-field="additionalRequest" data-target="icaoBulkAdditionalRequest" onchange="syncIcaoBulkFieldState()"> Ek kanıt / açıklama talebi</label><textarea id="icaoBulkAdditionalRequest" rows="2" disabled></textarea></div>
+                        <div class="icao-valid-field full"><label><input type="checkbox" data-icao-bulk-field="notes" data-target="icaoBulkNotes" onchange="syncIcaoBulkFieldState()"> İç not</label><textarea id="icaoBulkNotes" rows="2" disabled></textarea></div>
+                    </div>
+                    <div style="margin-top:10px;padding:9px;border:1px dashed var(--warn);border-radius:8px;font-size:10px;color:var(--muted);">⚠️ Nihai sonucu bulunan PQ'larda “ICAO nihai PQ sonucu” alanı işaretlenirse mevcut nihai sonuç değiştirilebilir. Kaydetmeden önce sistem bunun için ayrıca onay ister.</div>
+                    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:12px;"><button type="button" class="btn-outline" onclick="closeIcaoBulkAssessmentModal()">Vazgeç</button><button type="submit" id="icaoBulkSaveButton">💾 Seçili PQ'lara Uygula</button></div>
+                </form>
+            </div>
+        </div>
+
+        <div id="visitWorkspaceBulkAssessmentModal" class="modal" style="z-index:12070;" onclick="if(event.target===this) closeVisitWorkspaceBulkAssessmentModal()">
+            <div class="modal-content" style="max-width:920px;">
+                <div class="modal-header">
+                    <div><h3 style="margin:0;color:var(--ok);">🧾 İç Denetim / Ziyaret Toplu PQ Değerlendirme</h3><div style="font-size:11px;color:var(--muted);margin-top:4px;">Her seçili PQ için ayrı yeni saha kaydı oluşturulur; mevcut PQ kayıtları değiştirilmez.</div></div>
+                    <button type="button" class="btn-outline" onclick="closeVisitWorkspaceBulkAssessmentModal()">✖</button>
+                </div>
+                <form id="visitWorkspaceBulkAssessmentForm" onsubmit="saveVisitWorkspaceBulkAssessment(event)">
+                    <div id="visitWorkspaceBulkPreview" class="visit-sync-note" style="margin-bottom:10px;"></div>
+                    <div class="visit-work-grid">
+                        <div class="visit-work-field"><label>Not türü</label><select id="visitBulkNoteType"></select></div>
+                        <div class="visit-work-field"><label>Öncelik</label><select id="visitBulkPriority"></select></div>
+                        <div class="visit-work-field"><label>Kayıt durumu</label><select id="visitBulkRecordStatus"></select></div>
+                        <div class="visit-work-field"><label>Kanıt yeterlilik durumu</label><select id="visitBulkEvidenceStatus"></select></div>
+                        <div class="visit-work-field full"><label>Not / tespit / açıklama <span class="visit-required">*</span></label><textarea id="visitBulkNote" required placeholder="Seçili tüm PQ'lara uygulanacak ortak tespit veya açıklama"></textarea></div>
+                        <div class="visit-work-field"><label>İncelenen / talep edilen kanıt</label><textarea id="visitBulkEvidence"></textarea></div>
+                        <div class="visit-work-field"><label>Değerlendirme</label><textarea id="visitBulkAssessment"></textarea></div>
+                        <div class="visit-work-field full"><label style="display:flex;align-items:center;gap:8px;"><input id="visitBulkFollowRequired" type="checkbox" onchange="toggleVisitWorkspaceBulkFollowDate()"> Takip gerekli</label></div>
+                        <div class="visit-work-field"><label>Takip tarihi</label><input id="visitBulkFollowDate" type="date" disabled></div>
+                        <div class="visit-work-field"><label>Aksiyon sorumlusu</label><input id="visitBulkOwner" type="text"></div>
+                        <div class="visit-work-field full"><label>Beklenen çıktı</label><input id="visitBulkExpectedOutput" type="text"></div>
+                        <div class="visit-work-field"><label>Danışılacak makam</label><input id="visitBulkConsultAuthority" type="text" list="visitConsultAuthorityList"></div>
+                        <div class="visit-work-field"><label>Danışma konusu</label><input id="visitBulkConsultTopic" type="text"></div>
+                    </div>
+                    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:12px;"><button type="button" class="btn-outline" onclick="closeVisitWorkspaceBulkAssessmentModal()">Vazgeç</button><button type="submit" id="visitWorkspaceBulkSaveButton">💾 Her PQ İçin Ayrı Kayıt Oluştur</button></div>
+                </form>
             </div>
         </div>
 
@@ -2521,26 +2591,26 @@
 </div>
 
 
-<script src="js/app.js?v=20261115-v1.0-rc1.3"></script>
-<script src="js/modules/access-control.js?v=20261115-v1.0-rc1.3"></script>
-<script src="js/modules/visit-sync.js?v=20261115-v1.0-rc1.3"></script>
-<script src="js/modules/visit-hub.js?v=20261115-v1.0-rc1.3"></script>
-<script src="js/modules/state-compliance.js?v=20261115-v1.0-rc1.3"></script>
-<script src="js/modules/assessment-events.js?v=20261115-v1.0-rc1.3"></script>
-<script src="js/modules/official-ei-management.js?v=20261115-v1.0-rc1.3"></script>
-<script src="js/modules/official-ei-automation.js?v=20261115-v1.0-rc1.3"></script>
-<script src="js/parsers/pq-docx-parser.js?v=20261115-v1.0-rc1.3"></script>
-<script src="js/modules/pq-linkage.js?v=20261115-v1.0-rc1.3"></script>
-<script src="js/modules/validation-readiness.js?v=20261115-v1.0-rc1.3"></script>
-<script src="js/modules/assessment-impact.js?v=20261115-v1.0-rc1.3"></script>
-<script src="js/modules/management-shell.js?v=20261115-v1.0-rc1.3"></script>
-<script src="js/modules/drive-documents.js?v=20261115-v1.0-rc1.3"></script>
-<script src="js/services/pq-repository.js?v=20261115-v1.0-rc1.3"></script>
-<script src="js/modules/pq-library.js?v=20261115-v1.0-rc1.3"></script>
-<script src="js/modules/responsibility-registry.js?v=20261115-v1.0-rc1.3"></script>
-<script src="js/modules/system-integrity.js?v=20261115-v1.0-rc1.3"></script>
-<script src="js/modules/action-center.js?v=20261115-v1.0-rc1.3"></script>
-<script src="js/modules/notification-center.js?v=20261115-v1.0-rc1.3"></script>
-<script src="js/modules/reporting-center.js?v=20261115-v1.0-rc1.3"></script>
+<script src="js/app.js?v=20261115-v1.0-rc1.4"></script>
+<script src="js/modules/access-control.js?v=20261115-v1.0-rc1.4"></script>
+<script src="js/modules/visit-sync.js?v=20261115-v1.0-rc1.4"></script>
+<script src="js/modules/visit-hub.js?v=20261115-v1.0-rc1.4"></script>
+<script src="js/modules/state-compliance.js?v=20261115-v1.0-rc1.4"></script>
+<script src="js/modules/assessment-events.js?v=20261115-v1.0-rc1.4"></script>
+<script src="js/modules/official-ei-management.js?v=20261115-v1.0-rc1.4"></script>
+<script src="js/modules/official-ei-automation.js?v=20261115-v1.0-rc1.4"></script>
+<script src="js/parsers/pq-docx-parser.js?v=20261115-v1.0-rc1.4"></script>
+<script src="js/modules/pq-linkage.js?v=20261115-v1.0-rc1.4"></script>
+<script src="js/modules/validation-readiness.js?v=20261115-v1.0-rc1.4"></script>
+<script src="js/modules/assessment-impact.js?v=20261115-v1.0-rc1.4"></script>
+<script src="js/modules/management-shell.js?v=20261115-v1.0-rc1.4"></script>
+<script src="js/modules/drive-documents.js?v=20261115-v1.0-rc1.4"></script>
+<script src="js/services/pq-repository.js?v=20261115-v1.0-rc1.4"></script>
+<script src="js/modules/pq-library.js?v=20261115-v1.0-rc1.4"></script>
+<script src="js/modules/responsibility-registry.js?v=20261115-v1.0-rc1.4"></script>
+<script src="js/modules/system-integrity.js?v=20261115-v1.0-rc1.4"></script>
+<script src="js/modules/action-center.js?v=20261115-v1.0-rc1.4"></script>
+<script src="js/modules/notification-center.js?v=20261115-v1.0-rc1.4"></script>
+<script src="js/modules/reporting-center.js?v=20261115-v1.0-rc1.4"></script>
 </body>
 </html>
