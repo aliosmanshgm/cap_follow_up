@@ -1,6 +1,6 @@
 {
   "app": "USOAP CMA CAP Takip",
-  "version": "18.4-phase15-pq-change-distribution-hotfix",
+  "version": "18.5-phase15-pq-card-distribution-hotfix",
   "baseline": "index_visit_hub_pq_version_database(2).html",
   "buildDate": "2026-11-15",
   "features": [
@@ -87,7 +87,9 @@
     "ssp-metadata-edit-support",
     "pq-effective-change-count-excludes-no-change",
     "pq-change-nochange-separated-display",
-    "pq-parser-unchanged-row-classification"
+    "pq-parser-unchanged-row-classification",
+    "pq-card-revised-merged-new-nochange-deleted-breakdown",
+    "pq-card-zero-value-change-type-visibility"
   ],
   "architecture": {
     "index": "index.html",

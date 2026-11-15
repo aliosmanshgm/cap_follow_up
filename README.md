@@ -143,3 +143,9 @@ GitHub Pages üzerinde çalışan tarayıcı uygulaması kapalıyken sürekli ar
 3. Mevcut hesabınızla giriş yapın; ilk kullanıcı otomatik Sistem Sahibi olur.
 4. Yeni kullanıcıları Firebase Authentication > Users üzerinden oluşturun.
 5. Yeni kullanıcı ilk girişini yaptıktan sonra `Sistem & Yetki > Kullanıcı & Yetki Yönetimi` ekranından rol atayın.
+
+## Faz 15 v18.4 — PQ değişiklik dağılımı düzeltmesi
+PQ kartlarındaki amendment sayımı artık kaynak satır sayısına göre değil, benzersiz güncel PQ (`newPq`) bazında yapılır. Merged çoklu eşlemeler tek güncel PQ olarak sayılır; New/Revised/Merged/No change dağılımı ve Deleted ayrı sayaç olarak gösterilir. Mevcut Firebase verisi için migration gerekmez.
+
+## Faz 15 v18.5 - PQ kart dağılımı
+Alan kartlarında Revised, Merged, New, No change ve Deleted sayıları ayrı ayrı ve sıfır değerler dahil görünür.

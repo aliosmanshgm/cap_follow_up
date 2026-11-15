@@ -54,3 +54,19 @@ GitHub Pages tarayıcı uygulaması kapalıyken sürekli arka plan görevi çal�
 - Sentetik ikinci kullanıcı: veri erişimi yok, `requests/{uid}` pending talebi: PASS.
 - Rol matrisi: `viewer` operasyonel write izni yok; `coordinator` resmî EI yazabilir; `specialist` PQ library yazamaz; `manager` kullanıcı yönetebilir: PASS.
 - Faz 15 geçiş kuralı: access-control kullanıcı kaydı yokken authenticated legacy erişim; ilk owner kaydından sonra strict RBAC: PASS (kural yapısı doğrulandı).
+
+## Faz 15 v18.4 - PQ Change Distribution Hotfix
+- PEL sentetik referans testi: 100 güncel PQ, 104 raw amendment satırı -> 35 Revised + 2 Merged + 11 New + 52 No change = PASS.
+- Gerçek değişiklik = 48, No change = 52 = PASS.
+- ORG-benzeri test: 13 No change -> 0 değişiklik + 13 değişmedi = PASS.
+- Deleted ayrı sayaç testi = PASS.
+- JS syntax kontrolleri = PASS.
+- HTML ID: 876 / 876 unique; duplicate yok.
+- Eksik yerel JS/CSS referansı yok.
+
+## Faz 15 v18.5 - PQ kart değişiklik dağılımı
+- Alan kartlarında Revised / Merged / New / No change / Deleted ayrı ayrı gösteriliyor.
+- Sıfır değerler gizlenmiyor.
+- Kart toplam değişiklik özeti kaldırıldı; dağılım v18.4 benzersiz güncel-PQ sınıflandırmasını kullanıyor.
+- PEL referans dağılımı için beklenen kart değerleri: Revised 35, Merged 2, New 11, No change 52, Deleted 0.
+- Firebase Rules/veri migrasyonu gerekmiyor.
