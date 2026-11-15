@@ -502,7 +502,7 @@ const I18N = {
     // ================================================================
     // STABILIZASYON PAKETI 1
     // ================================================================
-    const APP_RELEASE = Object.freeze({version:'1.0.0-rc1.4.10',label:'v1.0 RC1.4.10',buildDate:'2026-11-15',baseline:'RC1.4.9 stable + CAP/Excel upload recovery',cacheTag:'20261115-v1.0-rc1.4.10'});
+    const APP_RELEASE = Object.freeze({version:'1.0.0-rc1.4.11',label:'v1.0 RC1.4.11',buildDate:'2026-11-15',baseline:'RC1.4.10 upload recovery + ICAO draft count projection',cacheTag:'20261115-v1.0-rc1.4.11'});
     const STABILIZATION_VERSION = APP_RELEASE.label;
     window.USOAP_APP_RELEASE = APP_RELEASE;
     const stabilizationState = {
@@ -695,7 +695,7 @@ const I18N = {
         add('word', 'Word okuma motoru', (typeof JSZip !== 'undefined') ? 'ok' : 'error', (typeof JSZip !== 'undefined') ? 'JSZip hazır.' : 'Word ayrıştırma kütüphanesi yüklenemedi.');
         add('charts', 'Grafik motoru', (typeof Chart !== 'undefined') ? 'ok' : 'warn', (typeof Chart !== 'undefined') ? 'Chart.js hazır.' : 'Grafik kütüphanesi yüklenemedi.');
         const assetVersionIssues = getLocalAssetVersionIssues();
-        add('release-build', 'Release / cache bütünlüğü', assetVersionIssues.length ? 'error' : 'ok', assetVersionIssues.length ? `RC1.4.10 cache etiketiyle eşleşmeyen ${assetVersionIssues.length} yerel asset: ${assetVersionIssues.slice(0,6).join(', ')}` : `${APP_RELEASE.label} · build ${APP_RELEASE.buildDate} · bütün yerel assetler ${APP_RELEASE.cacheTag}.`);
+        add('release-build', 'Release / cache bütünlüğü', assetVersionIssues.length ? 'error' : 'ok', assetVersionIssues.length ? `RC1.4.11 cache etiketiyle eşleşmeyen ${assetVersionIssues.length} yerel asset: ${assetVersionIssues.slice(0,6).join(', ')}` : `${APP_RELEASE.label} · build ${APP_RELEASE.buildDate} · bütün yerel assetler ${APP_RELEASE.cacheTag}.`);
         let storageOk=true; try{localStorage.setItem('__usoap_rc_probe','1');localStorage.removeItem('__usoap_rc_probe');}catch(_){storageOk=false;}
         add('browser-storage', 'Tarayıcı yerel depolama', storageOk ? 'ok' : 'warn', storageOk ? 'localStorage kullanılabilir.' : 'localStorage kapalı; çevrimdışı cache ve bazı tercihler kalıcı olmayabilir.');
         const originalDocMode=String(window.PQ_ORIGINAL_DOCUMENT_STORAGE_MODE||'external').toLowerCase();
@@ -6586,9 +6586,12 @@ const I18N = {
         
         if (stats.pqs.total === 0 && stats.actions.total === 0) { document.getElementById('pqDetails').innerHTML = ""; document.getElementById('actionDetails').innerHTML = ""; document.getElementById('lateDetails').innerHTML = ""; document.getElementById('doneDetails').innerHTML = ""; document.getElementById('pendingDetails').innerHTML = ""; } 
         else {
-            let pqExtra = stats.pqs.completed.total > 0 ? `<br><div style="margin-top:6px; font-size:12px; background: rgba(16, 185, 129, 0.1); padding: 6px 8px; border-radius: 4px; border: 1px solid rgba(16, 185, 129, 0.2);"><span style="color:var(--ok); font-weight:bold;">✅ PQ TAMAMLANDI (${stats.pqs.completed.total})</span><br><span style="font-weight:normal; font-size:11px; color:var(--text);"><b>Dağılım:</b> ${stats.pqs.completed.onSite} / ${stats.pqs.completed.offSite} Off-Site</span></div>` : "";
-            const icaoVisitProjection = buildDashboardIcaoVisitProjectionHtml();
-            document.getElementById('pqDetails').innerHTML = `<b>Dağılım:</b> ${stats.pqs.onSite} On-Site / ${stats.pqs.offSite} Off-Site ${pqExtra}${icaoVisitProjection}`; document.getElementById('actionDetails').innerHTML = `<b>Dağılım:</b> ${stats.actions.onSite} On-Site / ${stats.actions.offSite} Off-Site`; document.getElementById('lateDetails').innerHTML = `<b>Dağılım:</b> ${stats.late.onSite} On-Site / ${stats.late.offSite} Off-Site`; document.getElementById('doneDetails').innerHTML = `<b>Dağılım:</b> ${stats.done.onSite} On-Site / ${stats.done.offSite} Off-Site`; document.getElementById('pendingDetails').innerHTML = `<b>Dağılım:</b> ${stats.pending.onSite} On-Site / ${stats.pending.offSite} Off-Site`;
+            const draftCountProjection=getDashboardIcaoDraftCountProjection(groups,stats);
+            const completedProjectionText=draftCountProjection&&draftCountProjection.completedReduction>0?`<br><span style="font-weight:700;font-size:11px;color:#7e22ce">Taslak sonrası: ${draftCountProjection.projectedCompleted} PQ (${stats.pqs.completed.total} → ${draftCountProjection.projectedCompleted})</span>`:'';
+            let pqExtra = stats.pqs.completed.total > 0 ? `<br><div style="margin-top:6px; font-size:12px; background: rgba(16, 185, 129, 0.1); padding: 6px 8px; border-radius: 4px; border: 1px solid rgba(16, 185, 129, 0.2);"><span style="color:var(--ok); font-weight:bold;">✅ PQ TAMAMLANDI (${stats.pqs.completed.total})</span><br><span style="font-weight:normal; font-size:11px; color:var(--text);"><b>Dağılım:</b> ${stats.pqs.completed.onSite} / ${stats.pqs.completed.offSite} Off-Site</span>${completedProjectionText}</div>` : "";
+            const currentProjectionText=draftCountProjection&&draftCountProjection.reduction>0?`<br><span style="display:inline-block;margin-top:4px;font-weight:800;color:#7e22ce">Taslak sonrası beklenen: ${draftCountProjection.projectedTotal} PQ</span> <span style="font-size:10px;color:var(--muted)">(${stats.pqs.total} → ${draftCountProjection.projectedTotal}; −${draftCountProjection.reduction})</span>`:'';
+            const icaoVisitProjection = buildDashboardIcaoVisitProjectionHtml(draftCountProjection);
+            document.getElementById('pqDetails').innerHTML = `<b>Dağılım:</b> ${stats.pqs.onSite} On-Site / ${stats.pqs.offSite} Off-Site${currentProjectionText} ${pqExtra}${icaoVisitProjection}`; document.getElementById('actionDetails').innerHTML = `<b>Dağılım:</b> ${stats.actions.onSite} On-Site / ${stats.actions.offSite} Off-Site`; document.getElementById('lateDetails').innerHTML = `<b>Dağılım:</b> ${stats.late.onSite} On-Site / ${stats.late.offSite} Off-Site`; document.getElementById('doneDetails').innerHTML = `<b>Dağılım:</b> ${stats.done.onSite} On-Site / ${stats.done.offSite} Off-Site`; document.getElementById('pendingDetails').innerHTML = `<b>Dağılım:</b> ${stats.pending.onSite} On-Site / ${stats.pending.offSite} Off-Site`;
         }
 
         renderTable(filteredData, groups); updateCharts(filteredData, analytics); updateAreaSummary(filteredData, analytics); updateWarnings(filteredData, analytics); updatePastTasks(filteredData, analytics); updateEIProjections(filteredData); renderIcaoOfficialChart(); updateSmartManagementPanel(filteredData, analytics); updateDataQualityCenter(filteredData); if(typeof window.renderSystemIntegrityCenter==='function'&&document.getElementById('tab-quality')?.classList.contains('active'))window.renderSystemIntegrityCenter(); renderKanban(filteredData, analytics);
@@ -7795,15 +7798,66 @@ const I18N = {
         return Number.isFinite(n)?n:null;
     }
 
-    function buildDashboardIcaoVisitProjectionHtml() {
-        const s=getLatestDashboardIcaoVisitSummary();
+    function getDashboardIcaoDraftCountProjection(groups,stats) {
+        const summary=getLatestDashboardIcaoVisitSummary();
+        if(!summary||!summary.visit)return null;
+        const visit=summary.visit, scope=getIcaoVisitScopePqs(visit), records=getIcaoValidationRecords(visit);
+        const recordMap=new Map(records.map(r=>[String(r.pq||''),r]));
+        const newlySatisfactory=new Set();
+        scope.forEach(p=>{
+            const pq=String((p||{}).pq||'');
+            if(!pq)return;
+            const master=pqMasterData[pq]||{}, record=recordMap.get(pq);
+            if(record&&isIcaoWorkingSatisfactory(record)&&!isPqEffectivelyOfficiallyClosed(pq,master)) newlySatisfactory.add(pq);
+        });
+        const visiblePqs=Object.keys(groups||{});
+        const visibleNew=visiblePqs.filter(pq=>newlySatisfactory.has(String(pq)));
+        const completedPqs=visiblePqs.filter(pq=>{
+            const items=(groups||{})[pq]||[];
+            return items.length>0&&items.every(isCommonActionCompleted);
+        });
+        const completedSet=new Set(completedPqs.map(String));
+        const completedNew=visibleNew.filter(pq=>completedSet.has(String(pq)));
+        const countType=list=>{
+            let onSite=0,offSite=0,other=0;
+            list.forEach(pq=>{
+                const t=getCommonVerificationType(String(pq));
+                if(t==='onSite')onSite++;else if(t==='offSite')offSite++;else other++;
+            });
+            return {onSite,offSite,other};
+        };
+        const visibleType=countType(visibleNew),completedType=countType(completedNew);
+        const currentTotal=Number(stats&&stats.pqs&&stats.pqs.total||visiblePqs.length||0), currentCompleted=Number(stats&&stats.pqs&&stats.pqs.completed&&stats.pqs.completed.total||completedPqs.length||0);
+        return {
+            summary,
+            currentTotal,
+            reduction:visibleNew.length,
+            projectedTotal:Math.max(0,currentTotal-visibleNew.length),
+            currentCompleted,
+            completedReduction:completedNew.length,
+            projectedCompleted:Math.max(0,currentCompleted-completedNew.length),
+            projectedOnSite:Math.max(0,Number(stats&&stats.pqs&&stats.pqs.onSite||0)-visibleType.onSite),
+            projectedOffSite:Math.max(0,Number(stats&&stats.pqs&&stats.pqs.offSite||0)-visibleType.offSite),
+            projectedCompletedOnSite:Math.max(0,Number(stats&&stats.pqs&&stats.pqs.completed&&stats.pqs.completed.onSite||0)-completedType.onSite),
+            projectedCompletedOffSite:Math.max(0,Number(stats&&stats.pqs&&stats.pqs.completed&&stats.pqs.completed.offSite||0)-completedType.offSite),
+            visitNewSatisfactory:newlySatisfactory.size,
+            visibleNewSatisfactory:visibleNew.length,
+            visibleNewPqs:visibleNew
+        };
+    }
+
+    function buildDashboardIcaoVisitProjectionHtml(countProjection=null) {
+        const s=(countProjection&&countProjection.summary)||getLatestDashboardIcaoVisitSummary();
         if(!s)return '';
         const v=s.visit||{},impact=s.impact||{},published=dashboardPublishedDraftEiForVisit(v),draftEi=Number.isFinite(published)?published:Number(impact.newPct),officialEi=Number(impact.baselinePct),newSat=Number(impact.newSat),total=Number(impact.total),newly=Number(impact.validatedNew||0);
         const resultParts=[`${s.satisfactory}/${s.scopeCount} Satisfactory`];
         if(s.notSatisfactory)resultParts.push(`${s.notSatisfactory} açık/NS`);
         if(s.followUp)resultParts.push(`${s.followUp} takip/inceleme`);
         if(s.notEvaluated)resultParts.push(`${s.notEvaluated} değerlendirilmedi`);
-        return `<div id="dashboardIcaoVisitProjection" style="margin-top:8px;font-size:11px;background:#faf5ff;padding:8px 9px;border-radius:6px;border:1px dashed #a855f7;text-align:left;min-width:190px;max-width:290px"><div style="color:#7e22ce;font-weight:800">🟣 ${escapeHtml((v.icaoVisitType||'ICAO')+' Resmî Ziyareti')} · TASLAK</div><div style="margin-top:4px;color:var(--text)"><b>${escapeHtml(resultParts.join(' · '))}</b></div>${Number.isFinite(draftEi)?`<div style="margin-top:3px">Beklenen/taslak Overall EI: <b>%${draftEi.toFixed(2)}</b>${Number.isFinite(newSat)&&Number.isFinite(total)?` · ${newSat}/${total} S`:''}</div>`:''}${Number.isFinite(officialEi)?`<div style="color:var(--muted);margin-top:2px">Güncel resmî EI: %${officialEi.toFixed(2)}${newly>0?` · taslakta +${newly} yeni Satisfactory`:''}</div>`:''}<div style="color:#7e22ce;margin-top:4px;font-size:9px">Ziyaret kaydından hesaplanan çalışma sonucudur; final State Snapshot değildir.</div></div>`;
+        const countHtml=countProjection&&countProjection.reduction>0
+            ? `<div style="margin-top:6px;padding-top:6px;border-top:1px solid rgba(168,85,247,.22)"><b>📉 Taslak sonrası beklenen aktif PQ/CAP: ${countProjection.projectedTotal}</b> <span style="color:#7e22ce">(${countProjection.currentTotal} → ${countProjection.projectedTotal}; −${countProjection.reduction})</span><br><span style="color:var(--muted)">Dağılım: ${countProjection.projectedOnSite} On-Site / ${countProjection.projectedOffSite} Off-Site</span>${countProjection.completedReduction>0?`<br><b>✅ Tamamlanmış fakat validasyon bekleyen PQ: ${countProjection.projectedCompleted}</b> <span style="color:#7e22ce">(${countProjection.currentCompleted} → ${countProjection.projectedCompleted}; −${countProjection.completedReduction})</span><br><span style="color:var(--muted)">Taslak sonrası tamamlanmış dağılım: ${countProjection.projectedCompletedOnSite} / ${countProjection.projectedCompletedOffSite} Off-Site</span>`:''}</div>`
+            : '';
+        return `<div id="dashboardIcaoVisitProjection" style="margin-top:8px;font-size:11px;background:#faf5ff;padding:8px 9px;border-radius:6px;border:1px dashed #a855f7;text-align:left;min-width:190px;max-width:310px"><div style="color:#7e22ce;font-weight:800">🟣 ${escapeHtml((v.icaoVisitType||'ICAO')+' Resmî Ziyareti')} · TASLAK</div><div style="margin-top:4px;color:var(--text)"><b>${escapeHtml(resultParts.join(' · '))}</b></div>${Number.isFinite(draftEi)?`<div style="margin-top:3px">Beklenen/taslak Overall EI: <b>%${draftEi.toFixed(2)}</b>${Number.isFinite(newSat)&&Number.isFinite(total)?` · ${newSat}/${total} S`:''}</div>`:''}${Number.isFinite(officialEi)?`<div style="color:var(--muted);margin-top:2px">Güncel resmî EI: %${officialEi.toFixed(2)}${newly>0?` · taslakta +${newly} yeni Satisfactory`:''}</div>`:''}${countHtml}<div style="color:#7e22ce;margin-top:4px;font-size:9px">Taslak projeksiyon yalnız bu ekranda bulunan ve ICAO ziyaretinde yeni Satisfactory değerlendirilen PQ'ları düşer; final State Snapshot değildir.</div></div>`;
     }
 
     function renderDashboardAssessmentTimeline(rows) {
