@@ -19,7 +19,9 @@
     'visits.write':['owner','manager','coordinator','specialist'],
     'visitSettings.write':['owner','manager','coordinator'],
     'documents.write':['owner','manager','coordinator','specialist'],
+    'documents.settings.write':['owner','manager','coordinator'],
     'actions.write':['owner','manager','coordinator','specialist'],
+    'actions.settings.write':['owner','manager','coordinator'],
     'notifications.write':['owner','manager','coordinator','specialist','viewer'],
     'reports.export':['owner','manager','coordinator','specialist','viewer'],
     'access.manage':['owner','manager'],
@@ -64,7 +66,7 @@
     }
     state.profile=profile;state.accessGranted=profile.active===true;state.ready=true;
     try{const cs=await d.ref(`${ROOT}/config`).once('value');state.config=cs.val()||{};}catch(_){}
-    if(state.accessGranted){try{await d.ref(`${ROOT}/users/${user.uid}`).update({lastLoginAt:now(),email:user.email||profile.email||'',updatedAt:profile.updatedAt||now()});}catch(_){} installWriteGuard();attachSelfListener();}
+    if(state.accessGranted){try{await d.ref(`${ROOT}/users/${user.uid}/lastLoginAt`).set(now());}catch(_){} installWriteGuard();attachSelfListener();}
     applyUi();
     if(can('access.manage'))attachAdminListeners();
     return{allowed:state.accessGranted,reason:state.accessGranted?'ok':'inactive',profile:state.profile,bootstrap:state.bootstrap};
@@ -100,6 +102,8 @@
     if(!oc&&el.tagName==='INPUT'&&String(el.type||'').toLowerCase()==='file'){const id=text(el.id).toLowerCase();if(id.includes('drive')||id.includes('document'))return'documents.write';if(id.includes('pqdb')||id.includes('pq'))return'pqLibrary.write';return'system.write';}
     if(!oc)return'';
     if(/notification/.test(oc))return'notifications.write';
+    if(/savegoogledrivesettings|resetgoogledriverootfolder/.test(oc))return'documents.settings.write';
+    if(/saveactioncentersettings/.test(oc))return'actions.settings.write';
     if(/officialei|ei.*save|save.*ei|assessment.*save|automation.*ei/.test(oc))return'officialEi.write';
     if(/pqdb|pq.*import|pq.*metadata|pq.*active|lineage/.test(oc))return'pqLibrary.write';
     if(/validationreadiness|validation.*save|assign.*validation/.test(oc))return'validation.write';
@@ -122,9 +126,10 @@
   }
 
   function pathFromRef(ref){try{const s=String(ref.toString());const marker='.app/';let i=s.indexOf(marker);if(i>=0)return decodeURIComponent(s.slice(i+marker.length)).replace(/^\/+|\/+$/g,'');const u=new URL(s);return decodeURIComponent(u.pathname).replace(/^\/+|\/+$/g,'');}catch(_){return'';}}
-  function permissionForPath(path){const p=text(path).replace(/^\/+|\/+$/g,'');if(!p)return'';if(p.startsWith(`${ROOT}/`))return'access.manage';if(p.startsWith('icao_notification_center/'))return'notifications.write';if(p.startsWith('icao_official_ei/')||p==='icao_official_ei'||p.startsWith('icao_assessment_events/')||p.startsWith('icao_ei_snapshots/'))return'officialEi.write';if(p.startsWith('icao_pq_library/')||p==='icao_pq_library')return'pqLibrary.write';if(p.startsWith('icao_validation_readiness/')||p==='icao_validation_readiness')return'validation.write';if(p.startsWith('icao_visits/')||p==='icao_visits')return'visits.write';if(p.startsWith('icao_visit_settings/')||p==='icao_visit_settings')return'visitSettings.write';if(p.startsWith('icao_document_hub/')||p==='icao_document_hub')return'documents.write';if(p.startsWith('icao_action_center/')||p==='icao_action_center')return'actions.write';if(p.startsWith('icao_archive/')||p==='icao_archive')return'archive.write';if(p.startsWith('icao_system/')||p==='icao_system')return'system.write';return'system.admin';}
+  function permissionForPath(path){const p=text(path).replace(/^\/+|\/+$/g,'');if(!p)return'';if(p.startsWith(`${ROOT}/`))return'access.manage';if(p.startsWith('icao_notification_center/'))return'notifications.write';if(p.startsWith('icao_official_ei/')||p==='icao_official_ei'||p.startsWith('icao_assessment_events/')||p.startsWith('icao_ei_snapshots/'))return'officialEi.write';if(p.startsWith('icao_pq_library/')||p==='icao_pq_library')return'pqLibrary.write';if(p.startsWith('icao_validation_readiness/')||p==='icao_validation_readiness')return'validation.write';if(p.startsWith('icao_visits/')||p==='icao_visits')return'visits.write';if(p.startsWith('icao_visit_settings/')||p==='icao_visit_settings')return'visitSettings.write';if(p==='icao_document_hub/settings'||p.startsWith('icao_document_hub/settings/'))return'documents.settings.write';if(p.startsWith('icao_document_hub/')||p==='icao_document_hub')return'documents.write';if(p==='icao_action_center/settings'||p.startsWith('icao_action_center/settings/'))return'actions.settings.write';if(p.startsWith('icao_action_center/')||p==='icao_action_center')return'actions.write';if(p.startsWith('icao_archive/')||p==='icao_archive')return'archive.write';if(p.startsWith('icao_system/')||p==='icao_system')return'system.write';return'system.admin';}
   function pathAllowed(path){
     const p=text(path).replace(/^\/+|\/+$/g,'');
+    if(p===`${ROOT}/users/${state.user?.uid||'__'}/lastLoginAt`)return isActive();
     if(p.startsWith(`${ROOT}/requests/${state.user?.uid||'__'}`))return true;
     if(p.startsWith(`icao_notification_center/users/${state.user?.uid||'__'}`))return isActive();
     return can(permissionForPath(p));

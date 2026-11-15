@@ -1,0 +1,162 @@
+{
+  "release": "1.0.0-rc1",
+  "generatedAt": "2026-11-15T14:28:47.333Z",
+  "passed": true,
+  "counts": {
+    "passes": 37,
+    "warnings": 0,
+    "failures": 0
+  },
+  "failures": [],
+  "warnings": [],
+  "passes": [
+    {
+      "name": "HTML duplicate IDs",
+      "detail": "877/877 benzersiz"
+    },
+    {
+      "name": "Yerel asset referansları",
+      "detail": "23 referans mevcut"
+    },
+    {
+      "name": "RC cache etiketi",
+      "detail": "20 yerel asset 20261115-v1.0-rc1"
+    },
+    {
+      "name": "JavaScript syntax",
+      "detail": "20 dosya"
+    },
+    {
+      "name": "Inline handler fonksiyonları",
+      "detail": "467 handler"
+    },
+    {
+      "name": "Tab / Hub rotaları",
+      "detail": "31 ekran + 2 sanal Hub"
+    },
+    {
+      "name": "Manifest sürümü",
+      "detail": "1.0.0-rc1"
+    },
+    {
+      "name": "Release channel",
+      "detail": "release-candidate"
+    },
+    {
+      "name": "Public page about.html",
+      "detail": ""
+    },
+    {
+      "name": "Public page privacy.html",
+      "detail": ""
+    },
+    {
+      "name": "Public page terms.html",
+      "detail": ""
+    },
+    {
+      "name": "Privacy Drive scope açıklaması",
+      "detail": ""
+    },
+    {
+      "name": "Firebase root deny",
+      "detail": ""
+    },
+    {
+      "name": "Access bootstrap + yönetici sınırı",
+      "detail": ""
+    },
+    {
+      "name": "Erişim talebi self-write sınırı",
+      "detail": ""
+    },
+    {
+      "name": "Drive settings/record rol ayrımı",
+      "detail": ""
+    },
+    {
+      "name": "Aksiyon settings/task rol ayrımı",
+      "detail": ""
+    },
+    {
+      "name": "Bildirim kullanıcı izolasyonu",
+      "detail": ""
+    },
+    {
+      "name": "SSP / 9.xxx PQ referansı",
+      "detail": ""
+    },
+    {
+      "name": "PQ değişiklik dağılımı koruması",
+      "detail": ""
+    },
+    {
+      "name": "PQ parser No change/Merged koruması",
+      "detail": ""
+    },
+    {
+      "name": "Firebase-safe PQ alias key",
+      "detail": ""
+    },
+    {
+      "name": "Google Drive dar kapsam",
+      "detail": ""
+    },
+    {
+      "name": "Drive token kalıcılığı",
+      "detail": "erişim tokenı yalnız bellek state içinde"
+    },
+    {
+      "name": "SelfCheck runPqLibrarySelfCheck",
+      "detail": ""
+    },
+    {
+      "name": "SelfCheck runDriveDocumentsSelfCheck",
+      "detail": ""
+    },
+    {
+      "name": "SelfCheck runVisitHubSelfCheck",
+      "detail": ""
+    },
+    {
+      "name": "SelfCheck runValidationReadinessSelfCheck",
+      "detail": ""
+    },
+    {
+      "name": "SelfCheck runAssessmentImpactSelfCheck",
+      "detail": ""
+    },
+    {
+      "name": "SelfCheck runSystemIntegritySelfCheck",
+      "detail": ""
+    },
+    {
+      "name": "SelfCheck runActionCenterSelfCheck",
+      "detail": ""
+    },
+    {
+      "name": "SelfCheck runNotificationCenterSelfCheck",
+      "detail": ""
+    },
+    {
+      "name": "SelfCheck runReportingCenterSelfCheck",
+      "detail": ""
+    },
+    {
+      "name": "SelfCheck runAccessControlSelfCheck",
+      "detail": ""
+    },
+    {
+      "name": "Boyut index.html",
+      "detail": "244 KB"
+    },
+    {
+      "name": "Boyut css/app.css",
+      "detail": "210 KB"
+    },
+    {
+      "name": "Boyut js/app.js",
+      "detail": "892 KB"
+    }
+  ]
+}

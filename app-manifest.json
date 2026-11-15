@@ -1,6 +1,6 @@
 {
   "app": "USOAP CMA CAP Takip",
-  "version": "18.5-phase15-pq-card-distribution-hotfix",
+  "version": "1.0.0-rc1",
   "baseline": "index_visit_hub_pq_version_database(2).html",
   "buildDate": "2026-11-15",
   "features": [
@@ -89,7 +89,14 @@
     "pq-change-nochange-separated-display",
     "pq-parser-unchanged-row-classification",
     "pq-card-revised-merged-new-nochange-deleted-breakdown",
-    "pq-card-zero-value-change-type-visibility"
+    "pq-card-zero-value-change-type-visibility",
+    "release-candidate-stabilization",
+    "unified-cache-versioning",
+    "runtime-system-health-rc-check",
+    "static-regression-checker",
+    "pq-distribution-invariant-check",
+    "drive-token-persistence-check",
+    "firebase-rules-security-assertions"
   ],
   "architecture": {
     "index": "index.html",
@@ -117,5 +124,7 @@
       "js/modules/notification-center.js",
       "js/modules/reporting-center.js"
     ]
-  }
+  },
+  "releaseChannel": "release-candidate",
+  "previousVersion": "18.5-phase15-pq-card-distribution-hotfix"
 }

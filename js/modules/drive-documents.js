@@ -398,5 +398,19 @@
   window.refreshDriveDocuments=refresh;
   window.openDriveDocumentsContext=openContext;
 
+  function runDriveDocumentsSelfCheck(){
+    const forbiddenPersistentKeys=['accessToken','token','refreshToken','clientSecret','client_secret'];
+    const persistedKeys=Object.keys(state.settings||{}).filter(k=>forbiddenPersistentKeys.includes(k));
+    const result={
+      passed:!!document.getElementById('tab-drive-documents')&&DRIVE_SCOPE==='https://www.googleapis.com/auth/drive.file'&&persistedKeys.length===0,
+      moduleVersion:'drive-documents-v1.0-rc1',
+      scope:DRIVE_SCOPE,configured:isConfigured(),connected:state.connected===true,loaded:state.loaded===true,recordCount:allRecords().length,
+      tokenPersistence:persistedKeys.length?`risk:${persistedKeys.join(',')}`:'memory-only',
+      storageMode:String(window.PQ_ORIGINAL_DOCUMENT_STORAGE_MODE||'external').toLowerCase()
+    };
+    console.log('Drive Doküman Merkezi RC öz denetimi:',result);return result;
+  }
+  window.runDriveDocumentsSelfCheck=runDriveDocumentsSelfCheck;
+
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',setupLiveListener,{once:true});else setupLiveListener();
 })();

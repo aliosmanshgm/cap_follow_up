@@ -42,3 +42,14 @@ Kullanıcı profilinde LEG/ORG/PEL/OPS/AIR/AIG/ANS/AGA çalışma alanları seç
 - Görüntüleyici sunucu kuralları nedeniyle yazamaz.
 - Bildirim okundu/ertele/kapat durumları kullanıcı bazlı kalır.
 - Firebase Storage gerekmez.
+
+## Faz 16 / v1.0 RC1 güvenlik güncellemesi
+RC1 dağıtımında artık `firebase/database.rules.phase16.json` kullanılmalıdır.
+
+Ek sertleştirmeler:
+- Kullanıcı kendi rol/aktiflik/alan kaydını değiştiremez.
+- İlk owner bootstrap davranışı korunur.
+- Erişim talebi self-write yalnız `pending` talep oluşturma ile sınırlıdır.
+- Kullanıcı yalnız kendi `lastLoginAt` alanını güncelleyebilir.
+- Global Google Drive ayarları ve Aksiyon Merkezi eşik ayarları Koordinatör ve üstü rollerle sınırlıdır.
+- Uzman belge/görev kayıtlarını oluşturmaya ve güncellemeye devam eder.

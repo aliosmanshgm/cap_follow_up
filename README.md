@@ -1,3 +1,22 @@
+# USOAP CMA CAP Takip — v1.0 RC1
+
+## Faz 16 — Stabilizasyon, Güvenlik ve Release Candidate
+
+Bu paket Faz 1–15 işlevlerini koruyarak release hazırlığı yapar. Yeni ana işlev eklemek yerine cache/version standardizasyonu, runtime Sistem Sağlığı, statik regresyon testleri, PQ amendment invariant testleri ve rol/rule sertleştirmesi içerir.
+
+### RC araçları
+- `tools/rc-check.mjs` — statik regresyon / güvenlik kontrolü
+- `tools/rc-domain-tests.mjs` — PQ/PARSER sentetik domain testleri
+- `RC_STATIC_QA_REPORT.json` — son otomatik test raporu
+- `RC_ACCEPTANCE_CHECKLIST.md` — canlı GitHub/Firebase kabul listesi
+- `RELEASE_NOTES_v1.0_RC1.md` — sürüm notları
+- `PHASE16_DEPLOYMENT.md` — dağıtım sırası
+
+### Firebase
+RC1 için `firebase/database.rules.phase16.json` kullanılmalıdır. Firebase Storage gerekmez.
+
+---
+
 # USOAP CMA CAP Takip — Faz 12 v15
 
 ## Otomatik Raporlama Merkezi

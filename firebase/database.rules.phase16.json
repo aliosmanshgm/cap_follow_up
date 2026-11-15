@@ -1,0 +1,102 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "icao_access_control": {
+      "config": {
+        ".read": "auth != null && (!root.child('icao_access_control/users').exists() || (root.child('icao_access_control/users').child(auth.uid).child('active').val() === true))",
+        ".write": "auth != null && (!root.child('icao_access_control/users').exists() || ((root.child('icao_access_control/users').child(auth.uid).child('active').val() === true) && (root.child('icao_access_control/users').child(auth.uid).child('role').val() === 'owner' || root.child('icao_access_control/users').child(auth.uid).child('role').val() === 'manager')))"
+      },
+      "users": {
+        ".read": "auth != null && (root.child('icao_access_control/users').child(auth.uid).child('active').val() === true) && (root.child('icao_access_control/users').child(auth.uid).child('role').val() === 'owner' || root.child('icao_access_control/users').child(auth.uid).child('role').val() === 'manager')",
+        "$uid": {
+          ".read": "auth != null && (auth.uid === $uid || (auth != null && (root.child('icao_access_control/users').child(auth.uid).child('active').val() === true) && (root.child('icao_access_control/users').child(auth.uid).child('role').val() === 'owner' || root.child('icao_access_control/users').child(auth.uid).child('role').val() === 'manager')))",
+          ".write": "auth != null && (( !root.child('icao_access_control/users').exists() && auth.uid === $uid && !data.exists() && newData.exists() && newData.child('role').val() === 'owner' && newData.child('active').val() === true ) || ((root.child('icao_access_control/users').child(auth.uid).child('active').val() === true) && root.child('icao_access_control/users').child(auth.uid).child('role').val() === 'owner' && (auth.uid !== $uid || data.child('role').val() !== 'owner' || (newData.exists() && newData.child('role').val() === 'owner' && newData.child('active').val() === true))) || ((root.child('icao_access_control/users').child(auth.uid).child('active').val() === true) && root.child('icao_access_control/users').child(auth.uid).child('role').val() === 'manager' && newData.exists() && data.child('role').val() !== 'owner' && newData.child('role').val() !== 'owner'))",
+          ".validate": "!newData.exists() || (newData.hasChildren(['uid','email','role','active']) && newData.child('uid').val() === $uid && (newData.child('role').val() === 'owner' || newData.child('role').val() === 'manager' || newData.child('role').val() === 'coordinator' || newData.child('role').val() === 'specialist' || newData.child('role').val() === 'viewer'))",
+          "lastLoginAt": {
+            ".write": "auth != null && auth.uid === $uid && root.child('icao_access_control/users').child($uid).child('active').val() === true",
+            ".validate": "!newData.exists() || newData.isString()"
+          }
+        }
+      },
+      "requests": {
+        ".read": "auth != null && (root.child('icao_access_control/users').child(auth.uid).child('active').val() === true) && (root.child('icao_access_control/users').child(auth.uid).child('role').val() === 'owner' || root.child('icao_access_control/users').child(auth.uid).child('role').val() === 'manager')",
+        "$uid": {
+          ".read": "auth != null && (auth.uid === $uid || (auth != null && (root.child('icao_access_control/users').child(auth.uid).child('active').val() === true) && (root.child('icao_access_control/users').child(auth.uid).child('role').val() === 'owner' || root.child('icao_access_control/users').child(auth.uid).child('role').val() === 'manager')))",
+          ".write": "auth != null && ((auth.uid === $uid && !root.child('icao_access_control/users').child($uid).exists() && newData.exists() && newData.child('uid').val() === $uid && newData.child('status').val() === 'pending') || ((root.child('icao_access_control/users').child(auth.uid).child('active').val() === true) && (root.child('icao_access_control/users').child(auth.uid).child('role').val() === 'owner' || root.child('icao_access_control/users').child(auth.uid).child('role').val() === 'manager')))"
+        }
+      },
+      "audit": {
+        ".read": "auth != null && (root.child('icao_access_control/users').child(auth.uid).child('active').val() === true) && (root.child('icao_access_control/users').child(auth.uid).child('role').val() === 'owner' || root.child('icao_access_control/users').child(auth.uid).child('role').val() === 'manager')",
+        "$id": {
+          ".write": "auth != null && (root.child('icao_access_control/users').child(auth.uid).child('active').val() === true) && (root.child('icao_access_control/users').child(auth.uid).child('role').val() === 'owner' || root.child('icao_access_control/users').child(auth.uid).child('role').val() === 'manager')"
+        }
+      }
+    },
+    "icao_system": {
+      ".read": "auth != null && (!root.child('icao_access_control/users').exists() || (root.child('icao_access_control/users').child(auth.uid).child('active').val() === true))",
+      ".write": "auth != null && (!root.child('icao_access_control/users').exists() || ((root.child('icao_access_control/users').child(auth.uid).child('active').val() === true) && (root.child('icao_access_control/users').child(auth.uid).child('role').val() === 'owner' || root.child('icao_access_control/users').child(auth.uid).child('role').val() === 'manager' || root.child('icao_access_control/users').child(auth.uid).child('role').val() === 'coordinator' || root.child('icao_access_control/users').child(auth.uid).child('role').val() === 'specialist')))"
+    },
+    "icao_archive": {
+      ".read": "auth != null && (!root.child('icao_access_control/users').exists() || (root.child('icao_access_control/users').child(auth.uid).child('active').val() === true))",
+      ".write": "auth != null && (!root.child('icao_access_control/users').exists() || ((root.child('icao_access_control/users').child(auth.uid).child('active').val() === true) && (root.child('icao_access_control/users').child(auth.uid).child('role').val() === 'owner' || root.child('icao_access_control/users').child(auth.uid).child('role').val() === 'manager' || root.child('icao_access_control/users').child(auth.uid).child('role').val() === 'coordinator')))"
+    },
+    "icao_official_ei": {
+      ".read": "auth != null && (!root.child('icao_access_control/users').exists() || (root.child('icao_access_control/users').child(auth.uid).child('active').val() === true))",
+      ".write": "auth != null && (!root.child('icao_access_control/users').exists() || ((root.child('icao_access_control/users').child(auth.uid).child('active').val() === true) && (root.child('icao_access_control/users').child(auth.uid).child('role').val() === 'owner' || root.child('icao_access_control/users').child(auth.uid).child('role').val() === 'manager' || root.child('icao_access_control/users').child(auth.uid).child('role').val() === 'coordinator')))"
+    },
+    "icao_assessment_events": {
+      ".read": "auth != null && (!root.child('icao_access_control/users').exists() || (root.child('icao_access_control/users').child(auth.uid).child('active').val() === true))",
+      ".write": "auth != null && (!root.child('icao_access_control/users').exists() || ((root.child('icao_access_control/users').child(auth.uid).child('active').val() === true) && (root.child('icao_access_control/users').child(auth.uid).child('role').val() === 'owner' || root.child('icao_access_control/users').child(auth.uid).child('role').val() === 'manager' || root.child('icao_access_control/users').child(auth.uid).child('role').val() === 'coordinator')))"
+    },
+    "icao_ei_snapshots": {
+      ".read": "auth != null && (!root.child('icao_access_control/users').exists() || (root.child('icao_access_control/users').child(auth.uid).child('active').val() === true))",
+      ".write": "auth != null && (!root.child('icao_access_control/users').exists() || ((root.child('icao_access_control/users').child(auth.uid).child('active').val() === true) && (root.child('icao_access_control/users').child(auth.uid).child('role').val() === 'owner' || root.child('icao_access_control/users').child(auth.uid).child('role').val() === 'manager' || root.child('icao_access_control/users').child(auth.uid).child('role').val() === 'coordinator')))"
+    },
+    "icao_pq_library": {
+      ".read": "auth != null && (!root.child('icao_access_control/users').exists() || (root.child('icao_access_control/users').child(auth.uid).child('active').val() === true))",
+      ".write": "auth != null && (!root.child('icao_access_control/users').exists() || ((root.child('icao_access_control/users').child(auth.uid).child('active').val() === true) && (root.child('icao_access_control/users').child(auth.uid).child('role').val() === 'owner' || root.child('icao_access_control/users').child(auth.uid).child('role').val() === 'manager' || root.child('icao_access_control/users').child(auth.uid).child('role').val() === 'coordinator')))"
+    },
+    "icao_validation_readiness": {
+      ".read": "auth != null && (!root.child('icao_access_control/users').exists() || (root.child('icao_access_control/users').child(auth.uid).child('active').val() === true))",
+      ".write": "auth != null && (!root.child('icao_access_control/users').exists() || ((root.child('icao_access_control/users').child(auth.uid).child('active').val() === true) && (root.child('icao_access_control/users').child(auth.uid).child('role').val() === 'owner' || root.child('icao_access_control/users').child(auth.uid).child('role').val() === 'manager' || root.child('icao_access_control/users').child(auth.uid).child('role').val() === 'coordinator' || root.child('icao_access_control/users').child(auth.uid).child('role').val() === 'specialist')))"
+    },
+    "icao_visits": {
+      ".read": "auth != null && (!root.child('icao_access_control/users').exists() || (root.child('icao_access_control/users').child(auth.uid).child('active').val() === true))",
+      ".write": "auth != null && (!root.child('icao_access_control/users').exists() || ((root.child('icao_access_control/users').child(auth.uid).child('active').val() === true) && (root.child('icao_access_control/users').child(auth.uid).child('role').val() === 'owner' || root.child('icao_access_control/users').child(auth.uid).child('role').val() === 'manager' || root.child('icao_access_control/users').child(auth.uid).child('role').val() === 'coordinator' || root.child('icao_access_control/users').child(auth.uid).child('role').val() === 'specialist')))"
+    },
+    "icao_visit_settings": {
+      ".read": "auth != null && (!root.child('icao_access_control/users').exists() || (root.child('icao_access_control/users').child(auth.uid).child('active').val() === true))",
+      ".write": "auth != null && (!root.child('icao_access_control/users').exists() || ((root.child('icao_access_control/users').child(auth.uid).child('active').val() === true) && (root.child('icao_access_control/users').child(auth.uid).child('role').val() === 'owner' || root.child('icao_access_control/users').child(auth.uid).child('role').val() === 'manager' || root.child('icao_access_control/users').child(auth.uid).child('role').val() === 'coordinator')))"
+    },
+    "icao_document_hub": {
+      ".read": "auth != null && (!root.child('icao_access_control/users').exists() || (root.child('icao_access_control/users').child(auth.uid).child('active').val() === true))",
+      "settings": {
+        ".write": "auth != null && (!root.child('icao_access_control/users').exists() || ((root.child('icao_access_control/users').child(auth.uid).child('active').val() === true) && (root.child('icao_access_control/users').child(auth.uid).child('role').val() === 'owner' || root.child('icao_access_control/users').child(auth.uid).child('role').val() === 'manager' || root.child('icao_access_control/users').child(auth.uid).child('role').val() === 'coordinator')))"
+      },
+      "records": {
+        ".write": "auth != null && (!root.child('icao_access_control/users').exists() || ((root.child('icao_access_control/users').child(auth.uid).child('active').val() === true) && (root.child('icao_access_control/users').child(auth.uid).child('role').val() === 'owner' || root.child('icao_access_control/users').child(auth.uid).child('role').val() === 'manager' || root.child('icao_access_control/users').child(auth.uid).child('role').val() === 'coordinator' || root.child('icao_access_control/users').child(auth.uid).child('role').val() === 'specialist')))"
+      }
+    },
+    "icao_action_center": {
+      ".read": "auth != null && (!root.child('icao_access_control/users').exists() || (root.child('icao_access_control/users').child(auth.uid).child('active').val() === true))",
+      "settings": {
+        ".write": "auth != null && (!root.child('icao_access_control/users').exists() || ((root.child('icao_access_control/users').child(auth.uid).child('active').val() === true) && (root.child('icao_access_control/users').child(auth.uid).child('role').val() === 'owner' || root.child('icao_access_control/users').child(auth.uid).child('role').val() === 'manager' || root.child('icao_access_control/users').child(auth.uid).child('role').val() === 'coordinator')))"
+      },
+      "manual": {
+        ".write": "auth != null && (!root.child('icao_access_control/users').exists() || ((root.child('icao_access_control/users').child(auth.uid).child('active').val() === true) && (root.child('icao_access_control/users').child(auth.uid).child('role').val() === 'owner' || root.child('icao_access_control/users').child(auth.uid).child('role').val() === 'manager' || root.child('icao_access_control/users').child(auth.uid).child('role').val() === 'coordinator' || root.child('icao_access_control/users').child(auth.uid).child('role').val() === 'specialist')))"
+      },
+      "overrides": {
+        ".write": "auth != null && (!root.child('icao_access_control/users').exists() || ((root.child('icao_access_control/users').child(auth.uid).child('active').val() === true) && (root.child('icao_access_control/users').child(auth.uid).child('role').val() === 'owner' || root.child('icao_access_control/users').child(auth.uid).child('role').val() === 'manager' || root.child('icao_access_control/users').child(auth.uid).child('role').val() === 'coordinator' || root.child('icao_access_control/users').child(auth.uid).child('role').val() === 'specialist')))"
+      }
+    },
+    "icao_notification_center": {
+      "users": {
+        "$uid": {
+          ".read": "auth != null && (!root.child('icao_access_control/users').exists() || (root.child('icao_access_control/users').child(auth.uid).child('active').val() === true)) && auth.uid === $uid",
+          ".write": "auth != null && (!root.child('icao_access_control/users').exists() || (root.child('icao_access_control/users').child(auth.uid).child('active').val() === true)) && auth.uid === $uid"
+        }
+      }
+    }
+  }
+}

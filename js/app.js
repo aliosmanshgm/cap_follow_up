@@ -455,7 +455,9 @@ const I18N = {
     // ================================================================
     // STABILIZASYON PAKETI 1
     // ================================================================
-    const STABILIZATION_VERSION = '1.1.0-ei-auto';
+    const APP_RELEASE = Object.freeze({version:'1.0.0-rc1',label:'v1.0 RC1',buildDate:'2026-11-15',baseline:'Phase 15 v18.5',cacheTag:'20261115-v1.0-rc1'});
+    const STABILIZATION_VERSION = APP_RELEASE.label;
+    window.USOAP_APP_RELEASE = APP_RELEASE;
     const stabilizationState = {
         firebaseConnected: null,
         connectionListenerStarted: false,
@@ -554,15 +556,53 @@ const I18N = {
 
     function getMenuIntegrityIssues() {
         const issues = [];
+        // cap-hub ve visit-hub gerçek içerik sekmesi değil; alt ekranları yöneten sanal navigasyon düğmeleridir.
+        const virtualNavTargets = new Set(['cap-hub','visit-hub']);
         document.querySelectorAll('.tab-btn[id^="btn-tab-"]').forEach(btn => {
             const tabId = btn.id.replace(/^btn-tab-/, '');
-            if (!document.getElementById('tab-' + tabId)) issues.push(`Hedef ekran yok: ${tabId}`);
+            if (!virtualNavTargets.has(tabId) && !document.getElementById('tab-' + tabId)) issues.push(`Hedef ekran yok: ${tabId}`);
         });
         document.querySelectorAll('.tab-content[id^="tab-"]').forEach(tab => {
             const tabId = tab.id.replace(/^tab-/, '');
             if (!document.getElementById('btn-tab-' + tabId)) issues.push(`Menü düğmesi yok: ${tabId}`);
         });
         return issues;
+    }
+
+    function getLocalAssetVersionIssues() {
+        const issues = [];
+        document.querySelectorAll('script[src^="js/"],link[href^="css/"]').forEach(el => {
+            const value = el.getAttribute('src') || el.getAttribute('href') || '';
+            const match = value.match(/[?&]v=([^&#]+)/);
+            if (!match || decodeURIComponent(match[1]) !== APP_RELEASE.cacheTag) issues.push(value || el.tagName);
+        });
+        return issues;
+    }
+
+    function findForbiddenFirebaseObjectKeys(rootValue, limit = 12) {
+        const found = [], seen = new WeakSet();
+        const walk = (value, path, depth) => {
+            if (found.length >= limit || depth > 10 || !value || typeof value !== 'object') return;
+            if (seen.has(value)) return; seen.add(value);
+            Object.keys(value).forEach(key => {
+                if (found.length >= limit) return;
+                if (/[.#$\[\]\/]/.test(key)) found.push(`${path || 'root'}/${key}`);
+                walk(value[key], path ? `${path}/${key}` : key, depth + 1);
+            });
+        };
+        try { walk(rootValue, '', 0); } catch (_) {}
+        return found;
+    }
+
+    function runModuleSelfCheck(fnName) {
+        try {
+            const fn = window[fnName];
+            if (typeof fn !== 'function') return { available:false, passed:false, detail:'öz denetim fonksiyonu yüklenmedi' };
+            const result = fn() || {};
+            return { available:true, passed:result.passed !== false, result, detail:result.moduleVersion || 'hazır' };
+        } catch (error) {
+            return { available:true, passed:false, error:error.message || String(error), detail:error.message || String(error) };
+        }
     }
 
     function getVisitIntegritySummary() {
@@ -597,6 +637,12 @@ const I18N = {
         add('excel', 'Excel motoru', (typeof XLSX !== 'undefined' && XLSX && XLSX.utils) ? 'ok' : 'error', (typeof XLSX !== 'undefined' && XLSX && XLSX.utils) ? 'XLSX hazır.' : 'Excel kütüphanesi yüklenemedi.');
         add('word', 'Word okuma motoru', (typeof JSZip !== 'undefined') ? 'ok' : 'error', (typeof JSZip !== 'undefined') ? 'JSZip hazır.' : 'Word ayrıştırma kütüphanesi yüklenemedi.');
         add('charts', 'Grafik motoru', (typeof Chart !== 'undefined') ? 'ok' : 'warn', (typeof Chart !== 'undefined') ? 'Chart.js hazır.' : 'Grafik kütüphanesi yüklenemedi.');
+        const assetVersionIssues = getLocalAssetVersionIssues();
+        add('release-build', 'Release / cache bütünlüğü', assetVersionIssues.length ? 'error' : 'ok', assetVersionIssues.length ? `RC1 cache etiketiyle eşleşmeyen ${assetVersionIssues.length} yerel asset: ${assetVersionIssues.slice(0,6).join(', ')}` : `${APP_RELEASE.label} · build ${APP_RELEASE.buildDate} · bütün yerel assetler ${APP_RELEASE.cacheTag}.`);
+        let storageOk=true; try{localStorage.setItem('__usoap_rc_probe','1');localStorage.removeItem('__usoap_rc_probe');}catch(_){storageOk=false;}
+        add('browser-storage', 'Tarayıcı yerel depolama', storageOk ? 'ok' : 'warn', storageOk ? 'localStorage kullanılabilir.' : 'localStorage kapalı; çevrimdışı cache ve bazı tercihler kalıcı olmayabilir.');
+        const originalDocMode=String(window.PQ_ORIGINAL_DOCUMENT_STORAGE_MODE||'external').toLowerCase();
+        add('original-doc-storage', 'Kaynak doküman arşiv politikası', originalDocMode==='firebase' ? 'warn' : 'ok', originalDocMode==='firebase' ? 'Firebase Storage modu açık. Ücretsiz mimari için external/Google Drive tercih edilmelidir.' : `Mod: ${originalDocMode}. Firebase Storage zorunlu değil.`);
         const assessmentReady = typeof window.runAssessmentEventSelfCheck === 'function';
         const assessmentEvents = assessmentReady ? Object.values(window.icaoAssessmentEvents || {}).filter(x => x && !x.isDeleted).length : 0;
         const assessmentSnapshots = assessmentReady ? Object.values(window.icaoEiSnapshots || {}).filter(x => x && !x.isDeleted).length : 0;
@@ -609,6 +655,21 @@ const I18N = {
         const accessReady = typeof window.runAccessControlSelfCheck === 'function';
         const accessCheck = accessReady ? window.runAccessControlSelfCheck() : null;
         add('access-control', 'Kullanıcı & Yetki Yönetimi', accessReady && accessCheck && accessCheck.passed ? 'ok' : 'warn', accessReady ? `${accessCheck && accessCheck.role ? accessCheck.role : 'rol yok'} · ${accessCheck && accessCheck.active ? 'aktif' : 'pasif'} · istemci yazma koruması: ${accessCheck && accessCheck.writeGuard ? 'açık' : 'sunucu kuralları'}` : 'Yetki modülü yüklenemedi.');
+        const rcModules = [
+            ['pq-library','PQ Veri Tabanı / SSP / dağılım','runPqLibrarySelfCheck'],
+            ['drive-documents','Google Drive Doküman Merkezi','runDriveDocumentsSelfCheck'],
+            ['visit-hub','Ziyaret Yönetimi Hub','runVisitHubSelfCheck'],
+            ['validation-readiness','Validasyon Hazırlığı','runValidationReadinessSelfCheck'],
+            ['assessment-impact','Değerlendirme Dönemi & EI Etki','runAssessmentImpactSelfCheck'],
+            ['action-center','Aksiyon & Görev Merkezi','runActionCenterSelfCheck'],
+            ['reporting-center','Raporlama Merkezi','runReportingCenterSelfCheck']
+        ];
+        rcModules.forEach(([key,label,fn])=>{const check=runModuleSelfCheck(fn);add(`module-${key}`,label,!check.available?'error':(check.passed?'ok':'warn'),check.available?(check.passed?`Öz denetim geçti · ${check.detail}`:`Öz denetim uyarısı · ${check.detail}`):`Modül öz denetimi bulunamadı (${fn}).`);});
+        const pqSnapshot = safeDiagnosticCall(() => window.getIcaoPqLibrarySnapshot && window.getIcaoPqLibrarySnapshot(), null);
+        if (pqSnapshot) {
+            const forbiddenKeys = findForbiddenFirebaseObjectKeys(pqSnapshot);
+            add('firebase-safe-keys', 'PQ Firebase key güvenliği', forbiddenKeys.length ? 'error' : 'ok', forbiddenKeys.length ? `Firebase tarafından reddedilecek anahtar bulundu: ${forbiddenKeys.join(' | ')}` : 'PQ library nesnesinde . # $ [ ] / içeren key bulunmadı.');
+        } else add('firebase-safe-keys', 'PQ Firebase key güvenliği', 'warn', 'PQ library henüz yüklenmedi; key kontrolü çalıştırılamadı.');
         let integritySummary = null;
         if (typeof window.buildSystemIntegrityModel === 'function') {
             try {
@@ -630,6 +691,7 @@ const I18N = {
         const snapshot = {
             generatedAt: new Date().toISOString(),
             stabilizationVersion: STABILIZATION_VERSION,
+            release: APP_RELEASE,
             app: { href:location.href, userAgent:navigator.userAgent, online:navigator.onLine },
             counts: { rawData:(rawData || []).length, pqMaster:Object.keys(pqMasterData || {}).length, ...visit },
             save: { pending:systemSavePending, inFlight:systemSaveInFlight, lastSaveAt:systemLastSaveAt ? systemLastSaveAt.toISOString() : null, error:systemLastSaveError ? (systemLastSaveError.message || String(systemLastSaveError)) : null },
@@ -647,7 +709,7 @@ const I18N = {
         const checks = document.getElementById('systemHealthChecks');
         const errors = document.getElementById('systemHealthErrorList');
         const subtitle = document.getElementById('systemHealthSubtitle');
-        if (subtitle) subtitle.textContent = `Stabilizasyon ${STABILIZATION_VERSION} · ${new Date(snapshot.generatedAt).toLocaleString('tr-TR')}`;
+        if (subtitle) subtitle.textContent = `${APP_RELEASE.label} · Stabilizasyon / Release Candidate · ${new Date(snapshot.generatedAt).toLocaleString('tr-TR')}`;
         const ok = snapshot.checks.filter(x => x.level === 'ok').length;
         const warn = snapshot.checks.filter(x => x.level === 'warn').length;
         const error = snapshot.checks.filter(x => x.level === 'error').length;
@@ -655,7 +717,7 @@ const I18N = {
             ['ok', ok, 'Başarılı kontrol'],
             ['warn', warn, 'Uyarı'],
             ['error', error, 'Hata'],
-            [error ? 'error' : warn ? 'warn' : 'ok', snapshot.counts.visits || 0, 'Ziyaret kaydı']
+            [error ? 'error' : warn ? 'warn' : 'ok', error, 'RC blokajı']
         ].map(([level,value,label]) => `<div class="system-health-kpi ${level}"><strong>${value}</strong><span>${label}</span></div>`).join('');
         const icons = { ok:'✅', warn:'⚠️', error:'❌' };
         if (checks) checks.innerHTML = snapshot.checks.map(row => `<div class="system-health-row ${row.level}"><div class="icon">${icons[row.level]}</div><b>${escapeHtml(row.label)}</b><div class="detail">${escapeHtml(row.detail)}</div></div>`).join('');
@@ -684,6 +746,19 @@ const I18N = {
         document.body.appendChild(a); a.click(); a.remove();
         setTimeout(() => URL.revokeObjectURL(url), 1000);
     }
+
+    function runReleaseCandidateAcceptance(showUi = true) {
+        const snapshot = buildSystemHealthSnapshot();
+        const blockers = snapshot.checks.filter(x => x.level === 'error');
+        const warnings = snapshot.checks.filter(x => x.level === 'warn');
+        const result = { passed:blockers.length === 0, release:APP_RELEASE, blockers:blockers.map(x=>({key:x.key,label:x.label,detail:x.detail})), warnings:warnings.map(x=>({key:x.key,label:x.label,detail:x.detail})), generatedAt:snapshot.generatedAt };
+        if (showUi) {
+            openSystemHealthModal();
+            showAppRuntimeToast(result.passed ? `RC kabul öz denetimi geçti${warnings.length ? ` · ${warnings.length} uyarı` : ''}.` : `RC kabul öz denetiminde ${blockers.length} blokaj bulundu.`, result.passed ? (warnings.length?'warn':'success') : 'error');
+        }
+        return result;
+    }
+    window.runReleaseCandidateSelfCheck = runReleaseCandidateAcceptance;
 
     function initDuplicateActionGuard() {
         if (document.documentElement.dataset.actionGuardBound === '1') return;

@@ -892,3 +892,6 @@
 .pqdb-area-change-breakdown .no-change{border-top:2px solid #94a3b8}
 .pqdb-area-change-breakdown .deleted{border-top:2px solid #dc2626}
 @media(max-width:760px){.pqdb-area-card{min-height:auto}.pqdb-area-change-breakdown strong{font-size:8px}.pqdb-area-change-breakdown small{font-size:7px}}
+
+/* v1.0 RC1 release marker */
+.release-badge{min-width:auto!important;font-weight:800!important;letter-spacing:.04em;padding-left:10px!important;padding-right:10px!important}

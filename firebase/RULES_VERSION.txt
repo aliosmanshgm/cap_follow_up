@@ -1,0 +1,3 @@
+USOAP CMA CAP Takip Realtime Database Rules
+Version: phase16-v1.0-rc1
+Date: 2026-11-15

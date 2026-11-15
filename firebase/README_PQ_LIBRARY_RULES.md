@@ -222,3 +222,6 @@ Faz 15 ile Realtime Database erişimi yalnız `auth != null` olmaktan çıkarak 
 Roller: `owner`, `manager`, `coordinator`, `specialist`, `viewer`.
 
 Tam kural dosyası: `firebase/database.rules.phase15.json`.
+
+## Faz 16 / v1.0 RC1
+Release Candidate dağıtımında tek güncel Rules kaynağı `database.rules.phase16.json` dosyasıdır. Bu sürüm Phase 15 rol modelini korur ve Drive/Aksiyon global ayarları ile erişim talebi/lastLogin kurallarını sertleştirir.

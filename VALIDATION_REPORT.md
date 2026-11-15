@@ -70,3 +70,51 @@ GitHub Pages tarayıcı uygulaması kapalıyken sürekli arka plan görevi çal�
 - Kart toplam değişiklik özeti kaldırıldı; dağılım v18.4 benzersiz güncel-PQ sınıflandırmasını kullanıyor.
 - PEL referans dağılımı için beklenen kart değerleri: Revised 35, Merged 2, New 11, No change 52, Deleted 0.
 - Firebase Rules/veri migrasyonu gerekmiyor.
+
+# Faz 16 — v1.0 RC1 Stabilizasyon / Release Candidate QA
+
+## Otomatik regresyon sonucu
+- `node tools/rc-check.mjs`: **PASS** — 37 başarılı, 0 uyarı, 0 hata.
+- `node tools/rc-domain-tests.mjs`: **PASS** — 16 başarılı, 0 hata.
+- Tüm `js/**/*.js` dosyaları `node --check`: **PASS**.
+- HTML ID: **877 / 877 benzersiz**, duplicate: 0.
+- Inline event handler: **467**; statik çözümlemede eksik fonksiyon: 0.
+- Tab: **31 gerçek ekran + 2 sanal Hub route**; eksik rota yok.
+- Yerel CSS/JS cache etiketi: tek sürüm `20261115-v1.0-rc1`.
+- Yerel dosya referansları: eksik yok.
+
+## PQ / SSP regresyon testleri
+- SSP alanı PQ referans katmanında mevcut ve `9.xxx` aralığı korunuyor.
+- Firebase-safe alias: `9.001 → 9_001`: PASS.
+- PEL referans senaryosu: 100 güncel PQ / 104 raw amendment satırı → **35 Revised + 2 Merged + 11 New + 52 No change = 100**: PASS.
+- PEL gerçek güncel değişiklik: **48**: PASS.
+- ORG legacy senaryosu: 13 adet işaretsiz/same-PQ legacy Revised satırı → **0 değişiklik + 13 No change**: PASS.
+- Parser metrikleri güncel PQ sınıfına göre 35 / 2 / 11 / 52 üretir: PASS.
+
+## Release / Sistem Sağlığı
+- Sistem Sağlığına `RC Kabul Öz Denetimi` eklendi.
+- Hub düğümleri (`cap-hub`, `visit-hub`) artık yanlış “eksik tab” hatası üretmez.
+- Runtime modül self-check matrisi: PQ DB, Drive, Visit Hub, Validasyon, Assessment Impact, Action Center, Reporting Center, Access Control, Notification, System Integrity.
+- PQ library üzerinde Firebase tarafından yasaklanan `. # $ [ ] /` key kontrolü eklendi.
+- Kaynak belge storage modu `external` / Google Drive varsayımı kontrol edilir.
+- Asset cache sürümü runtime'da kontrol edilir.
+
+## Yetki / Rules sertleştirmesi
+- Yeni kurallar: `firebase/database.rules.phase16.json`.
+- Root read/write: deny.
+- İlk owner bootstrap korunur.
+- Manager owner kaydını değiştiremez.
+- Owner kendi owner+aktif durumunu sunucu kuralıyla korur.
+- Yeni kullanıcının self-write erişim talebi yalnız `pending` talep oluşturma ile sınırlandırılır.
+- Kullanıcı yalnız kendi `lastLoginAt` alanını yazabilir.
+- Google Drive global settings: Koordinatör+; Drive document records: Uzman+.
+- Action Center global settings: Koordinatör+; manual task / override: Uzman+.
+- Notification state kullanıcı bazlı self-only.
+
+## Browser automation sınırı
+Bu çalışma ortamında Chromium/Playwright'ın `file://` ve localhost navigasyonu platform politikası nedeniyle `ERR_BLOCKED_BY_ADMINISTRATOR` ile engellendi. Bu nedenle gerçek GitHub Pages + Firebase + Google OAuth servisleri için `RC_ACCEPTANCE_CHECKLIST.md` hazırlanmıştır. Bu durum uygulama kaynaklı bir test hatası değildir; statik/domain QA temizdir.
+
+## RC kabul kriteri
+- Otomatik test: PASS.
+- Canlı kabul: `RC_ACCEPTANCE_CHECKLIST.md` tamamlanmalı.
+- GitHub Pages üzerinde Sistem Kontrolü → `RC Kabul Öz Denetimi`: **RC blokajı = 0** hedeflenir.

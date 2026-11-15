@@ -456,5 +456,31 @@
     function exportIcaoPqLibraryExcel(){const eds=pqDbEditionEntries();if(!eds.length)return alert('Dışa aktarılacak PQ sürümü bulunmuyor.');const wb=XLSX.utils.book_new(),versionRows=[],pqRows=[],amRows=[];eds.forEach(e=>pqDbAreaEntries(e).forEach(a=>{versionRows.push({'Sürüm':pqDbEditionLabel(e),'Edition Key':e.key,'Yıl':e.year,'Revision':e.revision,'Alan':a.area,'Yayın':a.publicationDate||'','Kaynak Dosya':a.sourceFile||'','PQ Sayısı':pqDbPqList(a).length,'On-site':pqDbPqList(a).filter(p=>p.onSite).length,'Off-site':pqDbPqList(a).filter(p=>!p.onSite).length,'PPQ':pqDbPqList(a).filter(p=>p.ppq).length,'Auditor Note':pqDbPqList(a).filter(p=>p.auditorNote).length});pqDbPqList(a).forEach(p=>pqRows.push({'Sürüm':pqDbEditionLabel(e),'Alan':a.area,'PQ No':p.pq,'PQ Concept ID':p.conceptId||'','PQ Instance ID':p.instanceId||'','Lineage İlişkisi':(p.lineage||{}).relation||'','Önceki Instance':((p.lineage||{}).previousInstanceIds||[]).join(', '),'Parent Concept':((p.lineage||{}).parentConceptIds||[]).join(', '),'Protocol Question':p.question,'Guidance for Review of Evidence':p.guidance,'Note(s) to the auditor':p.auditorNote,'ICAO References':p.references,'PPQ':p.ppq?'Yes':'No','CE':p.ce||'','SSP Component':p.sspComponent||'','Değerlendirme Türü':p.assessmentMode,'Önceki PQ':p.previousPq||'','Değişiklik Türü':p.changeType||'','Değişiklik Açıklaması':p.changeDescription||''}));pqDbAmendments(a).forEach(x=>amRows.push({'Sürüm':pqDbEditionLabel(e),'Alan':a.area,'Önceki Sürüm':(a.amendmentMeta||{}).previousYear||'','Önceki PQ':x.oldPq||'','Yeni PQ':x.newPq||'','Değişiklik Türü':x.type||'','Açıklama':x.description||''}));}));XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(versionRows),'Sürümler');XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(pqRows),'PQ Kataloğu');XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(amRows),'Amendments');XLSX.writeFile(wb,'ICAO_PQ_Surum_Veritabani.xlsx');}
     window.exportIcaoPqLibraryExcel=exportIcaoPqLibraryExcel;
 
+    function runPqLibrarySelfCheck(){
+        const activeAreas={},issues=[];let activeCount=0,invalidPq=0,distributionMismatch=0,unknownClassified=0;
+        PQDB_AREAS.forEach(area=>{
+            const active=pqDbActiveAreaRecord(area);
+            if(!active||!active.editionKey){activeAreas[area]={active:false};return;}
+            const edition=(icaoPqLibrary.editions||{})[active.editionKey]||{},areaData=((edition.areas||{})[area])||null;
+            if(!areaData){activeAreas[area]={active:false,editionKey:active.editionKey};issues.push(`${area}: aktif kayıt hedefi bulunamadı`);return;}
+            activeCount++;
+            const pqs=pqDbPqList(areaData),stats=pqDbAmendmentStats(areaData),prefix=String(PQDB_AREAS.indexOf(area)+1);
+            const invalid=pqs.filter(p=>!new RegExp(`^${prefix}\\.\\d{3}$`).test(String((p&&p.pq)||'').trim()));
+            invalidPq+=invalid.length;
+            if(invalid.length)issues.push(`${area}: ${invalid.length} PQ numarası ${prefix}.xxx formatı dışında`);
+            const classified=stats.newCount+stats.revisedCount+stats.mergedCount+stats.noChangeCount+stats.unknownCount;
+            if(stats.rawRows>0&&classified!==stats.pqCount){distributionMismatch++;issues.push(`${area}: dağılım ${classified}, aktif PQ ${stats.pqCount}`);}
+            unknownClassified+=stats.rawRows>0?stats.unknownCount:0;
+            activeAreas[area]={active:true,editionKey:active.editionKey,pqCount:pqs.length,rawAmendmentRows:stats.rawRows,newCount:stats.newCount,revisedCount:stats.revisedCount,mergedCount:stats.mergedCount,noChangeCount:stats.noChangeCount,deletedCount:stats.deletedCount,unknownCount:stats.unknownCount};
+        });
+        const sspMetaOk=PQDB_AREAS.includes('SSP')&&PQDB_AREA_META.SSP&&PQDB_AREA_META.SSP.range==='9.xxx';
+        if(!sspMetaOk)issues.push('SSP / 9.xxx referans tanımı eksik');
+        const passed=!!document.getElementById('tab-pq-library')&&sspMetaOk&&distributionMismatch===0&&invalidPq===0;
+        const result={passed,moduleVersion:'pq-library-v1.0-rc1',referenceAreas:PQDB_AREAS.slice(),auditAreas:PQDB_AUDIT_AREAS.slice(),activeCount,invalidPq,distributionMismatch,unknownClassified,activeAreas,issues};
+        console.log('PQ Veri Tabanı RC öz denetimi:',result);return result;
+    }
+    window.runPqLibrarySelfCheck=runPqLibrarySelfCheck;
+    window.getPqDbAmendmentStatsForDiagnostics=pqDbAmendmentStats;
+
     // UI ilk durumları: eski ekran davranışını bozmadan yeni alt menüleri hazırla.
     document.addEventListener('DOMContentLoaded',()=>{setTimeout(()=>{setIcaoVisitWorkspaceMode('validation');setVisitWorkspaceMode('fieldwork');},0);});
