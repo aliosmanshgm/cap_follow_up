@@ -1,6 +1,6 @@
 {
   "app": "USOAP CMA CAP Takip",
-  "version": "1.0.0-rc1.4.15",
+  "version": "1.0.0-rc1.4.16",
   "baseline": "index_visit_hub_pq_version_database(2).html",
   "buildDate": "2026-11-16",
   "features": [
@@ -118,7 +118,11 @@
     "pq-generation-index-cache",
     "pq-concurrent-load-coalescing",
     "pq-visible-view-rendering",
-    "pq-consistent-import-snapshot"
+    "pq-consistent-import-snapshot",
+    "visit-scope-authoritative-pq-metadata",
+    "visit-scope-verification-filter-repair",
+    "exact-awaited-pq-content-navigation",
+    "visit-scope-reference-return-context"
   ],
   "architecture": {
     "index": "index.html",
@@ -150,6 +154,6 @@
     ]
   },
   "releaseChannel": "release-candidate",
-  "previousVersion": "1.0.0-rc1.4.14",
-  "cacheTag": "20261116-v1.0-rc1.4.15"
+  "previousVersion": "1.0.0-rc1.4.15",
+  "cacheTag": "20261116-v1.0-rc1.4.16"
 }

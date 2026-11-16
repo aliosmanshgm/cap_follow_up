@@ -1,0 +1,91 @@
+CAP FOLLOW UP — ZİYARET KAPSAMI VE PQ İÇERİĞİ DÜZELTMELERİ
+Sürüm: v1.0 RC1.4.16 | 16 Kasım 2026
+Önceki sürüm: RC1.4.15
+
+1. DOĞRULAMA TÜRÜ FİLTRESİ
+Ziyaret senkronizasyon modülü, temel ziyaret kapsamı oluşturucusunu başka bir
+oluşturucuyla değiştiriyordu. Bu ikinci oluşturucu verificationTypeCode alanını
+üretmiyor, doğrulama türünü yalnız master.tur alanından okuyordu. Filtre ise
+verificationTypeCode beklediğinden On-site/Off-site seçimleri sonuç vermiyordu.
+
+Her iki oluşturucu artık aynı PQ metadata çözümleyicisini kullanır. Alan, CE,
+soru, guidance ve doğrulama türü aktif PQ kaydından alınır. Eski master bilgisi
+resmî referans bulunmadığında yedek kaynak olarak kullanılır. Türkçe metinler,
+sorumlu ve CAP bulguları kendi mevcut kaynaklarından alınmaya devam eder.
+
+Ekran açıldığında PQ referansları otomatik yüklenir; önce PQ Veri Tabanı menüsünü
+açmak gerekmez. Yükleme bitince kapsam seçimi ve form taslakları korunarak liste
+yenilenir. On-site/Off-site adetleri gösterilir; gerçekten türü eksik PQ'lar
+Sınıflandırılmamış seçeneğinde ayrı incelenebilir.
+
+2. PQ İÇERİĞİNE GEÇİŞ
+Eski geçiş, katalog yüklenmesini sabit sürelerle bekliyor ve önceki katalogdaki
+sürüm, alan, CE, doğrulama türü ve PPQ filtrelerinden etkilenebiliyordu.
+PQ referansını açan yardımcı ayrıca {edition, areaData, pq} zarfını gerçek PQ
+kaydı yerine döndürebiliyordu; bu çözümleme düzeltildi.
+
+Her kapsam PQ kartına PQ İçeriği bağlantısı eklendi. Bağlantı:
+- PQ verisinin yüklenmesini bekler.
+- Kaydın doğru alanını ve sürümünü seçer.
+- Önceki katalog filtrelerini temizleyip tam PQ numarasını açar.
+- Numara değişmişse aktif ardıl PQ'yu açar.
+- Gerçekten bulunamayan PQ için önceki kaydı göstermek yerine boş sonuç verir.
+- Yükleme sürerken başka menüye geçilirse otomatik odaklamayı iptal eder.
+
+Katalogdaki Ziyaret Kapsamına Dön düğmesi aynı ziyaretin kapsam seçimini,
+filtrelerini, tarihini ve kaydedilmemiş hazırlık notlarını geri getirir.
+Mevcut ICAO Validasyon Çalışması → PQ Referansı akışı da aynı beklemeli
+katalog açma işlevini kullanır.
+
+3. VERİ VE PERFORMANS
+RC1.4.15'teki indeks önbelleği ve eşzamanlı okuma birleştirme korunmuştur.
+Eşleşmeyen bir PQ için bilinen kütüphane şeması tekrar tüm ağaçtan taranmaz.
+Güncel CAP satırları kapsam oluşturulurken PQ bazında bir kez gruplanır.
+
+Paket Firebase Rules veya veri tabanı şema değişikliği gerektirmez. Geçmiş ziyaret
+snapshot'ları topluca yeniden yazılmaz. Yeni kapsam kaydetme veya açık kaynak
+senkronizasyonu işleminde doğrulama türü güncel PQ kaynağından alınır.
+
+4. DOĞRULAMA
+- 13 ziyaret kapsamı regresyon testi başarılı.
+- 27 mevcut PQ performans/regresyon testi başarılı.
+- 16 mevcut domain testi başarılı.
+- 51 statik kontrol başarılı; tüm JavaScript dosyalarının sözdizimi geçerli.
+- 24 kapsam/başvuru tarayıcı kontrolü başarılı: 1.029, iki doğrulama filtresi,
+  sınıflandırılmamış kayıtlar, gecikmeli yükleme, eski SSP filtreleri, aynı
+  ziyarete dönüş, kaydedilmemiş notların korunması, numara değişimi, bulunamayan
+  PQ ve çevrimdışı önbellek.
+- Önceki geniş tarayıcı regresyonundaki 19 kontrol de başarılı.
+
+Tarayıcı testleri Chromium üzerinde sentetik kayıtlar ve bellek içi Firebase
+adaptörüyle yapıldı. Canlı Firebase'e bağlanılmadı; gerçek 1.029 kaydınızın içeriği
+ve üretim kullanıcı izinleri bu ortamdan doğrulanmadı.
+
+5. KURULUM
+1. Mevcut kod klasörünüzün bir yedeğini saklayın.
+2. ZIP içindeki cap_follow_up klasörü uygulamanın tamamıdır; .git geçmişi ve
+   desktop.ini içermez. Yalnız değişen dosyalar CHANGED_FILES.txt içinde listelidir.
+3. Dosyaları normal yayın akışınızla uygulayın. Firebase Rules değiştirmeyin.
+4. Tarayıcıda Ctrl+F5 yapın. Üst rozet RC1.4.16 · v1.0 olmalı.
+5. Ziyaret Kapsamı ve Hazırlık ekranında bir ziyaret seçin. On-site/Off-site
+   filtrelerini deneyin. 1.029 kartındaki PQ İçeriği bağlantısını açın ve
+   Ziyaret Kapsamına Dön ile seçim/notlarınızın kaldığını doğrulayın.
+6. Eski ziyaret snapshot'larında eksik tür bilgisi varsa önce güncel görünümü
+   inceleyin; kalıcı güncelleme için mevcut açık senkronizasyon/kaydetme akışını
+   kullanın. Bu paket geçmiş kapsamları kendiliğinden değiştirmez.
+
+Geliştirici kontrolleri:
+node tools/visit-scope-tests.mjs
+node tools/pq-performance-tests.mjs
+node tools/rc-domain-tests.mjs
+node tools/rc-check.mjs
+
+6. İLAVE ÖNERİLER — BU PAKETE EKLENMEDİ
+- Her PQ'da metadata kaynağı ve sürüm etiketi: kullanıcı doğrulama türünün hangi
+  referanstan geldiğini ve aktif sürümü doğrudan görebilsin.
+- Mevcut kaynak senkronizasyonuna PQ sürümü/numarası değişiklik önizlemesi:
+  aynı numarada içerik değişikliği ile yeniden numaralanan/birleştirilen PQ'lar
+  ayrı gösterilsin; kapsam güncellemesi öncesi etkisi görülsün.
+- Kapsam ve hazırlık formlarında genel otomatik taslak veya ayrılma uyarısı:
+  yalnız PQ içeriğine gidiş-dönüşte değil, başka menülere geçişte ve tarayıcı
+  yenilemesinde de kaydedilmemiş çalışma korunabilsin.

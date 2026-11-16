@@ -13,7 +13,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.10/pdfmake.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.10/vfs_fonts.js"></script>
-    <link rel="stylesheet" href="css/app.css?v=20261116-v1.0-rc1.4.15">
+    <link rel="stylesheet" href="css/app.css?v=20261116-v1.0-rc1.4.16">
 </head>
 <body>
 
@@ -149,7 +149,7 @@
                 <button onclick="toggleFiltersPanel()" class="btn-outline header-primary-action">🔎 Filtreler</button>
                 <button type="button" id="activeScreenPdfBtn" onclick="exportPDF()" style="background:#dc2626;" title="Aktif ekranı PDF olarak dışa aktar">📄 Ekran PDF</button>
                 <button id="activeScreenExcelBtn" onclick="exportExcel()" style="background:#059669;" title="Aktif ekranı Excel olarak dışa aktar">📊 Ekran Excel</button>
-                <button type="button" id="appReleaseBadge" class="system-connection-badge ok release-badge" onclick="openSystemHealthModal()" title="Release Candidate sistem kontrolünü aç">RC1.4.15 · v1.0</button>
+                <button type="button" id="appReleaseBadge" class="system-connection-badge ok release-badge" onclick="openSystemHealthModal()" title="Release Candidate sistem kontrolünü aç">RC1.4.16 · v1.0</button>
                 <button type="button" id="systemConnectionBadge" class="system-connection-badge checking" onclick="openSystemHealthModal()" title="Sistem bağlantı ve kayıt durumunu görüntüle">⚪ Kontrol ediliyor</button>
                 <div class="more-actions-wrap">
                     <button class="btn-outline" onclick="toggleMoreActions(event)">⚙️ Diğer <span style="font-size:10px;">▼</span></button>
@@ -1819,6 +1819,7 @@
                     <button type="button" onclick="openVisitForm()">➕ Yeni Ziyaret</button>
                 </div>
                 <div id="visitScopeSyncNote" class="visit-sync-note">Kapsam çalışması için bir ziyaret seçiniz.</div>
+                <div id="visitScopePqReferenceNote" class="visit-sync-note" role="status" hidden></div>
                 <div id="visitScopeSourceSyncPanel" class="visit-source-sync-panel" style="display:none"></div>
 
                 <div class="visit-scope-kpis">
@@ -1842,7 +1843,7 @@
                 <div class="visit-scope-toolbar">
                     <div><label>PQ / bulgu / CAP / ofis ara</label><input id="visitScopeSearch" type="text" placeholder="PQ, soru, bulgu, eylem veya ofis..." oninput="renderVisitScopeCandidates()"></div>
                     <div><label>Kapsam havuzu</label><select id="visitScopePoolFilter" onchange="renderVisitScopeCandidates()"><option value="auto">Otomatik (tüm uygun PQ'lar)</option><option value="open_cap">CAP bilgisi bulunan PQ'lar</option><option value="nonvalidated">Bu ziyarette nihai sonucu girilmemiş PQ'lar</option><option value="all">Tüm uygun PQ'lar</option></select></div>
-                    <div><label>Doğrulama Türü</label><select id="visitScopeVerificationFilter" onchange="renderVisitScopeCandidates()"><option value="all">Tümü</option><option value="onSite">On-site</option><option value="offSite">Off-site</option></select></div>
+                    <div><label>Doğrulama Türü</label><select id="visitScopeVerificationFilter" onchange="renderVisitScopeCandidates()"><option value="all">Tümü</option><option value="onSite">On-site</option><option value="offSite">Off-site</option><option value="other">Sınıflandırılmamış</option></select></div>
                     <div><label>Durum görünümü</label><select id="visitScopeStatusFilter" onchange="renderVisitScopeCandidates()"><option value="all">Tüm durumlar</option><option value="open">Açık PQ'lar</option><option value="late">Gecikmiş adımı olanlar</option><option value="date_risk">Tarih riski olanlar</option><option value="cap_completed">CAP tamamlandı</option><option value="official">ICAO kapattı</option><option value="no_cap">CAP yok / boş</option></select></div>
                     <div><label>Adım görünümü</label><select id="visitScopeStepFilter" onchange="renderVisitScopeCandidates()"><option value="all">Tüm adımlar</option><option value="open">Yalnız açık</option><option value="late">Yalnız gecikmiş</option><option value="date_risk">Yalnız tarih riski</option><option value="done">Yalnız tamamlanan</option></select></div>
                     <button type="button" class="btn-outline" onclick="clearVisitScopeLocalFilters()">✖ Görünüm filtrelerini temizle</button>
@@ -2600,26 +2601,26 @@
 </div>
 
 
-<script src="js/app.js?v=20261116-v1.0-rc1.4.15"></script>
-<script src="js/modules/access-control.js?v=20261116-v1.0-rc1.4.15"></script>
-<script src="js/modules/visit-sync.js?v=20261116-v1.0-rc1.4.15"></script>
-<script src="js/modules/visit-hub.js?v=20261116-v1.0-rc1.4.15"></script>
-<script src="js/modules/state-compliance.js?v=20261116-v1.0-rc1.4.15"></script>
-<script src="js/modules/assessment-events.js?v=20261116-v1.0-rc1.4.15"></script>
-<script src="js/modules/official-ei-management.js?v=20261116-v1.0-rc1.4.15"></script>
-<script src="js/modules/official-ei-automation.js?v=20261116-v1.0-rc1.4.15"></script>
-<script src="js/parsers/pq-docx-parser.js?v=20261116-v1.0-rc1.4.15"></script>
-<script src="js/modules/pq-linkage.js?v=20261116-v1.0-rc1.4.15"></script>
-<script src="js/modules/validation-readiness.js?v=20261116-v1.0-rc1.4.15"></script>
-<script src="js/modules/assessment-impact.js?v=20261116-v1.0-rc1.4.15"></script>
-<script src="js/modules/management-shell.js?v=20261116-v1.0-rc1.4.15"></script>
-<script src="js/modules/drive-documents.js?v=20261116-v1.0-rc1.4.15"></script>
-<script src="js/services/pq-repository.js?v=20261116-v1.0-rc1.4.15"></script>
-<script src="js/modules/pq-library.js?v=20261116-v1.0-rc1.4.15"></script>
-<script src="js/modules/responsibility-registry.js?v=20261116-v1.0-rc1.4.15"></script>
-<script src="js/modules/system-integrity.js?v=20261116-v1.0-rc1.4.15"></script>
-<script src="js/modules/action-center.js?v=20261116-v1.0-rc1.4.15"></script>
-<script src="js/modules/notification-center.js?v=20261116-v1.0-rc1.4.15"></script>
-<script src="js/modules/reporting-center.js?v=20261116-v1.0-rc1.4.15"></script>
+<script src="js/app.js?v=20261116-v1.0-rc1.4.16"></script>
+<script src="js/modules/access-control.js?v=20261116-v1.0-rc1.4.16"></script>
+<script src="js/modules/visit-sync.js?v=20261116-v1.0-rc1.4.16"></script>
+<script src="js/modules/visit-hub.js?v=20261116-v1.0-rc1.4.16"></script>
+<script src="js/modules/state-compliance.js?v=20261116-v1.0-rc1.4.16"></script>
+<script src="js/modules/assessment-events.js?v=20261116-v1.0-rc1.4.16"></script>
+<script src="js/modules/official-ei-management.js?v=20261116-v1.0-rc1.4.16"></script>
+<script src="js/modules/official-ei-automation.js?v=20261116-v1.0-rc1.4.16"></script>
+<script src="js/parsers/pq-docx-parser.js?v=20261116-v1.0-rc1.4.16"></script>
+<script src="js/modules/pq-linkage.js?v=20261116-v1.0-rc1.4.16"></script>
+<script src="js/modules/validation-readiness.js?v=20261116-v1.0-rc1.4.16"></script>
+<script src="js/modules/assessment-impact.js?v=20261116-v1.0-rc1.4.16"></script>
+<script src="js/modules/management-shell.js?v=20261116-v1.0-rc1.4.16"></script>
+<script src="js/modules/drive-documents.js?v=20261116-v1.0-rc1.4.16"></script>
+<script src="js/services/pq-repository.js?v=20261116-v1.0-rc1.4.16"></script>
+<script src="js/modules/pq-library.js?v=20261116-v1.0-rc1.4.16"></script>
+<script src="js/modules/responsibility-registry.js?v=20261116-v1.0-rc1.4.16"></script>
+<script src="js/modules/system-integrity.js?v=20261116-v1.0-rc1.4.16"></script>
+<script src="js/modules/action-center.js?v=20261116-v1.0-rc1.4.16"></script>
+<script src="js/modules/notification-center.js?v=20261116-v1.0-rc1.4.16"></script>
+<script src="js/modules/reporting-center.js?v=20261116-v1.0-rc1.4.16"></script>
 </body>
 </html>

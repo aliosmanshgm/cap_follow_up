@@ -1,16 +1,15 @@
-RC1.4.15 — PQ performans düzeltmesi
+RC1.4.16 — RC1.4.15 sürümüne göre değişen dosyalar
 
 CHANGED_FILES.txt
-PQ_PERFORMANCE_QA_REPORT.json
-PQ_PERFORMANS_NOTLARI.txt
 RC_STATIC_QA_REPORT.json
+ZIYARET_PQ_DUZELTME_NOTLARI_RC1_4_16.txt
+ZIYARET_PQ_QA_REPORT_RC1_4_16.json
 app-manifest.json
 index.html
 js/app.js
 js/modules/pq-library.js
-js/modules/pq-linkage.js
-js/services/pq-repository.js
-tools/pq-performance-tests.mjs
-tools/rc-check.mjs
+js/modules/visit-sync.js
+tools/visit-scope-tests.mjs
 
-Ayrıntılar: PQ_PERFORMANS_NOTLARI.txt
+Güncel kurulum notları: ZIYARET_PQ_DUZELTME_NOTLARI_RC1_4_16.txt
+RC1.4.15 performans düzeltmeleri pakette korunmuştur.
