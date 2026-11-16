@@ -1,8 +1,8 @@
 {
   "app": "USOAP CMA CAP Takip",
-  "version": "1.0.0-rc1.4.19",
+  "version": "1.0.0-rc1.4.20",
   "baseline": "index_visit_hub_pq_version_database(2).html",
-  "buildDate": "2026-11-16",
+  "buildDate": "2026-11-17",
   "features": [
     "assessment-event-model",
     "ei-snapshot-model",
@@ -135,7 +135,11 @@
     "visit-aware-snapshot-assessment-selector",
     "live-snapshot-assessment-options",
     "atomic-explicit-visit-snapshot-binding",
-    "explicit-snapshot-assessment-result-status"
+    "explicit-snapshot-assessment-result-status",
+    "single-visit-result-dashboard",
+    "final-assessment-precedence",
+    "explicit-working-effect-label",
+    "empty-system-initial-period-guard"
   ],
   "architecture": {
     "index": "index.html",
@@ -169,6 +173,6 @@
     ]
   },
   "releaseChannel": "release-candidate",
-  "previousVersion": "1.0.0-rc1.4.18",
-  "cacheTag": "20261116-v1.0-rc1.4.19"
+  "previousVersion": "1.0.0-rc1.4.19",
+  "cacheTag": "20261117-v1.0-rc1.4.20"
 }

@@ -1,0 +1,91 @@
+CAP FOLLOW UP — NİHAİ SONUÇ ÖNCELİĞİ VE BAŞLANGIÇ KAYITLARI
+Sürüm: v1.0 RC1.4.20 | 17 Kasım 2026
+Önceki sürüm: RC1.4.19
+
+DASHBOARD'DA TEK ZİYARET, TEK SATIR
+ICAO resmî validasyon ziyaretleri tablosunda her ziyaret için yalnız bir sonuç
+satırı gösterilir. Aynı ziyarete bağlı nihai/resmî değerlendirme veya nihai PQ
+sonucu varsa taslak ve çalışma satırları gösterilmez. Birden çok nihai değerlendirme
+varsa o ziyaretin en son nihai değerlendirmesi esas alınır.
+Nihai sonuç yoksa gerçek taslak değerlendirme/PQ sonucu gösterilir. Yalnız eski
+validated / not_validated çalışma durumları varsa satır Ziyaret çalışma etkisi
+olarak görünür; bunlar kendiliğinden Taslak rapor diye etiketlenmez.
+Hiç sonuç yoksa Sonuç bekleniyor satırı kalır.
+
+Örnek: CMAA nihai, OSVA nihai, ICVM taslak ise tabloda toplam üç satır görünür.
+CMAA ve OSVA'nın eski taslakları ikinci kez gösterilmez. Aynı kural dashboard
+Excel ve PDF çıktılarında da uygulanır.
+
+NASIL KULLANILIR?
+1. Paket dosyalarını kurun, Ctrl+F5 yapın ve RC1.4.20 rozetini doğrulayın.
+2. İlgili değerlendirmede zaten Nihai / Resmî seçiliyse dashboard otomatik olarak
+   tek satıra düşer. Eski taslak satırını silmeniz gerekmez.
+3. Henüz nihai seçilmemişse Değerlendirme kaynakları ekranında doğru kaydı açın,
+   bağlı ziyaretin doğru olduğunu kontrol edin, Sonuç statüsünü Nihai / Resmî
+   seçip kaydedin. Gerçek kaynağı taslak olan kaydı yalnız görünümü düzeltmek için
+   nihai yapmayın; taslaklar nihai bir sonuç bulunmadıkça görünür kalır.
+
+Kayıtlı nihai EI değerlendirmesi ile yalnız nihai PQ sonucundan hesaplanan çalışma
+etkisi birbirinden ayrıdır. İkinci durumda Nihai PQ sonucu ve resmî EI kaydı
+değildir açıklaması korunur; güncel resmî EI kendiliğinden yükselmez.
+Kapsam dışındaki alanların önceki değeri ve Valide edilmedi notu korunur.
+
+NİHAİ SEÇİMİN HEMEN YANSIMASI
+Değerlendirme kaydında seçilen statü, türetilmiş olay senkronizasyonu henüz
+bitmemiş olsa bile dashboard'da esas alınır. Silinmiş veya pasif bir nihai kayıt
+eski olay önbelleğinde kalsa da gerçek taslak satırını gizlemeye devam edemez.
+Ziyaret verisi geç yüklenirse, aynı açık ziyaret kimliğine bağlı değerlendirmeler
+yine tek grupta gösterilir. Yalnız isim veya tarih benzerliğiyle farklı ziyaretler
+birleştirilmez. Gerçekten ayrı ziyaretler ayrı satır olarak kalır.
+
+BAŞLANGIÇ DÖNEMLERİ DÜĞMESİ
+Önceki düğme, kodda tanımlı CMAA (%50,69) ve Virtual OSVA (%55,28) değerlerini
+Firebase'e ekliyordu; Excel veya ICAO raporu okumuyordu. Eski tekrar kontrolü
+ad + tarih üzerinden çalıştığı için örneğin CMAA ile CMAA (Eylül 2024) kayıtlarını
+aynı dönem olarak tanımayabiliyordu. Gönderdiğiniz uyarı bu eklemeyi teklif ediyordu.
+
+Yeni düğme: Başlangıç dönemleri (yalnız boş sistem).
+Mevcut EI değerlendirmesi, olay/EI snapshot'ı, tam PQ durum snapshot'ı veya ICAO
+ziyareti varsa yerleşik dönemler eklenmez. Kontrol yalnız tarayıcı önbelleğinden
+değil Firebase'den yapılır. Boş sistemde eş zamanlı iki tıklamanın/iki kullanıcının
+iki başlangıç seti yazmasını önlemek için atomik transaction kullanılır.
+Boş sistem onayı, eklenecek tarih ve yüzdeleri ve bunların koddan geldiğini açıkça
+belirtir. Mevcut üç ziyaretinizi beslemek için bu düğmeyi kullanmanız gerekmez;
+gerçek Full PQ Status dosyalarını Snapshot Metadata'dan doğru ziyaretlere bağlayın.
+
+BAŞLANGIÇ KAYITLARINI AYIRT ETME
+Yeni başlangıç kayıtları açık kaynak bilgisi taşır. Tanınabilen eski yerleşik
+başlangıç kayıtları da Değerlendirme kaynakları listesinde Yerleşik başlangıçtan
+oluşturuldu açıklamasıyla gösterilir. Snapshot kaynak tablosunda henüz dosya
+bağlanmamış başlangıç yüzdeleri ayrıca belirtilir. Sonradan gerçek bir durum
+dosyası bağlandıysa kaynak tablosu bağlı dosyayı gösterir.
+Önceden eklenmiş bağımsız başlangıç kayıtları bu sürümde otomatik silinmez.
+Bunların kullanılmaması gerekiyorsa Değerlendirme kaynakları ekranında ilgili
+kaydı açıp mevcut Sil işlemi kullanılabilir. Adı benziyor diye gerçek veriler
+silinmez veya farklı ziyaret kimlikleri otomatik birleştirilmez.
+
+GEÇMİŞ VE CAP VERİLERİ
+Bu tekilleştirme görünüm kuralıdır. Tarihsel taslak kayıtları, ziyaretler,
+snapshot'lar ve CAP Word geçmişi silinmez. CAP Word yüklemesi yalnız CAP
+ilerlemesini ve projeksiyonları beslemeye devam eder; yeni resmî EI/ziyaret
+sonucu oluşturmaz. Önceki PQ performans, ziyaret kapsamı, kaynak silme ve
+Snapshot Metadata bağlantı düzeltmeleri korunur.
+
+KURULUM
+ZIP içindeki uygulama dosyalarını birlikte mevcut proje üzerine alın.
+index.html, app-manifest.json ve js dosyaları aynı sürümde olmalıdır.
+Ctrl+F5 sonrasında RC1.4.20 rozetini doğrulayın. Yeni Firebase kuralı veya
+veri taşıması gerekmiyor. Canlı veritabanındaki kayıtlar paket tarafından
+kendiliğinden değiştirilmez.
+
+DOĞRULAMA
+- Nihai önceliği, tek satır, eski çalışma durumu ayrımı ve çıktı modeli: 22 test.
+- Başlangıç ekleme engeli, kaynak tanımı ve eş zamanlı işlem kontrolü: 22 test.
+- Gerçek formda OSVA'yı taslaktan nihaiye geçirme, üç satırlı tablo, mevcut veri
+  üzerinde başlangıç ekleme engeli ve gerçek Excel/PDF çıktıları: 20 Chromium
+  kontrolü. Yakalanmamış JavaScript hatası yok.
+- Önceki dashboard kontrolleri: 39 test ve 24 tarayıcı kontrolü.
+- Snapshot Metadata bağlantısı 35, kaynak silme 25, ziyaret kapsamı 13,
+  PQ performans 27, alan kuralları 16 test.
+- Statik sürüm, asset, HTML, JS ve kural kontrolleri: 51 başarılı; uyarı yok.
+Firebase işlemleri testlerde taklit edilmiştir; canlı kullanıcı verileri değişmedi.

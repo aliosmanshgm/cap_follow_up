@@ -62,12 +62,19 @@
   }
   function recordEvent(id,r){
     const areas={};for(const a of AREAS)areas[a]={...(r.areaCounts?.[a]||{}),ei:r.areas?.[a]};
-    return{...r,id:'official_'+id,sourceRecordId:id,snapshot:{areas,overall:{satisfactory:r.overallSatisfactory,applicable:r.overallApplicable,ei:r.overallEI}}};
+    return{...r,id:'official_'+id,sourceRecordId:id,stateSnapshotId:r.stateSnapshotId||'',linkedVisitId:r.linkedVisitId||'',snapshot:{stateSnapshotId:r.stateSnapshotId||'',areas,overall:{satisfactory:r.overallSatisfactory,applicable:r.overallApplicable,ei:r.overallEI}}};
   }
   function eventsFor(input){
     const out=(input.events||[]).filter(active).map(e=>({...e}));
     for(const [id,r] of Object.entries(input.officialRecords||{})){
-      if(active(r)&&!out.some(e=>e.sourceRecordId===id||e.linkedOfficialEiRecordId===id))out.push(recordEvent(id,r));
+      const matches=e=>e.sourceRecordId===id||e.linkedOfficialEiRecordId===id||e.id===r?.assessmentEventId||e.id==='official_'+id;
+      const previous=out.find(matches);
+      for(let i=out.length-1;i>=0;i--)if(matches(out[i]))out.splice(i,1);
+      if(active(r)){
+        const fresh=recordEvent(id,r);
+        out.push({...previous,...fresh,id:r.assessmentEventId||previous?.id||fresh.id,
+          snapshot:{...previous?.snapshot,...fresh.snapshot,resultStatus:r.resultStatus||'official',active:r.active!==false,isDeleted:false}});
+      }
     }
     return out.filter(e=>!e.snapshot?.isDeleted&&e.snapshot?.active!==false).sort(sortDate);
   }
@@ -123,8 +130,8 @@
   function phaseResults(visit,phase){
     const map=new Map();
     for(const r of values(visit?.icaoValidation?.records).filter(r=>!r.isDeleted)){
-      let value=phase==='final'?r.finalResult:r.draftResult;
-      if(phase==='draft'&&!value&&!r.finalResult)value=r.status==='validated'?'satisfactory':r.status==='not_validated'?'not_satisfactory':'';
+      let value=phase==='final'?r.finalResult:phase==='draft'?r.draftResult:'';
+      if(phase==='working')value=r.finalResult||r.draftResult||(r.status==='validated'?'satisfactory':r.status==='not_validated'?'not_satisfactory':'');
       map.set(str(r.pq),{...r,result:resultCode(value)});
     }
     return map;
@@ -158,19 +165,29 @@
   }
   function buildVisitRows(input,events,states,baseline,officialStates){
     const visits=(input.visits||[]).filter(v=>active(v)&&(v.visitType==='icao_official'||v.type==='icao_official')).map(v=>({...v}));
-    for(const e of events.filter(e=>str(e.type).toUpperCase()!=='CMAA')){
+    const eventGroups=new Map();
+    for(const e of events){
+      if(str(e.type).toUpperCase()==='CMAA'&&!e.linkedVisitId)continue;
       if(e.linkedVisitId&&visits.some(v=>v.id===e.linkedVisitId))continue;
-      // Bind by explicit visit ID only. Similar names and document dates never create links.
-      visits.push({id:'event:'+e.id,visitName:e.name||e.type,areas:e.scopeAreas||[],actualEnd:date(e),eventOnly:e});
+      // Missing visit rows can still be grouped by their explicit shared visit ID.
+      const key=e.linkedVisitId?'visit:'+e.linkedVisitId:'event:'+e.id;
+      if(!eventGroups.has(key))eventGroups.set(key,[]);
+      eventGroups.get(key).push(e);
+    }
+    for(const [id,group] of eventGroups){
+      const e=group.filter(e=>(e.resultStatus||'official')==='official').at(-1)||group.at(-1);
+      visits.push({id,visitName:e.name||e.type,areas:e.scopeAreas||[],actualEnd:date(e),eventOnly:e,relatedEvents:group});
     }
     visits.sort(sortDate);
     const rows=[];
     for(const visit of visits){
-      const related=visit.eventOnly?[visit.eventOnly]:events.filter(e=>e.linkedVisitId===visit.id);
-      const resultRows=values(visit.icaoValidation?.records).filter(r=>!r.isDeleted),phases=[];
-      if(related.some(e=>['draft','provisional'].includes(e.resultStatus))||resultRows.some(r=>r.draftResult||(!r.finalResult&&r.status==='validated')))phases.push('draft');
-      if(related.some(e=>(e.resultStatus||'official')==='official')||resultRows.some(r=>r.finalResult))phases.push('final');
-      if(!phases.length)phases.push('pending');
+      const related=visit.relatedEvents||(visit.eventOnly?[visit.eventOnly]:events.filter(e=>e.linkedVisitId===visit.id));
+      const resultRows=values(visit.icaoValidation?.records).filter(r=>!r.isDeleted);
+      const hasFinal=related.some(e=>(e.resultStatus||'official')==='official')||resultRows.some(r=>resultCode(r.finalResult));
+      const hasDraft=related.some(e=>['draft','provisional'].includes(e.resultStatus))||resultRows.some(r=>resultCode(r.draftResult));
+      const hasWorking=resultRows.some(r=>['validated','not_validated'].includes(r.status));
+      // One visible result per visit. Final results supersede all draft and working rows.
+      const phases=[hasFinal?'final':hasDraft?'draft':hasWorking?'working':'pending'];
       const day=date(visit),excluded=new Set(related.map(e=>stateForEvent(e,states)?.id).filter(Boolean));
       const priorStates=officialStates.filter(s=>date(s)&&date(s)<day&&!excluded.has(s.id));
       const priorEvents=events.filter(e=>(e.resultStatus||'official')==='official'&&date(e)<day&&!related.includes(e));
@@ -179,7 +196,7 @@
       if(priorState&&(!priorEvent||date(priorState)>=date(priorEvent)))before={data:priorState,metrics:metrics(priorState),version:priorState.pqVersion};
       else if(priorEvent)before={data:eventData(priorEvent,states),metrics:eventMetrics(priorEvent,states),version:priorEvent.pqVersion};
       for(const phase of phases){
-        const e=related.filter(e=>phase==='final'?(e.resultStatus||'official')==='official':['draft','provisional'].includes(e.resultStatus)).sort(sortDate).at(-1);
+        const e=related.filter(e=>phase==='final'?(e.resultStatus||'official')==='official':phase==='draft'&&['draft','provisional'].includes(e.resultStatus)).sort(sortDate).at(-1);
         const scope=new Set((e?.scopeAreas?.length?e.scopeAreas:visit.areas||[]).map(a=>str(a).toUpperCase()));
         if(!scope.size)values(visit.scope?.pqs).forEach(p=>{const a=areaOf(p,input.master);if(a)scope.add(a);});
         const simulated=simulateVisit(visit,phase,before,input.master,scope),published=e?eventMetrics(e,states):null,cells={};
@@ -238,6 +255,7 @@
   const esc=v=>str(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const fmt=v=>v===null||v===undefined?'—':Number(v).toLocaleString('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:2})+'%';
   const count=v=>v===null||v===undefined?'—':Number(v).toLocaleString('tr-TR');
+  const phaseLabel=v=>v.phase==='final'?(v.official?'Nihai':'Nihai PQ sonucu'):v.phase==='draft'?'Taslak':v.phase==='working'?'Ziyaret çalışma etkisi':'Sonuç bekleniyor';
   const delta=v=>v===null||v===undefined?'':`${v>0?'+':''}${Number(v).toLocaleString('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:2})} puan`;
   let baselineId='',capAsOf='',queued=false;
   function collect(){
@@ -262,7 +280,7 @@
       return `<tr ${a==='Overall'?'class="dash-overall"':''}><th scope="row">${a==='Overall'?'Overall':a}</th><td>${fmt(model.baseline.metrics[a].ei)}</td><td>${count(b.findings)}</td><td title="${b.identifiedFindings} PQ düzeyinde eşleştirilen bulgu">${count(b.capSteps)}${b.withCap?`<small>${b.withCap} bulguya bağlı</small>`:''}</td><td class="dash-official">${fmt(model.current.metrics[a].ei)}</td><td title="${esc(pr.reason)}">${fmt(pr.candidateEI)}<small>${pr.candidateCount} aday</small></td><td title="${esc(pr.reason)}">${fmt(pr.theoreticalEI)}<small>${pr.theoreticalCount} CAP’lı NS PQ</small></td></tr>`;
     }).join('');
     const visitRows=model.visits.map(v=>{
-      const label=v.phase==='final'?'Nihai':v.phase==='draft'?'Taslak':'Sonuç bekleniyor';
+      const label=phaseLabel(v);
       const cells=['Overall',...AREAS].map(a=>{
         const c=v.cells[a];
         return `<td class="${c.inScope?'':'dash-unvalidated'}">${fmt(c.ei)}<small>${!c.inScope?'Valide edilmedi':v.phase==='pending'?'Sonuç bekleniyor':c.delta!==null?delta(c.delta):'EI için veri eksik'}</small></td>`;
@@ -275,7 +293,7 @@
       <div class="dash-metrics">${cards}</div>
       ${model.issues.length?`<div class="dash-data-note" role="status">${model.issues.map(esc).join('<br>')}</div>`:''}
       <section class="dash-section"><h3>Denetim alanı bazında durum</h3><div class="dash-table-wrap"><table class="dash-table" id="dashboardAreaTable"><thead><tr><th>Alan</th><th>CMAA EI</th><th>CMAA bulgu</th><th>CAP adımı</th><th>Güncel resmî EI</th><th>Adaylar dahil EI</th><th>Teorik EI</th></tr></thead><tbody>${areaRows}</tbody></table></div><p class="dash-note">Bulgu = NS PQ. Overall EI = toplam S / toplam uygulanabilir PQ; alan yüzdelerinin ortalaması değildir. CAP adımları CMAA bulgularıyla PQ kimliği üzerinden eşleştirilir.</p></section>
-      <section class="dash-section"><div class="dash-section-heading"><div><h3>ICAO resmî validasyon ziyaretleri</h3><p>Taslak ve nihai aşamalar ayrı satırlardır; kapsam dışındaki alanların önceki EI değeri korunur.</p></div><button type="button" class="btn-outline" onclick="switchTab('icao-visit-validation')">Ziyaret sonuçları</button></div><div class="dash-table-wrap"><table class="dash-table dash-visit-table" id="dashboardVisitTable"><thead><tr><th>Ziyaret / sonuç aşaması</th>${['Overall',...AREAS].map(a=>`<th>${a}</th>`).join('')}</tr></thead><tbody>${visitRows||'<tr><td colspan="10">Kayıtlı resmî validasyon ziyareti bulunmuyor.</td></tr>'}</tbody></table></div><p class="dash-note">Taslak sonuçlar ve PQ bazındaki çalışma etkileri güncel resmî EI’yi değiştirmez. Yeni resmî durum yalnız değerlendirme / Full PQ Status kaynağından alınır.</p></section>
+      <section class="dash-section"><div class="dash-section-heading"><div><h3>ICAO resmî validasyon ziyaretleri</h3><p>Her ziyaret tek satırdır. Nihai sonuç varsa taslak ve çalışma satırları gösterilmez; kapsam dışındaki alanların önceki EI değeri korunur.</p></div><button type="button" class="btn-outline" onclick="switchTab('icao-visit-validation')">Ziyaret sonuçları</button></div><div class="dash-table-wrap"><table class="dash-table dash-visit-table" id="dashboardVisitTable"><thead><tr><th>Ziyaret / sonuç aşaması</th>${['Overall',...AREAS].map(a=>`<th>${a}</th>`).join('')}</tr></thead><tbody>${visitRows||'<tr><td colspan="10">Kayıtlı resmî validasyon ziyareti bulunmuyor.</td></tr>'}</tbody></table></div><p class="dash-note">Taslak sonuçlar ve PQ bazındaki çalışma etkileri güncel resmî EI’yi değiştirmez. Yeni resmî durum yalnız değerlendirme / Full PQ Status kaynağından alınır.</p></section>
       <details class="dash-definitions"><summary>Hesap kuralları ve CAP kaynakları</summary><p>Aday projeksiyonu: güncel resmî durumda NS olan, güncel CAP adımlarının tamamı tamamlanmış ve bekletilmeyen PQ’lar başarılı valide edilirse. Teorik EI: bekletilenler dahil CAP’ı bulunan tüm NS PQ’lar başarılı valide edilirse; her PQ bir kez sayılır. N/A ve zaten S olan PQ’lar ek artış üretmez. CAP’ı olmayan NS PQ’lar teorik sınıra eklenmez.</p><p>CAP kaynağı her denetim alanında ayrı seçilir; aynı adım eski ve yeni Word dosyalarından tekrar sayılmaz. Bu seçim değerlendirme veya ziyaret tarihi oluşturmaz. Dashboard, CAP ekranındaki geçici arama/ofis filtrelerinden bağımsız ulusal durumu gösterir.</p><ul>${model.cap.sources.map(s=>`<li><b>${s.area}</b> · ${esc(s.date||'Tarih bilinmiyor')} · ${s.files.map(esc).join(', ')}</li>`).join('')||'<li>CAP kaynağı bekleniyor.</li>'}</ul></details>`;
     return model;
   }
@@ -285,7 +303,7 @@
       'CMAA Bulgularına Bağlı CAP Adımı':model.baseByArea[a].capSteps,'Güncel Resmî EI (%)':model.current.metrics[a].ei,
       'Validasyon Adayları Dahil EI (%)':model.projection[a].candidateEI,'Aday PQ':model.projection[a].candidateCount,
       'Tüm CAP Başarılı Teorik EI (%)':model.projection[a].theoreticalEI,'CAP Bulunan NS PQ':model.projection[a].theoreticalCount}));
-    const visits=model.visits.flatMap(v=>['Overall',...AREAS].map(a=>({'Ziyaret':v.name,'Tarih':v.date,'Aşama':v.phase==='final'?'Nihai':v.phase==='draft'?'Taslak':'Sonuç bekleniyor',
+    const visits=model.visits.flatMap(v=>['Overall',...AREAS].map(a=>({'Ziyaret':v.name,'Tarih':v.date,'Aşama':phaseLabel(v),
       'Alan':a,'EI (%)':v.cells[a].ei,'Değişim (puan)':v.cells[a].delta,'Alan Durumu':v.cells[a].inScope?'Kapsamda':'Valide edilmedi',
       'Kaynak':v.source,'PQ Seti Değişti':v.versionChanged?'Evet':'Hayır'})));
     return{areas,visits};
@@ -298,6 +316,7 @@
     }
     XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet([{Kural:'CMAA kaynağı',Açıklama:model.baseline.event?.name||'Eksik'},
       {Kural:'Güncel resmî kaynak',Açıklama:model.current.name},{Kural:'CAP kaynak seçimi',Açıklama:capAsOf||'Her alanın en güncel kaynağı'},
+      {Kural:'Ziyaret görünümü',Açıklama:'Her ziyaret tek satır: nihai sonuç, yoksa taslak, yoksa çalışma etkisi veya bekleyen. Geçmiş sonuçlar silinmez.'},
       {Kural:'Projeksiyon',Açıklama:'Resmî EI değildir. S ve N/A için ek artış sayılmaz; her NS PQ bir kez sayılır.'},
       ...model.issues.map(x=>({Kural:'Veri kontrolü',Açıklama:x}))]),'Hesap_ve_Kaynak');
     XLSX.writeFile(wb,'Dashboard_CMAA_Validasyon_CAP.xlsx');
@@ -306,7 +325,7 @@
     const model=build(collect());
     const areaHeader=['Alan','CMAA EI','Bulgu','CAP adımı','Resmî EI','Aday EI','Teorik EI'];
     const areaBody=[areaHeader,...['Overall',...AREAS].map(a=>[a,fmt(model.baseline.metrics[a].ei),count(model.baseByArea[a].findings),count(model.baseByArea[a].capSteps),fmt(model.current.metrics[a].ei),fmt(model.projection[a].candidateEI),fmt(model.projection[a].theoreticalEI)])];
-    const visitBody=[['Ziyaret / aşama','Overall',...AREAS],...model.visits.map(v=>[`${v.name}\n${v.date} · ${v.phase==='final'?'Nihai':v.phase==='draft'?'Taslak':'Bekleyen'}${v.phase==='final'&&!v.official?'\nPQ sonuçlarından çalışma etkisi':''}`,...['Overall',...AREAS].map(a=>fmt(v.cells[a].ei)+'\n'+(v.cells[a].inScope?delta(v.cells[a].delta):'Valide edilmedi'))])];
+    const visitBody=[['Ziyaret / aşama','Overall',...AREAS],...model.visits.map(v=>[`${v.name}\n${v.date} · ${phaseLabel(v)}${v.phase==='final'&&!v.official?'\nPQ sonuçlarından çalışma etkisi':''}`,...['Overall',...AREAS].map(a=>fmt(v.cells[a].ei)+'\n'+(v.cells[a].inScope?delta(v.cells[a].delta):'Valide edilmedi'))])];
     const content=[{text:'CMAA, Validasyon ve CAP Dashboard',fontSize:17,bold:true,margin:[0,0,0,8]},
       {text:`CMAA: ${model.baseline.event?.name||'Eksik'} · Resmî kaynak: ${model.current.name} · CAP: ${capAsOf||'Her alanın en güncel kaynağı'}`,fontSize:8,margin:[0,0,0,10]},
       {table:{headerRows:1,widths:['*','*','*','*','*','*','*'],body:areaBody},layout:'lightHorizontalLines'},

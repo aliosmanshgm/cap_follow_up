@@ -505,7 +505,7 @@ const I18N = {
     // ================================================================
     // STABILIZASYON PAKETI 1
     // ================================================================
-    const APP_RELEASE = Object.freeze({version:'1.0.0-rc1.4.19',label:'v1.0 RC1.4.19',buildDate:'2026-11-16',baseline:'RC1.4.18 + visit-aware snapshot assessment binding',cacheTag:'20261116-v1.0-rc1.4.19'});
+    const APP_RELEASE = Object.freeze({version:'1.0.0-rc1.4.20',label:'v1.0 RC1.4.20',buildDate:'2026-11-17',baseline:'RC1.4.19 + final visit precedence and guarded initial periods',cacheTag:'20261117-v1.0-rc1.4.20'});
     const STABILIZATION_VERSION = APP_RELEASE.label;
     window.USOAP_APP_RELEASE = APP_RELEASE;
     const stabilizationState = {
@@ -698,7 +698,7 @@ const I18N = {
         add('word', 'Word okuma motoru', (typeof JSZip !== 'undefined') ? 'ok' : 'error', (typeof JSZip !== 'undefined') ? 'JSZip hazır.' : 'Word ayrıştırma kütüphanesi yüklenemedi.');
         add('charts', 'Grafik motoru', (typeof Chart !== 'undefined') ? 'ok' : 'warn', (typeof Chart !== 'undefined') ? 'Chart.js hazır.' : 'Grafik kütüphanesi yüklenemedi.');
         const assetVersionIssues = getLocalAssetVersionIssues();
-        add('release-build', 'Release / cache bütünlüğü', assetVersionIssues.length ? 'error' : 'ok', assetVersionIssues.length ? `RC1.4.19 cache etiketiyle eşleşmeyen ${assetVersionIssues.length} yerel asset: ${assetVersionIssues.slice(0,6).join(', ')}` : `${APP_RELEASE.label} · build ${APP_RELEASE.buildDate} · bütün yerel assetler ${APP_RELEASE.cacheTag}.`);
+        add('release-build', 'Release / cache bütünlüğü', assetVersionIssues.length ? 'error' : 'ok', assetVersionIssues.length ? `RC1.4.20 cache etiketiyle eşleşmeyen ${assetVersionIssues.length} yerel asset: ${assetVersionIssues.slice(0,6).join(', ')}` : `${APP_RELEASE.label} · build ${APP_RELEASE.buildDate} · bütün yerel assetler ${APP_RELEASE.cacheTag}.`);
         let storageOk=true; try{localStorage.setItem('__usoap_rc_probe','1');localStorage.removeItem('__usoap_rc_probe');}catch(_){storageOk=false;}
         add('browser-storage', 'Tarayıcı yerel depolama', storageOk ? 'ok' : 'warn', storageOk ? 'localStorage kullanılabilir.' : 'localStorage kapalı; çevrimdışı cache ve bazı tercihler kalıcı olmayabilir.');
         const originalDocMode=String(window.PQ_ORIGINAL_DOCUMENT_STORAGE_MODE||'external').toLowerCase();
@@ -8249,8 +8249,8 @@ const I18N = {
         const visit=getLatestDashboardIcaoVisitSummary();
         const result={release:APP_RELEASE.label,verificationTypeSample:null,officialVisit:visit?{name:visit.visit.visitName||visit.visit.icaoVisitType,scope:visit.scopeCount,satisfactory:visit.satisfactory,notSatisfactory:visit.notSatisfactory,followUp:visit.followUp,notEvaluated:visit.notEvaluated,draftEi:visit.impact?visit.impact.newPct:null,newSat:visit.impact?visit.impact.newSat:null,total:visit.impact?visit.impact.total:null}:null,pendingNoticeUsesVisit:!!visit};
         try{const first=Object.keys(pqMasterData||{})[0];if(first)result.verificationTypeSample={pq:first,type:getCommonVerificationType(first)};}catch(_){}
-        result.passed=APP_RELEASE.label.includes('RC1.4.19')&&(!visit||visit.scopeCount>=visit.satisfactory);
-        console.log('RC1.4.19 dashboard öz denetimi:',result);return result;
+        result.passed=APP_RELEASE.label.includes('RC1.4.20')&&(!visit||visit.scopeCount>=visit.satisfactory);
+        console.log('RC1.4.20 dashboard öz denetimi:',result);return result;
     };
 
     window.runSimulator = function() {

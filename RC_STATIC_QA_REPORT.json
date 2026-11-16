@@ -1,6 +1,6 @@
 {
-  "release": "1.0.0-rc1.4.19",
-  "generatedAt": "2026-11-16T20:51:10.044Z",
+  "release": "1.0.0-rc1.4.20",
+  "generatedAt": "2026-11-16T21:23:01.815Z",
   "passed": true,
   "counts": {
     "passes": 51,
@@ -20,7 +20,7 @@
     },
     {
       "name": "RC cache etiketi",
-      "detail": "24 yerel asset 20261116-v1.0-rc1.4.19"
+      "detail": "24 yerel asset 20261117-v1.0-rc1.4.20"
     },
     {
       "name": "JavaScript syntax",
@@ -36,7 +36,7 @@
     },
     {
       "name": "Manifest / uygulama sürümü",
-      "detail": "1.0.0-rc1.4.19"
+      "detail": "1.0.0-rc1.4.20"
     },
     {
       "name": "Release channel",

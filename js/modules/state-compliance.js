@@ -114,7 +114,7 @@
       const published=r.published?.overallEI??r.legacyBeforeStateLink?.overallEI;
       const hasPercentage=published!=null||(!explicitId&&r.overallEI!=null);
       const source=snapshot?`${snapshot.name||snapshot.sourceFile?.name||snapshot.id} · ${effectiveDate(snapshot)||'tarih yok'}`:
-        hasPercentage?'Yalnız kayıtlı / yayımlanan EI; PQ ayrıntıları yok':r.selectionKind==='visit'?'Ziyaret kayıtlı; EI değerlendirmesi ve tam PQ durum kaynağı henüz bağlanmadı':'Tam PQ durum kaynağı bekleniyor';
+        window.isBuiltInInitialEiRecord?.(r)?'Yerleşik başlangıç yüzdeleri; kaynak dosyası bağlı değil':hasPercentage?'Yalnız kayıtlı / yayımlanan EI; PQ ayrıntıları yok':r.selectionKind==='visit'?'Ziyaret kayıtlı; EI değerlendirmesi ve tam PQ durum kaynağı henüz bağlanmadı':'Tam PQ durum kaynağı bekleniyor';
       const detail=snapshot&&snapshot.sourceFile?.name?`<small>${esc(snapshot.sourceFile.name)}</small>`:'';
       const status=r.selectionKind==='visit'?'Sonuç kaydı yok':r.resultStatus==='draft'?'Taslak':r.resultStatus==='provisional'?'Geçici':'Nihai / Resmî';
       const action=r.officialRecordId?`onclick="openStateSnapshotAssessment('${esc(r.officialRecordId)}')">Düzenle`:`onclick="selectStateSnapshotAssessment('${esc(r.id)}')">Snapshot'a bağla`;
