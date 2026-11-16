@@ -506,7 +506,7 @@ const I18N = {
     // ================================================================
     // STABILIZASYON PAKETI 1
     // ================================================================
-    const APP_RELEASE = Object.freeze({version:'1.0.0-rc1.4.13',label:'v1.0 RC1.4.13',buildDate:'2026-11-16',baseline:'RC1.4.12 + PQ Library navigation performance hotfix',cacheTag:'20261116-v1.0-rc1.4.13'});
+    const APP_RELEASE = Object.freeze({version:'1.0.0-rc1.4.14',label:'v1.0 RC1.4.14',buildDate:'2026-11-16',baseline:'RC1.4.13 + Visit Scope On-site/Off-site source fix',cacheTag:'20261116-v1.0-rc1.4.14'});
     const STABILIZATION_VERSION = APP_RELEASE.label;
     window.USOAP_APP_RELEASE = APP_RELEASE;
     const stabilizationState = {
@@ -699,7 +699,7 @@ const I18N = {
         add('word', 'Word okuma motoru', (typeof JSZip !== 'undefined') ? 'ok' : 'error', (typeof JSZip !== 'undefined') ? 'JSZip hazır.' : 'Word ayrıştırma kütüphanesi yüklenemedi.');
         add('charts', 'Grafik motoru', (typeof Chart !== 'undefined') ? 'ok' : 'warn', (typeof Chart !== 'undefined') ? 'Chart.js hazır.' : 'Grafik kütüphanesi yüklenemedi.');
         const assetVersionIssues = getLocalAssetVersionIssues();
-        add('release-build', 'Release / cache bütünlüğü', assetVersionIssues.length ? 'error' : 'ok', assetVersionIssues.length ? `RC1.4.13 cache etiketiyle eşleşmeyen ${assetVersionIssues.length} yerel asset: ${assetVersionIssues.slice(0,6).join(', ')}` : `${APP_RELEASE.label} · build ${APP_RELEASE.buildDate} · bütün yerel assetler ${APP_RELEASE.cacheTag}.`);
+        add('release-build', 'Release / cache bütünlüğü', assetVersionIssues.length ? 'error' : 'ok', assetVersionIssues.length ? `RC1.4.14 cache etiketiyle eşleşmeyen ${assetVersionIssues.length} yerel asset: ${assetVersionIssues.slice(0,6).join(', ')}` : `${APP_RELEASE.label} · build ${APP_RELEASE.buildDate} · bütün yerel assetler ${APP_RELEASE.cacheTag}.`);
         let storageOk=true; try{localStorage.setItem('__usoap_rc_probe','1');localStorage.removeItem('__usoap_rc_probe');}catch(_){storageOk=false;}
         add('browser-storage', 'Tarayıcı yerel depolama', storageOk ? 'ok' : 'warn', storageOk ? 'localStorage kullanılabilir.' : 'localStorage kapalı; çevrimdışı cache ve bazı tercihler kalıcı olmayabilir.');
         const originalDocMode=String(window.PQ_ORIGINAL_DOCUMENT_STORAGE_MODE||'external').toLowerCase();
@@ -2022,26 +2022,59 @@ const I18N = {
         return { total: 0, onSite: 0, offSite: 0, other: 0 };
     }
 
+    function normalizeCommonVerificationType(value) {
+        if (value === undefined || value === null) return null;
+        const type = String(value).trim().toUpperCase().replace(/[–—]/g,'-');
+        if (!type) return null;
+        if (type.includes('OFF-SITE') || type.includes('OFFSITE') || type === 'OFF SITE') return 'offSite';
+        if (type.includes('ON-SITE') || type.includes('ONSITE') || type === 'ON SITE') return 'onSite';
+        return null;
+    }
+    function collectPqVerificationValues(root, depth = 0, seen = null) {
+        if (root === undefined || root === null || depth > 4) return [];
+        if (typeof root !== 'object') return [root];
+        if (!seen) seen = new WeakSet();
+        if (seen.has(root)) return [];
+        seen.add(root);
+        const values = [];
+        const interesting = new Set([
+            'verificationtype','validationtype','onsiteoffsite','onoffsite','sitetype',
+            'assessmentmode','auditmode','evaluationmode','mode','tur','type'
+        ]);
+        const nested = new Set(['currentpqref','sourcepqref','pqlink','metadata','meta','record','data','item','reference']);
+        for (const [key, value] of Object.entries(root)) {
+            const nk = String(key).toLowerCase().replace(/[^a-z0-9]/g,'');
+            if (interesting.has(nk) && (typeof value !== 'object' || value === null)) values.push(value);
+            if (nk === 'onsite' && value === true) values.push('On-site');
+            if (nk === 'offsite' && value === true) values.push('Off-site');
+            if (value && typeof value === 'object' && (nested.has(nk) || depth < 2)) values.push(...collectPqVerificationValues(value, depth + 1, seen));
+        }
+        return values;
+    }
+    function firstCommonVerificationType(values) {
+        for (const value of values || []) {
+            const code = normalizeCommonVerificationType(value);
+            if (code) return code;
+        }
+        return null;
+    }
     function getCommonVerificationType(pq) {
         const master = pqMasterData[pq] || {};
-        const values = [master.tur, master.verificationType, master.onOffSite];
-        // RC1.4.7: Sadeleştirilmiş Excel artık doğrulama türünü taşımıyor.
-        // On/Off-site bilgisi için otoritatif PQ Veri Tabanına geri dön.
+        // RC1.4.14: Otoritatif kaynak önce PQ Veri Tabanı / PQ havuzu.
+        // Eski Excel/master alanları yalnız fallback olarak kullanılır.
         try {
             const resolved = typeof getIcaoPqLibraryRecordForReference === 'function'
                 ? getIcaoPqLibraryRecordForReference(pq, master.alan || '') : null;
             const record = resolved && resolved.record ? resolved.record : null;
-            if (record) {
-                values.push(record.verificationType, record.tur, record.onOffSite, record.onsiteOffsite,
-                    record['On/Off-site'], record['ON/OFF-SITE'], record.assessmentMode, record.mode);
-                const cur = record.currentPqRef && typeof record.currentPqRef === 'object' ? record.currentPqRef : null;
-                if (cur) values.push(cur.verificationType, cur.tur, cur.onOffSite, cur.onsiteOffsite, cur['On/Off-site'], cur.mode);
-            }
+            const authoritative = firstCommonVerificationType(collectPqVerificationValues(record));
+            if (authoritative) return authoritative;
         } catch (_) {}
-        const type = values.filter(v => v !== undefined && v !== null).map(v => String(v).trim().toUpperCase()).find(Boolean) || '';
-        if (type.includes('ON-SITE') || type.includes('ONSITE') || type === 'ON SITE') return 'onSite';
-        if (type.includes('OFF-SITE') || type.includes('OFFSITE') || type === 'OFF SITE') return 'offSite';
-        return 'other';
+        const linked = firstCommonVerificationType(collectPqVerificationValues({
+            currentPqRef: master.currentPqRef,
+            pqLink: master.pqLink
+        }));
+        if (linked) return linked;
+        return firstCommonVerificationType([master.verificationType, master.onOffSite, master.onsiteOffsite, master.tur]) || 'other';
     }
 
     function incrementCommonCounter(counter, verificationType, amount = 1) {
@@ -5107,21 +5140,21 @@ const I18N = {
         if (value !== 'auto') return value;
         return 'all';
     }
-    function getVisitScopePoolCandidates(visit) {
+    function getVisitScopePoolCandidates(visit, baseCandidates = null) {
         const pool=resolveVisitScopePoolFilter(visit);
-        return buildVisitScopeCandidates().filter(item=>{
-            const master=item.master||pqMasterData[item.pq]||{};
+        const source=Array.isArray(baseCandidates)?baseCandidates:buildVisitScopeCandidates();
+        return source.filter(item=>{
             if(pool==='open_cap') return visitScopeHasOpenIcaoCap(item,visit);
             if(pool==='nonvalidated') { const rec=(typeof getIcaoValidationForPq==='function'?getIcaoValidationForPq(visit,item.pq):null); return !(rec && String(rec.finalResult||'').trim()); }
             return true;
         });
     }
-    function getVisibleVisitScopeCandidates() {
+    function filterVisibleVisitScopeCandidates(sourceCandidates, visit = null) {
         const q = ((document.getElementById('visitScopeSearch') || {}).value || '').trim().toLocaleLowerCase('tr');
         const status = (document.getElementById('visitScopeStatusFilter') || {}).value || 'all';
         const verification = (document.getElementById('visitScopeVerificationFilter') || {}).value || 'all';
-        const visit=getVisitScopeRecord(), official=visit&&isIcaoOfficialVisit(visit);
-        return getVisitScopePoolCandidates(visit).filter(item => {
+        const activeVisit=visit||getVisitScopeRecord(), official=activeVisit&&isIcaoOfficialVisit(activeVisit);
+        return (sourceCandidates||[]).filter(item => {
             if (verification !== 'all' && item.verificationTypeCode !== verification) return false;
             if (status === 'open' && (official ? item.statusCode === COMMON_PQ_STATUS.OFFICIAL_CLOSED.code : [COMMON_PQ_STATUS.OFFICIAL_CLOSED.code,COMMON_PQ_STATUS.CAP_COMPLETED.code].includes(item.statusCode))) return false;
             if (status === 'late' && item.lateSteps === 0) return false;
@@ -5130,11 +5163,25 @@ const I18N = {
             if (status === 'official' && item.statusCode !== COMMON_PQ_STATUS.OFFICIAL_CLOSED.code) return false;
             if (status === 'no_cap' && item.statusCode !== COMMON_PQ_STATUS.NO_CAP.code) return false;
             if (q) {
-                const haystack = [item.pq,item.area,item.ce,item.responsible,item.question,item.finding,...item.actionItems.flatMap(a => [a.action,a.office,a.step])].join(' ').toLocaleLowerCase('tr');
+                const haystack = [item.pq,item.area,item.ce,item.responsible,item.verificationType,item.question,item.finding,...item.actionItems.flatMap(a => [a.action,a.office,a.step])].join(' ').toLocaleLowerCase('tr');
                 if (!haystack.includes(q)) return false;
             }
             return true;
         });
+    }
+    function getVisibleVisitScopeCandidates() {
+        const visit=getVisitScopeRecord();
+        return filterVisibleVisitScopeCandidates(getVisitScopePoolCandidates(visit), visit);
+    }
+    function updateVisitScopeVerificationFilterCounts(poolCandidates) {
+        const el=document.getElementById('visitScopeVerificationFilter'); if(!el)return;
+        const counts={onSite:0,offSite:0,other:0};
+        (poolCandidates||[]).forEach(item=>{const k=item.verificationTypeCode||'other';counts[k]=(counts[k]||0)+1;});
+        const current=el.value||'all';
+        const labels={all:`Tümü (${(poolCandidates||[]).length})`,onSite:`On-site (${counts.onSite||0})`,offSite:`Off-site (${counts.offSite||0})`};
+        Array.from(el.options).forEach(opt=>{if(labels[opt.value])opt.textContent=labels[opt.value];});
+        el.value=Array.from(el.options).some(o=>o.value===current)?current:'all';
+        el.title=`PQ havuzu: ${counts.onSite||0} On-site · ${counts.offSite||0} Off-site${counts.other?` · ${counts.other} sınıflandırılamadı`:''}`;
     }
     function getVisibleVisitScopeSteps(item) {
         const filter = (document.getElementById('visitScopeStepFilter') || {}).value || 'all';
@@ -5170,9 +5217,10 @@ const I18N = {
         const poolEl=document.getElementById('visitScopePoolFilter'); if(poolEl)poolEl.value='auto';
         const verificationEl=document.getElementById('visitScopeVerificationFilter'); if(verificationEl)verificationEl.value='all';
         if (visit && isIcaoOfficialVisit(visit)) {
-            const eligible=new Set(getVisitScopePoolCandidates(visit).map(x=>String(x.pq)));
+            const eligibleCandidates=getVisitScopePoolCandidates(visit);
+            const eligible=new Set(eligibleCandidates.map(x=>String(x.pq)));
             visitScopeSelectedPqs=new Set([...visitScopeSelectedPqs].filter(pq=>eligible.has(String(pq))));
-            const eligibleSteps=new Set(getVisitScopePoolCandidates(visit).flatMap(x=>(x.actionItems||[]).map(a=>a.key)));
+            const eligibleSteps=new Set(eligibleCandidates.flatMap(x=>(x.actionItems||[]).map(a=>a.key)));
             visitScopeSelectedSteps=new Set([...visitScopeSelectedSteps].filter(k=>eligibleSteps.has(k)));
         }
         const due = document.getElementById('visitScopeDueDate');
@@ -5243,15 +5291,18 @@ const I18N = {
         const list = document.getElementById('visitScopePqList'); if (!list) return;
         const visit = getVisitScopeRecord();
         if (!visit) { list.innerHTML='<div class="visit-scope-empty">Kapsam oluşturmak için bir ziyaret seçiniz.</div>'; updateVisitScopeKpis([]); return; }
-        const candidates = getVisibleVisitScopeCandidates();
+        const allCandidates=buildVisitScopeCandidates();
+        const poolCandidates=getVisitScopePoolCandidates(visit,allCandidates);
+        updateVisitScopeVerificationFilterCounts(poolCandidates);
+        const candidates=filterVisibleVisitScopeCandidates(poolCandidates,visit);
         const count=document.getElementById('visitScopeListCount'); if(count)count.textContent=`${candidates.length} PQ`;
         const syncNote=document.getElementById('visitScopeSyncNote');
         if(syncNote && visit && isIcaoOfficialVisit(visit)){
-            const allNonValidated=buildVisitScopeCandidates().filter(x=>{ const rec=(typeof getIcaoValidationForPq==='function'?getIcaoValidationForPq(visit,x.pq):null); return !(rec && String(rec.finalResult||'').trim()); }).length;
-            const openCaps=buildVisitScopeCandidates().filter(x=>visitScopeHasOpenIcaoCap(x,visit)).length;
+            const allNonValidated=allCandidates.filter(x=>{ const rec=(typeof getIcaoValidationForPq==='function'?getIcaoValidationForPq(visit,x.pq):null); return !(rec && String(rec.finalResult||'').trim()); }).length;
+            const openCaps=allCandidates.filter(x=>visitScopeHasOpenIcaoCap(x,visit)).length;
             syncNote.textContent=`${visit.visitName||'ICAO ziyareti'} | Bu ziyarette nihai sonucu girilmemiş PQ: ${allNonValidated} | CAP bilgisi bulunan PQ: ${openCaps} | Kapsam seçimi resmî mevcut durumdan bağımsızdır.`;
         }
-        if (!candidates.length) { list.innerHTML='<div class="visit-scope-empty">Seçili ziyaret alanları ve görünüm filtreleri kapsamında PQ bulunamadı.</div>'; updateVisitScopeKpis(getVisitScopePoolCandidates(visit)); return; }
+        if (!candidates.length) { list.innerHTML='<div class="visit-scope-empty">Seçili ziyaret alanları ve görünüm filtreleri kapsamında PQ bulunamadı.</div>'; updateVisitScopeKpis(poolCandidates); return; }
         list.innerHTML = candidates.map(item => {
             const selected=visitScopeSelectedPqs.has(item.pq); const steps=getVisibleVisitScopeSteps(item);
             const finding=shortenVisitText(item.finding || item.question || 'Bulgu/soru bilgisi yok.',240);
@@ -5260,9 +5311,9 @@ const I18N = {
                 const dayText=a.statusCode===COMMON_ACTION_STATUS.LATE.code?`${a.delayDays} gün gecikmiş`:(a.statusCode===COMMON_ACTION_STATUS.DATE_RISK.code?'Tarih eksik/geçersiz':(a.daysLeft!==null&&a.daysLeft!==undefined?`${a.daysLeft} gün kaldı`:''));
                 return visit&&isIcaoOfficialVisit(visit) ? `<div class="visit-step-item ${visitScopeStatusClass(a)}"><label><b>Step ${escapeHtml(a.step || '-')}</b> <span style="color:var(--muted);font-size:9px">(bilgi amaçlı)</span> — ${escapeHtml(shortenVisitText(a.action,210))}<small>${escapeHtml(a.office || 'Ofis belirtilmedi')} | ${escapeHtml(a.estDate || 'Tarih yok')} | ${escapeHtml(a.statusLabel || '')}${dayText?' | '+escapeHtml(dayText):''}</small></label></div>` : `<div class="visit-step-item ${visitScopeStatusClass(a)}"><input type="checkbox" ${checked?'checked':''} onchange="toggleVisitScopeStep('${encoded}','${item.pq}',this.checked)"><label><b>Step ${escapeHtml(a.step || '-')}</b> — ${escapeHtml(shortenVisitText(a.action,210))}<small>${escapeHtml(a.office || 'Ofis belirtilmedi')} | ${escapeHtml(a.estDate || 'Tarih yok')} | ${escapeHtml(a.statusLabel || '')}${dayText?' | '+escapeHtml(dayText):''}</small></label></div>`;
             }).join('') : '<div class="visit-form-note">Görünüm filtresine uygun CAP adımı yok.</div>';
-            return `<article class="visit-pq-card ${selected?'selected':''}"><div class="visit-pq-head"><input type="checkbox" ${selected?'checked':''} onchange="toggleVisitScopePq('${item.pq}',this.checked)"><div><div class="visit-pq-title">PQ ${escapeHtml(item.pq)} — ${escapeHtml(item.area)}</div><div class="visit-pq-meta">CE: ${escapeHtml(item.ce||'-')} | PQ sorumlusu: ${escapeHtml(item.responsible||'-')} | Açık adım: ${item.openSteps} | Gecikmiş: ${item.lateSteps} | Tarih riski: ${item.dateRiskSteps}</div></div><span class="visit-pq-status">${escapeHtml(item.statusLabel||'-')}</span></div><div class="visit-pq-finding">${escapeHtml(finding)}</div><div class="visit-step-list"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><b style="font-size:10px;color:var(--muted)">CAP Adımları (${steps.length})</b>${visit&&isIcaoOfficialVisit(visit)?'<span style="font-size:9px;color:var(--muted)">Step seçimi yapılmaz</span>':`<button type="button" class="btn-outline" style="font-size:9px;padding:4px 6px" onclick="selectVisitScopePqSteps('${item.pq}')">Görünen adımları seç/kaldır</button>`}</div>${stepHtml}</div></article>`;
+            return `<article class="visit-pq-card ${selected?'selected':''}"><div class="visit-pq-head"><input type="checkbox" ${selected?'checked':''} onchange="toggleVisitScopePq('${item.pq}',this.checked)"><div><div class="visit-pq-title">PQ ${escapeHtml(item.pq)} — ${escapeHtml(item.area)}</div><div class="visit-pq-meta">CE: ${escapeHtml(item.ce||'-')} | Doğrulama: ${escapeHtml(item.verificationType||'Sınıflandırılmadı')} | PQ sorumlusu: ${escapeHtml(item.responsible||'-')} | Açık adım: ${item.openSteps} | Gecikmiş: ${item.lateSteps} | Tarih riski: ${item.dateRiskSteps}</div></div><span class="visit-pq-status">${escapeHtml(item.statusLabel||'-')}</span></div><div class="visit-pq-finding">${escapeHtml(finding)}</div><div class="visit-step-list"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><b style="font-size:10px;color:var(--muted)">CAP Adımları (${steps.length})</b>${visit&&isIcaoOfficialVisit(visit)?'<span style="font-size:9px;color:var(--muted)">Step seçimi yapılmaz</span>':`<button type="button" class="btn-outline" style="font-size:9px;padding:4px 6px" onclick="selectVisitScopePqSteps('${item.pq}')">Görünen adımları seç/kaldır</button>`}</div>${stepHtml}</div></article>`;
         }).join('');
-        updateVisitScopeKpis(getVisitScopePoolCandidates(visit)); updateVisitScopeSummary(); renderVisitPreparationTargetOptions();
+        updateVisitScopeKpis(poolCandidates); updateVisitScopeSummary(); renderVisitPreparationTargetOptions(allCandidates);
     }
     function updateVisitScopeKpis(allCandidates) {
         const candidates=allCandidates||[]; const selectedStepRows=candidates.flatMap(x=>x.actionItems).filter(a=>visitScopeSelectedSteps.has(a.key));
@@ -5303,9 +5354,9 @@ const I18N = {
         catch(error){console.error(error);alert('Kapsam kaydedilemedi: '+(error.message||error));}
         finally{if(btn){btn.disabled=false;btn.textContent='💾 Kapsamı ve Genel Hazırlığı Kaydet';}}
     }
-    function renderVisitPreparationTargetOptions() {
+    function renderVisitPreparationTargetOptions(candidatesOverride = null) {
         const select=document.getElementById('visitPrepTarget');if(!select)return;
-        const current=select.value; const candidates=buildVisitScopeCandidates();
+        const current=select.value; const candidates=Array.isArray(candidatesOverride)?candidatesOverride:buildVisitScopeCandidates();
         const options=['<option value="visit">Ziyaret geneli</option>'];
         candidates.filter(x=>visitScopeSelectedPqs.has(x.pq)).forEach(x=>options.push(`<option value="pq::${escapeHtml(x.pq)}">PQ ${escapeHtml(x.pq)} — ${escapeHtml(x.area)}</option>`));
         candidates.flatMap(x=>x.actionItems.map(a=>({x,a}))).filter(z=>visitScopeSelectedSteps.has(z.a.key)).forEach(({x,a})=>options.push(`<option value="step::${encodeURIComponent(a.key)}">PQ ${escapeHtml(x.pq)} / Step ${escapeHtml(a.step||'-')}</option>`));
@@ -8145,8 +8196,8 @@ const I18N = {
         const visit=getLatestDashboardIcaoVisitSummary();
         const result={release:APP_RELEASE.label,verificationTypeSample:null,officialVisit:visit?{name:visit.visit.visitName||visit.visit.icaoVisitType,scope:visit.scopeCount,satisfactory:visit.satisfactory,notSatisfactory:visit.notSatisfactory,followUp:visit.followUp,notEvaluated:visit.notEvaluated,draftEi:visit.impact?visit.impact.newPct:null,newSat:visit.impact?visit.impact.newSat:null,total:visit.impact?visit.impact.total:null}:null,pendingNoticeUsesVisit:!!visit};
         try{const first=Object.keys(pqMasterData||{})[0];if(first)result.verificationTypeSample={pq:first,type:getCommonVerificationType(first)};}catch(_){}
-        result.passed=APP_RELEASE.label.includes('RC1.4.13')&&(!visit||visit.scopeCount>=visit.satisfactory);
-        console.log('RC1.4.13 dashboard öz denetimi:',result);return result;
+        result.passed=APP_RELEASE.label.includes('RC1.4.14')&&(!visit||visit.scopeCount>=visit.satisfactory);
+        console.log('RC1.4.14 dashboard öz denetimi:',result);return result;
     };
 
     window.runSimulator = function() {
