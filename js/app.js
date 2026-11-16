@@ -436,7 +436,11 @@ const I18N = {
             if(tabId === 'validation-readiness' && typeof renderValidationReadiness==='function') renderValidationReadiness();
             if(tabId === 'smart') updateSmartManagementPanel(getFilteredData(), window.currentAnalyticsModel || null);
             if(tabId === 'quality') { updateDataQualityCenter(getFilteredData()); if(typeof window.renderSystemIntegrityCenter==='function') setTimeout(()=>window.renderSystemIntegrityCenter(true),0); }
-            if(tabId === 'pq-library') renderIcaoPqLibraryModule();
+            if(tabId !== 'pq-library' && typeof window.cancelIcaoPqLibraryAutoFocus==='function') window.cancelIcaoPqLibraryAutoFocus();
+            if(tabId === 'pq-library') {
+                if(window.__skipNextPqLibraryTabRender) window.__skipNextPqLibraryTabRender=false;
+                else renderIcaoPqLibraryModule();
+            }
             if(tabId === 'drive-documents' && typeof window.renderDriveDocumentsCenter==='function') window.renderDriveDocumentsCenter();
             if(tabId === 'visits') renderVisitModule();
             if(tabId === 'visit-scope') renderVisitScopeModule();
@@ -502,7 +506,7 @@ const I18N = {
     // ================================================================
     // STABILIZASYON PAKETI 1
     // ================================================================
-    const APP_RELEASE = Object.freeze({version:'1.0.0-rc1.4.12',label:'v1.0 RC1.4.12',buildDate:'2026-11-16',baseline:'RC1.4.11 draft count projection + visit scope On/Off-site filter',cacheTag:'20261116-v1.0-rc1.4.12'});
+    const APP_RELEASE = Object.freeze({version:'1.0.0-rc1.4.13',label:'v1.0 RC1.4.13',buildDate:'2026-11-16',baseline:'RC1.4.12 + PQ Library navigation performance hotfix',cacheTag:'20261116-v1.0-rc1.4.13'});
     const STABILIZATION_VERSION = APP_RELEASE.label;
     window.USOAP_APP_RELEASE = APP_RELEASE;
     const stabilizationState = {
@@ -695,7 +699,7 @@ const I18N = {
         add('word', 'Word okuma motoru', (typeof JSZip !== 'undefined') ? 'ok' : 'error', (typeof JSZip !== 'undefined') ? 'JSZip hazır.' : 'Word ayrıştırma kütüphanesi yüklenemedi.');
         add('charts', 'Grafik motoru', (typeof Chart !== 'undefined') ? 'ok' : 'warn', (typeof Chart !== 'undefined') ? 'Chart.js hazır.' : 'Grafik kütüphanesi yüklenemedi.');
         const assetVersionIssues = getLocalAssetVersionIssues();
-        add('release-build', 'Release / cache bütünlüğü', assetVersionIssues.length ? 'error' : 'ok', assetVersionIssues.length ? `RC1.4.12 cache etiketiyle eşleşmeyen ${assetVersionIssues.length} yerel asset: ${assetVersionIssues.slice(0,6).join(', ')}` : `${APP_RELEASE.label} · build ${APP_RELEASE.buildDate} · bütün yerel assetler ${APP_RELEASE.cacheTag}.`);
+        add('release-build', 'Release / cache bütünlüğü', assetVersionIssues.length ? 'error' : 'ok', assetVersionIssues.length ? `RC1.4.13 cache etiketiyle eşleşmeyen ${assetVersionIssues.length} yerel asset: ${assetVersionIssues.slice(0,6).join(', ')}` : `${APP_RELEASE.label} · build ${APP_RELEASE.buildDate} · bütün yerel assetler ${APP_RELEASE.cacheTag}.`);
         let storageOk=true; try{localStorage.setItem('__usoap_rc_probe','1');localStorage.removeItem('__usoap_rc_probe');}catch(_){storageOk=false;}
         add('browser-storage', 'Tarayıcı yerel depolama', storageOk ? 'ok' : 'warn', storageOk ? 'localStorage kullanılabilir.' : 'localStorage kapalı; çevrimdışı cache ve bazı tercihler kalıcı olmayabilir.');
         const originalDocMode=String(window.PQ_ORIGINAL_DOCUMENT_STORAGE_MODE||'external').toLowerCase();
@@ -4224,40 +4228,52 @@ const I18N = {
         const target=direct||row;
         try{target.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true,view:window}));return true;}catch(_){try{target.click();return true;}catch(__){return false;}}
     }
-    function focusIcaoPqInLibraryCatalog(ctx,attempt=0){
-        if(!ctx||!ctx.pq)return;
+    let icaoPqLibraryFocusTimer=null;
+    let icaoPqLibraryFocusToken=0;
+    function cancelIcaoPqLibraryAutoFocus(){
+        icaoPqLibraryFocusToken++;
+        if(icaoPqLibraryFocusTimer){clearTimeout(icaoPqLibraryFocusTimer);icaoPqLibraryFocusTimer=null;}
+    }
+    function isPqLibraryTabActive(){
+        const tab=document.getElementById('tab-pq-library');
+        return !!(tab&&tab.classList.contains('active'));
+    }
+    function focusIcaoPqInLibraryCatalog(ctx){
+        if(!ctx||!ctx.pq||!isPqLibraryTabActive())return;
+        cancelIcaoPqLibraryAutoFocus();
+        const token=icaoPqLibraryFocusToken;
         ensureIcaoPqLibraryReturnBar(ctx);
-        activateIcaoPqLibraryCatalog();
-        const search=document.getElementById('pqDbCatalogSearch');
-        let areaSelect=document.getElementById('pqDbCatalogArea');
-        const editionSelect=document.getElementById('pqDbCatalogEdition');
-        const editionChanged=!!(editionSelect&&ctx.editionHint&&selectPqLibraryOption(editionSelect,[ctx.editionHint]));
-        if(editionChanged&&typeof window.pqDbCatalogEditionChanged==='function'){try{window.pqDbCatalogEditionChanged();}catch(e){console.warn('PQ sürüm seçimi uygulanamadı:',e);}}
-        areaSelect=document.getElementById('pqDbCatalogArea');
-        if(areaSelect&&ctx.area)selectPqLibraryOption(areaSelect,[ctx.area]);
-        if(search)search.value=ctx.pq;
-        if(typeof window.renderIcaoPqLibraryModule==='function'){
-            try{window.renderIcaoPqLibraryModule();}catch(e){console.warn('PQ Kataloğu yenilenemedi:',e);}
-        }
-        setTimeout(()=>{
-            const body=document.getElementById('pqDbCatalogBody');
-            const rows=body?Array.from(body.querySelectorAll('tr')):[];
-            const row=rows.find(r=>catalogRowMatchesPq(r,ctx.pq));
-            if(row){
-                clickPqLibraryCatalogRow(row);
-                setTimeout(()=>{
-                    const detail=document.getElementById('pqDbDetail');
-                    if(detail){
-                        detail.scrollIntoView({behavior:'smooth',block:'start'});
-                        const txt=String(detail.textContent||'');
-                        if(!txt.includes(ctx.pq)&&attempt<8)setTimeout(()=>focusIcaoPqInLibraryCatalog(ctx,attempt+1),120);
-                    }
-                },120);
-                return;
+        const catalogView=document.getElementById('pqDbViewCatalog');
+        if(!(catalogView&&catalogView.classList.contains('active'))) activateIcaoPqLibraryCatalog();
+        icaoPqLibraryFocusTimer=setTimeout(()=>{
+            icaoPqLibraryFocusTimer=null;
+            if(token!==icaoPqLibraryFocusToken||!isPqLibraryTabActive())return;
+            const search=document.getElementById('pqDbCatalogSearch');
+            let areaSelect=document.getElementById('pqDbCatalogArea');
+            const editionSelect=document.getElementById('pqDbCatalogEdition');
+            let needsRender=false;
+            if(editionSelect&&ctx.editionHint&&selectPqLibraryOption(editionSelect,[ctx.editionHint]))needsRender=true;
+            areaSelect=document.getElementById('pqDbCatalogArea');
+            if(areaSelect&&ctx.area&&selectPqLibraryOption(areaSelect,[ctx.area]))needsRender=true;
+            if(search&&search.value!==ctx.pq){search.value=ctx.pq;needsRender=true;}
+            if(needsRender&&typeof window.renderIcaoPqLibraryModule==='function'){
+                try{window.renderIcaoPqLibraryModule();}catch(e){console.warn('PQ Kataloğu yenilenemedi:',e);}
             }
-            if(attempt<24){setTimeout(()=>focusIcaoPqInLibraryCatalog(ctx,attempt+1),140);}
-            else showAppRuntimeToast(`PQ ${ctx.pq} katalogda otomatik açılamadı; arama alanı PQ numarasıyla filtrelendi.`,'error');
-        },110);
+            const tryOpen=()=>{
+                if(token!==icaoPqLibraryFocusToken||!isPqLibraryTabActive())return false;
+                const body=document.getElementById('pqDbCatalogBody');
+                const rows=body?Array.from(body.querySelectorAll('tr')):[];
+                const row=rows.find(r=>catalogRowMatchesPq(r,ctx.pq));
+                if(!row)return false;
+                clickPqLibraryCatalogRow(row);
+                return true;
+            };
+            if(tryOpen())return;
+            icaoPqLibraryFocusTimer=setTimeout(()=>{
+                icaoPqLibraryFocusTimer=null;
+                if(!tryOpen()) showAppRuntimeToast(`PQ ${ctx.pq} katalogda otomatik açılamadı; arama alanı PQ numarasıyla filtrelendi.`,'info');
+            },180);
+        },120);
     }
     function openIcaoValidationPqReferenceInLibrary(){
         const visit=getActiveIcaoOfficialVisitRecord(),pq=String(activeIcaoValidationPq||'');
@@ -4268,11 +4284,14 @@ const I18N = {
         const bundle=buildIcaoPqReferenceRecord(pq,scope),editionHint=getIcaoPqLibraryHint(bundle.record,['editionKey','edition','versionKey','pqEditionKey']);
         const ctx={visitId:visit.id,pq,visitName:visit.visitName||'ICAO ziyareti',area:normalizeAreaKey(scope.area||m.alan||''),areaFilter:getSelectedIcaoVisitAreaFilter(),search:((document.getElementById('icaoVisitSearch')||{}).value||''),statusFilter:((document.getElementById('icaoVisitStatusFilter')||{}).value||'all'),language:getIcaoPqTextLanguage(),editionHint,openedAt:new Date().toISOString()};
         writeIcaoPqLibraryReturnContext(ctx);
+        cancelIcaoPqLibraryAutoFocus();
+        window.__skipNextPqLibraryTabRender=true;
         switchTab('pq-library');
         ensureIcaoPqLibraryReturnBar(ctx);
-        setTimeout(()=>focusIcaoPqInLibraryCatalog(ctx,0),80);
+        focusIcaoPqInLibraryCatalog(ctx);
     }
     function returnToIcaoValidationFromPqLibrary(){
+        cancelIcaoPqLibraryAutoFocus();
         const ctx=window.icaoPqLibraryReturnContext||readIcaoPqLibraryReturnContext();
         if(!ctx||!ctx.visitId){hideIcaoPqLibraryReturnBar();return switchTab('icao-visit-validation');}
         activeIcaoOfficialVisitId=ctx.visitId;
@@ -4288,9 +4307,22 @@ const I18N = {
         setTimeout(()=>{selectIcaoValidationPq(ctx.pq);const list=document.getElementById('icaoOfficialVisitPqList');if(list){const active=list.querySelector('.icao-visit-pq.active');if(active)active.scrollIntoView({behavior:'smooth',block:'center'});}},50);
         clearIcaoPqLibraryReturnContext();hideIcaoPqLibraryReturnBar();
     }
+    let icaoPqLibraryRenderDebounceTimer=null;
+    function scheduleIcaoPqLibraryRender(delay=150){
+        if(icaoPqLibraryRenderDebounceTimer)clearTimeout(icaoPqLibraryRenderDebounceTimer);
+        icaoPqLibraryRenderDebounceTimer=setTimeout(()=>{
+            icaoPqLibraryRenderDebounceTimer=null;
+            if(!isPqLibraryTabActive())return;
+            if(typeof window.renderIcaoPqLibraryModule==='function'){
+                try{window.renderIcaoPqLibraryModule();}catch(e){console.warn('PQ Kataloğu yenilenemedi:',e);}
+            }
+        },Math.max(0,Number(delay)||0));
+    }
     window.renderIcaoPqReferencePanelFromPqData=renderIcaoPqReferencePanelFromPqData;
     window.openIcaoValidationPqReferenceInLibrary=openIcaoValidationPqReferenceInLibrary;
     window.returnToIcaoValidationFromPqLibrary=returnToIcaoValidationFromPqLibrary;
+    window.cancelIcaoPqLibraryAutoFocus=cancelIcaoPqLibraryAutoFocus;
+    window.scheduleIcaoPqLibraryRender=scheduleIcaoPqLibraryRender;
 
     function updateIcaoTranslationStatus(visit){
         const el=document.getElementById('icaoVisitTranslationStatus');if(!el)return;
@@ -8113,8 +8145,8 @@ const I18N = {
         const visit=getLatestDashboardIcaoVisitSummary();
         const result={release:APP_RELEASE.label,verificationTypeSample:null,officialVisit:visit?{name:visit.visit.visitName||visit.visit.icaoVisitType,scope:visit.scopeCount,satisfactory:visit.satisfactory,notSatisfactory:visit.notSatisfactory,followUp:visit.followUp,notEvaluated:visit.notEvaluated,draftEi:visit.impact?visit.impact.newPct:null,newSat:visit.impact?visit.impact.newSat:null,total:visit.impact?visit.impact.total:null}:null,pendingNoticeUsesVisit:!!visit};
         try{const first=Object.keys(pqMasterData||{})[0];if(first)result.verificationTypeSample={pq:first,type:getCommonVerificationType(first)};}catch(_){}
-        result.passed=APP_RELEASE.label.includes('RC1.4.12')&&(!visit||visit.scopeCount>=visit.satisfactory);
-        console.log('RC1.4.12 dashboard öz denetimi:',result);return result;
+        result.passed=APP_RELEASE.label.includes('RC1.4.13')&&(!visit||visit.scopeCount>=visit.satisfactory);
+        console.log('RC1.4.13 dashboard öz denetimi:',result);return result;
     };
 
     window.runSimulator = function() {
