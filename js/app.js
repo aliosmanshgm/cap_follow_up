@@ -506,7 +506,7 @@ const I18N = {
     // ================================================================
     // STABILIZASYON PAKETI 1
     // ================================================================
-    const APP_RELEASE = Object.freeze({version:'1.0.0-rc1.4.15',label:'v1.0 RC1.4.15',buildDate:'2026-11-16',baseline:'RC1.4.14 + PQ index and navigation performance fix',cacheTag:'20261116-v1.0-rc1.4.15'});
+    const APP_RELEASE = Object.freeze({version:'1.0.0-rc1.4.16',label:'v1.0 RC1.4.16',buildDate:'2026-11-16',baseline:'RC1.4.15 + Visit scope verification types and exact PQ navigation',cacheTag:'20261116-v1.0-rc1.4.16'});
     const STABILIZATION_VERSION = APP_RELEASE.label;
     window.USOAP_APP_RELEASE = APP_RELEASE;
     const stabilizationState = {
@@ -699,7 +699,7 @@ const I18N = {
         add('word', 'Word okuma motoru', (typeof JSZip !== 'undefined') ? 'ok' : 'error', (typeof JSZip !== 'undefined') ? 'JSZip hazır.' : 'Word ayrıştırma kütüphanesi yüklenemedi.');
         add('charts', 'Grafik motoru', (typeof Chart !== 'undefined') ? 'ok' : 'warn', (typeof Chart !== 'undefined') ? 'Chart.js hazır.' : 'Grafik kütüphanesi yüklenemedi.');
         const assetVersionIssues = getLocalAssetVersionIssues();
-        add('release-build', 'Release / cache bütünlüğü', assetVersionIssues.length ? 'error' : 'ok', assetVersionIssues.length ? `RC1.4.15 cache etiketiyle eşleşmeyen ${assetVersionIssues.length} yerel asset: ${assetVersionIssues.slice(0,6).join(', ')}` : `${APP_RELEASE.label} · build ${APP_RELEASE.buildDate} · bütün yerel assetler ${APP_RELEASE.cacheTag}.`);
+        add('release-build', 'Release / cache bütünlüğü', assetVersionIssues.length ? 'error' : 'ok', assetVersionIssues.length ? `RC1.4.16 cache etiketiyle eşleşmeyen ${assetVersionIssues.length} yerel asset: ${assetVersionIssues.slice(0,6).join(', ')}` : `${APP_RELEASE.label} · build ${APP_RELEASE.buildDate} · bütün yerel assetler ${APP_RELEASE.cacheTag}.`);
         let storageOk=true; try{localStorage.setItem('__usoap_rc_probe','1');localStorage.removeItem('__usoap_rc_probe');}catch(_){storageOk=false;}
         add('browser-storage', 'Tarayıcı yerel depolama', storageOk ? 'ok' : 'warn', storageOk ? 'localStorage kullanılabilir.' : 'localStorage kapalı; çevrimdışı cache ve bazı tercihler kalıcı olmayabilir.');
         const originalDocMode=String(window.PQ_ORIGINAL_DOCUMENT_STORAGE_MODE||'external').toLowerCase();
@@ -2058,13 +2058,13 @@ const I18N = {
         }
         return null;
     }
-    function getCommonVerificationType(pq) {
+    function getCommonVerificationType(pq, areaHint = '') {
         const master = pqMasterData[pq] || {};
         // RC1.4.14: Otoritatif kaynak önce PQ Veri Tabanı / PQ havuzu.
         // Eski Excel/master alanları yalnız fallback olarak kullanılır.
         try {
             const resolved = typeof getIcaoPqLibraryRecordForReference === 'function'
-                ? getIcaoPqLibraryRecordForReference(pq, master.alan || '') : null;
+                ? getIcaoPqLibraryRecordForReference(pq, areaHint || master.alan || '') : null;
             const record = resolved && resolved.record ? resolved.record : null;
             const authoritative = firstCommonVerificationType(collectPqVerificationValues(record));
             if (authoritative) return authoritative;
@@ -4153,6 +4153,7 @@ const I18N = {
     }
     function unwrapIcaoPqLibraryReference(ref,pq){
         if(!ref||typeof ref!=='object')return null;
+        if(ref.pq&&typeof ref.pq==='object'&&looksLikeIcaoPqLibraryRecord(ref.pq))return ref.pq;
         if(icaoPqObjectDirectlyMatches(ref,pq)||looksLikeIcaoPqLibraryRecord(ref))return ref;
         for(const key of ['record','data','item','pqRecord','reference']){
             const child=ref[key];
@@ -4169,7 +4170,11 @@ const I18N = {
         if(typeof window.getIcaoPqLibrarySnapshot==='function'){
             try{
                 const snapshot=window.getIcaoPqLibrarySnapshot();
-                const hit=findIcaoPqRecordInSnapshot(snapshot,pq);if(hit)return {record:hit,source:'ICAO PQ Veri Tabanı snapshot'};
+                // The indexed resolver has already searched this schema, including history.
+                // Avoid a second full-tree scan for every unmatched CAP PQ.
+                if(!(snapshot&&snapshot.editions&&typeof window.findPqLibraryReference==='function')){
+                    const hit=findIcaoPqRecordInSnapshot(snapshot,pq);if(hit)return {record:hit,source:'ICAO PQ Veri Tabanı snapshot'};
+                }
             }catch(error){console.warn('PQ Veri Tabanı snapshot taraması yapılamadı:',error);}
         }
         return {record:null,source:'PQ Master fallback'};
@@ -4241,8 +4246,10 @@ const I18N = {
         const bar=document.getElementById('pqDbValidationReturnBar');if(!bar)return;
         const title=document.getElementById('pqDbValidationReturnTitle'),meta=document.getElementById('pqDbValidationReturnMeta');
         bar.style.display='flex';
-        if(title)title.textContent=`PQ ${ctx.pq||'-'} · Validasyon Çalışmasından açıldı`;
-        if(meta)meta.textContent=`Ziyaret: ${ctx.visitName||'-'} · Alan: ${ctx.area||'-'} · Geri dönüş aynı ziyaret ve aynı PQ bağlamını açar.`;
+        const fromScope=ctx.entryPoint==='scope';
+        if(title)title.textContent=`PQ ${ctx.pq||'-'} · ${fromScope?'Ziyaret Kapsamından':'Validasyon Çalışmasından'} açıldı`;
+        if(meta)meta.textContent=`Ziyaret: ${ctx.visitName||'-'} · Alan: ${ctx.area||'-'} · ${fromScope?'Geri dönüş kapsam seçiminizi ve filtrelerinizi korur.':'Geri dönüş aynı ziyaret ve aynı PQ bağlamını açar.'}`;
+        const button=bar.querySelector('button');if(button)button.textContent=fromScope?'↩ Ziyaret Kapsamına Dön':'↩ Validasyon Çalışmasına Dön';
     }
     function hideIcaoPqLibraryReturnBar(){const bar=document.getElementById('pqDbValidationReturnBar');if(bar)bar.style.display='none';}
     function activateIcaoPqLibraryCatalog(){
@@ -4271,43 +4278,38 @@ const I18N = {
         const tab=document.getElementById('tab-pq-library');
         return !!(tab&&tab.classList.contains('active'));
     }
-    function focusIcaoPqInLibraryCatalog(ctx){
+    async function focusIcaoPqInLibraryCatalog(ctx){
         if(!ctx||!ctx.pq||!isPqLibraryTabActive())return;
         cancelIcaoPqLibraryAutoFocus();
         const token=icaoPqLibraryFocusToken;
+        const shouldOpen=()=>token===icaoPqLibraryFocusToken&&isPqLibraryTabActive();
         ensureIcaoPqLibraryReturnBar(ctx);
-        const catalogView=document.getElementById('pqDbViewCatalog');
-        if(!(catalogView&&catalogView.classList.contains('active'))) activateIcaoPqLibraryCatalog();
-        icaoPqLibraryFocusTimer=setTimeout(()=>{
-            icaoPqLibraryFocusTimer=null;
-            if(token!==icaoPqLibraryFocusToken||!isPqLibraryTabActive())return;
-            const search=document.getElementById('pqDbCatalogSearch');
-            let areaSelect=document.getElementById('pqDbCatalogArea');
-            const editionSelect=document.getElementById('pqDbCatalogEdition');
-            let needsRender=false;
-            if(editionSelect&&ctx.editionHint&&selectPqLibraryOption(editionSelect,[ctx.editionHint]))needsRender=true;
-            areaSelect=document.getElementById('pqDbCatalogArea');
-            if(areaSelect&&ctx.area&&selectPqLibraryOption(areaSelect,[ctx.area]))needsRender=true;
-            if(search&&search.value!==ctx.pq){search.value=ctx.pq;needsRender=true;}
-            if(needsRender&&typeof window.renderIcaoPqLibraryModule==='function'){
-                try{window.renderIcaoPqLibraryModule();}catch(e){console.warn('PQ Kataloğu yenilenemedi:',e);}
-            }
-            const tryOpen=()=>{
-                if(token!==icaoPqLibraryFocusToken||!isPqLibraryTabActive())return false;
-                const body=document.getElementById('pqDbCatalogBody');
-                const rows=body?Array.from(body.querySelectorAll('tr')):[];
-                const row=rows.find(r=>catalogRowMatchesPq(r,ctx.pq));
-                if(!row)return false;
-                clickPqLibraryCatalogRow(row);
-                return true;
-            };
-            if(tryOpen())return;
-            icaoPqLibraryFocusTimer=setTimeout(()=>{
-                icaoPqLibraryFocusTimer=null;
-                if(!tryOpen()) showAppRuntimeToast(`PQ ${ctx.pq} katalogda otomatik açılamadı; arama alanı PQ numarasıyla filtrelendi.`,'info');
-            },180);
-        },120);
+        try{
+            if(typeof window.openPqDbQuestion!=='function')throw new Error('PQ katalog servisi yüklenemedi.');
+            const ref=await window.openPqDbQuestion(ctx.pq,ctx.area,{shouldOpen});
+            if(!shouldOpen())return;
+            if(!ref)showAppRuntimeToast(`PQ ${ctx.pq} için PQ veri tabanında kayıt bulunamadı.`,'info');
+        }catch(error){
+            console.warn('PQ içeriği açılamadı:',error);
+            if(shouldOpen())showAppRuntimeToast('PQ içeriği açılamadı. PQ veri tabanı bağlantısını kontrol edin.','error');
+        }
     }
+    const VISIT_SCOPE_REFERENCE_FIELDS=['visitScopeSearch','visitScopePoolFilter','visitScopeVerificationFilter','visitScopeStatusFilter','visitScopeStepFilter','visitScopeDueDate',
+        'visitPrepGeneralAgenda','visitPrepGeneralQuestions','visitPrepGeneralEvidence','visitPrepGeneralAuthorities','visitPrepGeneralRisks','visitPrepGeneralNotes',
+        'visitPrepTarget','visitPrepRecordId','visitPrepQuestions','visitPrepEvidence','visitPrepAuthorities','visitPrepVerification','visitPrepAssessment','visitPrepRisks','visitPrepNotes'];
+    function openVisitScopePqReference(pq){
+        const visit=getVisitScopeRecord();pq=normalizePQ(pq||'');
+        if(!visit||!pq)return;
+        const item=buildVisitScopeCandidates().find(item=>item.pq===pq),master=pqMasterData[pq]||{};
+        const fields={};VISIT_SCOPE_REFERENCE_FIELDS.forEach(id=>{const el=document.getElementById(id);if(el)fields[id]=el.value;});
+        const ctx={entryPoint:'scope',visitId:visit.id,visitName:visit.visitName||'Ziyaret',pq,area:(item&&item.area)||master.alan||'',
+            scopeState:{fields,selectedPqs:Array.from(visitScopeSelectedPqs),selectedSteps:Array.from(visitScopeSelectedSteps)},openedAt:new Date().toISOString()};
+        writeIcaoPqLibraryReturnContext(ctx);
+        window.__skipNextPqLibraryTabRender=true;
+        switchTab('pq-library');
+        return focusIcaoPqInLibraryCatalog(ctx);
+    }
+    window.openVisitScopePqReference=openVisitScopePqReference;
     function openIcaoValidationPqReferenceInLibrary(){
         const visit=getActiveIcaoOfficialVisitRecord(),pq=String(activeIcaoValidationPq||'');
         if(!visit)return alert('Önce bir ICAO resmî ziyareti seçiniz.');
@@ -4327,6 +4329,16 @@ const I18N = {
         cancelIcaoPqLibraryAutoFocus();
         const ctx=window.icaoPqLibraryReturnContext||readIcaoPqLibraryReturnContext();
         if(!ctx||!ctx.visitId){hideIcaoPqLibraryReturnBar();return switchTab('icao-visit-validation');}
+        if(ctx.entryPoint==='scope'){
+            activeVisitScopeId=ctx.visitId;switchTab('visit-scope');
+            const select=document.getElementById('visitScopeVisitSelect');if(select)select.value=ctx.visitId;
+            const state=ctx.scopeState||{};
+            if(Array.isArray(state.selectedPqs))visitScopeSelectedPqs=new Set(state.selectedPqs);
+            if(Array.isArray(state.selectedSteps))visitScopeSelectedSteps=new Set(state.selectedSteps);
+            const restore=()=>Object.entries(state.fields||{}).forEach(([id,value])=>{const el=document.getElementById(id);if(el)el.value=value;});
+            restore();renderVisitScopeCandidates();renderVisitPreparationPanel();restore();
+            clearIcaoPqLibraryReturnContext();hideIcaoPqLibraryReturnBar();return true;
+        }
         activeIcaoOfficialVisitId=ctx.visitId;
         switchTab('icao-visit-validation');
         const visitSelect=document.getElementById('icaoOfficialVisitSelect');if(visitSelect)visitSelect.value=ctx.visitId;
@@ -5089,6 +5101,21 @@ const I18N = {
         for (const key of keys) if (master && master[key] !== undefined && master[key] !== null && String(master[key]).trim()) return String(master[key]);
         return '';
     }
+    function getVisitScopePqMetadata(pq, master = {}, sourceRows = []) {
+        const rowArea = (sourceRows.find(row => row && (row.area || row.alan)) || {});
+        const areaHint = normalizeAreaKey(master.alan || rowArea.area || rowArea.alan || '');
+        const resolved = getIcaoPqLibraryRecordForReference(pq, areaHint);
+        const record = resolved.record || {};
+        const area = normalizeAreaKey(record.area || record.alan || areaHint || 'DİĞER');
+        const verificationTypeCode = firstCommonVerificationType(collectPqVerificationValues(record)) || getCommonVerificationType(pq, area);
+        return {
+            area, verificationTypeCode,
+            verificationType: verificationTypeCode === 'onSite' ? 'On-site' : (verificationTypeCode === 'offSite' ? 'Off-site' : ''),
+            question: record.question || record.protocolQuestion || visitScopeMasterText(master, ['soru','question','pqQuestion']),
+            reviewEvidence: record.guidance || visitScopeMasterText(master, ['reviewEvidence','incelenecekKanitlar','evidence']),
+            ce: record.ce || record.sspComponent || master.ce || ''
+        };
+    }
     function buildVisitScopeCandidates() {
         const visit = getVisitScopeRecord();
         if (!visit) return [];
@@ -5098,24 +5125,24 @@ const I18N = {
         const candidates = [];
         allPqs.forEach(pq => {
             const master = pqMasterData[pq] || {};
-            const area = String(master.alan || 'DİĞER').trim().toUpperCase();
-            if (areas.size && !areas.has(area)) return;
             const sourceRows = rawData.filter(r => r && r.pq === pq);
+            const metadata = getVisitScopePqMetadata(pq, master, sourceRows);
+            const area = metadata.area;
+            if (areas.size && !areas.has(area)) return;
             const pqStatus = classifyCommonPQStatus(pq, sourceRows, { projectionDate });
             const actionItems = sourceRows.filter(isUsableCapStep).map(row => {
                 const cls = classifyCommonActionStatus(row, { projectionDate });
                 return { ...row, statusCode:cls.code, statusLabel:cls.label, delayDays:cls.delayDays || 0, daysLeft:cls.daysLeft, dueByProjection:!!cls.dueByProjection, parsedDate:cls.parsedDate || null, key:visitScopeStepKey(row) };
             });
-            const verificationTypeCode = getCommonVerificationType(pq);
-            const verificationType = verificationTypeCode === 'onSite' ? 'On-site' : (verificationTypeCode === 'offSite' ? 'Off-site' : visitScopeMasterText(master,['tur','verificationType','onOffSite']));
+            const {verificationTypeCode, verificationType} = metadata;
             candidates.push({
                 pq, master, area, statusCode:pqStatus.code, statusLabel:pqStatus.label,
-                question:visitScopeMasterText(master,['soru','question','pqQuestion']),
+                question:metadata.question,
                 questionTr:visitScopeMasterText(master,['soruTr','questionTr','pqQuestionTr']),
                 finding:visitScopeMasterText(master,['bulgu','finding','description']),
                 findingTr:visitScopeMasterText(master,['bulguTr','findingTr','descriptionTr']),
-                reviewEvidence:visitScopeMasterText(master,['reviewEvidence','incelenecekKanitlar','evidence']),
-                ce:master.ce || '', responsible:master.sorumlu || '', verificationType, verificationTypeCode,
+                reviewEvidence:metadata.reviewEvidence,
+                ce:metadata.ce, responsible:master.sorumlu || '', verificationType, verificationTypeCode,
                 actionItems, lateSteps:actionItems.filter(a => a.statusCode === COMMON_ACTION_STATUS.LATE.code).length,
                 dateRiskSteps:actionItems.filter(a => a.statusCode === COMMON_ACTION_STATUS.DATE_RISK.code).length,
                 openSteps:actionItems.filter(a => a.statusCode !== COMMON_ACTION_STATUS.COMPLETED.code).length
@@ -5178,7 +5205,7 @@ const I18N = {
         const counts={onSite:0,offSite:0,other:0};
         (poolCandidates||[]).forEach(item=>{const k=item.verificationTypeCode||'other';counts[k]=(counts[k]||0)+1;});
         const current=el.value||'all';
-        const labels={all:`Tümü (${(poolCandidates||[]).length})`,onSite:`On-site (${counts.onSite||0})`,offSite:`Off-site (${counts.offSite||0})`};
+        const labels={all:`Tümü (${(poolCandidates||[]).length})`,onSite:`On-site (${counts.onSite||0})`,offSite:`Off-site (${counts.offSite||0})`,other:`Sınıflandırılmamış (${counts.other||0})`};
         Array.from(el.options).forEach(opt=>{if(labels[opt.value])opt.textContent=labels[opt.value];});
         el.value=Array.from(el.options).some(o=>o.value===current)?current:'all';
         el.title=`PQ havuzu: ${counts.onSite||0} On-site · ${counts.offSite||0} Off-site${counts.other?` · ${counts.other} sınıflandırılamadı`:''}`;
@@ -5193,7 +5220,24 @@ const I18N = {
             return true;
         });
     }
+    let visitScopePqLoadPromise = null;
+    function ensureVisitScopePqLibrary() {
+        if (!document.getElementById('tab-visit-scope')?.classList.contains('active')) return;
+        if (typeof window.loadIcaoPqLibrary !== 'function' || window.isIcaoPqLibraryLoaded?.() || visitScopePqLoadPromise) return;
+        const note = document.getElementById('visitScopePqReferenceNote');
+        if (note) { note.hidden = false; note.textContent = 'PQ doğrulama türleri ve referans bilgileri yükleniyor…'; }
+        visitScopePqLoadPromise = Promise.resolve(window.loadIcaoPqLibrary()).then(() => {
+            if (document.getElementById('tab-visit-scope')?.classList.contains('active')) {
+                renderVisitScopeCandidates();
+                renderVisitPreparationTargetOptions();
+            }
+        }).catch(error => {
+            console.warn('Ziyaret PQ referansları yüklenemedi:', error);
+            if (note) { note.hidden = false; note.textContent = 'PQ referans bilgileri yüklenemedi. PQ veri tabanı bağlantısını kontrol edip yeniden deneyin.'; }
+        }).finally(() => { visitScopePqLoadPromise = null; });
+    }
     function renderVisitScopeModule(forceReload = false) {
+        ensureVisitScopePqLibrary();
         const select = document.getElementById('visitScopeVisitSelect');
         if (!select) return;
         const visits = getVisitRecords().sort((a,b) => String(a.visitName || '').localeCompare(String(b.visitName || ''),'tr'));
@@ -5291,6 +5335,8 @@ const I18N = {
         const list = document.getElementById('visitScopePqList'); if (!list) return;
         const visit = getVisitScopeRecord();
         if (!visit) { list.innerHTML='<div class="visit-scope-empty">Kapsam oluşturmak için bir ziyaret seçiniz.</div>'; updateVisitScopeKpis([]); return; }
+        const referenceNote=document.getElementById('visitScopePqReferenceNote');
+        if(referenceNote&&window.isIcaoPqLibraryLoaded?.()){referenceNote.hidden=true;referenceNote.textContent='';}
         const allCandidates=buildVisitScopeCandidates();
         const poolCandidates=getVisitScopePoolCandidates(visit,allCandidates);
         updateVisitScopeVerificationFilterCounts(poolCandidates);
@@ -5311,7 +5357,7 @@ const I18N = {
                 const dayText=a.statusCode===COMMON_ACTION_STATUS.LATE.code?`${a.delayDays} gün gecikmiş`:(a.statusCode===COMMON_ACTION_STATUS.DATE_RISK.code?'Tarih eksik/geçersiz':(a.daysLeft!==null&&a.daysLeft!==undefined?`${a.daysLeft} gün kaldı`:''));
                 return visit&&isIcaoOfficialVisit(visit) ? `<div class="visit-step-item ${visitScopeStatusClass(a)}"><label><b>Step ${escapeHtml(a.step || '-')}</b> <span style="color:var(--muted);font-size:9px">(bilgi amaçlı)</span> — ${escapeHtml(shortenVisitText(a.action,210))}<small>${escapeHtml(a.office || 'Ofis belirtilmedi')} | ${escapeHtml(a.estDate || 'Tarih yok')} | ${escapeHtml(a.statusLabel || '')}${dayText?' | '+escapeHtml(dayText):''}</small></label></div>` : `<div class="visit-step-item ${visitScopeStatusClass(a)}"><input type="checkbox" ${checked?'checked':''} onchange="toggleVisitScopeStep('${encoded}','${item.pq}',this.checked)"><label><b>Step ${escapeHtml(a.step || '-')}</b> — ${escapeHtml(shortenVisitText(a.action,210))}<small>${escapeHtml(a.office || 'Ofis belirtilmedi')} | ${escapeHtml(a.estDate || 'Tarih yok')} | ${escapeHtml(a.statusLabel || '')}${dayText?' | '+escapeHtml(dayText):''}</small></label></div>`;
             }).join('') : '<div class="visit-form-note">Görünüm filtresine uygun CAP adımı yok.</div>';
-            return `<article class="visit-pq-card ${selected?'selected':''}"><div class="visit-pq-head"><input type="checkbox" ${selected?'checked':''} onchange="toggleVisitScopePq('${item.pq}',this.checked)"><div><div class="visit-pq-title">PQ ${escapeHtml(item.pq)} — ${escapeHtml(item.area)}</div><div class="visit-pq-meta">CE: ${escapeHtml(item.ce||'-')} | Doğrulama: ${escapeHtml(item.verificationType||'Sınıflandırılmadı')} | PQ sorumlusu: ${escapeHtml(item.responsible||'-')} | Açık adım: ${item.openSteps} | Gecikmiş: ${item.lateSteps} | Tarih riski: ${item.dateRiskSteps}</div></div><span class="visit-pq-status">${escapeHtml(item.statusLabel||'-')}</span></div><div class="visit-pq-finding">${escapeHtml(finding)}</div><div class="visit-step-list"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><b style="font-size:10px;color:var(--muted)">CAP Adımları (${steps.length})</b>${visit&&isIcaoOfficialVisit(visit)?'<span style="font-size:9px;color:var(--muted)">Step seçimi yapılmaz</span>':`<button type="button" class="btn-outline" style="font-size:9px;padding:4px 6px" onclick="selectVisitScopePqSteps('${item.pq}')">Görünen adımları seç/kaldır</button>`}</div>${stepHtml}</div></article>`;
+            return `<article class="visit-pq-card ${selected?'selected':''}"><div class="visit-pq-head"><input type="checkbox" ${selected?'checked':''} onchange="toggleVisitScopePq('${item.pq}',this.checked)"><div><div class="visit-pq-title">PQ ${escapeHtml(item.pq)} — ${escapeHtml(item.area)} <button type="button" class="btn-outline" style="font-size:10px;padding:3px 6px" onclick="openVisitScopePqReference('${escapeHtml(item.pq)}')">📚 PQ İçeriği ↗</button></div><div class="visit-pq-meta">CE: ${escapeHtml(item.ce||'-')} | Doğrulama: ${escapeHtml(item.verificationType||'Sınıflandırılmadı')} | PQ sorumlusu: ${escapeHtml(item.responsible||'-')} | Açık adım: ${item.openSteps} | Gecikmiş: ${item.lateSteps} | Tarih riski: ${item.dateRiskSteps}</div></div><span class="visit-pq-status">${escapeHtml(item.statusLabel||'-')}</span></div><div class="visit-pq-finding">${escapeHtml(finding)}</div><div class="visit-step-list"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><b style="font-size:10px;color:var(--muted)">CAP Adımları (${steps.length})</b>${visit&&isIcaoOfficialVisit(visit)?'<span style="font-size:9px;color:var(--muted)">Step seçimi yapılmaz</span>':`<button type="button" class="btn-outline" style="font-size:9px;padding:4px 6px" onclick="selectVisitScopePqSteps('${item.pq}')">Görünen adımları seç/kaldır</button>`}</div>${stepHtml}</div></article>`;
         }).join('');
         updateVisitScopeKpis(poolCandidates); updateVisitScopeSummary(); renderVisitPreparationTargetOptions(allCandidates);
     }
@@ -8196,8 +8242,8 @@ const I18N = {
         const visit=getLatestDashboardIcaoVisitSummary();
         const result={release:APP_RELEASE.label,verificationTypeSample:null,officialVisit:visit?{name:visit.visit.visitName||visit.visit.icaoVisitType,scope:visit.scopeCount,satisfactory:visit.satisfactory,notSatisfactory:visit.notSatisfactory,followUp:visit.followUp,notEvaluated:visit.notEvaluated,draftEi:visit.impact?visit.impact.newPct:null,newSat:visit.impact?visit.impact.newSat:null,total:visit.impact?visit.impact.total:null}:null,pendingNoticeUsesVisit:!!visit};
         try{const first=Object.keys(pqMasterData||{})[0];if(first)result.verificationTypeSample={pq:first,type:getCommonVerificationType(first)};}catch(_){}
-        result.passed=APP_RELEASE.label.includes('RC1.4.15')&&(!visit||visit.scopeCount>=visit.satisfactory);
-        console.log('RC1.4.15 dashboard öz denetimi:',result);return result;
+        result.passed=APP_RELEASE.label.includes('RC1.4.16')&&(!visit||visit.scopeCount>=visit.satisfactory);
+        console.log('RC1.4.16 dashboard öz denetimi:',result);return result;
     };
 
     window.runSimulator = function() {
