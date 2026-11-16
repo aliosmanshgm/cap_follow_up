@@ -77,8 +77,8 @@
         return [];
     }
     function linkedStateSnapshot(record){try{return record&&record.stateSnapshotId&&typeof window.getStateComplianceSnapshotById==='function'?window.getStateComplianceSnapshotById(record.stateSnapshotId):null;}catch(_){return null;}}
-    function areaSnapshot(record,scopeAreas){
-        const state=linkedStateSnapshot(record),source=record&&record.areas||{},counts=record&&record.areaCounts||{},out={};
+    function areaSnapshot(record,scopeAreas,stateOverride){
+        const state=(stateOverride===undefined?linkedStateSnapshot(record):stateOverride),source=record&&record.areas||{},counts=record&&record.areaCounts||{},out={};
         AREAS.forEach(area=>{
             const stateCount=state&&state.counts&&state.counts.areas&&state.counts.areas[area];
             const c=stateCount||counts[area]||{};
@@ -87,10 +87,10 @@
             out[area]=clean({ei:explicitEi!==null?explicitEi:calcEi(satisfactory,applicable),satisfactory,applicable,notSatisfactory:intOrNull(c.notSatisfactory),notApplicable:intOrNull(c.notApplicable),inScope:scopeAreas.includes(area),stateSource:state?'state_snapshot':(stateCount?'area_counts':'legacy')});
         });return out;
     }
-    function normalizeOfficialRecord(recordId,record){
+    function normalizeOfficialRecord(recordId,record,stateOverride){
         const eventId=eventIdForOfficial(recordId),snapshotId=snapshotIdForOfficial(recordId);
         const scopeAreas=defaultScopeForLegacy(record);
-        const state=linkedStateSnapshot(record),stateOverall=state&&state.counts&&state.counts.overall||{};
+        const state=(stateOverride===undefined?linkedStateSnapshot(record):stateOverride),stateOverall=state&&state.counts&&state.counts.overall||{};
         const overallSatisfactory=intOrNull(state?stateOverall.satisfactory:record.overallSatisfactory);
         const overallApplicable=intOrNull(state?stateOverall.applicable:record.overallApplicable);
         const calculatedOverall=num(state?stateOverall.ei:(record.calculated&&record.calculated.overallEI));
@@ -143,7 +143,7 @@
             pqVersion,
             pqRevision,
             overall:{ei:overallEi,satisfactory:overallSatisfactory,applicable:overallApplicable,calculatedEi:calculatedOverall,publishedEi:publishedOverall},
-            areas:areaSnapshot(record,scopeAreas),
+            areas:areaSnapshot(record,scopeAreas,stateOverride),
             stateSnapshotId:record.stateSnapshotId||'',
             linkedVisitId:record.linkedVisitId||'',
             sourceOfTruth:record.sourceOfTruth||{},
@@ -185,8 +185,8 @@
     window.normalizeOfficialEiToAssessmentModel=function(recordId,record){return normalizeOfficialRecord(recordId,record||{});};
 
     // Also used by source removal so records and their derived metrics change atomically.
-    window.buildOfficialEiAssessmentUpdates=function(recordId,record){
-        const normalized=normalizeOfficialRecord(recordId,record);
+    window.buildOfficialEiAssessmentUpdates=function(recordId,record,stateOverride){
+        const normalized=normalizeOfficialRecord(recordId,record,stateOverride);
         return {
             [`${EVENT_PATH}/${normalized.eventId}`]:withAudit(normalized.eventCore,(window.icaoAssessmentEvents||{})[normalized.eventId],normalized.fingerprint),
             [`${SNAPSHOT_PATH}/${normalized.snapshotId}`]:withAudit(normalized.snapshotCore,(window.icaoEiSnapshots||{})[normalized.snapshotId],normalized.fingerprint)
@@ -236,8 +236,8 @@
         window.icaoAssessmentModelLoaded=false;updateStatus();
         if(!firebase.auth().currentUser)return;
         eventRef=db.ref(EVENT_PATH);snapshotRef=db.ref(SNAPSHOT_PATH);
-        eventCallback=snap=>{window.icaoAssessmentEvents=snap.val()||{};window.icaoAssessmentModelLoaded=true;updateStatus();scheduleAssessmentUiRefresh();if(typeof window.renderSystemIntegrityCenter==='function'&&document.getElementById('tab-quality')?.classList.contains('active'))setTimeout(()=>window.renderSystemIntegrityCenter(true),0);};
-        snapshotCallback=snap=>{window.icaoEiSnapshots=snap.val()||{};window.icaoAssessmentModelLoaded=true;updateStatus();scheduleAssessmentUiRefresh();if(typeof window.renderSystemIntegrityCenter==='function'&&document.getElementById('tab-quality')?.classList.contains('active'))setTimeout(()=>window.renderSystemIntegrityCenter(true),0);};
+        eventCallback=snap=>{window.icaoAssessmentEvents=snap.val()||{};window.icaoAssessmentModelLoaded=true;updateStatus();window.refreshStateSnapshotAssessmentOptions?.();scheduleAssessmentUiRefresh();if(typeof window.renderSystemIntegrityCenter==='function'&&document.getElementById('tab-quality')?.classList.contains('active'))setTimeout(()=>window.renderSystemIntegrityCenter(true),0);};
+        snapshotCallback=snap=>{window.icaoEiSnapshots=snap.val()||{};window.icaoAssessmentModelLoaded=true;updateStatus();window.refreshStateSnapshotAssessmentOptions?.();scheduleAssessmentUiRefresh();if(typeof window.renderSystemIntegrityCenter==='function'&&document.getElementById('tab-quality')?.classList.contains('active'))setTimeout(()=>window.renderSystemIntegrityCenter(true),0);};
         eventRef.on('value',eventCallback,err=>{console.error('Assessment Event verisi okunamadı',err);window.icaoAssessmentModelLoaded=true;updateStatus();});
         snapshotRef.on('value',snapshotCallback,err=>{console.error('EI Snapshot verisi okunamadı',err);window.icaoAssessmentModelLoaded=true;updateStatus();});
     };

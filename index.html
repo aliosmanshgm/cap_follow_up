@@ -13,7 +13,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.10/pdfmake.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.10/vfs_fonts.js"></script>
-    <link rel="stylesheet" href="css/app.css?v=20261116-v1.0-rc1.4.18">
+    <link rel="stylesheet" href="css/app.css?v=20261116-v1.0-rc1.4.19">
 </head>
 <body>
 
@@ -149,7 +149,7 @@
                 <button onclick="toggleFiltersPanel()" class="btn-outline header-primary-action">🔎 Filtreler</button>
                 <button type="button" id="activeScreenPdfBtn" onclick="exportPDF()" style="background:#dc2626;" title="Aktif ekranı PDF olarak dışa aktar">📄 Ekran PDF</button>
                 <button id="activeScreenExcelBtn" onclick="exportExcel()" style="background:#059669;" title="Aktif ekranı Excel olarak dışa aktar">📊 Ekran Excel</button>
-                <button type="button" id="appReleaseBadge" class="system-connection-badge ok release-badge" onclick="openSystemHealthModal()" title="Release Candidate sistem kontrolünü aç">RC1.4.18 · v1.0</button>
+                <button type="button" id="appReleaseBadge" class="system-connection-badge ok release-badge" onclick="openSystemHealthModal()" title="Release Candidate sistem kontrolünü aç">RC1.4.19 · v1.0</button>
                 <button type="button" id="systemConnectionBadge" class="system-connection-badge checking" onclick="openSystemHealthModal()" title="Sistem bağlantı ve kayıt durumunu görüntüle">⚪ Kontrol ediliyor</button>
                 <div class="more-actions-wrap">
                     <button class="btn-outline" onclick="toggleMoreActions(event)">⚙️ Diğer <span style="font-size:10px;">▼</span></button>
@@ -335,7 +335,7 @@
         <section class="data-panel-card state-snapshot-source-guide"><h4>Hangi kayıt EI verisini besliyor?</h4><p>CMAA ve OSVA için ilgili dönemin tüm PQ durumlarını (S / NS / N-A) içeren Excel dosyasını yükleyin ve doğru değerlendirmeye bağlayın. Yalnız bulgu listesi EI paydasını sağlamaz. Kapsam dışı alanlar ziyaretle valide edilmiş sayılmaz.</p><p>Yalnız ICAO'nun yayımladığı EI yüzdeleri varsa değerlendirme kaydına girilebilir; PQ ayrıntıları olmadan bulgu–CAP eşleştirmesi ve projeksiyon hesaplanmaz. CAP Word dosyaları yalnız CAP adımlarının ilerleme geçmişini günceller.</p><div id="stateSnapshotSources"></div></section>
         <div class="icao-ei-auto-grid">
           <section class="data-panel-card"><h4>1️⃣ Full PQ Status Kaynağı</h4><input id="stateSnapshotFileInput" type="file" accept=".xlsx,.xls" style="display:none" onchange="handleStateSnapshotFile(event)"><button type="button" class="btn-outline" style="width:100%;justify-content:center;" onclick="triggerStateSnapshotFile()">📥 Tüm PQ Statüleri Excel'ini Seç</button><div class="icao-ei-auto-help" style="margin-top:8px;">Dosyada her PQ için statü (Satisfactory / Not Satisfactory / N/A) bulunmalıdır. Yalnız açık finding listesi bu katmanda kabul edilmez.</div><div id="stateSnapshotPreview" style="margin-top:10px;"></div></section>
-          <section class="data-panel-card"><h4>2️⃣ Snapshot Metadata</h4><input type="hidden" id="stateSnapshotEditId"><div class="icao-ei-auto-form-grid"><div class="full"><label>Snapshot adı</label><input id="stateSnapshotName"></div><div><label>Temsil ettiği durum tarihi *</label><input type="date" id="stateSnapshotDate"><small style="display:block;color:var(--muted);margin-top:4px;">Dosyanın indirildiği/yüklendiği tarih değil; PQ statülerinin fiilen geçerli olduğu tarih.</small></div><div><label>Bağlı ICAO değerlendirmesi</label><select id="stateSnapshotAssessmentEvent"><option value="">Bağımsız / mevcut genel durum</option></select><small style="display:block;color:var(--muted);margin-top:4px;">Snapshot yalnız burada seçilen assessment'a bağlanır; import tarihi otomatik eşleştirme için kullanılmaz.</small></div><div><label>PQ sürümü</label><input id="stateSnapshotPqVersion" placeholder="2024"></div><div><label>PQ revizyonu</label><input id="stateSnapshotPqRevision" placeholder="Rev.1"></div></div><div style="display:flex;gap:8px;margin-top:10px"><button type="button" onclick="saveStateSnapshot()" style="flex:1;justify-content:center;">💾 State Snapshot Olarak Kaydet</button><button type="button" class="btn-outline" onclick="resetStateSnapshotMetadataForm()">Temizle</button></div><div style="margin-top:12px;border-top:1px solid var(--border);padding-top:10px;"><h4 style="margin:0 0 8px;">Kayıtlı Snapshot'lar</h4><div id="stateSnapshotList"></div></div></section>
+          <section class="data-panel-card"><h4>2️⃣ Snapshot Metadata</h4><input type="hidden" id="stateSnapshotEditId"><div class="icao-ei-auto-form-grid"><div class="full"><label>Snapshot adı</label><input id="stateSnapshotName"></div><div><label>Temsil ettiği durum tarihi *</label><input type="date" id="stateSnapshotDate"><small style="display:block;color:var(--muted);margin-top:4px;">Dosyanın indirildiği/yüklendiği tarih değil; PQ statülerinin fiilen geçerli olduğu tarih.</small></div><div><label>Bağlı ICAO değerlendirmesi</label><select id="stateSnapshotAssessmentEvent" onchange="onStateSnapshotAssessmentChange()"><option value="">Bağımsız / mevcut genel durum</option></select><small style="display:block;color:var(--muted);margin-top:4px;">Snapshot yalnız burada seçilen assessment'a bağlanır; import tarihi otomatik eşleştirme için kullanılmaz.</small></div><div id="stateSnapshotAssessmentStatusField" hidden><label>Bu dosyanın sonuç statüsü *</label><select id="stateSnapshotAssessmentStatus"><option value="">Sonuç statüsünü seçin...</option><option value="official">Nihai / Resmî</option><option value="draft">Taslak</option><option value="provisional">Geçici</option></select><small style="display:block;color:var(--muted);margin-top:4px;">Ziyaret için EI değerlendirmesi yoksa snapshot kaydedilirken seçtiğiniz statüyle oluşturulur. Taslak ve geçici sonuçlar resmî EI'yi değiştirmez.</small></div><div><label>PQ sürümü</label><input id="stateSnapshotPqVersion" placeholder="2024"></div><div><label>PQ revizyonu</label><input id="stateSnapshotPqRevision" placeholder="Rev.1"></div></div><div style="display:flex;gap:8px;margin-top:10px"><button type="button" onclick="saveStateSnapshot()" style="flex:1;justify-content:center;">💾 State Snapshot Olarak Kaydet</button><button type="button" class="btn-outline" onclick="resetStateSnapshotMetadataForm()">Temizle</button></div><div style="margin-top:12px;border-top:1px solid var(--border);padding-top:10px;"><h4 style="margin:0 0 8px;">Kayıtlı Snapshot'lar</h4><div id="stateSnapshotList"></div></div></section>
         </div>
     </div>
 </div>
@@ -2612,28 +2612,28 @@
 </div>
 
 
-<script src="js/services/cap-current-source.js?v=20261116-v1.0-rc1.4.18"></script>
-<script src="js/app.js?v=20261116-v1.0-rc1.4.18"></script>
-<script src="js/modules/access-control.js?v=20261116-v1.0-rc1.4.18"></script>
-<script src="js/modules/visit-sync.js?v=20261116-v1.0-rc1.4.18"></script>
-<script src="js/modules/visit-hub.js?v=20261116-v1.0-rc1.4.18"></script>
-<script src="js/modules/state-compliance.js?v=20261116-v1.0-rc1.4.18"></script>
-<script src="js/modules/assessment-events.js?v=20261116-v1.0-rc1.4.18"></script>
-<script src="js/modules/official-ei-management.js?v=20261116-v1.0-rc1.4.18"></script>
-<script src="js/modules/official-ei-automation.js?v=20261116-v1.0-rc1.4.18"></script>
-<script src="js/parsers/pq-docx-parser.js?v=20261116-v1.0-rc1.4.18"></script>
-<script src="js/modules/pq-linkage.js?v=20261116-v1.0-rc1.4.18"></script>
-<script src="js/modules/validation-readiness.js?v=20261116-v1.0-rc1.4.18"></script>
-<script src="js/modules/assessment-impact.js?v=20261116-v1.0-rc1.4.18"></script>
-<script src="js/modules/management-shell.js?v=20261116-v1.0-rc1.4.18"></script>
-<script src="js/modules/drive-documents.js?v=20261116-v1.0-rc1.4.18"></script>
-<script src="js/services/pq-repository.js?v=20261116-v1.0-rc1.4.18"></script>
-<script src="js/modules/pq-library.js?v=20261116-v1.0-rc1.4.18"></script>
-<script src="js/modules/responsibility-registry.js?v=20261116-v1.0-rc1.4.18"></script>
-<script src="js/modules/system-integrity.js?v=20261116-v1.0-rc1.4.18"></script>
-<script src="js/modules/action-center.js?v=20261116-v1.0-rc1.4.18"></script>
-<script src="js/modules/notification-center.js?v=20261116-v1.0-rc1.4.18"></script>
-<script src="js/modules/reporting-center.js?v=20261116-v1.0-rc1.4.18"></script>
-<script src="js/modules/dashboard-overview.js?v=20261116-v1.0-rc1.4.18"></script>
+<script src="js/services/cap-current-source.js?v=20261116-v1.0-rc1.4.19"></script>
+<script src="js/app.js?v=20261116-v1.0-rc1.4.19"></script>
+<script src="js/modules/access-control.js?v=20261116-v1.0-rc1.4.19"></script>
+<script src="js/modules/visit-sync.js?v=20261116-v1.0-rc1.4.19"></script>
+<script src="js/modules/visit-hub.js?v=20261116-v1.0-rc1.4.19"></script>
+<script src="js/modules/state-compliance.js?v=20261116-v1.0-rc1.4.19"></script>
+<script src="js/modules/assessment-events.js?v=20261116-v1.0-rc1.4.19"></script>
+<script src="js/modules/official-ei-management.js?v=20261116-v1.0-rc1.4.19"></script>
+<script src="js/modules/official-ei-automation.js?v=20261116-v1.0-rc1.4.19"></script>
+<script src="js/parsers/pq-docx-parser.js?v=20261116-v1.0-rc1.4.19"></script>
+<script src="js/modules/pq-linkage.js?v=20261116-v1.0-rc1.4.19"></script>
+<script src="js/modules/validation-readiness.js?v=20261116-v1.0-rc1.4.19"></script>
+<script src="js/modules/assessment-impact.js?v=20261116-v1.0-rc1.4.19"></script>
+<script src="js/modules/management-shell.js?v=20261116-v1.0-rc1.4.19"></script>
+<script src="js/modules/drive-documents.js?v=20261116-v1.0-rc1.4.19"></script>
+<script src="js/services/pq-repository.js?v=20261116-v1.0-rc1.4.19"></script>
+<script src="js/modules/pq-library.js?v=20261116-v1.0-rc1.4.19"></script>
+<script src="js/modules/responsibility-registry.js?v=20261116-v1.0-rc1.4.19"></script>
+<script src="js/modules/system-integrity.js?v=20261116-v1.0-rc1.4.19"></script>
+<script src="js/modules/action-center.js?v=20261116-v1.0-rc1.4.19"></script>
+<script src="js/modules/notification-center.js?v=20261116-v1.0-rc1.4.19"></script>
+<script src="js/modules/reporting-center.js?v=20261116-v1.0-rc1.4.19"></script>
+<script src="js/modules/dashboard-overview.js?v=20261116-v1.0-rc1.4.19"></script>
 </body>
 </html>

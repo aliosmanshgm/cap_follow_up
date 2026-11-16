@@ -266,7 +266,7 @@
     window.toggleIcaoPublishedOverride=function(checked){setPublishedInputsEnabled(checked===true);};
     function updateScopeSuccessRate(){const app=intOrNull(formValue('icaoEiScopeApplicable')),sat=intOrNull(formValue('icaoEiScopeSatisfactory'));const el=document.getElementById('icaoEiScopeSuccessRate');if(!el)return;el.value=app&&sat!==null?`${Math.round((sat/app)*10000)/100}%`:'';}
     window.updateIcaoScopeSuccessRate=updateScopeSuccessRate;
-    function officialVisits(){try{const src=(typeof icaoVisits!=='undefined'&&icaoVisits)||window.icaoVisits||{};return Object.entries(src||{}).map(([id,v])=>({id,...(v||{})})).filter(v=>!v.isDeleted&&String(v.visitType||v.type||'').toLowerCase()==='icao_official').sort((a,b)=>String(a.plannedStart||a.startDate||'').localeCompare(String(b.plannedStart||b.startDate||'')));}catch(_){return[];}}
+    function officialVisits(){try{const src=(typeof icaoVisits!=='undefined'&&icaoVisits)||window.icaoVisits||{};return Object.entries(src||{}).map(([id,v])=>({...(v||{}),id})).filter(v=>!v.isDeleted&&String(v.visitType||v.type||'').toLowerCase()==='icao_official').sort((a,b)=>String(a.plannedStart||a.startDate||'').localeCompare(String(b.plannedStart||b.startDate||'')));}catch(_){return[];}}
     function populateOfficialVisitSelect(selected=''){const el=document.getElementById('icaoEiLinkedVisit');if(!el)return;const rows=officialVisits();el.innerHTML='<option value="">Ziyarete bağlı değil</option>'+rows.map(v=>`<option value="${escapeHtml(v.id)}">${escapeHtml(v.visitName||v.title||'ICAO ziyareti')} · ${escapeHtml(v.plannedStart||v.startDate||'-')}</option>`).join('');if(rows.some(v=>String(v.id)===String(selected)))el.value=selected;}
     function visitScopeMetrics(visitId){const visit=officialVisits().find(v=>String(v.id)===String(visitId));if(!visit)return null;let pqs=[];try{pqs=typeof getIcaoVisitScopePqs==='function'?getIcaoVisitScopePqs(visit):[];}catch(_){pqs=[];}let sat=0,evaluated=0,draftSat=0;for(const p of pqs){let r=null;try{r=typeof getIcaoValidationForPq==='function'?getIcaoValidationForPq(visit,String(p.pq||'')):null;}catch(_){r=null;}if(!r)continue;const draft=String(r.draftResult||'');const final=String(r.finalResult||'');if(final){evaluated++;if(final==='satisfactory')sat++;}else if(draft){evaluated++;if(draft==='satisfactory')draftSat++;else if(String(r.status||'')==='validated')draftSat++;}else if(String(r.status||'')==='validated'){evaluated++;draftSat++;}}
       return{visit,scopeApplicable:pqs.length,scopeSatisfactory:sat+draftSat,evaluated,draftSatisfactory:draftSat,finalSatisfactory:sat,source:'linked_icao_visit'};}
@@ -336,6 +336,44 @@
         }
         return{updates,affected};
     };
+    // A visit becomes an EI assessment only when a user explicitly saves a bound snapshot.
+    window.buildStateSnapshotAssessmentBinding=function(snapshotId,snapshot,target,resultStatus){
+        const now=new Date().toISOString(),who=actor();
+        let recordId=target?.officialRecordId||target?.sourceRecordId||target?.linkedOfficialEiRecordId||'',record=null;
+        let linkedVisitId=target?.linkedVisitId||'';
+        if(target?.selectionKind==='visit'){
+            if(!['official','draft','provisional'].includes(resultStatus))throw new Error('Ziyarete bağlamak için snapshot sonucunu Nihai / Resmî, Taslak veya Geçici olarak seçin.');
+            const visit=officialVisits().find(v=>v.id===target.linkedVisitId&&v.active!==false&&v.status!=='cancelled');
+            if(!visit)throw new Error('Seçilen ICAO ziyareti artık kullanılamıyor. Listeyi yenileyin.');
+            linkedVisitId=visit.id;
+            const existing=Object.entries(window.icaoOfficialEiRecords||{}).find(([,r])=>r&&!r.isDeleted&&r.active!==false&&r.linkedVisitId===visit.id&&r.resultStatus===resultStatus);
+            recordId=existing?.[0]||db.ref('icao_official_ei').push().key;
+            const previous=existing?.[1]||{};
+            const assessmentDate=visit.actualEnd||visit.actualStart||visit.plannedEnd||visit.plannedStart||'';
+            if(!assessmentDate)throw new Error('Ziyaretin gerçekleşen veya planlanan tarihini ziyaret kaydında girin.');
+            record={...previous,name:previous.name||visit.visitName||visit.icaoVisitType||'ICAO ziyareti',type:visit.icaoVisitType||'OTHER',resultStatus,
+                startDate:visit.actualStart||visit.plannedStart||'',endDate:visit.actualEnd||visit.plannedEnd||'',assessmentDate,
+                scopeAreas:(visit.areas||[]).map(a=>String(a).toUpperCase()).filter(a=>AREAS.includes(a)),linkedVisitId,
+                pqVersion:snapshot.pqVersion||previous.pqVersion||'',pqRevision:snapshot.pqRevision||previous.pqRevision||'',
+                published:previous.published||{override:false},eventMetrics:previous.eventMetrics||{metricType:'assessment_scope',linkedVisitId,metricsSource:'linked_icao_visit'},
+                source:previous.source||`Full PQ Status: ${snapshot.sourceFile?.name||snapshot.name||''}`,active:true,isDeleted:false,
+                createdAt:previous.createdAt||now,createdBy:previous.createdBy||who,updatedAt:now,updatedBy:who};
+        }else if(recordId){
+            record=(window.icaoOfficialEiRecords||{})[recordId];
+            if(!record||record.isDeleted||record.active===false)throw new Error('Seçilen EI değerlendirmesi artık kullanılamıyor. Listeyi yenileyin.');
+            linkedVisitId=record.linkedVisitId||linkedVisitId;
+            resultStatus=record.resultStatus||'official';
+        }
+        if(!record){
+            return {snapshot:{...snapshot,linkedAssessmentEventId:target?.id||'',linkedVisitId,resultStatus:target?.resultStatus||snapshot.resultStatus||'',linkMode:target?'explicit_assessment':'unlinked'},updates:{}};
+        }
+        const links=window.getAssessmentEventIdsForOfficialEi(recordId);
+        const bound={...snapshot,id:snapshotId,linkedAssessmentEventId:links.eventId,linkedVisitId,resultStatus,linkMode:'explicit_assessment'};
+        const fields=snapshotLinkPayload(recordId,record,bound,now,who),next={...record,assessmentEventId:links.eventId,eiSnapshotId:links.snapshotId};
+        const prefix=`icao_official_ei/${recordId}/`;
+        for(const [path,value] of Object.entries(fields)){const key=path.slice(prefix.length);if(value===null)delete next[key];else next[key]=value;}
+        return {snapshot:bound,updates:{[`icao_official_ei/${recordId}`]:next,...window.buildOfficialEiAssessmentUpdates(recordId,next,bound)}};
+    };
     window.reconcileExplicitStateSnapshotLinks=async function(options={}){if(typeof window.hasAccessPermission==='function'&&!window.hasAccessPermission('officialEi.write'))return{updated:0,skipped:'permission'};const records=window.icaoOfficialEiRecords||{},updates={},now=new Date().toISOString(),who=actor();let count=0,detached=0;for(const [id,r] of Object.entries(records)){if(!r||r.isDeleted)continue;const eventId=officialEventIdForRecord(id,r),snap=explicitSnapshotForEvent(eventId);if(snap){if(String(r.stateSnapshotId||'')!==String(snap.id)||String(r.sourceOfTruth&&r.sourceOfTruth.linkMode||'')!=='explicit_assessment_binding'){Object.assign(updates,snapshotLinkPayload(id,r,snap,now,who));count++;}continue;}const currentSnap=r.stateSnapshotId&&typeof window.getStateComplianceSnapshotById==='function'?window.getStateComplianceSnapshotById(r.stateSnapshotId):null;const invalidCurrent=!!r.stateSnapshotId&&(!currentSnap||String(currentSnap.linkedAssessmentEventId||'')!==String(eventId));const oldAuto=String(r.sourceOfTruth&&r.sourceOfTruth.linkMode||'')==='automatic_post_event';if(invalidCurrent||oldAuto){Object.assign(updates,detachInvalidStateLink(id,r,now,who));detached++;continue;}if(String(r.resultStatus||'official')==='official'&&/draft|taslak/i.test(String(r.source||'')+' '+String(r.name||''))){updates[`icao_official_ei/${id}/resultStatus`]='draft';updates[`icao_official_ei/${id}/updatedAt`]=now;updates[`icao_official_ei/${id}/updatedBy`]=who;count++;}}
       if(Object.keys(updates).length){await db.ref().update(updates);if(!options.silent&&typeof showAppRuntimeToast==='function')showAppRuntimeToast(`${count} assessment açık snapshot bağlantısına göre güncellendi${detached?`, ${detached} yanlış otomatik bağlantı kaldırıldı`:''}.`,'success');}return{updated:count,detached};};
     window.autoLinkStateSnapshotsToOfficialEi=window.reconcileExplicitStateSnapshotLinks;
@@ -350,7 +388,7 @@
             window.icaoOfficialEiRecords=snap.val()||{};
             window.icaoOfficialEiManagementLoaded=true;
             renderList();
-            if(typeof window.renderStateSnapshotSources==='function')window.renderStateSnapshotSources();
+            window.refreshStateSnapshotAssessmentOptions?.();
             renderIcaoOfficialPeriodControls();
             if(typeof renderIcaoOfficialChart==='function')renderIcaoOfficialChart();
             renderIcaoOfficialTrend();

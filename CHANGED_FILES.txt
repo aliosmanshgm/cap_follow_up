@@ -1,18 +1,16 @@
-RC1.4.18 — RC1.4.17 sürümüne göre değişen dosyalar
+RC1.4.19 — RC1.4.18 sürümüne göre değişen dosyalar
 
 CHANGED_FILES.txt
-EI_KAYNAKLARI_QA_REPORT_RC1_4_18.json
-EI_KAYNAKLARI_SILME_NOTLARI_RC1_4_18.txt
 RC_STATIC_QA_REPORT.json
+SNAPSHOT_ZIYARET_BAGLANTISI_RC1_4_19.txt
+SNAPSHOT_ZIYARET_QA_REPORT_RC1_4_19.json
 app-manifest.json
-css/app.css
 index.html
 js/app.js
 js/modules/assessment-events.js
-js/modules/dashboard-overview.js
 js/modules/official-ei-management.js
 js/modules/state-compliance.js
-tools/state-snapshot-tests.mjs
+tools/snapshot-assessment-tests.mjs
 
-Kurulum ve kaynak rehberi: EI_KAYNAKLARI_SILME_NOTLARI_RC1_4_18.txt
-Önceki dashboard, CAP, PQ ve ziyaret düzeltmeleri korunmuştur.
+Kurulum ve kullanım: SNAPSHOT_ZIYARET_BAGLANTISI_RC1_4_19.txt
+Önceki silme, dashboard, CAP, PQ ve ziyaret düzeltmeleri korunur.

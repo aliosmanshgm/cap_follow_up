@@ -1,6 +1,6 @@
 {
-  "release": "1.0.0-rc1.4.18",
-  "generatedAt": "2026-11-16T19:57:47.194Z",
+  "release": "1.0.0-rc1.4.19",
+  "generatedAt": "2026-11-16T20:51:10.044Z",
   "passed": true,
   "counts": {
     "passes": 51,
@@ -12,7 +12,7 @@
   "passes": [
     {
       "name": "HTML duplicate IDs",
-      "detail": "961/961 benzersiz"
+      "detail": "963/963 benzersiz"
     },
     {
       "name": "Yerel asset referansları",
@@ -20,7 +20,7 @@
     },
     {
       "name": "RC cache etiketi",
-      "detail": "24 yerel asset 20261116-v1.0-rc1.4.18"
+      "detail": "24 yerel asset 20261116-v1.0-rc1.4.19"
     },
     {
       "name": "JavaScript syntax",
@@ -28,7 +28,7 @@
     },
     {
       "name": "Inline handler fonksiyonları",
-      "detail": "512 handler"
+      "detail": "513 handler"
     },
     {
       "name": "Tab / Hub rotaları",
@@ -36,7 +36,7 @@
     },
     {
       "name": "Manifest / uygulama sürümü",
-      "detail": "1.0.0-rc1.4.18"
+      "detail": "1.0.0-rc1.4.19"
     },
     {
       "name": "Release channel",

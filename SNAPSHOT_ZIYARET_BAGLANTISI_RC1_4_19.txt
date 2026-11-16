@@ -1,0 +1,72 @@
+CAP FOLLOW UP — SNAPSHOT METADATA ZİYARET BAĞLANTISI
+Sürüm: v1.0 RC1.4.19 | 16 Kasım 2026
+Önceki sürüm: RC1.4.18
+
+SORUNUN NEDENİ
+Bağlı ICAO değerlendirmesi menüsü yalnız türetilmiş Assessment Event kayıtlarını
+okuyordu. Ziyaret bölümünde kayıtlı CMAA, OSVA ve ICVM ziyaretleri ayrı tutulduğu
+ve henüz EI değerlendirmesine dönüştürülmediği için görünmüyordu. Ayrıca ziyaret
+ve değerlendirme verileri ekran açıldıktan sonra geldiğinde menü yenilenmiyordu.
+
+DÜZELTME
+- Menü artık kayıtlı EI değerlendirmelerini, henüz olay senkronizasyonu bitmemiş
+  EI kayıtlarını ve EI değerlendirmesi olmayan mevcut ICAO ziyaretlerini içerir.
+- Bağlantısı açıkça aynı ziyaret kimliğine giden kayıt tek seçenek olarak sunulur.
+  Yalnız ad/tarih benzerliğinden ziyaret veya değerlendirme eşleştirmesi yapılmaz.
+- Ziyaretler, EI kayıtları veya olaylar yüklendiğinde açık formun seçenekleri
+  yenilenir. Yazılmış ad/tarih, seçilmiş kayıt ve sonuç statüsü korunur.
+- Geçici olarak yüklenemeyen eski bağlantı sessizce Bağımsız seçeneğine düşmez.
+- Hangi kayıt EI verisini besliyor? tablosu ziyaret-only kayıtları da gösterir.
+  Snapshot'a bağla düğmesi formda ilgili ziyareti seçer.
+
+NASIL KULLANILIR?
+1. Güncel paket dosyalarını kurun; Ctrl+F5 yapın ve RC1.4.19 rozetini doğrulayın.
+2. Dashboard > PQ durum kaynakları / Sil ekranını açın.
+3. Mevcut Full PQ Status kaydında Bağlantı / Metadata düğmesine basın veya yeni
+   tam PQ durum Excel'ini seçin.
+4. Bağlı ICAO değerlendirmesi menüsünden CMAA, OSVA veya ICVM kaydını seçin.
+   Mevcut EI kaydı varsa Kayıtlı EI değerlendirmeleri grubunda; yalnız ziyaret
+   kaydı varsa ICAO ziyaretleri grubunda görünür.
+5. Seçilen ziyaret için henüz EI değerlendirmesi yoksa Bu dosyanın sonuç statüsü
+   alanı açılır. Dosyanın gerçekten temsil ettiği sonucu seçin:
+   Nihai / Resmî, Taslak veya Geçici. Bu alan kendiliğinden nihai seçilmez.
+6. Gerçek durum tarihini ve PQ sürümünü kontrol edip State Snapshot Olarak
+   Kaydet'e basın. Kaynak tablosunda bağlantıyı kontrol edin.
+
+CMAA, OSVA VE ICVM ZİYARETLERİNİ YENİDEN OLUŞTURMANIZ GEREKMİYOR.
+Yalnız ziyaret kaydı bulunan seçenekte, değerlendirme açıkça Snapshot Kaydet
+işlemi sırasında oluşturulur. Kaynak, EI kaydı ve türetilmiş olay/EI snapshot
+kayıtları aynı Firebase güncellemesiyle kaydedilir. Formu açmak veya ziyaret
+listesinin yüklenmesi yeni EI değerlendirmesi oluşturmaz.
+
+SONUÇ VE KAPSAM KURALLARI
+Ziyaretin Tamamlandı durumunda olması tek başına resmî EI sonucu değildir.
+Taslak ve geçici snapshot'lar güncel resmî EI/PQ durumunun yerine geçmez.
+Nihai kayıt için dosyanın resmî tam PQ durumunu temsil ettiğini doğrulayın.
+Ziyaret tarihi ziyaret kaydından, PQ durum tarihi snapshot formundan alınır.
+Ziyaret alanları korunur; OSVA/ICVM kapsamı dışındaki alanlar valide edilmiş
+sayılmaz. Aynı snapshot metadata kaydı tekrar kaydedildiğinde ikinci bir
+ziyaret/değerlendirme oluşmaz. Eski bağlantı başka değerlendirmeye taşınırsa
+önceki kaydın kaynaksız hesapları da aynı güncellemede temizlenir.
+
+ÖNCEKİ DÜZELTMELER
+RC1.4.18 kayıt silme, RC1.4.17 dashboard/CAP tarihçesi ve önceki PQ performans/
+ziyaret kapsamı düzeltmeleri korunur. CAP Word içe aktarma bu sürümde de yalnız
+CAP ilerleme geçmişini besler; resmî EI veya ziyaret sonucu oluşturmaz.
+
+KURULUM VE YETKİ
+ZIP içindeki index.html, app-manifest.json ve js dosyalarını birlikte güncelleyin.
+Tüm klasörü mevcut proje üzerine almak önceki düzeltmeleri de korur.
+Yeni Firebase kuralı veya toplu veri taşıması gerekmez. Kaydetme mevcut EI yazma
+yetkisini kullanır. Ziyaretler ve CAP geçmişi yeniden oluşturulmaz veya silinmez.
+Bu paket canlı veritabanınıza kendiliğinden bağlanıp veri değiştirmez.
+
+DOĞRULAMA
+- Snapshot menüsü, açık ziyaret bağlantısı ve durum ayrımı: 35 test başarılı.
+- Gerçek form, geç yüklenen ziyaretler ve gerçek Excel dosya girdisi: Chromium'da
+  24 kontrol başarılı; yakalanmamış JavaScript hatası yok.
+- Kayıt silme: 25 test ve 19 tarayıcı kontrolü başarılı.
+- Dashboard: 39 test ve 24 tarayıcı kontrolü başarılı.
+- Ziyaret kapsamı 13, PQ performans 27, alan kuralları 16 test başarılı.
+- Statik sürüm/asset/JS/HTML/kural kontrolleri: 51 başarılı, uyarı yok.
+Firebase yazmaları testlerde taklit edilmiştir; canlı kullanıcı verileri değişmedi.
