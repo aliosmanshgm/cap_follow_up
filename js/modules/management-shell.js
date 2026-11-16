@@ -105,6 +105,7 @@
         return `<button type="button" class="management-flow-card ${kind}" onclick="${action}"><span class="management-flow-step">${step}</span><span class="management-flow-icon">${icon}</span><span class="management-flow-copy"><b>${esc(title)}</b><strong>${esc(value)}</strong><small>${esc(sub)}</small></span><span class="management-flow-arrow">›</span></button>`;
     }
     window.renderManagementFlow=function(){
+        if(typeof window.scheduleDashboardOverview==='function')window.scheduleDashboardOverview();
         const el=document.getElementById('managementFlowStrip');if(!el)return;
         const pq=pqSummary(),cap=capSummary(),val=validationSummary(),vis=visitSummary(),latest=latestAssessment();
         let pending=null;try{pending=typeof window.getLatestPendingAssessment==='function'?window.getLatestPendingAssessment():null;}catch(_){pending=null;}

@@ -1,6 +1,6 @@
 {
   "app": "USOAP CMA CAP Takip",
-  "version": "1.0.0-rc1.4.16",
+  "version": "1.0.0-rc1.4.17",
   "baseline": "index_visit_hub_pq_version_database(2).html",
   "buildDate": "2026-11-16",
   "features": [
@@ -122,7 +122,13 @@
     "visit-scope-authoritative-pq-metadata",
     "visit-scope-verification-filter-repair",
     "exact-awaited-pq-content-navigation",
-    "visit-scope-reference-return-context"
+    "visit-scope-reference-return-context",
+    "cmaa-dashboard-source-isolation",
+    "per-area-cap-source-date-selection",
+    "separate-draft-final-validation-timeline",
+    "weighted-ei-projection-dashboard",
+    "dated-cap-action-history",
+    "dashboard-pdf-excel-source-consistency"
   ],
   "architecture": {
     "index": "index.html",
@@ -130,6 +136,7 @@
       "css/app.css"
     ],
     "scripts": [
+      "js/services/cap-current-source.js",
       "js/app.js",
       "js/modules/access-control.js",
       "js/modules/visit-sync.js",
@@ -150,10 +157,11 @@
       "js/modules/system-integrity.js",
       "js/modules/action-center.js",
       "js/modules/notification-center.js",
-      "js/modules/reporting-center.js"
+      "js/modules/reporting-center.js",
+      "js/modules/dashboard-overview.js"
     ]
   },
   "releaseChannel": "release-candidate",
-  "previousVersion": "1.0.0-rc1.4.15",
-  "cacheTag": "20261116-v1.0-rc1.4.16"
+  "previousVersion": "1.0.0-rc1.4.16",
+  "cacheTag": "20261116-v1.0-rc1.4.17"
 }

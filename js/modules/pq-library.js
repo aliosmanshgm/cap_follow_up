@@ -542,6 +542,7 @@
             });
         }catch(err){console.warn('PQ Master, PQ Word verisiyle zenginleştirilemedi:',err);}
         try{if(typeof window.applyResponsibilityRegistryToMaster==='function')window.applyResponsibilityRegistryToMaster();}catch(err){console.warn('Sorumluluk registry master görünümüne uygulanamadı:',err);}
+        if(window.CapCurrentSource)window.CapCurrentSource.invalidate();
         return updated;
     };
 

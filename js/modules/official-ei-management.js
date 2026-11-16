@@ -166,7 +166,7 @@
         const kpis=document.getElementById('icaoOfficialTrendKpis');
         const table=document.getElementById('icaoOfficialTrendTable');
         const canvas=document.getElementById('icaoOfficialTrendCanvas');
-        if(!canvas)return;
+        if(!canvas||canvas.closest('[hidden]'))return;
         const records=trendRecords();
         const points=records.map(r=>({record:r,value:trendValue(r,officialEiTrendMetric)})).filter(x=>x.value!==null);
         if(points.length<1){

@@ -15,7 +15,7 @@
     }
     function safeKey(v){return String(v||'').trim().replace(/[.#$\[\]\/]/g,'_').replace(/\s+/g,'_');}
     function areaOf(pq){return String(((pqMasterData||{})[pq]||{}).alan||'').trim().toUpperCase();}
-    function usableRows(pq){return (rawData||[]).filter(r=>r&&String(r.pq||'')===String(pq)&&typeof isUsableCapStep==='function'&&isUsableCapStep(r));}
+    function usableRows(pq){return (window.CapCurrentSource?window.CapCurrentSource.current().rows:(rawData||[])).filter(r=>r&&String(r.pq||'')===String(pq)&&typeof isUsableCapStep==='function'&&isUsableCapStep(r));}
     function evidenceText(row){return String((row&&row.evidenceReference)||'').trim();}
     function latestOfficial(){return typeof window.getLatestOfficialAssessmentSnapshot==='function'?window.getLatestOfficialAssessmentSnapshot():null;}
     function baseTotal(area){return Number((((baseEIData||{})[area]||{}).total)||0)||0;}
@@ -59,7 +59,7 @@
             const completedCode=((window.COMMON_ACTION_STATUS||{}).COMPLETED||{}).code||'completed';
             const allDone=statuses.length>0&&statuses.every(s=>s&&s.code===completedCode);
             // Eski durum çözümleyicisi geriye dönük emniyet ağıdır.
-            const verifiedAllDone=allDone||rows.every(r=>{try{return getStatus(r).type==='done';}catch(e){return false;}});
+            const verifiedAllDone=window.CapCurrentSource?rows.every(window.CapCurrentSource.completed):allDone||rows.every(r=>{try{return getStatus(r).type==='done';}catch(e){return false;}});
             if(!verifiedAllDone)continue;
             const link=master.pqLink||rows.find(r=>r&&r.pqLink)?.pqLink||{};
             const key=candidateKeyFor(pq,master,link);

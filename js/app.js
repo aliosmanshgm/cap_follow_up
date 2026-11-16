@@ -2,7 +2,7 @@ const I18N = {
         tr: {
             loadingText: 'Veriler İşleniyor... Lütfen Bekleyin.',
             appSubtitle: 'Analiz için lütfen Word (.docx) belgelerini yükleyiniz.',
-            lblWord: '1️⃣ Orijinal Word Dosyaları (.docx)',
+            lblWord: '1️⃣ CAP İlerleme Word Dosyaları (.docx)',
             lblExcel: 'PQ Ek Bilgi / TR-Fallback (.xlsx)'
         },
         en: {
@@ -454,6 +454,7 @@ const I18N = {
             if(tabId === 'visit-audit') renderVisitAuditTrail();
             if(typeof window.syncVisitHubNavigation === 'function') window.syncVisitHubNavigation(tabId);
             if(typeof window.syncCapHubNavigation === 'function') window.syncCapHubNavigation(tabId);
+            if(tabId === 'dashboard' && typeof window.scheduleDashboardOverview === 'function')window.scheduleDashboardOverview();
             if(tabId === 'dashboard' && typeof window.renderManagementFlow === 'function') window.renderManagementFlow();
             if(tabId === 'dashboard' && typeof window.renderActionCenterDashboardSummary === 'function') window.renderActionCenterDashboardSummary();
             if(tabId === 'dashboard' && typeof window.renderNotificationCenter === 'function') window.renderNotificationCenter();
@@ -506,7 +507,7 @@ const I18N = {
     // ================================================================
     // STABILIZASYON PAKETI 1
     // ================================================================
-    const APP_RELEASE = Object.freeze({version:'1.0.0-rc1.4.16',label:'v1.0 RC1.4.16',buildDate:'2026-11-16',baseline:'RC1.4.15 + Visit scope verification types and exact PQ navigation',cacheTag:'20261116-v1.0-rc1.4.16'});
+    const APP_RELEASE = Object.freeze({version:'1.0.0-rc1.4.17',label:'v1.0 RC1.4.17',buildDate:'2026-11-16',baseline:'RC1.4.16 + CMAA dashboard and dated CAP history isolation',cacheTag:'20261116-v1.0-rc1.4.17'});
     const STABILIZATION_VERSION = APP_RELEASE.label;
     window.USOAP_APP_RELEASE = APP_RELEASE;
     const stabilizationState = {
@@ -699,7 +700,7 @@ const I18N = {
         add('word', 'Word okuma motoru', (typeof JSZip !== 'undefined') ? 'ok' : 'error', (typeof JSZip !== 'undefined') ? 'JSZip hazır.' : 'Word ayrıştırma kütüphanesi yüklenemedi.');
         add('charts', 'Grafik motoru', (typeof Chart !== 'undefined') ? 'ok' : 'warn', (typeof Chart !== 'undefined') ? 'Chart.js hazır.' : 'Grafik kütüphanesi yüklenemedi.');
         const assetVersionIssues = getLocalAssetVersionIssues();
-        add('release-build', 'Release / cache bütünlüğü', assetVersionIssues.length ? 'error' : 'ok', assetVersionIssues.length ? `RC1.4.16 cache etiketiyle eşleşmeyen ${assetVersionIssues.length} yerel asset: ${assetVersionIssues.slice(0,6).join(', ')}` : `${APP_RELEASE.label} · build ${APP_RELEASE.buildDate} · bütün yerel assetler ${APP_RELEASE.cacheTag}.`);
+        add('release-build', 'Release / cache bütünlüğü', assetVersionIssues.length ? 'error' : 'ok', assetVersionIssues.length ? `RC1.4.17 cache etiketiyle eşleşmeyen ${assetVersionIssues.length} yerel asset: ${assetVersionIssues.slice(0,6).join(', ')}` : `${APP_RELEASE.label} · build ${APP_RELEASE.buildDate} · bütün yerel assetler ${APP_RELEASE.cacheTag}.`);
         let storageOk=true; try{localStorage.setItem('__usoap_rc_probe','1');localStorage.removeItem('__usoap_rc_probe');}catch(_){storageOk=false;}
         add('browser-storage', 'Tarayıcı yerel depolama', storageOk ? 'ok' : 'warn', storageOk ? 'localStorage kullanılabilir.' : 'localStorage kapalı; çevrimdışı cache ve bazı tercihler kalıcı olmayabilir.');
         const originalDocMode=String(window.PQ_ORIGINAL_DOCUMENT_STORAGE_MODE||'external').toLowerCase();
@@ -1270,7 +1271,7 @@ const I18N = {
             subEl.style.fontWeight = "normal";
         }
     }
-    function recalculateGlobalStateFromFiles() { window.loadedWordAreas.clear(); window_loadedReportDate = null; loadedFiles.forEach(fileName => { let upperName = fileName.toUpperCase(); ICAO_GLOBAL_ORDER.forEach(a => { if (upperName.includes(a)) window.loadedWordAreas.add(a); }); let dateMatch = fileName.match(/(\d{4})(\d{2})(\d{2})/); if(dateMatch && !window_loadedReportDate) window_loadedReportDate = new Date(dateMatch[1], parseInt(dateMatch[2], 10) - 1, parseInt(dateMatch[3], 10)); }); updateDynamicSubtitle(); }
+    function recalculateGlobalStateFromFiles() { if(window.CapCurrentSource)window.CapCurrentSource.invalidate(); window.loadedWordAreas.clear(); window_loadedReportDate = null; loadedFiles.forEach(fileName => { let upperName = fileName.toUpperCase(); ICAO_GLOBAL_ORDER.forEach(a => { if (upperName.includes(a)) window.loadedWordAreas.add(a); }); let dateMatch = fileName.match(/(\d{4})(\d{2})(\d{2})/); if(dateMatch && !window_loadedReportDate) window_loadedReportDate = new Date(dateMatch[1], parseInt(dateMatch[2], 10) - 1, parseInt(dateMatch[3], 10)); }); updateDynamicSubtitle(); }
 
     window.filterCheckboxes = function(inputId, listId) { let filterText = document.getElementById(inputId).value.toLowerCase(); let labels = document.getElementById(listId).getElementsByTagName('label'); for (let i = 0; i < labels.length; i++) { let txtValue = labels[i].textContent || labels[i].innerText; labels[i].style.display = txtValue.toLowerCase().indexOf(filterText) > -1 ? "flex" : "none"; } };
 
@@ -1559,13 +1560,16 @@ const I18N = {
         return a + '\n' + b;
     }
 
+    function makeCapSourceActionKey(fileName, pq, step, action) {
+        return String(fileName || '') + '||' + makeActionKey(pq, step, action);
+    }
     function makeCapDuplicateIndexes() {
         const actionMap = new Map();
-        rawData.forEach(d => actionMap.set(makeActionKey(d.pq, d.step, d.action), d));
+        rawData.forEach(d => actionMap.set(makeCapSourceActionKey(d.sourceFile, d.pq, d.step, d.action), d));
         return {
             actionKeys: new Set(actionMap.keys()),
             actionMap,
-            pqKeys: new Set(rawData.map(d => d.pq))
+            pqKeys: new Set(rawData.map(d => String(d.sourceFile || '') + '||' + d.pq))
         };
     }
 
@@ -1575,25 +1579,26 @@ const I18N = {
 
         const indexes = duplicateIndex || makeCapDuplicateIndexes();
         mergeCapProtocolIntoMaster(section, fileName);
+        const sourcePqKey=String(fileName || '') + '||' + section.pq;
         let filledSteps = section.tempSteps.filter(s => !s.isPlaceholder);
         if (filledSteps.length > 0) {
             filledSteps.forEach(s => {
-                const key = makeActionKey(section.pq, s.step, s.action);
+                const key = makeCapSourceActionKey(fileName, section.pq, s.step, s.action);
                 if (!indexes.actionKeys.has(key)) {
                     const row={ pq: section.pq, step: s.step, action: s.action, office: s.office, evidenceReference: s.evidenceReference || '', estDate: s.estDate, progress: s.progress, sourceFile: fileName, note: "", isEmptyCap: false };
                     rawData.push(row);
                     indexes.actionKeys.add(key);
                     if(indexes.actionMap) indexes.actionMap.set(key,row);
-                    indexes.pqKeys.add(section.pq);
+                    indexes.pqKeys.add(sourcePqKey);
                     result.addedActions++;
                 } else if (s.evidenceReference) {
                     // Aynı CAP adımı daha önce yüklenmişse yeni Word'deki kanıt referansını kaybetme.
-                    const existing = indexes.actionMap ? indexes.actionMap.get(key) : rawData.find(d=>makeActionKey(d.pq,d.step,d.action)===key);
+                    const existing = indexes.actionMap ? indexes.actionMap.get(key) : rawData.find(d=>makeCapSourceActionKey(d.sourceFile,d.pq,d.step,d.action)===key);
                     if(existing) existing.evidenceReference = mergeEvidenceReferenceText(existing.evidenceReference, s.evidenceReference);
                 }
             });
         } else if (section.tempSteps.length > 0 || section.hasCapMarker || section.hasProtocolMarker) {
-            if (!indexes.pqKeys.has(section.pq)) {
+            if (!indexes.pqKeys.has(sourcePqKey)) {
                 rawData.push({
                     pq: section.pq,
                     step: "-",
@@ -1606,8 +1611,8 @@ const I18N = {
                     note: "",
                     isEmptyCap: true
                 });
-                indexes.pqKeys.add(section.pq);
-                indexes.actionKeys.add(makeActionKey(section.pq, "-", "EMPTY_CAP"));
+                indexes.pqKeys.add(sourcePqKey);
+                indexes.actionKeys.add(makeCapSourceActionKey(fileName, section.pq, "-", "EMPTY_CAP"));
                 result.addedEmptyCaps++;
             }
         }
@@ -1732,7 +1737,7 @@ const I18N = {
             await yieldToBrowser();
             render();
             if(typeof showAppRuntimeToast==='function') {
-                showAppRuntimeToast(`CAP Word: ${importedFiles} dosya işlendi${replacedFiles?` · ${replacedFiles} kaynak yenilendi`:''} · ${totalPq} PQ · ${totalActions} eylem${persisted?' · Firebase kaydı doğrulandı':' · Firebase kaydı bekliyor'}.`, persisted?'success':'warn');
+                showAppRuntimeToast(`CAP ilerlemesi güncellendi (resmî EI / ziyaret sonucu değişmedi): ${importedFiles} dosya işlendi${replacedFiles?` · ${replacedFiles} kaynak yenilendi`:''} · ${totalPq} PQ · ${totalActions} eylem${persisted?' · Firebase kaydı doğrulandı':' · Firebase kaydı bekliyor'}.`, persisted?'success':'warn');
             }
         } catch(e) {
             console.error(e);
@@ -6734,6 +6739,7 @@ const I18N = {
         if(typeof window.renderActionCenterDashboardSummary==='function') window.renderActionCenterDashboardSummary();
         if(document.getElementById('tab-actions') && document.getElementById('tab-actions').classList.contains('active') && typeof window.renderActionCenter==='function') window.renderActionCenter();
         if(typeof window.renderManagementFlow==='function') window.renderManagementFlow();
+        if(typeof window.scheduleDashboardOverview==='function')window.scheduleDashboardOverview();
         if(typeof window.refreshCapHubSummary==='function') window.refreshCapHubSummary();
         if(document.getElementById('tab-validation-readiness') && document.getElementById('tab-validation-readiness').classList.contains('active') && typeof renderValidationReadiness==='function') renderValidationReadiness();
         if(document.getElementById('tab-report').classList.contains('active')) { if(typeof window.renderReportingCenter==='function') window.renderReportingCenter(); else updateReportPreview(); }
@@ -6812,6 +6818,7 @@ const I18N = {
     }
 
     function updateCharts(data, analyticsModel = null) {
+        const operations=document.getElementById('dashboardOperations');if(operations&&!operations.open)return;
         const analytics = analyticsModel || buildCommonCalculationModel(data || []);
         const sType = {
             done: { 'On-Site': analytics.status.done.onSite, 'Off-Site': analytics.status.done.offSite, 'Other': analytics.status.done.other },
@@ -7741,7 +7748,7 @@ const I18N = {
 
     function renderIcaoOfficialChart() {
         const canvas = document.getElementById('icaoOfficialChartCanvas');
-        if (!canvas || typeof Chart === 'undefined') return;
+        if (!canvas || typeof Chart === 'undefined' || canvas.closest('[hidden]')) return;
 
         if (typeof window.renderIcaoOfficialPeriodControls === 'function') window.renderIcaoOfficialPeriodControls();
         const config = getIcaoOfficialEiData();
@@ -8213,6 +8220,7 @@ const I18N = {
             datasets.push({ label: '4. Açık CAP Teorik Potansiyeli', data: window.currentAreaEIData.map(d => parseFloat(d.proj) - parseFloat(d.local)), backgroundColor: '#f59e0b' });
         }
         const hasNegative=datasets.some(ds=>(ds.data||[]).some(v=>Number(v)<0));
+        if(document.getElementById('eiChartCanvas')?.closest('[hidden]'))return;
         charts.ei = new Chart(ctx, {
             type: 'bar',
             data: {
@@ -8242,8 +8250,8 @@ const I18N = {
         const visit=getLatestDashboardIcaoVisitSummary();
         const result={release:APP_RELEASE.label,verificationTypeSample:null,officialVisit:visit?{name:visit.visit.visitName||visit.visit.icaoVisitType,scope:visit.scopeCount,satisfactory:visit.satisfactory,notSatisfactory:visit.notSatisfactory,followUp:visit.followUp,notEvaluated:visit.notEvaluated,draftEi:visit.impact?visit.impact.newPct:null,newSat:visit.impact?visit.impact.newSat:null,total:visit.impact?visit.impact.total:null}:null,pendingNoticeUsesVisit:!!visit};
         try{const first=Object.keys(pqMasterData||{})[0];if(first)result.verificationTypeSample={pq:first,type:getCommonVerificationType(first)};}catch(_){}
-        result.passed=APP_RELEASE.label.includes('RC1.4.16')&&(!visit||visit.scopeCount>=visit.satisfactory);
-        console.log('RC1.4.16 dashboard öz denetimi:',result);return result;
+        result.passed=APP_RELEASE.label.includes('RC1.4.17')&&(!visit||visit.scopeCount>=visit.satisfactory);
+        console.log('RC1.4.17 dashboard öz denetimi:',result);return result;
     };
 
     window.runSimulator = function() {
@@ -10449,6 +10457,7 @@ ${formatOfficialEiDelta(delta)}`,fontSize:8});
 
     function exportExcel() {
         const ctx = getActiveExportContext();
+        if(ctx.mode==='dashboard'&&typeof window.exportDashboardOverviewExcel==='function'){window.exportDashboardOverviewExcel();return;}
         if (ctx.mode === 'trend') { exportTrendExcel(); return; }
         if (ctx.mode === 'actions' && typeof window.exportActionCenterExcel==='function') { window.exportActionCenterExcel(); return; }
         if (ctx.mode === 'notifications' && typeof window.exportNotificationCenterExcel==='function') { window.exportNotificationCenterExcel(); return; }
@@ -10750,6 +10759,7 @@ Mevcut: ${issue.currentValue || 'Boş'}`), fontSize:8},
         let ctx;
         try {
             ctx = getActiveExportContext();
+            if(ctx.mode==='dashboard'&&typeof window.exportDashboardOverviewPDF==='function'){window.exportDashboardOverviewPDF();return;}
             if (ctx.mode === 'trend') { exportTrendPDF(); return; }
             if (ctx.mode === 'actions' && typeof window.exportActionCenterPDF==='function') { window.exportActionCenterPDF(); return; }
             if (ctx.mode === 'notifications' && typeof window.exportNotificationCenterPDF==='function') { window.exportNotificationCenterPDF(); return; }

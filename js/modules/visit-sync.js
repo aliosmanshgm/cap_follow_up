@@ -15,6 +15,7 @@
     function visitScopeSourceDateIso(){const d=getVisitCurrentSourceReportDate();return d?d.toISOString():null;}
 
     function selectLatestVisitRows(){
+        if(window.CapCurrentSource)return window.CapCurrentSource.current().rows;
         const dated=rawData.map((row,index)=>({row,index,date:visitSourceFileDateValue((row||{}).sourceFile)})).filter(x=>x.row&&x.row.pq);
         const maxDate=dated.reduce((m,x)=>Math.max(m,x.date||0),0);
         // Tarihli ICAO raporlarında yalnızca en güncel rapor tarihindeki satırlar çalışma kaynağıdır.

@@ -1,0 +1,311 @@
+{
+  "release": "1.0.0-rc1.4.17",
+  "previousRelease": "1.0.0-rc1.4.16",
+  "date": "2026-11-16",
+  "commands": [
+    {
+      "command": "node tools/dashboard-tests.mjs",
+      "passed": 39,
+      "failed": 0
+    },
+    {
+      "command": "node tools/visit-scope-tests.mjs",
+      "passed": 13,
+      "failed": 0
+    },
+    {
+      "command": "node tools/pq-performance-tests.mjs",
+      "passed": 27,
+      "failed": 0
+    },
+    {
+      "command": "node tools/rc-domain-tests.mjs",
+      "passed": 16,
+      "failed": 0
+    },
+    {
+      "command": "node tools/rc-check.mjs",
+      "passed": 51,
+      "failed": 0
+    }
+  ],
+  "dashboardBrowser": {
+    "passed": true,
+    "checks": [
+      "six concise metric cards are visible",
+      "area table shows Overall and all eight audit areas",
+      "weighted Overall EI is displayed as 33.33 percent",
+      "CMAA finding and related CAP step counts are distinct",
+      "candidate and theoretical EI are separate projections",
+      "draft and final rows appear for the same ICVM visit",
+      "areas outside visit scope are marked unvalidated",
+      "legacy duplicate EI charts are hidden",
+      "operational detail is collapsed initially",
+      "historical CAP date changes step count without changing CMAA findings or EI",
+      "per-area latest source is restored",
+      "global official dashboard is independent of CAP search filters",
+      "optional operation section can still be opened",
+      "mobile page width remains within viewport",
+      "real Excel export contains official, finding, CAP and scenario columns",
+      "real PDF export generates a non-empty PDF document",
+      "later dated Word preserves the same action as a new historical record",
+      "current CAP source reads the new completed status",
+      "a second Word updates current progress without deleting historical records",
+      "CAP Word imports never alter official state, assessment, EI snapshot or visit stores",
+      "real CAP import persistence writes only icao_system",
+      "official EI and CMAA findings remain unchanged after both Word imports",
+      "reimporting the same file replaces its source records once",
+      "no uncaught JavaScript errors"
+    ],
+    "errors": [],
+    "blockedExternalRequests": 3
+  },
+  "scopeBrowser": {
+    "passed": true,
+    "checks": [
+      "opening scope starts the PQ reference load",
+      "scope loads reference data once without visiting PQ database",
+      "loaded references clear the loading status",
+      "all four scope PQs appear",
+      "library types override contradictory legacy master values",
+      "reference adapter unwraps the actual PQ record",
+      "On-site selection filters to PQ 1.029",
+      "Off-site selection filters to two PQs",
+      "unknown selection shows only truly unclassified PQ 1.031",
+      "scope content link opens the active LEG 1.029 record despite stale SSP filters",
+      "explicit navigation clears unrelated catalog filters",
+      "scope return action is visible",
+      "return restores scope filters, date, selections and preparation drafts",
+      "browsing reference content leaves stored visit snapshots intact",
+      "saved scope snapshots use authoritative On-site type",
+      "missing legacy area is recovered from PQ metadata",
+      "leaving during a slow content load cancels automatic catalog navigation",
+      "validation reference waits for delayed library loading",
+      "validation return keeps the same visit and PQ",
+      "renumbered historical PQ opens its active successor",
+      "missing PQ shows an explicit empty result instead of stale content",
+      "offline reference opening uses cached PQ data",
+      "browsing tests perform no database writes",
+      "no uncaught JavaScript errors"
+    ],
+    "errors": [],
+    "blockedExternalRequests": 6
+  },
+  "broadBrowser": {
+    "passed": true,
+    "checks": [
+      "background load leaves hidden catalog/comparison/version DOM empty",
+      "100 CAP rows resolve after initial load",
+      "all nine audit/SSP cards appear",
+      "versions view keeps hidden catalog empty",
+      "SSP catalog shows 80 questions",
+      "CE filter retains selection and reduces rows",
+      "debounced catalog search finds the requested PQ",
+      "selected PQ details match",
+      "comparison base selection survives rendering",
+      "unchanged fixture yields 80 unchanged comparisons",
+      "summary shows 20 revised and 60 unchanged PQs",
+      "CAP linkage table renders",
+      "repeated menu navigation reuses the loaded library",
+      "a refresh completing after navigation leaves the active menu alone",
+      "quality, validation, visits and action menus open successfully",
+      "tests made no database writes",
+      "no uncaught JavaScript errors",
+      "PQ self-check passes",
+      "dashboard self-check passes"
+    ],
+    "errors": [],
+    "timing": {
+      "elapsedMs": 297,
+      "pqReadsBefore": 1,
+      "pqReadsAfter": 1
+    },
+    "diag": {
+      "reads": [
+        "icao_pq_library",
+        "icao_pq_library"
+      ],
+      "linkage": {
+        "linked": 100,
+        "unmatched": 0,
+        "ambiguous": 0,
+        "renumbered": 0,
+        "total": 100
+      },
+      "selfCheck": {
+        "passed": true,
+        "moduleVersion": "pq-library-v1.0-rc1.1",
+        "referenceAreas": [
+          "LEG",
+          "ORG",
+          "PEL",
+          "OPS",
+          "AIR",
+          "AIG",
+          "ANS",
+          "AGA",
+          "SSP"
+        ],
+        "auditAreas": [
+          "LEG",
+          "ORG",
+          "PEL",
+          "OPS",
+          "AIR",
+          "AIG",
+          "ANS",
+          "AGA"
+        ],
+        "activeCount": 9,
+        "invalidPq": 0,
+        "distributionMismatch": 0,
+        "unknownClassified": 0,
+        "activeAreas": {
+          "LEG": {
+            "active": true,
+            "editionKey": "2024",
+            "pqCount": 80,
+            "rawAmendmentRows": 80,
+            "newCount": 0,
+            "revisedCount": 20,
+            "mergedCount": 0,
+            "noChangeCount": 60,
+            "deletedCount": 0,
+            "unknownCount": 0
+          },
+          "ORG": {
+            "active": true,
+            "editionKey": "2024",
+            "pqCount": 80,
+            "rawAmendmentRows": 80,
+            "newCount": 0,
+            "revisedCount": 20,
+            "mergedCount": 0,
+            "noChangeCount": 60,
+            "deletedCount": 0,
+            "unknownCount": 0
+          },
+          "PEL": {
+            "active": true,
+            "editionKey": "2024",
+            "pqCount": 80,
+            "rawAmendmentRows": 80,
+            "newCount": 0,
+            "revisedCount": 20,
+            "mergedCount": 0,
+            "noChangeCount": 60,
+            "deletedCount": 0,
+            "unknownCount": 0
+          },
+          "OPS": {
+            "active": true,
+            "editionKey": "2024",
+            "pqCount": 80,
+            "rawAmendmentRows": 80,
+            "newCount": 0,
+            "revisedCount": 20,
+            "mergedCount": 0,
+            "noChangeCount": 60,
+            "deletedCount": 0,
+            "unknownCount": 0
+          },
+          "AIR": {
+            "active": true,
+            "editionKey": "2024",
+            "pqCount": 80,
+            "rawAmendmentRows": 80,
+            "newCount": 0,
+            "revisedCount": 20,
+            "mergedCount": 0,
+            "noChangeCount": 60,
+            "deletedCount": 0,
+            "unknownCount": 0
+          },
+          "AIG": {
+            "active": true,
+            "editionKey": "2024",
+            "pqCount": 80,
+            "rawAmendmentRows": 80,
+            "newCount": 0,
+            "revisedCount": 20,
+            "mergedCount": 0,
+            "noChangeCount": 60,
+            "deletedCount": 0,
+            "unknownCount": 0
+          },
+          "ANS": {
+            "active": true,
+            "editionKey": "2024",
+            "pqCount": 80,
+            "rawAmendmentRows": 80,
+            "newCount": 0,
+            "revisedCount": 20,
+            "mergedCount": 0,
+            "noChangeCount": 60,
+            "deletedCount": 0,
+            "unknownCount": 0
+          },
+          "AGA": {
+            "active": true,
+            "editionKey": "2024",
+            "pqCount": 80,
+            "rawAmendmentRows": 80,
+            "newCount": 0,
+            "revisedCount": 20,
+            "mergedCount": 0,
+            "noChangeCount": 60,
+            "deletedCount": 0,
+            "unknownCount": 0
+          },
+          "SSP": {
+            "active": true,
+            "editionKey": "2024",
+            "pqCount": 80,
+            "rawAmendmentRows": 80,
+            "newCount": 0,
+            "revisedCount": 20,
+            "mergedCount": 0,
+            "noChangeCount": 60,
+            "deletedCount": 0,
+            "unknownCount": 0
+          }
+        },
+        "issues": []
+      },
+      "dashboardSelfCheck": {
+        "release": "v1.0 RC1.4.17",
+        "verificationTypeSample": {
+          "pq": "2.002",
+          "type": "offSite"
+        },
+        "officialVisit": null,
+        "pendingNoticeUsesVisit": false,
+        "passed": true
+      },
+      "release": {
+        "version": "1.0.0-rc1.4.17",
+        "label": "v1.0 RC1.4.17",
+        "buildDate": "2026-11-16",
+        "baseline": "RC1.4.16 + CMAA dashboard and dated CAP history isolation",
+        "cacheTag": "20261116-v1.0-rc1.4.17"
+      }
+    },
+    "blockedExternalRequests": 6
+  },
+  "artifactChecks": {
+    "xlsxReadBack": true,
+    "pdfHeaderAndSize": true,
+    "pdfTextReadBack": true,
+    "desktopAndMobileScreenshotsInspected": true
+  },
+  "sourceRules": [
+    "CMAA source must be explicit; no date-based binding to CAP or arbitrary Full Status.",
+    "Official/draft/final visit working results and projections are separate.",
+    "CAP upload writes only the system working data; no state/event/visit updates.",
+    "Missing counts/identities remain unknown rather than being inferred from percentages."
+  ],
+  "limitations": [
+    "Synthetic fixtures and in-memory Firebase adapter; no production database access.",
+    "Historical CAP rows previously discarded by cross-file duplicate suppression require reimport of the original dated documents."
+  ]
+}

@@ -13,7 +13,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.10/pdfmake.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.10/vfs_fonts.js"></script>
-    <link rel="stylesheet" href="css/app.css?v=20261116-v1.0-rc1.4.16">
+    <link rel="stylesheet" href="css/app.css?v=20261116-v1.0-rc1.4.17">
 </head>
 <body>
 
@@ -149,7 +149,7 @@
                 <button onclick="toggleFiltersPanel()" class="btn-outline header-primary-action">🔎 Filtreler</button>
                 <button type="button" id="activeScreenPdfBtn" onclick="exportPDF()" style="background:#dc2626;" title="Aktif ekranı PDF olarak dışa aktar">📄 Ekran PDF</button>
                 <button id="activeScreenExcelBtn" onclick="exportExcel()" style="background:#059669;" title="Aktif ekranı Excel olarak dışa aktar">📊 Ekran Excel</button>
-                <button type="button" id="appReleaseBadge" class="system-connection-badge ok release-badge" onclick="openSystemHealthModal()" title="Release Candidate sistem kontrolünü aç">RC1.4.16 · v1.0</button>
+                <button type="button" id="appReleaseBadge" class="system-connection-badge ok release-badge" onclick="openSystemHealthModal()" title="Release Candidate sistem kontrolünü aç">RC1.4.17 · v1.0</button>
                 <button type="button" id="systemConnectionBadge" class="system-connection-badge checking" onclick="openSystemHealthModal()" title="Sistem bağlantı ve kayıt durumunu görüntüle">⚪ Kontrol ediliyor</button>
                 <div class="more-actions-wrap">
                     <button class="btn-outline" onclick="toggleMoreActions(event)">⚙️ Diğer <span style="font-size:10px;">▼</span></button>
@@ -178,7 +178,7 @@
                 <div class="data-management-grid">
                     <section class="data-panel-card">
                         <h4>1️⃣ CAP Word Raporları</h4>
-                        <label class="data-label" data-i18n="lblWord">ICAO CAP Word dosyaları (.docx)</label>
+                        <label class="data-label" data-i18n="lblWord">CAP ilerleme Word dosyaları (.docx)</label>
                         <input type="file" id="docxInput" multiple accept=".docx">
                         <div id="wordFileList" class="file-list-container"></div>
                         <div class="icao-ei-auto-help">Finding, CAP adımları, tarihler ve kanıtlar bu kaynaktan alınır. Aynı isimli DOCX yeniden seçilirse mevcut kaynak yenilenir.</div>
@@ -476,18 +476,51 @@
         </div>
 
         <div id="tab-dashboard" class="tab-content active">
+            <div id="dashboardOverview" aria-live="polite"><p>Resmî değerlendirme kaynakları yükleniyor…</p></div>
+            <details id="dashboardOperations" class="dash-operations"><summary>CAP operasyonu ve diğer analizler</summary>
+
             <div id="managementFlowStrip" class="management-flow-shell" aria-live="polite">
                 <div class="management-flow-loading">USOAP CMA süreç zinciri hazırlanıyor...</div>
             </div>
 
-            <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 20px; margin-bottom: 0;">
+            <div style="display: grid; grid-template-columns: 1fr; gap: 20px; margin-bottom: 0;">
                 <div class="stat-card" style="display:flex; flex-direction:column; justify-content:center; align-items:center; border: 2px solid var(--primary); background: rgba(37, 99, 235, 0.02); height: 100%;">
                     <h3 id="totalPqCount" style="font-size: 52px; color: var(--primary); margin: 0;">0</h3>
                     <p style="font-weight: 700; font-size: 16px; margin: 5px 0;">Ekranda Listelenen PQ</p>
                     <div id="pqDetails" class="stat-detail" style="margin-top:15px; font-size:13px;"></div>
                 </div>
 
-                <div class="ei-panel" id="eiOverallProgressPanel" style="display: none; margin: 0; padding: 25px; grid-template-columns: 1fr; height: 100%; align-content: center;">
+                
+            </div>
+
+            
+            <div id="actionCenterDashboardSummary" class="action-dashboard-summary"><div class="validation-dashboard-empty">Aksiyon merkezi hazırlanıyor...</div></div>
+            <div id="notificationCenterDashboardSummary" class="notification-dashboard-summary"><div class="validation-dashboard-empty">Bildirim merkezi hazırlanıyor...</div></div>
+
+            <div style="margin-top: 35px; margin-bottom: 25px;">
+                <h3 style="margin: 0 0 20px 0; font-size: 16px; color: var(--text); border-bottom: 1px solid var(--border); padding-bottom: 10px;">📋 Eylem Durum Özeti</h3>
+                <div class="stats-grid" style="margin-bottom: 0;">
+                    <div class="stat-card"><h3 id="activeActionCount">0</h3><p>Ekranda Listelenen Eylem</p><div id="actionDetails" class="stat-detail"></div></div>
+                    <div class="stat-card" style="border-bottom: 4px solid var(--ok);"><h3 id="doneCount">0</h3><p>Tamamlanan</p><div id="doneDetails" class="stat-detail"></div></div>
+                    <div class="stat-card" style="border-bottom: 4px solid var(--warn);"><h3 id="pendingCount">0</h3><p>Devam Ediyor</p><div id="pendingDetails" class="stat-detail"></div></div>
+                    <div class="stat-card" style="border-bottom: 4px solid var(--danger);"><h3 id="lateCount">0</h3><p>Gecikmiş</p><div id="lateDetails" class="stat-detail"></div></div>
+                </div>
+            </div>
+
+            
+
+            
+
+            
+
+            <div class="visual-area">
+                <div class="stat-card"><canvas id="statusChart"></canvas></div>
+                <div class="stat-card"><canvas id="delayChart"></canvas></div>
+                <div class="stat-card"><canvas id="officeChart"></canvas></div>
+            </div>
+        
+            </details>
+            <div id="dashboardLegacyEi" hidden aria-hidden="true"><div class="ei-panel" id="eiOverallProgressPanel" style="display: none; margin: 0; padding: 25px; grid-template-columns: 1fr; height: 100%; align-content: center;">
                     <div>
                         <h3 id="eiPanelTitle" style="margin: 0 0 5px 0; color: var(--primary);">🌍 Genel (Overall) Etkin Uygulama (EI) Oranı (%) Değişimi</h3>
                         <p id="eiPanelSubtitle" style="margin: 0 0 12px 0; font-size: 13px; color: var(--muted);">Resmî ICAO değerlendirmeleri ile validasyon adayı CAP'ler birbirinden ayrılarak gösterilir. EI yalnızca resmî değerlendirme sonucunda değişmiş kabul edilir.</p>
@@ -508,23 +541,8 @@
                         <div style="display:flex;justify-content:flex-end;margin-top:8px;"><button type="button" class="btn-outline" onclick="switchTab('assessment-impact')">📈 Değerlendirme Dönemi &amp; EI Etki Analizini Aç</button></div>
                     </div>
                 </div>
-            </div>
-
-            <div id="validationReadinessDashboardSummary" class="validation-dashboard-summary"><div class="validation-dashboard-empty">Validasyon hazırlığı verisi hesaplanıyor...</div></div>
-            <div id="actionCenterDashboardSummary" class="action-dashboard-summary"><div class="validation-dashboard-empty">Aksiyon merkezi hazırlanıyor...</div></div>
-            <div id="notificationCenterDashboardSummary" class="notification-dashboard-summary"><div class="validation-dashboard-empty">Bildirim merkezi hazırlanıyor...</div></div>
-
-            <div style="margin-top: 35px; margin-bottom: 25px;">
-                <h3 style="margin: 0 0 20px 0; font-size: 16px; color: var(--text); border-bottom: 1px solid var(--border); padding-bottom: 10px;">📋 Eylem Durum Özeti</h3>
-                <div class="stats-grid" style="margin-bottom: 0;">
-                    <div class="stat-card"><h3 id="activeActionCount">0</h3><p>Ekranda Listelenen Eylem</p><div id="actionDetails" class="stat-detail"></div></div>
-                    <div class="stat-card" style="border-bottom: 4px solid var(--ok);"><h3 id="doneCount">0</h3><p>Tamamlanan</p><div id="doneDetails" class="stat-detail"></div></div>
-                    <div class="stat-card" style="border-bottom: 4px solid var(--warn);"><h3 id="pendingCount">0</h3><p>Devam Ediyor</p><div id="pendingDetails" class="stat-detail"></div></div>
-                    <div class="stat-card" style="border-bottom: 4px solid var(--danger);"><h3 id="lateCount">0</h3><p>Gecikmiş</p><div id="lateDetails" class="stat-detail"></div></div>
-                </div>
-            </div>
-
-            <div class="ei-panel" id="eiChartPanel" style="display: none; grid-template-columns: 1fr; padding: 20px;">
+<div id="validationReadinessDashboardSummary" class="validation-dashboard-summary"><div class="validation-dashboard-empty">Validasyon hazırlığı verisi hesaplanıyor...</div></div>
+<div class="ei-panel" id="eiChartPanel" style="display: none; grid-template-columns: 1fr; padding: 20px;">
                 <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;margin-bottom:12px;">
                     <div>
                         <h3 style="margin: 0 0 5px 0; color: var(--primary);">📊 Denetim Alanı Bazında EI (%) – Değerlendirme ve Projeksiyon</h3>
@@ -535,8 +553,7 @@
                 <div><canvas id="eiChartCanvas" style="min-height: 320px;"></canvas></div>
                 <div id="eiAreaAssessmentTable" class="ei-area-assessment-table"></div>
             </div>
-
-            <div class="ei-panel" id="icaoOfficialChartPanel" style="grid-template-columns: 1fr; padding: 20px; margin-top: 20px;">
+<div class="ei-panel" id="icaoOfficialChartPanel" style="grid-template-columns: 1fr; padding: 20px; margin-top: 20px;">
                 <div style="display:flex; justify-content:space-between; gap:12px; align-items:flex-start; flex-wrap:wrap; margin-bottom:12px;">
                     <div>
                         <h3 style="margin: 0 0 5px 0; color: var(--primary);">🌐 ICAO Resmî EI Karşılaştırma Grafiği</h3>
@@ -576,8 +593,7 @@
                 <div id="icaoOfficialChartCanvasWrap" style="height: 410px;"><canvas id="icaoOfficialChartCanvas"></canvas></div>
                 <div id="icaoOfficialChangeSummary" style="margin-top:16px;"></div>
             </div>
-
-            <div class="ei-panel" id="icaoOfficialTrendPanel" style="grid-template-columns:1fr;padding:20px;margin-top:20px;">
+<div class="ei-panel" id="icaoOfficialTrendPanel" style="grid-template-columns:1fr;padding:20px;margin-top:20px;">
                 <div style="display:flex;justify-content:space-between;gap:14px;align-items:flex-start;flex-wrap:wrap;margin-bottom:14px;">
                     <div>
                         <h3 style="margin:0 0 5px 0;color:var(--primary);">📈 ICAO Resmî EI Geçmiş Değerlendirmeler Trendi</h3>
@@ -601,13 +617,7 @@
                 <div id="icaoOfficialTrendEmptyState" style="display:none;min-height:170px;align-items:center;justify-content:center;text-align:center;color:var(--muted);background:rgba(148,163,184,0.06);border:1px dashed var(--border);border-radius:10px;padding:24px;"></div>
                 <div id="icaoOfficialTrendCanvasWrap" style="height:370px;"><canvas id="icaoOfficialTrendCanvas"></canvas></div>
                 <div id="icaoOfficialTrendTable" style="margin-top:16px;overflow-x:auto;"></div>
-            </div>
-
-            <div class="visual-area">
-                <div class="stat-card"><canvas id="statusChart"></canvas></div>
-                <div class="stat-card"><canvas id="delayChart"></canvas></div>
-                <div class="stat-card"><canvas id="officeChart"></canvas></div>
-            </div>
+            </div></div>
         </div>
 
 
@@ -2601,26 +2611,28 @@
 </div>
 
 
-<script src="js/app.js?v=20261116-v1.0-rc1.4.16"></script>
-<script src="js/modules/access-control.js?v=20261116-v1.0-rc1.4.16"></script>
-<script src="js/modules/visit-sync.js?v=20261116-v1.0-rc1.4.16"></script>
-<script src="js/modules/visit-hub.js?v=20261116-v1.0-rc1.4.16"></script>
-<script src="js/modules/state-compliance.js?v=20261116-v1.0-rc1.4.16"></script>
-<script src="js/modules/assessment-events.js?v=20261116-v1.0-rc1.4.16"></script>
-<script src="js/modules/official-ei-management.js?v=20261116-v1.0-rc1.4.16"></script>
-<script src="js/modules/official-ei-automation.js?v=20261116-v1.0-rc1.4.16"></script>
-<script src="js/parsers/pq-docx-parser.js?v=20261116-v1.0-rc1.4.16"></script>
-<script src="js/modules/pq-linkage.js?v=20261116-v1.0-rc1.4.16"></script>
-<script src="js/modules/validation-readiness.js?v=20261116-v1.0-rc1.4.16"></script>
-<script src="js/modules/assessment-impact.js?v=20261116-v1.0-rc1.4.16"></script>
-<script src="js/modules/management-shell.js?v=20261116-v1.0-rc1.4.16"></script>
-<script src="js/modules/drive-documents.js?v=20261116-v1.0-rc1.4.16"></script>
-<script src="js/services/pq-repository.js?v=20261116-v1.0-rc1.4.16"></script>
-<script src="js/modules/pq-library.js?v=20261116-v1.0-rc1.4.16"></script>
-<script src="js/modules/responsibility-registry.js?v=20261116-v1.0-rc1.4.16"></script>
-<script src="js/modules/system-integrity.js?v=20261116-v1.0-rc1.4.16"></script>
-<script src="js/modules/action-center.js?v=20261116-v1.0-rc1.4.16"></script>
-<script src="js/modules/notification-center.js?v=20261116-v1.0-rc1.4.16"></script>
-<script src="js/modules/reporting-center.js?v=20261116-v1.0-rc1.4.16"></script>
+<script src="js/services/cap-current-source.js?v=20261116-v1.0-rc1.4.17"></script>
+<script src="js/app.js?v=20261116-v1.0-rc1.4.17"></script>
+<script src="js/modules/access-control.js?v=20261116-v1.0-rc1.4.17"></script>
+<script src="js/modules/visit-sync.js?v=20261116-v1.0-rc1.4.17"></script>
+<script src="js/modules/visit-hub.js?v=20261116-v1.0-rc1.4.17"></script>
+<script src="js/modules/state-compliance.js?v=20261116-v1.0-rc1.4.17"></script>
+<script src="js/modules/assessment-events.js?v=20261116-v1.0-rc1.4.17"></script>
+<script src="js/modules/official-ei-management.js?v=20261116-v1.0-rc1.4.17"></script>
+<script src="js/modules/official-ei-automation.js?v=20261116-v1.0-rc1.4.17"></script>
+<script src="js/parsers/pq-docx-parser.js?v=20261116-v1.0-rc1.4.17"></script>
+<script src="js/modules/pq-linkage.js?v=20261116-v1.0-rc1.4.17"></script>
+<script src="js/modules/validation-readiness.js?v=20261116-v1.0-rc1.4.17"></script>
+<script src="js/modules/assessment-impact.js?v=20261116-v1.0-rc1.4.17"></script>
+<script src="js/modules/management-shell.js?v=20261116-v1.0-rc1.4.17"></script>
+<script src="js/modules/drive-documents.js?v=20261116-v1.0-rc1.4.17"></script>
+<script src="js/services/pq-repository.js?v=20261116-v1.0-rc1.4.17"></script>
+<script src="js/modules/pq-library.js?v=20261116-v1.0-rc1.4.17"></script>
+<script src="js/modules/responsibility-registry.js?v=20261116-v1.0-rc1.4.17"></script>
+<script src="js/modules/system-integrity.js?v=20261116-v1.0-rc1.4.17"></script>
+<script src="js/modules/action-center.js?v=20261116-v1.0-rc1.4.17"></script>
+<script src="js/modules/notification-center.js?v=20261116-v1.0-rc1.4.17"></script>
+<script src="js/modules/reporting-center.js?v=20261116-v1.0-rc1.4.17"></script>
+<script src="js/modules/dashboard-overview.js?v=20261116-v1.0-rc1.4.17"></script>
 </body>
 </html>

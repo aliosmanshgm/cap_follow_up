@@ -1,0 +1,125 @@
+CAP FOLLOW UP — DASHBOARD VE CAP TARİHÇESİ
+Sürüm: v1.0 RC1.4.17 | 16 Kasım 2026
+Önceki sürüm: RC1.4.16
+
+DASHBOARD DÜZENİ
+Ana görünüm altı özet kartından, tek bir alan/Overall tablosundan ve ayrı bir
+ICAO ziyaret sonuç tablosundan oluşur. Yinelenen EI grafik/özetleri ana görünümden
+çıkarıldı. CAP operasyonu, aksiyon/bildirim ve diğer analizler kapalı bir ayrıntı
+bölümünde erişilebilir. Önceki PQ performans ve ziyaret kapsamı düzeltmeleri korunur.
+
+1. CMAA EI
+Nihai/resmî CMAA kaydı kullanılır. Birden fazla CMAA varsa başlangıç kaydı seçilebilir.
+CMAA başlangıcı güncel CAP Word dosyalarının durumuyla değiştirilmez. Overall,
+toplam S / toplam uygulanabilir PQ üzerinden hesaplanır; alan yüzdelerinin
+ortalaması alınmaz. Yayımlanmış resmî yüzde varsa kaynak değer ayrı korunur.
+
+2. CMAA BULGULARI
+Bulgu, CMAA dönemindeki NS (Not Satisfactory) PQ anlamındadır; eylem adedi değildir.
+Denetim alanları ve Overall için ayrı gösterilir. Bilinmeyen değer 0 yerine — olur.
+
+3. BULGULARA BAĞLI CAP ADIMLARI
+CMAA bulguları ile CAP satırları kalıcı PQ kimliği / numara eşleştirmesi üzerinden
+bağlanır. Zaten S olan veya N/A olan PQ'ların adımları CMAA bulgu adımına eklenmez.
+Bir adımın eski ve yeni Word kopyaları aynı anda toplanmaz. Her alanın en güncel
+tarihli CAP kaynağı ayrı seçilir; LEG'de yeni dosya yüklemek ORG'nin daha eski ama
+güncel olan alan kaynağını ortadan kaldırmaz. CAP kaynak tarihi menüsüyle önceki
+bir tarihteki adım sayıları ve projeksiyonlar da incelenebilir.
+
+4. ICAO RESMÎ VALİDASYON ZİYARETLERİ
+Her ziyaretin taslak ve nihai aşamaları ayrı satırlardır. Alan ve Overall EI
+ile önceki resmî duruma göre yüzde puan değişimi gösterilir. Kapsam dışındaki
+alanlarda önceki değer korunur ve Valide edilmedi notu yer alır.
+
+Yayımlanan değerlendirme ile yalnız ziyaretin PQ sonuçlarından hesaplanan
+çalışma etkisi ayrıdır. Nihai PQ sonucu tek başına resmî EI kaydı sayılmaz.
+Taslaklar güncel resmî EI'ye eklenmez. Full Status'un yalnız taslak kayda bağlı
+olduğu durum da resmî EI olarak kullanılmaz. Aynı PQ iki kez sonuçlandırılırsa
+aynı S artışı tekrar sayılmaz. PQ seti değişirse yüzde farkının yalnız validasyon
+etkisi olmadığı belirtilir. Ziyaret/değerlendirme bağlantısı yalnız açık kayıt
+kimliğiyle yapılır; benzer adlar veya CAP dosya tarihleriyle otomatik bağ kurulmaz.
+
+5. ADAYLAR DAHİL EI PROJEKSİYONU
+Güncel resmî durumda NS olan, güncel CAP adımlarının tamamı tamamlanmış ve
+bekletilmeyen PQ'ların başarılı valide edilmesi varsayımıdır. Zaten S veya N/A
+olan PQ'lar ek artış sağlamaz. Her PQ bir kez sayılır; resmî EI yerine geçmez.
+
+6. TEORİK EI
+CAP'ı bulunan tüm güncel NS PQ'ların başarılı valide edilmesi varsayımıdır.
+Adaylar, kısmen tamamlanmış CAP'lar ve bekletilen CAP'lar bu üst sınıra dahildir.
+CAP'ı olmayan NS PQ'lar dahil edilmez. Adaylar teorik toplamda tekrar sayılmaz.
+Bu değer de resmî sonuç değildir. Hesap için S/uygulanabilir PQ ve PQ düzeyinde
+NS kimlikleri eksikse kesin bir yüzde gösterilmez.
+
+CAP WORD YÜKLEMESİ VE TARİHÇE
+Eski kod, farklı tarihli dosyalardaki aynı PQ/adım/eylem metnini tek tekrar
+kabul ederek yeni ilerleme satırını atlayabiliyordu. Tekrar kontrolü artık dosya
+bazındadır. Böylece tarihli durumlar birlikte saklanır; güncel görünüm son alan
+kaynağını kullanır. Aynı dosyanın yeniden yüklenmesi o kaynağı yeniler, çoğaltmaz.
+Yeni dosyada CAP boşsa eski adımlar tekrar güncel kabul edilmez.
+
+Dosya adındaki tarih yalnız CAP kaynağı seçimidir. Yeni EI, değerlendirme veya
+ziyaret oluşturmaz. CAP yüklemesi CAP ilerlemesini ve projeksiyonları etkiler;
+CMAA bulgularını, resmî EI'yi ve ICAO ziyaret sonuçlarını değiştirmez.
+
+Tarih için CAP_LEG_20261116.docx benzeri YYYYMMDD formatı kullanılabilir.
+Tarihsiz veya geçersiz tarihli dosyalar veri kontrolü notunda belirtilir.
+Tarihli alan kaynağı varsa tarihsiz kayıtlar güncel sayımı geçersiz kılamaz.
+
+ÖNEMLİ YÜKLEME NOTU
+Daha önce yüklenen dosyalardaki bazı ilerleme kayıtları eski tekrar kontrolüyle
+atlanmış olabilir. Yeni kod bu kayıp satırları kendiliğinden geri getiremez.
+Bu nedenle güncel CAP Word dosyalarını bu sürümde yeniden yükleyin. Eksiksiz
+tarih karşılaştırması istenen eski dönem dosyalarını da yeniden yükleyebilirsiniz.
+Bu işlem resmî EI veya ziyaret sonucunu güncellemez.
+
+VERİ TAMLIĞI
+CMAA kaydında yalnız yüzdeler varsa bunlardan bulgu sayısı, S/uygulanabilir PQ
+sayısı veya CAP eşleşmesi uydurulmaz. Eksik değerler — ile ve açıklamayla gösterilir.
+CMAA değerlendirmesine o döneme ait Full PQ Status State Snapshot bağlanmalıdır.
+En son yüklenen genel durum dosyası, sırf tarihi yakın diye CMAA'ya bağlanmaz.
+Bağlantı mevcut Değerlendirme Kaynakları / resmî değerlendirme ekranından yapılır.
+
+Güncel resmî EI aktif resmî Full PQ Status / değerlendirme kaynağından gelir.
+Dashboard ulusal durumu gösterir; CAP listesindeki geçici ofis/arama filtreleri
+resmî EI, bulgu veya bu dashboard toplamlarını değiştirmez.
+
+PDF VE EXCEL
+Üstteki Ekran PDF / Ekran Excel düğmeleri yeni dashboard modeliyle aynı verileri
+aktarır. Excel alan/Overall, ziyaret aşamaları, CAP kaynakları ve hesap/kaynak
+sayfalarını içerir. PDF taslak/nihai ayrımını ve Valide edilmedi notlarını korur.
+
+DOĞRULAMA
+- 39 dashboard / hesap / CAP kaynak ve ayrıştırıcı regresyon kontrolü başarılı.
+- 13 ziyaret kapsamı, 27 PQ performans, 16 domain kontrolü başarılı.
+- 51 statik kontrol başarılı; JavaScript sözdizimi kontrolleri geçti.
+- Yeni dashboard için gerçek Chromium üzerinde 24 kontrol başarılı: tarih
+  seçimi, mobil görünüm, gerçek Excel ve PDF dosyası üretimi, iki tarihli DOCX
+  yüklemesi ve aynı dosyanın yeniden yüklenmesi dahil.
+- Önceki ziyaret kapsamı tarayıcı testlerinde 24, geniş PQ/menü testlerinde
+  19 kontrol başarılı.
+- PDF içeriği metin olarak geri okundu; yeni tablo ve ziyaret aşamaları doğrulandı.
+- Gerçek CAP dosya girdisiyle yapılan testte yazma yalnız icao_system yoluna
+  yapıldı. Resmî state, assessment, EI snapshot ve ziyaret depoları değişmedi.
+
+Testler sentetik örnek kayıtlar ve bellek içi Firebase adaptörüyle yapıldı.
+Canlı Firebase verileri veya üretim izinleri bu ortamdan doğrulanmadı.
+
+KURULUM
+1. Mevcut kodunuzun bir yedeğini alın.
+2. ZIP içindeki cap_follow_up uygulamanın tamamıdır; .git ve desktop.ini içermez.
+   RC1.4.16'ya göre değişen dosyalar CHANGED_FILES.txt içinde listelidir.
+3. Normal yayın akışınızla dosyaları uygulayın. Firebase Rules veya şema taşıması
+   gerekmiyor. Geçmiş ziyaretler veya resmî sonuçlar topluca yeniden yazılmaz.
+4. Ctrl+F5 ile yenileyin. Rozet RC1.4.17 · v1.0 olmalı.
+5. CMAA kaynağını kontrol edin; bulgu/PQ kaynak bağları eksikse açıklamaları izleyin.
+6. Güncel CAP Word dosyalarını yeniden yükleyin ve CAP kaynak tarihi seçimini deneyin.
+7. Bir taslak/nihai ziyaretin alanlarını ve Valide edilmedi notlarını kontrol edin.
+8. Ekran PDF ve Ekran Excel çıktıları aynı dashboard modelini kullanmalıdır.
+
+GELİŞTİRİCİ KONTROLLERİ
+node tools/dashboard-tests.mjs
+node tools/visit-scope-tests.mjs
+node tools/pq-performance-tests.mjs
+node tools/rc-domain-tests.mjs
+node tools/rc-check.mjs
