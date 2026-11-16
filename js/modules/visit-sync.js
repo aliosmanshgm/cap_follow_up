@@ -28,19 +28,20 @@
     window.buildVisitCurrentSourceCandidates=function(visit,projectionDate){
         if(!visit)return[];
         const areas=new Set(visitArrayValue(visit.areas).map(a=>visitSyncNorm(a).toUpperCase()));
-        const latestRows=selectLatestVisitRows();
+        const latestRows=selectLatestVisitRows(),rowsByPq=new Map();
+        latestRows.forEach(row=>{const key=String(row.pq);if(!rowsByPq.has(key))rowsByPq.set(key,[]);rowsByPq.get(key).push(row);});
         const allPqs=new Set([...Object.keys(pqMasterData||{}),...latestRows.map(r=>r&&r.pq).filter(Boolean)]);
         const candidates=[];
         allPqs.forEach(pq=>{
-            const master=pqMasterData[pq]||{},area=visitSyncNorm(master.alan||'DİĞER').toUpperCase();
+            const master=pqMasterData[pq]||{},sourceRows=rowsByPq.get(String(pq))||[];
+            const metadata=getVisitScopePqMetadata(pq,master,sourceRows),area=metadata.area;
             if(areas.size&&!areas.has(area))return;
-            const sourceRows=latestRows.filter(r=>r&&String(r.pq)===String(pq));
             const pqStatus=classifyCommonPQStatus(pq,sourceRows,{projectionDate:projectionDate||null});
             const actionItems=sourceRows.filter(isUsableCapStep).map(row=>{
                 const cls=classifyCommonActionStatus(row,{projectionDate:projectionDate||null});
                 return {...row,statusCode:cls.code,statusLabel:cls.label,delayDays:cls.delayDays||0,daysLeft:cls.daysLeft,dueByProjection:!!cls.dueByProjection,parsedDate:cls.parsedDate||null,key:visitScopeStableStepKey(row),stableKey:visitScopeStableStepKey(row),legacyKey:visitScopeLegacyKey(row)};
             }).sort((a,b)=>String(a.step||'').localeCompare(String(b.step||''),'tr',{numeric:true}));
-            candidates.push({pq,master,area,statusCode:pqStatus.code,statusLabel:pqStatus.label,question:visitScopeMasterText(master,['soru','question','pqQuestion']),questionTr:visitScopeMasterText(master,['soruTr','questionTr','pqQuestionTr']),finding:visitScopeMasterText(master,['bulgu','finding','description']),findingTr:visitScopeMasterText(master,['bulguTr','findingTr','descriptionTr']),reviewEvidence:visitScopeMasterText(master,['reviewEvidence','incelenecekKanitlar','evidence']),ce:master.ce||'',responsible:master.sorumlu||'',verificationType:master.tur||'',actionItems,lateSteps:actionItems.filter(a=>a.statusCode===COMMON_ACTION_STATUS.LATE.code).length,dateRiskSteps:actionItems.filter(a=>a.statusCode===COMMON_ACTION_STATUS.DATE_RISK.code).length,openSteps:actionItems.filter(a=>a.statusCode!==COMMON_ACTION_STATUS.COMPLETED.code).length});
+            candidates.push({pq,master,area,statusCode:pqStatus.code,statusLabel:pqStatus.label,question:metadata.question,questionTr:visitScopeMasterText(master,['soruTr','questionTr','pqQuestionTr']),finding:visitScopeMasterText(master,['bulgu','finding','description']),findingTr:visitScopeMasterText(master,['bulguTr','findingTr','descriptionTr']),reviewEvidence:metadata.reviewEvidence,ce:metadata.ce,responsible:master.sorumlu||'',verificationType:metadata.verificationType,verificationTypeCode:metadata.verificationTypeCode,actionItems,lateSteps:actionItems.filter(a=>a.statusCode===COMMON_ACTION_STATUS.LATE.code).length,dateRiskSteps:actionItems.filter(a=>a.statusCode===COMMON_ACTION_STATUS.DATE_RISK.code).length,openSteps:actionItems.filter(a=>a.statusCode!==COMMON_ACTION_STATUS.COMPLETED.code).length});
         });
         return candidates.sort((a,b)=>sortAreas(a.area,b.area)||sortPQs(a.pq,b.pq));
     };
