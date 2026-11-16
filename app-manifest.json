@@ -1,8 +1,8 @@
 {
   "app": "USOAP CMA CAP Takip",
-  "version": "1.0.0-rc1.2",
+  "version": "1.0.0-rc1.4.15",
   "baseline": "index_visit_hub_pq_version_database(2).html",
-  "buildDate": "2026-11-15",
+  "buildDate": "2026-11-16",
   "features": [
     "assessment-event-model",
     "ei-snapshot-model",
@@ -114,7 +114,11 @@
     "icao-final-pq-result-tracking",
     "published-draft-ei-isolation",
     "pending-assessment-dashboard-status",
-    "icao-objection-action-automation"
+    "icao-objection-action-automation",
+    "pq-generation-index-cache",
+    "pq-concurrent-load-coalescing",
+    "pq-visible-view-rendering",
+    "pq-consistent-import-snapshot"
   ],
   "architecture": {
     "index": "index.html",
@@ -146,5 +150,6 @@
     ]
   },
   "releaseChannel": "release-candidate",
-  "previousVersion": "1.0.0-rc1.1"
+  "previousVersion": "1.0.0-rc1.4.14",
+  "cacheTag": "20261116-v1.0-rc1.4.15"
 }

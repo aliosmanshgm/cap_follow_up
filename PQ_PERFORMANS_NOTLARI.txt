@@ -1,0 +1,84 @@
+CAP FOLLOW UP — PQ PERFORMANS DÜZELTMESİ
+Sürüm: v1.0 RC1.4.15 | 16 Kasım 2026
+
+BULGU
+PQLinkage.resolveCapReference() her eşleşmede buildIndex() çağırıyordu;
+buildIndex() bütün kütüphane üzerinde enrichLibrary() çalıştırıyordu.
+CAP listesi veya State Snapshot için yüzlerce PQ arandığında sürüm geçmişi,
+concept bağlantıları ve sıralamalar tekrar tekrar hesaplanıyordu.
+
+PQ ekranı ilk yüklemede görünmeyen katalog, kıyaslama ve bağlantı ekranlarını
+da oluşturuyordu. Aynı anda gelen yükleme istekleri birleştirilmiyordu.
+Katalogdaki filtre ve arama işlemleri sürüm kartlarını ve seçim kutularını da
+tekrar kuruyordu; bu durum kıyaslama referans seçimini de sıfırlayabiliyordu.
+
+UYGULANAN DÜZELTMELER
+- Kütüphane nesnesine bağlı WeakMap indeksi: normal okumalar aynı indeksi kullanır.
+- Sürüm geçmişinde önceki PQ araması alan/PQ indeksi üzerinden yapılır.
+- Instance ID çözümlemesi tüm kayıtları taramak yerine Map üzerinden yapılır.
+- Eşzamanlı normal okumalar tek isteği paylaşır. Devam eden bir okuma sırasında
+  zorunlu yenileme istenirse sonrasında tek ek okuma yapılır; yazımdan önceki
+  okumanın sonucu son yenilemenin önüne geçmez.
+- İlk yüklemede yalnız açık PQ alt ekranı oluşturulur; başka menü açıksa PQ
+  ekranları arka planda oluşturulmaz. Sistem bütünlüğü görünümü de yalnız
+  Veri Kalitesi menüsü açıksa yenilenir.
+- Seçim kutuları veri değiştiğinde yenilenir; katalog filtresi/arama sırasında
+  korunur. PQ sıralaması aynı veri için bellekte tutulur.
+- Kıyaslama özetindeki satır eşleştirmeleri Map ile yapılır.
+- Başarılı çevrim içi okumadan önce yerel cache gereksiz yere JSON.parse edilmez.
+- DOCX içe aktarma ön kontrolünde aynı veriyi kapsayan dört ayrı RTDB okuması
+  yerine tek tutarlı snapshot kullanılır; yazma doğrulaması korunur.
+- Cache etiketi, uygulama sürümü ve manifest RC1.4.15 ile eşitlendi.
+  Eski RC1.2 etiketine sabitlenmiş statik kontrol artık manifest ile uygulama
+  sürümünün gerçekten eşleştiğini kontrol eder.
+
+ÖLÇÜM
+Aynı ortamda, aynı sentetik yük: 2 sürüm, 9 alan, 1.440 PQ kaydı, 100 eşleştirme.
+Önce: 4.497,3 ms. Sonra: 118,3 ms. Yaklaşık 38 kat hızlanma.
+Her iki durumda da 100 eşleştirme başarılı.
+Bu tek çalıştırmalı ölçüm eşleştirme motorunu kapsar; canlı uygulamanızdaki menü
+geçişlerinin tamamı için aynı hızlanmayı garanti etmez.
+
+DOĞRULAMA
+- 27 yeni PQ performans/regresyon kontrolü başarılı.
+- 16 mevcut domain kontrolü başarılı.
+- 51 statik kontrol başarılı; tüm JavaScript dosyalarının sözdizimi geçerli.
+- 228 eski/yeni sonuç karşılaştırmasında concept, lineage ve eşleştirme sonuçları
+  aynı kaldı (zaman damgaları karşılaştırma dışında tutuldu).
+- Gerçek Chromium üzerinde 19 kontrol başarılı: 9 alan kartı, SSP kataloğu,
+  arama, CE filtresi, detay seçimi, kıyaslama/özet, CAP bağlantıları, menüler,
+  yükleme sürerken menü değiştirme ve modül öz denetimleri.
+- Tarayıcı testinde 5 Dashboard→PQ gidiş/dönüşü sırasında PQ okuma sayısı 1 olarak
+  kaldı. Test verisi 100 CAP satırı ve 1.440 PQ kaydından oluştu.
+- Testlerde canlı Firebase'e bağlanılmadı ve canlı veriye yazılmadı. RTDB erişimi
+  bellek içi adaptörle taklit edildi; üretim yetkileri ve ağ gecikmesi doğrulanmadı.
+
+KULLANIM
+1. Mevcut proje klasörünüzün ve olağan veri yedeklerinizin bir kopyasını saklayın.
+2. ZIP içindeki cap_follow_up klasörü uygulamanın tamamını içerir (.git geçmişi
+   ve desktop.ini hariç). Mevcut depoya yalnız CHANGED_FILES.txt listesindeki
+   dosyaları da kopyalayabilirsiniz; diğer uygulama dosyaları değişmedi.
+3. Normal GitHub Pages yayın akışınızla bu dosyaları yayımlayın. Bu paket için
+   Firebase Rules değişikliği veya veri tabanı şema taşıması gerekmiyor.
+4. Tarayıcıda Ctrl+F5 ile yenileyin. Üst rozet RC1.4.15 · v1.0 göstermeli.
+5. PQ Veri Tabanı'nda katalog, SSP, arama ve filtreleri deneyin. Sürüm Kıyaslama'da
+   referans sürümü değiştirip seçimin kaldığını doğrulayın. Dashboard, CAP ve
+   ziyaret menüleri arasında geçiş yapın.
+6. Sorun halinde önceki kod paketini geri yükleyebilirsiniz.
+
+GELİŞTİRİCİ İÇİN
+node tools/pq-performance-tests.mjs
+node tools/rc-domain-tests.mjs
+node tools/rc-check.mjs
+
+İndeks kütüphane nesnesi bazında tutulur. Yeni yükleme yeni nesne getirir.
+İçe aktarma ve açık indeks oluşturma enrichLibrary() üzerinden geçersizleştirir.
+Yeni geliştirmelerde mevcut editions/alan/PQ nesnelerini yerinde değiştirirseniz
+PQLinkage.invalidateIndex(library) veya PQLinkage.enrichLibrary(library) çağırın.
+Görünüm verisini değiştirdikten sonra mevcut zorunlu yenileme akışını kullanın.
+
+SONRAKİ İNCELEME İÇİN
+Açık yenileme hâlâ icao_pq_library kökünü bütünüyle okuyor; yerel cache hâlâ
+senkron localStorage kullanıyor. Gerçek veri hacmi büyükse alan/sürüm bazında
+okuma ve IndexedDB değerlendirilebilir. Gerçek oturumla hangi menüde ne kadar
+bekleme olduğu ölçülerek bir sonraki darboğaz seçilmelidir.

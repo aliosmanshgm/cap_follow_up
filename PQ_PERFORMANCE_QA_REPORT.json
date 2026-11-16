@@ -1,0 +1,242 @@
+{
+  "release": "1.0.0-rc1.4.15",
+  "date": "2026-11-16",
+  "scope": "Local source, synthetic data, mocked Firebase; no production database requests or writes.",
+  "benchmark": {
+    "instances": 1440,
+    "lookups": 100,
+    "linkedBefore": 100,
+    "linkedAfter": 100,
+    "originalMs": 4497.3,
+    "correctedMs": 118.3,
+    "speedup": 38.0,
+    "note": "Same Node VM workload and environment. Single-run synthetic measurement; not live menu latency."
+  },
+  "regression": {
+    "pqPerformance": {
+      "passed": 27,
+      "failed": 0,
+      "command": "node tools/pq-performance-tests.mjs"
+    },
+    "domain": {
+      "passed": 16,
+      "failed": 0,
+      "command": "node tools/rc-domain-tests.mjs"
+    },
+    "static": {
+      "passed": 51,
+      "failed": 0,
+      "command": "node tools/rc-check.mjs"
+    },
+    "equivalence": {
+      "equivalenceChecks": 228,
+      "passed": true
+    }
+  },
+  "browser": {
+    "passed": true,
+    "checks": [
+      "background load leaves hidden catalog/comparison/version DOM empty",
+      "100 CAP rows resolve after initial load",
+      "all nine audit/SSP cards appear",
+      "versions view keeps hidden catalog empty",
+      "SSP catalog shows 80 questions",
+      "CE filter retains selection and reduces rows",
+      "debounced catalog search finds the requested PQ",
+      "selected PQ details match",
+      "comparison base selection survives rendering",
+      "unchanged fixture yields 80 unchanged comparisons",
+      "summary shows 20 revised and 60 unchanged PQs",
+      "CAP linkage table renders",
+      "repeated menu navigation reuses the loaded library",
+      "a refresh completing after navigation leaves the active menu alone",
+      "quality, validation, visits and action menus open successfully",
+      "tests made no database writes",
+      "no uncaught JavaScript errors",
+      "PQ self-check passes",
+      "dashboard self-check passes"
+    ],
+    "errors": [],
+    "timing": {
+      "elapsedMs": 249,
+      "pqReadsBefore": 1,
+      "pqReadsAfter": 1
+    },
+    "diag": {
+      "reads": [
+        "icao_pq_library",
+        "icao_pq_library"
+      ],
+      "linkage": {
+        "linked": 100,
+        "unmatched": 0,
+        "ambiguous": 0,
+        "renumbered": 0,
+        "total": 100
+      },
+      "selfCheck": {
+        "passed": true,
+        "moduleVersion": "pq-library-v1.0-rc1.1",
+        "referenceAreas": [
+          "LEG",
+          "ORG",
+          "PEL",
+          "OPS",
+          "AIR",
+          "AIG",
+          "ANS",
+          "AGA",
+          "SSP"
+        ],
+        "auditAreas": [
+          "LEG",
+          "ORG",
+          "PEL",
+          "OPS",
+          "AIR",
+          "AIG",
+          "ANS",
+          "AGA"
+        ],
+        "activeCount": 9,
+        "invalidPq": 0,
+        "distributionMismatch": 0,
+        "unknownClassified": 0,
+        "activeAreas": {
+          "LEG": {
+            "active": true,
+            "editionKey": "2024",
+            "pqCount": 80,
+            "rawAmendmentRows": 80,
+            "newCount": 0,
+            "revisedCount": 20,
+            "mergedCount": 0,
+            "noChangeCount": 60,
+            "deletedCount": 0,
+            "unknownCount": 0
+          },
+          "ORG": {
+            "active": true,
+            "editionKey": "2024",
+            "pqCount": 80,
+            "rawAmendmentRows": 80,
+            "newCount": 0,
+            "revisedCount": 20,
+            "mergedCount": 0,
+            "noChangeCount": 60,
+            "deletedCount": 0,
+            "unknownCount": 0
+          },
+          "PEL": {
+            "active": true,
+            "editionKey": "2024",
+            "pqCount": 80,
+            "rawAmendmentRows": 80,
+            "newCount": 0,
+            "revisedCount": 20,
+            "mergedCount": 0,
+            "noChangeCount": 60,
+            "deletedCount": 0,
+            "unknownCount": 0
+          },
+          "OPS": {
+            "active": true,
+            "editionKey": "2024",
+            "pqCount": 80,
+            "rawAmendmentRows": 80,
+            "newCount": 0,
+            "revisedCount": 20,
+            "mergedCount": 0,
+            "noChangeCount": 60,
+            "deletedCount": 0,
+            "unknownCount": 0
+          },
+          "AIR": {
+            "active": true,
+            "editionKey": "2024",
+            "pqCount": 80,
+            "rawAmendmentRows": 80,
+            "newCount": 0,
+            "revisedCount": 20,
+            "mergedCount": 0,
+            "noChangeCount": 60,
+            "deletedCount": 0,
+            "unknownCount": 0
+          },
+          "AIG": {
+            "active": true,
+            "editionKey": "2024",
+            "pqCount": 80,
+            "rawAmendmentRows": 80,
+            "newCount": 0,
+            "revisedCount": 20,
+            "mergedCount": 0,
+            "noChangeCount": 60,
+            "deletedCount": 0,
+            "unknownCount": 0
+          },
+          "ANS": {
+            "active": true,
+            "editionKey": "2024",
+            "pqCount": 80,
+            "rawAmendmentRows": 80,
+            "newCount": 0,
+            "revisedCount": 20,
+            "mergedCount": 0,
+            "noChangeCount": 60,
+            "deletedCount": 0,
+            "unknownCount": 0
+          },
+          "AGA": {
+            "active": true,
+            "editionKey": "2024",
+            "pqCount": 80,
+            "rawAmendmentRows": 80,
+            "newCount": 0,
+            "revisedCount": 20,
+            "mergedCount": 0,
+            "noChangeCount": 60,
+            "deletedCount": 0,
+            "unknownCount": 0
+          },
+          "SSP": {
+            "active": true,
+            "editionKey": "2024",
+            "pqCount": 80,
+            "rawAmendmentRows": 80,
+            "newCount": 0,
+            "revisedCount": 20,
+            "mergedCount": 0,
+            "noChangeCount": 60,
+            "deletedCount": 0,
+            "unknownCount": 0
+          }
+        },
+        "issues": []
+      },
+      "dashboardSelfCheck": {
+        "release": "v1.0 RC1.4.15",
+        "verificationTypeSample": {
+          "pq": "2.002",
+          "type": "offSite"
+        },
+        "officialVisit": null,
+        "pendingNoticeUsesVisit": false,
+        "passed": true
+      },
+      "release": {
+        "version": "1.0.0-rc1.4.15",
+        "label": "v1.0 RC1.4.15",
+        "buildDate": "2026-11-16",
+        "baseline": "RC1.4.14 + PQ index and navigation performance fix",
+        "cacheTag": "20261116-v1.0-rc1.4.15"
+      }
+    },
+    "blockedExternalRequests": 6
+  },
+  "limitations": [
+    "No authenticated production Firebase session or production data export was supplied.",
+    "RTDB still reads the complete icao_pq_library branch on explicit refresh; selective loading and IndexedDB are possible follow-up work.",
+    "Browser tests use real Chromium and the app DOM with synthetic PQ/CAP records, mocked Firebase and local copies of public Chart.js/JSZip assets."
+  ]
+}

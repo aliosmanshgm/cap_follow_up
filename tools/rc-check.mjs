@@ -8,7 +8,8 @@ const read = p => fs.readFileSync(path.join(root,p),'utf8');
 const exists = p => fs.existsSync(path.join(root,p));
 const html = read('index.html');
 const manifest = JSON.parse(read('app-manifest.json'));
-const expectedCache = '20261115-v1.0-rc1.2';
+const expectedCache = manifest.cacheTag;
+if(!expectedCache)throw new Error('Manifest cacheTag eksik');
 const failures=[]; const warnings=[]; const passes=[];
 const pass=(name,detail='')=>passes.push({name,detail});
 const fail=(name,detail='')=>failures.push({name,detail});
@@ -61,7 +62,8 @@ const btnNoTab=[...btns].filter(x=>!tabs.has(x)&&!virtual.has(x));
 (tabsNoBtn.length||btnNoTab.length)?fail('Tab / Hub rotaları',`tabsNoBtn=${tabsNoBtn.join(',')} btnNoTab=${btnNoTab.join(',')}`):pass('Tab / Hub rotaları',`${tabs.size} ekran + ${virtual.size} sanal Hub`);
 
 // 7. Manifest / release
-manifest.version==='1.0.0-rc1.2'?pass('Manifest sürümü',manifest.version):fail('Manifest sürümü',String(manifest.version));
+const appRelease=read('js/app.js').match(/const APP_RELEASE = Object\.freeze\(\{version:'([^']+)'[^\n]+cacheTag:'([^']+)'/);
+appRelease&&appRelease[1]===manifest.version&&appRelease[2]===expectedCache?pass('Manifest / uygulama sürümü',manifest.version):fail('Manifest / uygulama sürümü',String(manifest.version));
 manifest.releaseChannel==='release-candidate'?pass('Release channel','release-candidate'):fail('Release channel',String(manifest.releaseChannel));
 
 // 8. Public OAuth pages

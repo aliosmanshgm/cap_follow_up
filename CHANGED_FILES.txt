@@ -1,17 +1,16 @@
-RC1_2_DEPLOYMENT.md
-RC_ACCEPTANCE_CHECKLIST.md
+RC1.4.15 — PQ performans düzeltmesi
+
+CHANGED_FILES.txt
+PQ_PERFORMANCE_QA_REPORT.json
+PQ_PERFORMANS_NOTLARI.txt
 RC_STATIC_QA_REPORT.json
-README.md
-RELEASE_NOTES_v1.0_RC1_2.md
-SOURCE_OF_TRUTH_MODEL.md
-VALIDATION_REPORT.md
 app-manifest.json
 index.html
 js/app.js
-js/modules/action-center.js
-js/modules/assessment-events.js
-js/modules/management-shell.js
-js/modules/official-ei-automation.js
-js/modules/official-ei-management.js
-js/modules/state-compliance.js
+js/modules/pq-library.js
+js/modules/pq-linkage.js
+js/services/pq-repository.js
+tools/pq-performance-tests.mjs
 tools/rc-check.mjs
+
+Ayrıntılar: PQ_PERFORMANS_NOTLARI.txt

@@ -17,14 +17,22 @@
   function amendmentEntries(areaData){return Object.values((areaData&&areaData.amendments)||{}).filter(Boolean);}
   function uniq(values){return [...new Set((values||[]).filter(Boolean))];}
 
-  function latestBefore(history,area,pq,rank){const arr=history.filter(x=>x.area===area&&x.pq===pq&&x.rank<rank).sort((a,b)=>b.rank-a.rank);return arr[0]||null;}
-  function latestByConcept(history,concept,rank){return history.filter(x=>x.conceptId===concept&&x.rank<rank).sort((a,b)=>b.rank-a.rank)[0]||null;}
+  // The library is mutable during imports. Explicit enrichment/invalidation starts a new
+  // index generation; ordinary reference reads reuse that generation.
+  const indexCache=new WeakMap(),enrichedEditions=new WeakMap();
+  function invalidateIndex(library){if(library&&typeof library==='object'){indexCache.delete(library);enrichedEditions.delete(library);}}
+  function latestBefore(historyByPq,area,pq,rank){
+    let latest=null;
+    for(const item of historyByPq.get(`${area}|${pq}`)||[]){if(item.rank<rank&&(!latest||item.rank>latest.rank))latest=item;}
+    return latest;
+  }
 
   function enrichLibrary(input){
     const library=input&&typeof input==='object'?input:{};
+    invalidateIndex(library);
     library.editions=library.editions&&typeof library.editions==='object'?library.editions:{};
     library.activeByArea=library.activeByArea&&typeof library.activeByArea==='object'?library.activeByArea:{};
-    const history=[];
+    const history=[],historyByPq=new Map();
     const conceptRecords={};
 
     for(const edition of editionEntries(library)){
@@ -44,9 +52,10 @@
           p.instanceId=p.instanceId||instanceId({area,year:edition.year,revision:edition.revision,pq});
           const amendmentRows=byNew.get(pq)||[];
           const previousPqs=uniq([normalizePq(p.previousPq),...amendmentRows.map(a=>normalizePq(a.oldPq))]);
-          const predecessorInstances=uniq(previousPqs.map(old=>latestBefore(history,area,old,rank)).filter(Boolean).map(x=>x.instanceId));
-          const predecessorConcepts=uniq(previousPqs.map(old=>latestBefore(history,area,old,rank)).filter(Boolean).map(x=>x.conceptId));
-          const sameNumberPrevious=latestBefore(history,area,pq,rank);
+          const predecessors=previousPqs.map(old=>latestBefore(historyByPq,area,old,rank)).filter(Boolean);
+          const predecessorInstances=uniq(predecessors.map(x=>x.instanceId));
+          const predecessorConcepts=uniq(predecessors.map(x=>x.conceptId));
+          const sameNumberPrevious=latestBefore(historyByPq,area,pq,rank);
           const declaredType=String(p.changeType||((amendmentRows[0]||{}).type)||'').trim();
           const merged=declaredType.toLowerCase()==='merged'||predecessorConcepts.length>1;
 
@@ -67,7 +76,11 @@
             editionYear:String(edition.year||''),
             revision:String(edition.revision||'')
           };
-          history.push({instanceId:p.instanceId,conceptId:cid,area,pq,editionKey:edition.key,year:String(edition.year||''),revision:String(edition.revision||''),rank,record:p});
+          const item={instanceId:p.instanceId,conceptId:cid,area,pq,editionKey:edition.key,year:String(edition.year||''),revision:String(edition.revision||''),rank,record:p};
+          history.push(item);
+          const historyKey=`${area}|${pq}`;
+          if(!historyByPq.has(historyKey))historyByPq.set(historyKey,[]);
+          historyByPq.get(historyKey).push(item);
 
           const c=conceptRecords[cid]||(conceptRecords[cid]={conceptId:cid,area,firstSeen:null,lastSeen:null,instances:{},aliases:{},parentConceptIds:{},successorConceptIds:{},status:'historical'});
           const inst={instanceId:p.instanceId,editionKey:edition.key,year:String(edition.year||''),revision:String(edition.revision||''),pq,changeType:declaredType||'',assessmentMode:p.assessmentMode||'',ce:p.ce||'',sspComponent:p.sspComponent||''};
@@ -95,11 +108,15 @@
     const now=new Date().toISOString();
     library.concepts=conceptRecords;
     library.linkageMeta={schemaVersion:2,generatedAt:now,instanceCount:history.length,conceptCount:Object.keys(conceptRecords).length};
+    enrichedEditions.set(library,library.editions);
     return library;
   }
 
   function buildIndex(library){
-    enrichLibrary(library);
+    library=library&&typeof library==='object'?library:{};
+    const cached=indexCache.get(library);
+    if(cached&&enrichedEditions.get(library)===library.editions)return cached;
+    if(!enrichedEditions.has(library)||enrichedEditions.get(library)!==library.editions)enrichLibrary(library);
     const instances=new Map(),byAreaPq=new Map(),byConcept=new Map();
     for(const edition of editionEntries(library)){
       for(const [rawArea,areaData] of Object.entries(edition.areas||{})){
@@ -114,11 +131,19 @@
     }
     for(const arr of byAreaPq.values())arr.sort((a,b)=>b.rank-a.rank);
     for(const arr of byConcept.values())arr.sort((a,b)=>b.rank-a.rank);
-    return{instances,byAreaPq,byConcept,concepts:library.concepts||{}};
+    const index={instances,byAreaPq,byConcept,concepts:library.concepts||{},activeAreas:new Map()};
+    indexCache.set(library,index);
+    return index;
   }
 
   function activeAreaEdition(library,area){const p=(library.activeByArea||{})[normalizeArea(area)];return p&&p.editionKey?String(p.editionKey):'';}
-  function activeInstancesForArea(library,index,area){const key=activeAreaEdition(library,area);if(!key)return[];const ed=(library.editions||{})[key]||{},ad=((ed.areas||{})[normalizeArea(area)])||{};return pqEntries(ad).map(p=>index.instances.get(p.instanceId)).filter(Boolean);}
+  function activeInstancesForArea(library,index,area){
+    const key=activeAreaEdition(library,area);if(!key)return[];
+    const cached=index.activeAreas.get(area);if(cached&&cached.editionKey===key)return cached.items;
+    const ed=(library.editions||{})[key]||{},ad=((ed.areas||{})[normalizeArea(area)])||{};
+    const items=pqEntries(ad).map(p=>index.instances.get(p.instanceId)).filter(Boolean);
+    index.activeAreas.set(area,{editionKey:key,items});return items;
+  }
 
   function resolveCapReference(library,pq,area,existingLink){
     area=normalizeArea(area);pq=normalizePq(pq);const index=buildIndex(library),existing=existingLink&&typeof existingLink==='object'?existingLink:{};
@@ -173,5 +198,5 @@
     const out={pqCount:byPq.size,linked:0,unmatched:0,ambiguous:0,renumbered:0};for(const l of byPq.values()){if(l.status==='linked')out.linked++;else if(l.status==='ambiguous')out.ambiguous++;else out.unmatched++;if(l.renumbered)out.renumbered++;}return out;
   }
 
-  window.PQLinkage={AREAS,normalizeArea,normalizePq,normalizeRevision,safeKey,conceptId,instanceId,enrichLibrary,buildIndex,resolveCapReference,linkCapData,linkageSummary};
+  window.PQLinkage={AREAS,normalizeArea,normalizePq,normalizeRevision,safeKey,conceptId,instanceId,enrichLibrary,invalidateIndex,buildIndex,resolveCapReference,linkCapData,linkageSummary};
 })();

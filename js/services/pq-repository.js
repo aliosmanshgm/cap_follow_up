@@ -44,22 +44,21 @@
       try{
         ref=db.ref('.info/connected');
         handler=s=>{if(s&&s.val()===true)finish(true);};
-        ref.on('value',handler,()=>finish(false));
         timer=setTimeout(()=>finish(false),timeoutMs);
+        ref.on('value',handler,()=>finish(false));
       }catch(_){finish(false);}
     });
   }
 
   async function load(){
-    const local=readLocal();
-    if(typeof db==='undefined'||!db||!isOnline())return{library:local,source:'local',message:'Çevrimdışı mod: yerel PQ cache kullanılıyor.'};
+    if(typeof db==='undefined'||!db||!isOnline())return{library:readLocal(),source:'local',message:'Çevrimdışı mod: yerel PQ cache kullanılıyor.'};
     try{
       const snap=await withTimeout(db.ref('icao_pq_library').once('value'),DB_TIMEOUT_MS,'Firebase PQ veri tabanı okuması');
       const library=normalize(snap.exists()?snap.val():{});
       writeLocal(library);
       return{library,source:'firebase',message:(library.editions&&Object.keys(library.editions).length)?'PQ veri tabanı Firebase üzerinden güncellendi.':'Firebase PQ veri tabanı henüz boş.'};
     }catch(err){
-      return{library:local,source:'local-fallback',message:`Firebase PQ veri tabanı okunamadı; yerel cache kullanılıyor. ${err.message||err}`,error:err};
+      return{library:readLocal(),source:'local-fallback',message:`Firebase PQ veri tabanı okunamadı; yerel cache kullanılıyor. ${err.message||err}`,error:err};
     }
   }
 
@@ -147,12 +146,11 @@
     let editionExisting,existing,activeExisting,libraryExisting;
     emit(onProgress,'check','Mevcut sürüm/alan kaydı ve PQ lineage indeksi kontrol ediliyor…');
     try{
-      [editionExisting,existing,activeExisting,libraryExisting]=await Promise.all([
-        withTimeout(db.ref(editionPath).once('value'),DB_TIMEOUT_MS,'Firebase sürüm kontrolü'),
-        withTimeout(db.ref(areaPath).once('value'),DB_TIMEOUT_MS,'Firebase alan kontrolü'),
-        withTimeout(db.ref(`icao_pq_library/activeByArea/${safeKey(area)}`).once('value'),DB_TIMEOUT_MS,'Firebase aktif PQ sürümü kontrolü'),
-        withTimeout(db.ref('icao_pq_library').once('value'),DB_TIMEOUT_MS,'Firebase PQ lineage kontrolü')
-      ]);
+      // One consistent snapshot already contains the edition, area and active pointer.
+      libraryExisting=await withTimeout(db.ref('icao_pq_library').once('value'),DB_TIMEOUT_MS,'Firebase PQ lineage kontrolü');
+      editionExisting=libraryExisting.child(`editions/${editionKey}`);
+      existing=libraryExisting.child(`editions/${editionKey}/areas/${safeKey(area)}`);
+      activeExisting=libraryExisting.child(`activeByArea/${safeKey(area)}`);
     }catch(err){throw friendlyDbError(err);}
     if(existing.exists()&&!overwrite)throw new Error(`${editionKey} / ${area} zaten kayıtlı. Güncelleme onayı gerekir.`);
 
