@@ -940,3 +940,18 @@
 @media print{#dashboardOverview .dash-controls button,.dash-heading button,.dash-section-heading button,.dash-operations{display:none!important}.dash-table-wrap{overflow:visible}.dash-metrics{grid-template-columns:repeat(3,1fr)}.dash-table{font-size:9px;min-width:0}.dash-visit-table{min-width:0}.dash-visit-table td{min-width:0}}
 
 .dash-table tbody th{text-transform:none;letter-spacing:normal}
+
+/* State Snapshot source management */
+.state-snapshot-delete{color:var(--danger,#b91c1c);border-color:currentColor;}
+.state-snapshot-source-guide{margin:12px 0;}
+.state-snapshot-source-guide p{font-size:12px;line-height:1.6;color:var(--muted);}
+#stateSnapshotSources td small{display:block;margin-top:4px;color:var(--muted);}
+#stateSnapshotSources th,#stateSnapshotSources td{text-align:left;}
+.state-snapshot-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;padding:12px 0;border-top:1px solid var(--border);}
+.state-snapshot-row:first-child{border-top:0;}
+.state-snapshot-row>div:first-child{overflow-wrap:anywhere;}
+.state-snapshot-row span{display:block;margin-top:5px;font-size:11px;line-height:1.5;color:var(--muted);}
+.state-snapshot-row>div:last-child{grid-column:1/-1;}
+#stateSnapshotModal .icao-ei-auto-form-grid label{display:block;margin-bottom:5px;}
+#stateSnapshotModal input:not([type=file]){box-sizing:border-box;width:100%;min-width:0;padding:8px;border:1px solid var(--border);border-radius:6px;background:var(--surface,#fff);color:var(--text);}
+@media(max-width:600px){.state-snapshot-row{grid-template-columns:minmax(0,1fr);}}

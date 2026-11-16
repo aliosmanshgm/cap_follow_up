@@ -1,6 +1,6 @@
 {
-  "release": "1.0.0-rc1.4.17",
-  "generatedAt": "2026-11-16T19:26:43.275Z",
+  "release": "1.0.0-rc1.4.18",
+  "generatedAt": "2026-11-16T19:57:47.194Z",
   "passed": true,
   "counts": {
     "passes": 51,
@@ -12,7 +12,7 @@
   "passes": [
     {
       "name": "HTML duplicate IDs",
-      "detail": "960/960 benzersiz"
+      "detail": "961/961 benzersiz"
     },
     {
       "name": "Yerel asset referansları",
@@ -20,7 +20,7 @@
     },
     {
       "name": "RC cache etiketi",
-      "detail": "24 yerel asset 20261116-v1.0-rc1.4.17"
+      "detail": "24 yerel asset 20261116-v1.0-rc1.4.18"
     },
     {
       "name": "JavaScript syntax",
@@ -36,7 +36,7 @@
     },
     {
       "name": "Manifest / uygulama sürümü",
-      "detail": "1.0.0-rc1.4.17"
+      "detail": "1.0.0-rc1.4.18"
     },
     {
       "name": "Release channel",
@@ -204,11 +204,11 @@
     },
     {
       "name": "Boyut index.html",
-      "detail": "271 KB"
+      "detail": "272 KB"
     },
     {
       "name": "Boyut css/app.css",
-      "detail": "216 KB"
+      "detail": "217 KB"
     },
     {
       "name": "Boyut js/app.js",

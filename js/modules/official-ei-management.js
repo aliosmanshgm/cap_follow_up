@@ -296,7 +296,46 @@
     function officialEventIdForRecord(id,r){if(r&&r.assessmentEventId)return String(r.assessmentEventId);try{const links=typeof window.getAssessmentEventIdsForOfficialEi==='function'?window.getAssessmentEventIdsForOfficialEi(id):null;if(links&&links.eventId)return String(links.eventId);}catch(_){ }return`official_${String(id||'').replace(/[.#$\[\]\/]/g,'_')}`;}
     function explicitSnapshotForEvent(eventId){if(typeof window.getStateComplianceSnapshots!=='function'||!eventId)return null;const rows=(window.getStateComplianceSnapshots()||[]).filter(x=>x&&x.active!==false&&String(x.linkedAssessmentEventId||'')===String(eventId));return rows.sort((a,b)=>String(a.effectiveAsOfDate||a.snapshotDate||'').localeCompare(String(b.effectiveAsOfDate||b.snapshotDate||''))).slice(-1)[0]||null;}
     function snapshotLinkPayload(id,r,snap,now,who){const o=snapshotOverall(snap),calcAreas={},areaCounts={};AREAS.forEach(a=>{calcAreas[a]=snapshotAreaEi(snap,a);const c=snap.counts&&snap.counts.areas&&snap.counts.areas[a];areaCounts[a]=c?{satisfactory:intOrNull(c.satisfactory),applicable:intOrNull(c.applicable),notSatisfactory:intOrNull(c.notSatisfactory),notApplicable:intOrNull(c.notApplicable),unknown:intOrNull(c.unknown)}:{};});const publishedStatus=String(r.published&&r.published.status||(/draft|taslak/i.test(String(r.source||''))?'draft':String(r.resultStatus||'official'))).toLowerCase(),publishedOverride=!!(r.published&&r.published.override),publishedCanOverrideState=publishedOverride&&!['draft','provisional'].includes(publishedStatus),publishedOverall=publishedOverride?num(r.published.overallEI):null,effectiveOverall=publishedCanOverrideState&&publishedOverall!==null?publishedOverall:num(o.ei),effectiveAreas={};AREAS.forEach(a=>{const p=publishedCanOverrideState?num(r.published&&r.published.areas&&r.published.areas[a]):null;effectiveAreas[a]=p!==null?p:calcAreas[a];});let recStatus='calculated_only',diff=null;if(publishedCanOverrideState&&publishedOverall!==null&&num(o.ei)!==null){diff=Math.round((publishedOverall-num(o.ei))*100)/100;recStatus=Math.abs(diff)<=0.05?'verified':'mismatch';}else if(publishedOverride&&['draft','provisional'].includes(publishedStatus))recStatus='draft_published_with_state';const legacyEvent=legacyCountsAsEventMetrics(r),base=`icao_official_ei/${id}`,u={};u[`${base}/stateSnapshotId`]=snap.id;u[`${base}/sourceOfTruth`]={stateSnapshotId:snap.id,calculationSource:'olf_full_status_state_snapshot',linkMode:'explicit_assessment_binding',linkedAssessmentEventId:snap.linkedAssessmentEventId||'',effectiveAsOfDate:snap.effectiveAsOfDate||snap.snapshotDate||'',linkedAt:now};u[`${base}/calculated`]={overallEI:num(o.ei),overallSatisfactory:intOrNull(o.satisfactory),overallApplicable:intOrNull(o.applicable),areas:calcAreas};if(legacyEvent)u[`${base}/eventMetrics`]=legacyEvent;if(!r.legacyBeforeStateLink)u[`${base}/legacyBeforeStateLink`]={overallEI:num(r.overallEI),overallSatisfactory:intOrNull(r.overallSatisfactory),overallApplicable:intOrNull(r.overallApplicable),areas:r.areas||{},source:r.source||'',resultStatus:r.resultStatus||'official',capturedAt:now};u[`${base}/overallEI`]=effectiveOverall;u[`${base}/overallSatisfactory`]=intOrNull(o.satisfactory);u[`${base}/overallApplicable`]=intOrNull(o.applicable);u[`${base}/areas`]=effectiveAreas;u[`${base}/areaCounts`]=areaCounts;u[`${base}/reconciliation`]={status:recStatus,overallDifference:diff,tolerance:0.05};u[`${base}/updatedAt`]=now;u[`${base}/updatedBy`]=who;u[`${base}/moduleVersion`]='official-ei-management-v9-draft-objection-explicit-binding';return u;}
-    function detachInvalidStateLink(id,r,now,who){const base=`icao_official_ei/${id}`,u={},legacy=r.legacyBeforeStateLink||{},eventMetrics=r.eventMetrics||legacyCountsAsEventMetrics(legacy)||legacyCountsAsEventMetrics(r),source=String(legacy.source||r.source||''),name=String(r.name||''),looksDraft=/draft|taslak/i.test(source+' '+name),legacyEi=num(legacy.overallEI),legacyAreas=legacy.areas||r.areas||{};u[`${base}/stateSnapshotId`]=null;u[`${base}/sourceOfTruth`]={stateSnapshotId:'',calculationSource:looksDraft?'published_draft_no_state_snapshot':'event_without_state_snapshot',linkMode:'explicit_only',unlinkedAt:now};u[`${base}/calculated`]=null;u[`${base}/areaCounts`]=null;if(eventMetrics)u[`${base}/eventMetrics`]=eventMetrics;u[`${base}/overallSatisfactory`]=null;u[`${base}/overallApplicable`]=null;if(legacyEi!==null)u[`${base}/overallEI`]=legacyEi;if(looksDraft&&legacyEi!==null){u[`${base}/resultStatus`]='draft';u[`${base}/published`]={override:true,overallEI:legacyEi,areas:legacyAreas,source:source||'ICAO Draft Report',status:'draft'};}u[`${base}/areas`]=legacyAreas;u[`${base}/reconciliation`]={status:'awaiting_state_snapshot',overallDifference:null,tolerance:0.05};u[`${base}/updatedAt`]=now;u[`${base}/updatedBy`]=who;u[`${base}/moduleVersion`]='official-ei-management-v9-draft-objection-explicit-binding';return u;}
+    function detachInvalidStateLink(id,r,now,who){
+        const base=`icao_official_ei/${id}`,u={},legacy=r.legacyBeforeStateLink||{};
+        const published=r.published||{},hasPublished=published.override===true||num(published.overallEI)!==null;
+        // A deleted source cannot remain a fallback for its own calculated values.
+        const overall=hasPublished?num(published.overallEI):num(legacy.overallEI);
+        const areas=hasPublished?(published.areas||{}):(legacy.areas||{});
+        u[`${base}/stateSnapshotId`]=null;
+        u[`${base}/sourceOfTruth`]={stateSnapshotId:'',calculationSource:hasPublished?'published_without_state_snapshot':overall!==null?'legacy_published_without_state_snapshot':'event_without_state_snapshot',linkMode:'explicit_only',unlinkedAt:now};
+        u[`${base}/calculated`]=null;u[`${base}/areaCounts`]=null;
+        u[`${base}/overallSatisfactory`]=null;u[`${base}/overallApplicable`]=null;
+        u[`${base}/overallEI`]=overall;u[`${base}/areas`]=areas;
+        const legacySource=String(legacy.source||r.source||'');
+        const draft=String(r.resultStatus||'')==='draft'||String(published.status||'')==='draft'||/draft|taslak/i.test(legacySource+' '+String(r.name||''));
+        if(draft){
+            u[`${base}/resultStatus`]='draft';
+            if(!hasPublished&&overall!==null)u[`${base}/published`]={override:true,status:'draft',overallEI:overall,areas,source:legacySource||'ICAO Draft Report'};
+        }
+        u[`${base}/reconciliation`]={status:'awaiting_state_snapshot',overallDifference:null,tolerance:0.05};
+        u[`${base}/updatedAt`]=now;u[`${base}/updatedBy`]=who;
+        u[`${base}/moduleVersion`]='official-ei-management-v10-source-removal';
+        return u;
+    }
+    window.buildOfficialEiStateSnapshotRemovalUpdates=function(snapshotId,now,who){
+        if(typeof window.buildOfficialEiAssessmentUpdates!=='function')throw new Error('Değerlendirme modülü yüklenemedi; sayfayı yenileyin.');
+        const updates={},affected=[];
+        for(const [id,r] of Object.entries(window.icaoOfficialEiRecords||{})){
+            if(!r||r.isDeleted||String(r.stateSnapshotId||r.sourceOfTruth?.stateSnapshotId||'')!==String(snapshotId))continue;
+            const eventId=officialEventIdForRecord(id,r);
+            const alternatives=(window.getStateComplianceSnapshots?.()||[]).filter(s=>s.id!==snapshotId&&s.active!==false&&s.linkedAssessmentEventId===eventId)
+                .sort((a,b)=>String(a.effectiveAsOfDate||a.snapshotDate||'').localeCompare(String(b.effectiveAsOfDate||b.snapshotDate||'')));
+            const replacement=alternatives.at(-1);
+            const recordUpdates=replacement?snapshotLinkPayload(id,r,replacement,now,who):detachInvalidStateLink(id,r,now,who);
+            const next={...r},prefix=`icao_official_ei/${id}/`;
+            for(const [path,value] of Object.entries(recordUpdates)){const key=path.slice(prefix.length);if(value===null)delete next[key];else next[key]=value;}
+            updates[`icao_official_ei/${id}`]=next;
+            Object.assign(updates,window.buildOfficialEiAssessmentUpdates(id,next));
+            affected.push({id,name:r.name||r.type||id,replacementId:replacement?.id||''});
+        }
+        return{updates,affected};
+    };
     window.reconcileExplicitStateSnapshotLinks=async function(options={}){if(typeof window.hasAccessPermission==='function'&&!window.hasAccessPermission('officialEi.write'))return{updated:0,skipped:'permission'};const records=window.icaoOfficialEiRecords||{},updates={},now=new Date().toISOString(),who=actor();let count=0,detached=0;for(const [id,r] of Object.entries(records)){if(!r||r.isDeleted)continue;const eventId=officialEventIdForRecord(id,r),snap=explicitSnapshotForEvent(eventId);if(snap){if(String(r.stateSnapshotId||'')!==String(snap.id)||String(r.sourceOfTruth&&r.sourceOfTruth.linkMode||'')!=='explicit_assessment_binding'){Object.assign(updates,snapshotLinkPayload(id,r,snap,now,who));count++;}continue;}const currentSnap=r.stateSnapshotId&&typeof window.getStateComplianceSnapshotById==='function'?window.getStateComplianceSnapshotById(r.stateSnapshotId):null;const invalidCurrent=!!r.stateSnapshotId&&(!currentSnap||String(currentSnap.linkedAssessmentEventId||'')!==String(eventId));const oldAuto=String(r.sourceOfTruth&&r.sourceOfTruth.linkMode||'')==='automatic_post_event';if(invalidCurrent||oldAuto){Object.assign(updates,detachInvalidStateLink(id,r,now,who));detached++;continue;}if(String(r.resultStatus||'official')==='official'&&/draft|taslak/i.test(String(r.source||'')+' '+String(r.name||''))){updates[`icao_official_ei/${id}/resultStatus`]='draft';updates[`icao_official_ei/${id}/updatedAt`]=now;updates[`icao_official_ei/${id}/updatedBy`]=who;count++;}}
       if(Object.keys(updates).length){await db.ref().update(updates);if(!options.silent&&typeof showAppRuntimeToast==='function')showAppRuntimeToast(`${count} assessment açık snapshot bağlantısına göre güncellendi${detached?`, ${detached} yanlış otomatik bağlantı kaldırıldı`:''}.`,'success');}return{updated:count,detached};};
     window.autoLinkStateSnapshotsToOfficialEi=window.reconcileExplicitStateSnapshotLinks;
@@ -311,6 +350,7 @@
             window.icaoOfficialEiRecords=snap.val()||{};
             window.icaoOfficialEiManagementLoaded=true;
             renderList();
+            if(typeof window.renderStateSnapshotSources==='function')window.renderStateSnapshotSources();
             renderIcaoOfficialPeriodControls();
             if(typeof renderIcaoOfficialChart==='function')renderIcaoOfficialChart();
             renderIcaoOfficialTrend();

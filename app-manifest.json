@@ -1,6 +1,6 @@
 {
   "app": "USOAP CMA CAP Takip",
-  "version": "1.0.0-rc1.4.17",
+  "version": "1.0.0-rc1.4.18",
   "baseline": "index_visit_hub_pq_version_database(2).html",
   "buildDate": "2026-11-16",
   "features": [
@@ -128,7 +128,10 @@
     "separate-draft-final-validation-timeline",
     "weighted-ei-projection-dashboard",
     "dated-cap-action-history",
-    "dashboard-pdf-excel-source-consistency"
+    "dashboard-pdf-excel-source-consistency",
+    "state-snapshot-soft-deletion",
+    "atomic-ei-source-removal",
+    "assessment-source-provenance-table"
   ],
   "architecture": {
     "index": "index.html",
@@ -162,6 +165,6 @@
     ]
   },
   "releaseChannel": "release-candidate",
-  "previousVersion": "1.0.0-rc1.4.16",
-  "cacheTag": "20261116-v1.0-rc1.4.17"
+  "previousVersion": "1.0.0-rc1.4.17",
+  "cacheTag": "20261116-v1.0-rc1.4.18"
 }

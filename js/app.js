@@ -81,15 +81,13 @@ const I18N = {
     let window_loadedReportDate = null; let rawData = []; let pqMasterData = {}; let baseEIData = {}; let legacyEIReferenceData = {}; let loadedFiles = new Set(); let charts = {};
     window.currentEiSourceKind = window.currentEiSourceKind || 'none';
     window.setBaseEiDataFromStateSnapshot = function(snapshot) {
-        if(!snapshot || !snapshot.counts || !snapshot.counts.areas) return false;
         const next={};
         ICAO_GLOBAL_ORDER.forEach(area=>{
-            const c=(snapshot.counts.areas||{})[area]||{};
+            const c=(snapshot?.counts?.areas||{})[area]||{};
             const total=Number(c.applicable||0), sat=Number(c.satisfactory||0);
             if(total>0) next[area]={total, sat, afterSat:sat, source:'state_snapshot', snapshotId:snapshot.id||'', snapshotDate:snapshot.snapshotDate||''};
         });
-        if(!Object.keys(next).length) return false;
-        baseEIData=next; window.currentEiSourceKind='state_snapshot';
+        baseEIData=next; window.currentEiSourceKind=Object.keys(next).length?'state_snapshot':'none';
         try{document.getElementById('eiOverallProgressPanel').style.display='grid';document.getElementById('eiChartPanel').style.display='block';}catch(_){}
         try{refreshAllFilters();renderFileList();render();}catch(_){}
         return true;
@@ -507,7 +505,7 @@ const I18N = {
     // ================================================================
     // STABILIZASYON PAKETI 1
     // ================================================================
-    const APP_RELEASE = Object.freeze({version:'1.0.0-rc1.4.17',label:'v1.0 RC1.4.17',buildDate:'2026-11-16',baseline:'RC1.4.16 + CMAA dashboard and dated CAP history isolation',cacheTag:'20261116-v1.0-rc1.4.17'});
+    const APP_RELEASE = Object.freeze({version:'1.0.0-rc1.4.18',label:'v1.0 RC1.4.18',buildDate:'2026-11-16',baseline:'RC1.4.17 + State Snapshot deletion and EI source provenance',cacheTag:'20261116-v1.0-rc1.4.18'});
     const STABILIZATION_VERSION = APP_RELEASE.label;
     window.USOAP_APP_RELEASE = APP_RELEASE;
     const stabilizationState = {
@@ -700,7 +698,7 @@ const I18N = {
         add('word', 'Word okuma motoru', (typeof JSZip !== 'undefined') ? 'ok' : 'error', (typeof JSZip !== 'undefined') ? 'JSZip hazır.' : 'Word ayrıştırma kütüphanesi yüklenemedi.');
         add('charts', 'Grafik motoru', (typeof Chart !== 'undefined') ? 'ok' : 'warn', (typeof Chart !== 'undefined') ? 'Chart.js hazır.' : 'Grafik kütüphanesi yüklenemedi.');
         const assetVersionIssues = getLocalAssetVersionIssues();
-        add('release-build', 'Release / cache bütünlüğü', assetVersionIssues.length ? 'error' : 'ok', assetVersionIssues.length ? `RC1.4.17 cache etiketiyle eşleşmeyen ${assetVersionIssues.length} yerel asset: ${assetVersionIssues.slice(0,6).join(', ')}` : `${APP_RELEASE.label} · build ${APP_RELEASE.buildDate} · bütün yerel assetler ${APP_RELEASE.cacheTag}.`);
+        add('release-build', 'Release / cache bütünlüğü', assetVersionIssues.length ? 'error' : 'ok', assetVersionIssues.length ? `RC1.4.18 cache etiketiyle eşleşmeyen ${assetVersionIssues.length} yerel asset: ${assetVersionIssues.slice(0,6).join(', ')}` : `${APP_RELEASE.label} · build ${APP_RELEASE.buildDate} · bütün yerel assetler ${APP_RELEASE.cacheTag}.`);
         let storageOk=true; try{localStorage.setItem('__usoap_rc_probe','1');localStorage.removeItem('__usoap_rc_probe');}catch(_){storageOk=false;}
         add('browser-storage', 'Tarayıcı yerel depolama', storageOk ? 'ok' : 'warn', storageOk ? 'localStorage kullanılabilir.' : 'localStorage kapalı; çevrimdışı cache ve bazı tercihler kalıcı olmayabilir.');
         const originalDocMode=String(window.PQ_ORIGINAL_DOCUMENT_STORAGE_MODE||'external').toLowerCase();
@@ -8250,8 +8248,8 @@ const I18N = {
         const visit=getLatestDashboardIcaoVisitSummary();
         const result={release:APP_RELEASE.label,verificationTypeSample:null,officialVisit:visit?{name:visit.visit.visitName||visit.visit.icaoVisitType,scope:visit.scopeCount,satisfactory:visit.satisfactory,notSatisfactory:visit.notSatisfactory,followUp:visit.followUp,notEvaluated:visit.notEvaluated,draftEi:visit.impact?visit.impact.newPct:null,newSat:visit.impact?visit.impact.newSat:null,total:visit.impact?visit.impact.total:null}:null,pendingNoticeUsesVisit:!!visit};
         try{const first=Object.keys(pqMasterData||{})[0];if(first)result.verificationTypeSample={pq:first,type:getCommonVerificationType(first)};}catch(_){}
-        result.passed=APP_RELEASE.label.includes('RC1.4.17')&&(!visit||visit.scopeCount>=visit.satisfactory);
-        console.log('RC1.4.17 dashboard öz denetimi:',result);return result;
+        result.passed=APP_RELEASE.label.includes('RC1.4.18')&&(!visit||visit.scopeCount>=visit.satisfactory);
+        console.log('RC1.4.18 dashboard öz denetimi:',result);return result;
     };
 
     window.runSimulator = function() {

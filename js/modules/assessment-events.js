@@ -184,6 +184,15 @@
     window.getAssessmentEventIdsForOfficialEi=function(recordId){return{eventId:eventIdForOfficial(recordId),snapshotId:snapshotIdForOfficial(recordId)};};
     window.normalizeOfficialEiToAssessmentModel=function(recordId,record){return normalizeOfficialRecord(recordId,record||{});};
 
+    // Also used by source removal so records and their derived metrics change atomically.
+    window.buildOfficialEiAssessmentUpdates=function(recordId,record){
+        const normalized=normalizeOfficialRecord(recordId,record);
+        return {
+            [`${EVENT_PATH}/${normalized.eventId}`]:withAudit(normalized.eventCore,(window.icaoAssessmentEvents||{})[normalized.eventId],normalized.fingerprint),
+            [`${SNAPSHOT_PATH}/${normalized.snapshotId}`]:withAudit(normalized.snapshotCore,(window.icaoEiSnapshots||{})[normalized.snapshotId],normalized.fingerprint)
+        };
+    };
+
     window.syncOfficialEiRecordToAssessmentModel=async function(recordId,record,options={}){
         if(!recordId||!record||typeof db==='undefined')return{changed:false,reason:'missing-input'};
         const normalized=normalizeOfficialRecord(recordId,record);

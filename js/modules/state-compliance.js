@@ -3,7 +3,8 @@
   const PATH='icao_state_snapshots';
   const AREAS=['LEG','ORG','PEL','OPS','AIR','AIG','ANS','AGA'];
   const AREA_BY_PREFIX={'1':'LEG','2':'ORG','3':'PEL','4':'OPS','5':'AIR','6':'AIG','7':'ANS','8':'AGA'};
-  const VERSION='state-compliance-v1.0-rc1.2';
+  const VERSION='state-compliance-v1.0-rc1.4.18';
+  const deleting=new Set();
   let ref=null, cb=null, preview=null;
   window.icaoStateSnapshots=window.icaoStateSnapshots||{};
   window.icaoStateComplianceLoaded=window.icaoStateComplianceLoaded===true;
@@ -31,7 +32,7 @@
     const counts=summarize(states);if(skipped)warnings.push(`${skipped} satır PQ/alan tanınamadığı için atlandı.`);if(duplicate)warnings.push(`${duplicate} yinelenen PQ/instance satırında son kayıt esas alındı.`);if(unknown)warnings.push(`${unknown} PQ statüsü tanınamadı; EI numerator/denominator hesabına güvenilir statü olarak eklenmedi.`);return{states,counts,warnings,parsed:Object.keys(states).length};}
   function inferDate(name){const s=String(name||'');let m=s.match(/(20\d{2})[._-]?(\d{2})[._-]?(\d{2})/);if(m)return `${m[1]}-${m[2]}-${m[3]}`;m=s.match(/(\d{2})[._-](\d{2})[._-](20\d{2})/);if(m)return `${m[3]}-${m[2]}-${m[1]}`;return '';}
   function effectiveDate(x){return String(x&&x.effectiveAsOfDate||x&&x.snapshotDate||'');}
-  function list(){return Object.entries(window.icaoStateSnapshots||{}).map(([id,x])=>({id,...(x||{})})).filter(x=>!x.isDeleted).sort((a,b)=>effectiveDate(a).localeCompare(effectiveDate(b))||String(a.createdAt||'').localeCompare(String(b.createdAt||'')));}
+  function list(){return Object.entries(window.icaoStateSnapshots||{}).map(([id,x])=>({...(x||{}),id})).filter(x=>!x.isDeleted).sort((a,b)=>effectiveDate(a).localeCompare(effectiveDate(b))||String(a.createdAt||'').localeCompare(String(b.createdAt||'')));}
   function latest(){const rows=list().filter(x=>x.active!==false&&x.sourceType==='olf_full_status');return rows.length?rows[rows.length-1]:null;}
   function stateIdentity(row){
     if(!row)return'';
@@ -62,16 +63,76 @@
   window.getLatestStateTransition=function(){const rows=list().filter(x=>x.active!==false&&x.sourceType==='olf_full_status');if(rows.length<2)return null;return compareSnapshots(rows[rows.length-2],rows[rows.length-1]);};
   window.getStateComplianceSnapshots=list;
   window.getLatestStateComplianceSnapshot=latest;
-  window.getStateComplianceSnapshotById=id=>id&&window.icaoStateSnapshots?window.icaoStateSnapshots[id]||null:null;
+  window.getStateComplianceSnapshotById=id=>{const x=id&&window.icaoStateSnapshots?.[id];return x&&!x.isDeleted&&x.active!==false?x:null;};
   window.parseFullStatusWorkbook=function(wb,fileName=''){const sheet=detectSheet(wb,fileName);if(!sheet||sheet.kind!=='full_status')return{ok:false,kind:sheet&&sheet.kind||'unknown',sheet:sheet&&sheet.name||'',message:sheet&&sheet.kind==='findings_only'?'Bu dosya yalnız bulgu listesidir; State Snapshot için tüm PQ statülerini içeren export gereklidir.':'Tam PQ statü sütunları algılanamadı.'};const parsed=parseFullStatusSheet(sheet);return{ok:true,kind:'full_status',sheet:sheet.name,...parsed};};
 
   function assessmentRows(){try{return typeof window.getAssessmentTimeline==='function'?(window.getAssessmentTimeline({includePassive:true})||[]):[];}catch(_){return[];}}
   function assessmentLabel(event){if(!event)return'';const status=String(event.resultStatus||'official');const stat=status==='draft'?'Taslak':status==='provisional'?'Geçici':'Resmî';const date=event.assessmentDate||event.endDate||event.startDate||'';return `${event.name||event.type||'ICAO değerlendirmesi'} · ${date||'tarih yok'} · ${stat}`;}
   function assessmentById(id){return assessmentRows().find(x=>String(x.id)===String(id))||null;}
   function populateAssessmentSelect(selected=''){const sel=document.getElementById('stateSnapshotAssessmentEvent');if(!sel)return;const rows=assessmentRows();sel.innerHTML='<option value="">Bağımsız / mevcut genel durum</option>'+rows.map(x=>`<option value="${esc(x.id)}">${esc(assessmentLabel(x))}</option>`).join('');if(rows.some(x=>String(x.id)===String(selected)))sel.value=selected;}
-  function applyLatest(){const s=latest();if(s&&typeof window.setBaseEiDataFromStateSnapshot==='function')window.setBaseEiDataFromStateSnapshot(s);renderStatus();}
+  function applyLatest(){const s=latest();if(typeof window.setBaseEiDataFromStateSnapshot==='function')window.setBaseEiDataFromStateSnapshot(s);renderStatus();}
   function renderStatus(){const s=latest(),tr=window.getLatestStateTransition();const trText=tr&&tr.summary&&tr.summary.totalChanged?` · Son fark: <b>${tr.summary.nsToS} NS→S</b>, ${tr.summary.sToNs} S→NS, ${tr.summary.totalChanged} statü değişimi`:'';const link=s&&s.linkedAssessmentEventId?assessmentById(s.linkedAssessmentEventId):null;const linkText=link?` · Bağlı: <b>${esc(link.name||link.type||'Assessment')}</b>`:'';const html=s?`Aktif State Snapshot: <b>${esc(s.name||s.sourceFile&&s.sourceFile.name||effectiveDate(s)||s.id)}</b> · geçerlilik ${esc(effectiveDate(s)||'-')} · Overall <b>${s.counts&&s.counts.overall&&s.counts.overall.ei!=null?Number(s.counts.overall.ei).toLocaleString('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:2})+'%':'-'}</b>${linkText}${trText}`:'Henüz OLF Full PQ Status State Snapshot yüklenmedi.';['stateSnapshotStatus','stateSnapshotStatusDataPanel'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=html;});const sel=document.getElementById('icaoEiStateSnapshot');if(sel){const cur=sel.value;const rows=list();sel.innerHTML='<option value="">State Snapshot seçiniz...</option>'+rows.map(x=>`<option value="${esc(x.id)}">${esc(effectiveDate(x)||'-')} · ${esc(x.name||x.sourceFile&&x.sourceFile.name||x.id)} · ${x.counts&&x.counts.overall&&x.counts.overall.ei!=null?Number(x.counts.overall.ei).toLocaleString('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:2})+'%':'EI -'}</option>`).join('');if(rows.some(x=>x.id===cur))sel.value=cur;}populateAssessmentSelect(document.getElementById('stateSnapshotAssessmentEvent')?.value||'');}
-  function renderList(){const el=document.getElementById('stateSnapshotList');if(!el)return;const rows=[...list()].reverse();if(!rows.length){el.innerHTML='<div class="icao-ei-auto-empty">Henüz State Compliance Snapshot yok.</div>';return;}el.innerHTML=rows.map(x=>{const o=x.counts&&x.counts.overall||{};const ts=x.transitionSummary||{},delta=x.transitionFromSnapshotId?` · ${ts.nsToS||0} NS→S · ${ts.sToNs||0} S→NS · ${ts.totalChanged||0} değişim`:'';const ev=x.linkedAssessmentEventId?assessmentById(x.linkedAssessmentEventId):null;const linked=ev?` · <b>${esc(ev.name||ev.type||'Assessment')}</b>`:' · Bağımsız';return `<div class="state-snapshot-row"><div><b>${esc(x.name||x.sourceFile&&x.sourceFile.name||'State Snapshot')}</b><span>Geçerlilik: ${esc(effectiveDate(x)||'-')} · import: ${esc((x.importedAt||x.createdAt||'').slice(0,10)||'-')} · ${esc(x.pqVersion||'-')}${x.pqRevision?'/'+esc(x.pqRevision):''}${linked}${delta}</span></div><div><strong>${o.ei==null?'-':Number(o.ei).toLocaleString('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:2})+'%'}</strong><span>${o.satisfactory??'-'}/${o.applicable??'-'} S/Applicable</span></div><div style="display:flex;gap:5px;flex-wrap:wrap"><button type="button" class="btn-outline" onclick="editStateSnapshotMetadata('${esc(x.id)}')">Bağlantı / Metadata</button><button type="button" class="btn-outline" onclick="useStateSnapshotForOfficialEi('${esc(x.id)}')">EI Kaydına Bağla</button></div></div>`;}).join('');}
+  function renderList(){window.renderStateSnapshotSources();const el=document.getElementById('stateSnapshotList');if(!el)return;const rows=[...list()].reverse();if(!rows.length){el.innerHTML='<div class="icao-ei-auto-empty">Henüz State Compliance Snapshot yok.</div>';return;}el.innerHTML=rows.map(x=>{const o=x.counts&&x.counts.overall||{};const ts=x.transitionSummary||{},delta=x.transitionFromSnapshotId?` · ${ts.nsToS||0} NS→S · ${ts.sToNs||0} S→NS · ${ts.totalChanged||0} değişim`:'';const ev=x.linkedAssessmentEventId?assessmentById(x.linkedAssessmentEventId):null;const linked=ev?` · <b>${esc(ev.name||ev.type||'Assessment')}</b>`:' · Bağımsız';return `<div class="state-snapshot-row"><div><b>${esc(x.name||x.sourceFile&&x.sourceFile.name||'State Snapshot')}</b><span>Geçerlilik: ${esc(effectiveDate(x)||'-')} · import: ${esc((x.importedAt||x.createdAt||'').slice(0,10)||'-')} · ${esc(x.pqVersion||'-')}${x.pqRevision?'/'+esc(x.pqRevision):''}${linked}${delta}</span></div><div><strong>${o.ei==null?'-':Number(o.ei).toLocaleString('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:2})+'%'}</strong><span>${o.satisfactory??'-'}/${o.applicable??'-'} S/Applicable</span></div><div style="display:flex;gap:5px;flex-wrap:wrap"><button type="button" class="btn-outline" onclick="editStateSnapshotMetadata('${esc(x.id)}')">Bağlantı / Metadata</button><button type="button" class="btn-outline" onclick="useStateSnapshotForOfficialEi('${esc(x.id)}')">EI Kaydına Bağla</button><button type="button" class="btn-outline state-snapshot-delete" data-permission="officialEi.write" onclick="deleteStateComplianceSnapshot('${esc(x.id)}')">Sil</button></div></div>`;}).join('');}
+  window.renderStateSnapshotSources=function(){
+    const el=document.getElementById('stateSnapshotSources');if(!el)return;
+    const records=Object.entries(window.icaoOfficialEiRecords||{}).filter(([,r])=>r&&!r.isDeleted&&r.active!==false)
+      .sort((a,b)=>String(a[1].assessmentDate||'').localeCompare(String(b[1].assessmentDate||'')));
+    const body=records.map(([id,r])=>{
+      const links=window.getAssessmentEventIdsForOfficialEi?.(id),eventId=r.assessmentEventId||links?.eventId;
+      const explicitId=r.stateSnapshotId||r.sourceOfTruth?.stateSnapshotId;
+      const snapshot=window.getStateComplianceSnapshotById(explicitId)||list().filter(s=>s.active!==false&&eventId&&s.linkedAssessmentEventId===eventId).at(-1);
+      const published=r.published?.overallEI??r.legacyBeforeStateLink?.overallEI;
+      const hasPercentage=published!=null||(!explicitId&&r.overallEI!=null);
+      const source=snapshot?`${snapshot.name||snapshot.sourceFile?.name||snapshot.id} · ${effectiveDate(snapshot)||'tarih yok'}`:
+        hasPercentage?'Yalnız kayıtlı / yayımlanan EI; PQ ayrıntıları yok':'Tam PQ durum kaynağı bekleniyor';
+      const detail=snapshot&&snapshot.sourceFile?.name?`<small>${esc(snapshot.sourceFile.name)}</small>`:'';
+      const status=r.resultStatus==='draft'?'Taslak':r.resultStatus==='provisional'?'Geçici':'Nihai / Resmî';
+      return `<tr><td><b>${esc(r.name||r.type||'Değerlendirme')}</b><small>${esc(r.type||'')} · ${esc(r.assessmentDate||'-')} · ${status}</small></td><td>${esc(source)}${detail}</td><td><button type="button" class="btn-outline" onclick="openStateSnapshotAssessment('${esc(id)}')">Düzenle</button></td></tr>`;
+    }).join('');
+    el.innerHTML=body?`<div style="overflow-x:auto"><table class="icao-ei-auto-table"><thead><tr><th>Değerlendirme</th><th>EI ve bulgu kaynağı</th><th>İşlem</th></tr></thead><tbody>${body}</tbody></table></div>`:'<div class="icao-ei-auto-empty">Henüz kayıtlı değerlendirme yok. Değerlendirme kaynaklarından CMAA / OSVA kaydı oluşturun.</div>';
+  };
+  window.openStateSnapshotAssessment=function(id){window.closeStateSnapshotCenter();window.openIcaoOfficialEiManager?.();window.editIcaoOfficialEiRecord?.(id);};
+  function applyRemovalUpdates(updates){
+    const stores={icao_state_snapshots:'icaoStateSnapshots',icao_official_ei:'icaoOfficialEiRecords',icao_assessment_events:'icaoAssessmentEvents',icao_ei_snapshots:'icaoEiSnapshots'};
+    for(const [path,value] of Object.entries(updates)){
+      const [root,id,...rest]=path.split('/'),key=stores[root];if(!key||!id)continue;
+      const store=window[key]||(window[key]={});
+      if(!rest.length){if(value===null)delete store[id];else store[id]=value;}
+      else{const row=store[id]||(store[id]={});if(value===null)delete row[rest[0]];else row[rest[0]]=value;}
+    }
+  }
+  window.deleteStateComplianceSnapshot=async function(id){
+    if(deleting.has(id))return false;
+    const snapshot=window.icaoStateSnapshots?.[id];if(!snapshot||snapshot.isDeleted)return false;
+    if(!firebase.auth().currentUser){alert('Silmek için yetkili oturum gereklidir.');return false;}
+    if(typeof window.hasAccessPermission==='function'&&!window.hasAccessPermission('officialEi.write')){alert('Bu kaydı silmek için EI düzenleme yetkisi gereklidir.');return false;}
+    try{
+      const now=new Date().toISOString(),who=actor();
+      const plan=window.buildOfficialEiStateSnapshotRemovalUpdates(id,now,who);
+      const sourceName=snapshot.name||snapshot.sourceFile?.name||id;
+      const affected=plan.affected.length?`\nBağlı değerlendirmeler: ${plan.affected.map(r=>r.name).join(', ')}. Kalan açık bağlantı veya yayımlanan EI korunur; kaynaksız hesaplar kaldırılır.`:'';
+      if(!confirm(`“${sourceName}” kaydı silinsin mi?${affected}\nKayıt listelerden ve hesaplardan çıkarılır; CAP Word kayıtları ve ziyaretler korunur. Silme bilgisi denetim geçmişinde saklanır.`))return false;
+      deleting.add(id);
+      const updates={...plan.updates};
+      for(const [key,value] of Object.entries({isDeleted:true,active:false,deletedAt:now,deletedBy:who,updatedAt:now,updatedBy:who}))updates[`${PATH}/${id}/${key}`]=value;
+      // Clear any standalone derived event/snapshot that also refers to this source.
+      for(const [key,event] of Object.entries(window.icaoAssessmentEvents||{})){
+        const path=`icao_assessment_events/${key}`;
+        if(event?.stateSnapshotId===id&&!updates[path])updates[path]={...event,stateSnapshotId:'',reconciliation:{status:'awaiting_state_snapshot'},updatedAt:now,updatedBy:who};
+      }
+      for(const [key,ei] of Object.entries(window.icaoEiSnapshots||{})){
+        const path=`icao_ei_snapshots/${key}`;
+        if(ei?.stateSnapshotId===id&&!updates[path])updates[path]={...ei,stateSnapshotId:'',overall:{},areas:{},sourceOfTruth:{calculationSource:'removed_state_snapshot'},reconciliation:{status:'awaiting_state_snapshot'},updatedAt:now,updatedBy:who};
+      }
+      await db.ref().update(updates);
+      applyRemovalUpdates(updates);
+      if(document.getElementById('stateSnapshotEditId')?.value===id)window.resetStateSnapshotMetadataForm();
+      applyLatest();renderList();window.scheduleDashboardOverview?.();
+      if(typeof showAppRuntimeToast==='function')showAppRuntimeToast('PQ durum kaydı silindi; EI kaynakları güncellendi.','success');
+      return true;
+    }catch(e){console.error(e);alert('Kayıt silinemedi: '+(e.message||e));return false;}
+    finally{deleting.delete(id);}
+  };
   function renderPreview(){const el=document.getElementById('stateSnapshotPreview');if(!el)return;if(!preview){el.innerHTML='<div class="icao-ei-auto-empty">Tüm PQ statülerini içeren OLF Excel dosyasını seçiniz veya mevcut snapshot metadata kaydını düzenleyiniz.</div>';return;}if(!preview.ok){el.innerHTML=`<div class="icao-ei-auto-warnings"><div>⚠️ ${esc(preview.message||'Dosya uygun değil.')}</div></div>`;return;}const c=preview.counts,o=c.overall;el.innerHTML=`<div class="icao-ei-auto-preview-head"><div><b>${esc(preview.fileName||preview.name||'Mevcut State Snapshot')}</b><span>${esc(preview.sheet||'kayıtlı PQ state')}</span></div><div class="icao-ei-auto-kpi"><strong>${o.ei==null?'-':Number(o.ei).toLocaleString('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:2})+'%'}</strong><small>Hesaplanan Overall EI</small></div></div><div class="icao-ei-auto-meta">PQ: <b>${preview.parsed??Object.keys(preview.states||{}).length}</b> · Satisfactory: <b>${o.satisfactory}</b> · NS: <b>${o.notSatisfactory}</b> · N/A: <b>${o.notApplicable}</b> · Applicable: <b>${o.applicable}</b></div>${preview.warnings&&preview.warnings.length?`<div class="icao-ei-auto-warnings">${preview.warnings.map(w=>`<div>⚠️ ${esc(w)}</div>`).join('')}</div>`:''}<div style="overflow-x:auto"><table class="icao-ei-auto-table"><thead><tr><th>Alan</th><th>S</th><th>NS</th><th>N/A</th><th>Applicable</th><th>EI</th></tr></thead><tbody>${AREAS.map(a=>{const x=c.areas[a];return `<tr><td><b>${a}</b></td><td>${x.satisfactory}</td><td>${x.notSatisfactory}</td><td>${x.notApplicable}</td><td>${x.applicable}</td><td>${x.ei==null?'-':Number(x.ei).toLocaleString('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:2})+'%'}</td></tr>`;}).join('')}</tbody></table></div>`;}
 
   window.openStateSnapshotCenter=function(){const m=document.getElementById('stateSnapshotModal');if(m)m.style.display='block';window.resetStateSnapshotMetadataForm();renderList();renderStatus();};
@@ -93,7 +154,7 @@
   window.useStateSnapshotForOfficialEi=function(id){const s=window.getStateComplianceSnapshotById(id);if(!s)return;const modal=document.getElementById('stateSnapshotModal');if(modal)modal.style.display='none';const main=document.getElementById('icaoOfficialEiModal');if(main)main.style.display='block';const sel=document.getElementById('icaoEiStateSnapshot');if(sel)sel.value=id;if(typeof window.applyStateSnapshotToOfficialEiForm==='function')window.applyStateSnapshotToOfficialEiForm(id);};
 
   window.startStateComplianceListener=function(){if(ref&&cb)ref.off('value',cb);window.icaoStateComplianceLoaded=false;if(!firebase.auth().currentUser)return;ref=db.ref(PATH);cb=snap=>{window.icaoStateSnapshots=snap.val()||{};window.icaoStateComplianceLoaded=true;applyLatest();renderList();if(typeof window.syncAllOfficialEiRecordsToAssessmentModel==='function')setTimeout(()=>window.syncAllOfficialEiRecordsToAssessmentModel({silent:true}),80);if(typeof window.reconcileExplicitStateSnapshotLinks==='function')setTimeout(()=>window.reconcileExplicitStateSnapshotLinks({silent:true}).catch(()=>{}),160);if(typeof window.renderValidationReadiness==='function'&&document.getElementById('tab-validation-readiness')?.classList.contains('active'))setTimeout(()=>window.renderValidationReadiness(),0);if(typeof window.renderSystemIntegrityCenter==='function'&&document.getElementById('tab-quality')?.classList.contains('active'))setTimeout(()=>window.renderSystemIntegrityCenter(true),0);};ref.on('value',cb,e=>{console.error('State Snapshot okunamadı',e);window.icaoStateComplianceLoaded=true;});};
-  window.stopStateComplianceListener=function(){if(ref&&cb)ref.off('value',cb);ref=null;cb=null;window.icaoStateSnapshots={};window.icaoStateComplianceLoaded=false;renderStatus();};
+  window.stopStateComplianceListener=function(){if(ref&&cb)ref.off('value',cb);ref=null;cb=null;window.icaoStateSnapshots={};window.icaoStateComplianceLoaded=false;applyLatest();};
   window.runStateComplianceSelfCheck=function(){const synthetic=parseFullStatusSheet({rows:[{'PQ':'1.001','Area':'LEG','Status':'Satisfactory'},{'PQ':'1.002','Area':'LEG','Status':'Not Satisfactory'},{'PQ':'4.001','Area':'OPS','Status':'Satisfactory'},{'PQ':'4.002','Area':'OPS','Status':'N/A'}]});const ok=synthetic.counts.overall.satisfactory===2&&synthetic.counts.overall.applicable===3&&synthetic.counts.overall.notApplicable===1&&Math.abs(synthetic.counts.overall.ei-66.67)<0.01;const prev={id:'a',effectiveAsOfDate:'2026-01-01',snapshotDate:'2026-01-01',pqStates:{a:{pq:'1.001',area:'LEG',status:'NS'},b:{pq:'1.002',area:'LEG',status:'S'}}},cur={id:'b',effectiveAsOfDate:'2026-02-01',snapshotDate:'2026-02-01',pqStates:{a:{pq:'1.001',area:'LEG',status:'S'},b:{pq:'1.002',area:'LEG',status:'S'}}},tr=compareSnapshots(prev,cur),transitionOk=tr.summary.nsToS===1&&tr.summary.totalChanged===1;const r={passed:ok&&transitionOk&&typeof window.parseFullStatusWorkbook==='function'&&typeof window.isPqOfficiallySatisfactory==='function'&&typeof window.editStateSnapshotMetadata==='function',version:VERSION,loaded:window.icaoStateComplianceLoaded,snapshots:list().length,synthetic:ok,transition:transitionOk,latest:latest()&&latest().id||''};console.log('State Compliance öz denetimi:',r);return r;};
   document.addEventListener('DOMContentLoaded',()=>{renderStatus();renderPreview();});
 })();

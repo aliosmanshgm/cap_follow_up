@@ -1,22 +1,18 @@
-RC1.4.17 — RC1.4.16 sürümüne göre değişen dosyalar
+RC1.4.18 — RC1.4.17 sürümüne göre değişen dosyalar
 
 CHANGED_FILES.txt
-DASHBOARD_CAP_NOTLARI_RC1_4_17.txt
-DASHBOARD_QA_REPORT_RC1_4_17.json
+EI_KAYNAKLARI_QA_REPORT_RC1_4_18.json
+EI_KAYNAKLARI_SILME_NOTLARI_RC1_4_18.txt
 RC_STATIC_QA_REPORT.json
 app-manifest.json
 css/app.css
 index.html
 js/app.js
+js/modules/assessment-events.js
 js/modules/dashboard-overview.js
-js/modules/management-shell.js
 js/modules/official-ei-management.js
-js/modules/pq-library.js
-js/modules/validation-readiness.js
-js/modules/visit-sync.js
-js/services/cap-current-source.js
-tools/dashboard-tests.mjs
-tools/fixtures/dashboard-data.mjs
+js/modules/state-compliance.js
+tools/state-snapshot-tests.mjs
 
-Güncel kurulum notları: DASHBOARD_CAP_NOTLARI_RC1_4_17.txt
-Önceki PQ performans ve ziyaret kapsamı düzeltmeleri pakette korunmuştur.
+Kurulum ve kaynak rehberi: EI_KAYNAKLARI_SILME_NOTLARI_RC1_4_18.txt
+Önceki dashboard, CAP, PQ ve ziyaret düzeltmeleri korunmuştur.

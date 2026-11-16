@@ -1,0 +1,71 @@
+{
+  "release": "1.0.0-rc1.4.18",
+  "liveDatabaseModified": false,
+  "firebaseWritesMocked": true,
+  "tests": {
+    "sourceRemoval": 25,
+    "sourceRemovalBrowser": 19,
+    "dashboard": 39,
+    "dashboardBrowser": 24,
+    "visitScope": 13,
+    "pqPerformance": 27,
+    "domain": 16,
+    "static": 51
+  },
+  "sourceRemovalBrowser": {
+    "passed": 19,
+    "checks": [
+      "Dashboard opens the State Snapshot source manager",
+      "the named historical source is visible",
+      "each saved source has a delete button",
+      "source map names the CMAA source file",
+      "source map identifies percentage-only OSVA data",
+      "source-map edit opens the correct assessment record",
+      "confirmation identifies the affected assessment",
+      "canceling deletion preserves the saved source",
+      "the source manager works at mobile width",
+      "confirming deletion removes the source from the visible list",
+      "deleted source is removed from source selectors",
+      "the last source removal clears the real working EI cache",
+      "the affected CMAA record has no orphan calculated EI",
+      "independent published OSVA percentage survives",
+      "CAP and visit data remain byte-for-byte unchanged",
+      "source and derived records were changed in a single write",
+      "the source map reports that CMAA now needs a PQ source",
+      "dashboard does not reuse the deleted CMAA EI",
+      "no browser runtime errors"
+    ],
+    "errors": []
+  },
+  "dashboardBrowser": {
+    "passed": true,
+    "checks": [
+      "six concise metric cards are visible",
+      "area table shows Overall and all eight audit areas",
+      "weighted Overall EI is displayed as 33.33 percent",
+      "CMAA finding and related CAP step counts are distinct",
+      "candidate and theoretical EI are separate projections",
+      "draft and final rows appear for the same ICVM visit",
+      "areas outside visit scope are marked unvalidated",
+      "legacy duplicate EI charts are hidden",
+      "operational detail is collapsed initially",
+      "historical CAP date changes step count without changing CMAA findings or EI",
+      "per-area latest source is restored",
+      "global official dashboard is independent of CAP search filters",
+      "optional operation section can still be opened",
+      "mobile page width remains within viewport",
+      "real Excel export contains official, finding, CAP and scenario columns",
+      "real PDF export generates a non-empty PDF document",
+      "later dated Word preserves the same action as a new historical record",
+      "current CAP source reads the new completed status",
+      "a second Word updates current progress without deleting historical records",
+      "CAP Word imports never alter official state, assessment, EI snapshot or visit stores",
+      "real CAP import persistence writes only icao_system",
+      "official EI and CMAA findings remain unchanged after both Word imports",
+      "reimporting the same file replaces its source records once",
+      "no uncaught JavaScript errors"
+    ],
+    "errors": [],
+    "blockedExternalRequests": 3
+  }
+}

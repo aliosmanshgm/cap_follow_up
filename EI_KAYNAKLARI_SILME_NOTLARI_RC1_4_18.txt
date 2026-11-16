@@ -1,0 +1,103 @@
+CAP FOLLOW UP — EI KAYNAKLARI VE KAYIT SİLME
+Sürüm: v1.0 RC1.4.18 | 16 Kasım 2026
+Önceki sürüm: RC1.4.17
+
+KURULUM
+ZIP içindeki cap_follow_up klasörünün dosyalarını mevcut uygulama dosyalarının
+üzerine alın. index.html ile js ve css dosyalarını birlikte güncelleyin.
+Yayımdan sonra Ctrl+F5 yapın; üstte RC1.4.18 rozetini doğrulayın.
+Bu sürüm için Firebase veri taşıması veya yeni kural dosyası gerekmiyor.
+Önceki dashboard, CAP tarihçesi, PQ performans ve ziyaret düzeltmeleri korunur.
+Bu paket canlı veritabanındaki herhangi bir kaydı kendiliğinden silmez.
+
+İSTENMEYEN KAYDI SİLME
+1. Dashboard > PQ durum kaynakları / Sil düğmesine basın.
+2. Kayıtlı Snapshot'lar altında örneğin
+   Turkiye_Regular_StateLivePQFindings (ICVM Öncesi) · 2026-11-14
+   kaydını bulun ve o satırdaki Sil düğmesine basın.
+3. Onay penceresinde kaydı ve bağlı değerlendirmeleri kontrol edin; onaylayın.
+Silme yetkisi mevcut EI düzenleme yetkisidir: owner, manager veya coordinator.
+
+Silinen kaynak listelerden, seçim menülerinden, güncel PQ durumundan ve hesaplardan
+çıkarılır. Kaynağın içeriği ve silen kullanıcı/tarih bilgisi denetim amacıyla saklanır.
+CAP Word geçmişi, ziyaretler ve değerlendirme kayıtlarının kendileri silinmez.
+Aynı değerlendirmeye önceden açıkça bağlı başka bir kaynak varsa o kullanılır.
+Yoksa bu kaynaktan hesaplanan EI ve PQ sayıları kaldırılır; bağımsız yayımlanmış
+ICAO yüzdeleri veya bağlantıdan önce kayıtlı yüzde verileri korunur. Kaynak olmadan
+PQ sayısı, bulgu–CAP eşleştirmesi veya projeksiyon üretilmez. Başka güncel snapshot
+kalmadıysa eski çalışma EI önbelleği de temizlenir.
+Kaynak, bağlı EI kaydı ve türetilmiş olay/EI kayıtları tek Firebase güncellemesiyle
+yazılır. Yetkisiz işlem, iptal ve yazma hatası durumları için kontroller bulunur.
+
+CMAA VE OSVA GERÇEK EI VERİLERİ NEREDEN GELİYOR?
+Dashboard'daki Değerlendirme kaynakları CMAA, OSVA, ICVM gibi kayıtları yönetir.
+PQ durum kaynakları / Sil ekranındaki Hangi kayıt EI verisini besliyor? tablosu,
+her aktif değerlendirme için bağlı dosyayı, durum tarihini ve nihai/taslak ayrımını
+gösterir. Excel bağlı değilse yalnız kayıtlı/yayımlanan yüzde veya eksik kaynak
+bilgisi görünür. Bazı kayıtlar önceki sürümlerin başlangıç değerleri ya da elle
+kaydedilmiş yüzdeler olabilir; bunlar tam PQ statü kaynağı yerine geçmez.
+Canlı veritabanınız bu çalışma ortamında okunmadığı için hangi kaydın şu anda
+sizin ekranınızda aktif olduğu paket hazırlanırken doğrulanmamıştır.
+
+A. TAM PQ DURUM EXCEL'İ — FULL PQ STATUS
+Her PQ için PQ numarası ve Satisfactory / Not Satisfactory / N/A statüsü gerekir.
+Alan bilgisi varsa kullanılır; yoksa PQ numarasından alan bulunur.
+EI = S / (S + NS) x 100. N/A paydadan çıkarılır.
+Overall, toplam sayılardan hesaplanır; alan yüzdelerinin ortalaması alınmaz.
+Dosya içeriğinin ilgili dönemdeki bütün PQ durumlarını kapsadığını doğrulayın.
+Başlıktaki Status sütunu veya dosyanın adı tek başına tam kapsamı kanıtlamaz.
+
+CMAA için CMAA sonucunu temsil eden tarihsel tam durum dosyası gerekir.
+Güncel dosyanın adını CMAA yapmak, geçmiş CMAA durumunu geri oluşturmaz.
+OSVA sonrası EI için OSVA sonucunu yansıtan tam durum dosyası gerekir.
+OSVA kapsamına alınmayan alanlar ilgili önceki durumunu korur; bu alanlar OSVA ile
+valide edilmiş sayılmaz. Yalnız ziyaret kapsamındaki birkaç PQ'nun S/Toplam oranı
+ülkenin Overall EI değeri değildir.
+
+Mevcut CMAA/OSVA kaydına bağlama:
+1. PQ durum kaynakları / Sil > Tüm PQ Statüleri Excel'ini Seç.
+2. Snapshot adı, gerçek durum tarihi ve PQ sürümünü girin.
+3. Bağlı ICAO değerlendirmesi alanında doğru CMAA veya OSVA kaydını seçin.
+4. State Snapshot Olarak Kaydet'e basın.
+5. Kaynak tablosunda doğru değerlendirme–dosya bağlantısını kontrol edin.
+Mevcut bir snapshot için Bağlantı / Metadata düğmesiyle aynı işlem yapılabilir.
+İndirme/yükleme tarihi değerlendirme tarihi olarak kullanılmaz; tarihe bakarak
+kendiliğinden CMAA/OSVA/ICVM eşleştirmesi yapılmaz.
+
+B. ICAO'NUN YAYIMLADIĞI EI YÜZDELERİ
+Elinizde yalnız resmî rapordaki alan/Overall yüzdeleri varsa bunlar Değerlendirme
+kaynakları formundaki yayımlanan EI alanlarına girilebilir; ilgili sonuç statüsü
+Nihai/Resmî veya Taslak olarak doğru seçilmelidir. Bu yöntemle Excel yüklemek
+zorunlu değildir. Ancak yalnız yüzdelerden NS sayısı, hangi PQ'nun bulgu olduğu,
+bulgulara bağlı CAP adımı ve güvenilir projeksiyon çıkarılamaz.
+Yeni bir değerlendirme henüz yoksa yayımlanan rapor verileriyle önce o değerlendirme
+kaydedilip ardından dönemin tam PQ durum dosyası bağlanabilir.
+Taslak yüzdeler güncel resmî EI'yi değiştirmez.
+
+C. YALNIZ BULGU EXCEL'İ — FINDINGS ONLY / STATE LIVE PQ FINDINGS
+Yalnız NS/açık bulguları listeleyen dosya S ve N/A sayılarını sağlamaz; gerçek EI
+ve Overall paydası için tek başına yeterli değildir. Dosya adı ne olursa olsun
+belirleyici olan kapsam ve sütunlardaki gerçek statü bilgileridir.
+İsmi StateLivePQFindings olan eski bir kayıt tam durum olarak kaydedilmişse
+bu sürüm adından hareketle otomatik silmez veya düzeltmez; içerik doğrulandıktan
+sonra kullanıcı ilgili kaydı silebilir ve doğru tam durum dosyasını bağlayabilir.
+
+D. PQ VERİ TABANI WORD DOSYALARI
+Soru metni, rehber, referans, sürüm ve on-site/off-site doğrulama türünü besler.
+Ülkenin S/NS sonucunu veya gerçekleşmiş EI'yi kendi başına sağlamaz.
+
+E. CAP İLERLEME WORD DOSYALARI
+CAP adımlarını, ilerleme durumlarını ve farklı tarihlerdeki CAP geçmişini besler.
+Resmî EI, değerlendirme olayı veya ziyaret sonucu oluşturmaz.
+Aynı PQ'nun farklı tarihli CAP belgeleri tutulur; dashboard'da her alanın güncel
+kaynağı esas alınır. Tamamlanma, yalnız olası EI projeksiyonunu etkiler; resmî EI
+artışı için uygun resmî sonuç/PQ durum kaynağı ayrıca gereklidir.
+
+DOĞRULAMA
+- Kaynak silme ve bağlı EI davranışları: 25 test başarılı.
+- Gerçek HTML/JS ile Chromium silme/kaynak ekranı: 19 kontrol başarılı.
+- Dashboard davranışları: 39 test başarılı.
+- Dashboard tarayıcı ve gerçek Word içe aktarma kontrolleri: 24 kontrol başarılı.
+- Ziyaret kapsamı: 13, PQ performans: 27, alan kuralları: 16 test başarılı.
+- Statik sürüm, JS sözdizimi, HTML ve kural kontrolleri: 51 başarılı; uyarı yok.
+Firebase yazmaları testlerde taklit edilmiştir; canlı kullanıcı verileri değişmedi.
