@@ -9,8 +9,9 @@
   const percent=(s,n)=>s!==null&&n!==null&&n>0&&s>=0&&s<=n?100*s/n:null;
   const pctValue=v=>{const n=num(v);return n!==null&&n>=0&&n<=100?n:null;};
   const active=v=>v&&!v.isDeleted&&v.active!==false;
-  const date=v=>str(v&&(v.effectiveAsOfDate||v.snapshotDate||v.assessmentDate||v.endDate||v.actualEnd||v.plannedEnd||v.actualStart||v.plannedStart));
+  const date=v=>str(v&&(v.date||v.effectiveAsOfDate||v.snapshotDate||v.assessmentDate||v.endDate||v.actualEnd||v.plannedEnd||v.actualStart||v.plannedStart));
   const sortDate=(a,b)=>date(a).localeCompare(date(b))||str(a.id).localeCompare(str(b.id));
+  let buildIndexCache=null,buildGroupCache=null;
   const safe=v=>str(v).replace(/[.#$\[\]\/]/g,'_').replace(/\s+/g,'_');
   const areaOf=(row,master={})=>window.CapCurrentSource.areaOf(row,master);
   function aliases(row,master={}){
@@ -20,6 +21,7 @@
   }
   function concept(row,master={}){const m=master[row.pq]||{};return str(row.conceptId||row.pqConceptId||m.pqConceptId||row.pqLink?.pqConceptId||m.pqLink?.pqConceptId);}
   function indexStates(data){
+    if(buildIndexCache&&data&&buildIndexCache.has(data))return buildIndexCache.get(data);
     const rows=new Map(),byConcept=new Map(),byPq=new Map();
     for(const row of values(data?.pqStates)){
       if(!row||!AREAS.includes(row.area))continue;
@@ -30,7 +32,7 @@
       if(concept(row))byConcept.set(concept(row),id);
       for(const pq of aliases(row))byPq.set(`${row.area}|${pq}`,id);
     }
-    return{rows,byConcept,byPq};
+    const index={rows,byConcept,byPq};if(buildIndexCache&&data)buildIndexCache.set(data,index);return index;
   }
   function findState(index,row,master={}){
     const m=master[row.pq]||{},link=row.pqLink||m.pqLink||{};
@@ -45,7 +47,7 @@
     let notSatisfactory=integer(raw.notSatisfactory);
     if(notSatisfactory===null&&satisfactory!==null&&applicable!==null&&applicable>=satisfactory)notSatisfactory=applicable-satisfactory;
     const calculated=percent(satisfactory,applicable),explicit=pctValue(raw.ei);
-    return{satisfactory,applicable,notSatisfactory,ei:applicable===0?null:(explicit??calculated),
+    return{satisfactory,applicable,notSatisfactory,notApplicable:integer(raw.notApplicable),reliable:raw.sourceReliable!==false,ei:raw.sourceReliable===false||applicable===0?null:(explicit??calculated),
       consistent:!(satisfactory!==null&&applicable!==null&&satisfactory>applicable)&&!(notSatisfactory!==null&&applicable!==null&&notSatisfactory>applicable)&&
         (calculated===null||explicit===null||Math.abs(calculated-explicit)<0.06)};
   }
@@ -93,13 +95,14 @@
     return m;
   }
   function groupsFor(cap,index,master){
+    if(buildGroupCache?.has(index))return buildGroupCache.get(index);
     const groups=new Map();
     for(const row of cap.rows){
       if(!window.CapCurrentSource.usable(row))continue;
       const id=findState(index,row,master);if(!id)continue;
       if(!groups.has(id))groups.set(id,[]);groups.get(id).push(row);
     }
-    return groups;
+    if(buildGroupCache)buildGroupCache.set(index,groups);return groups;
   }
   function projections(current,cap,master,readiness={}){
     const idx=indexStates(current.data),groups=groupsFor(cap,idx,master),out={};
@@ -112,7 +115,7 @@
         const key=safe(concept(row)||`${row.area}__${row.pq}`),stored=readiness[key]||{};
         if(actions.every(window.CapCurrentSource.completed)&&stored.planningStatus!=='hold')candidate++;
       }
-      const countsKnown=m.satisfactory!==null&&m.applicable!==null&&m.applicable>0&&m.consistent;
+      const countsKnown=m.reliable!==false&&m.satisfactory!==null&&m.applicable!==null&&m.applicable>0&&m.consistent;
       const identityComplete=m.notSatisfactory!==null&&ns.length===m.notSatisfactory;
       const sourcePresent=cap.sources.some(s=>a==='Overall'||s.area===a)||m.notSatisfactory===0;
       const available=countsKnown&&identityComplete&&sourcePresent;
@@ -123,45 +126,55 @@
     }
     return out;
   }
-  function resultCode(value){
-    const v=str(value).toLowerCase();
-    return({satisfactory:'S',not_satisfactory:'NS',not_applicable:'NA',s:'S',ns:'NS',na:'NA'})[v]||null;
+  function resultCode(value){return window.IcaoVisitOutcomes.code(value);}
+  function visitScope(visit,master,scopeAreas){
+    return [...new Map(values(visit?.scope?.pqs).filter(p=>p&&!p.isDeleted&&p.active!==false&&(!scopeAreas.size||scopeAreas.has(areaOf(p,master))))
+      .map(p=>[`${areaOf(p,master)}|${concept(p,master)||p.pq}`,p])).values()];
   }
-  function phaseResults(visit,phase){
-    const map=new Map();
-    for(const r of values(visit?.icaoValidation?.records).filter(r=>!r.isDeleted)){
-      let value=phase==='final'?r.finalResult:phase==='draft'?r.draftResult:'';
-      if(phase==='working')value=r.finalResult||r.draftResult||(r.status==='validated'?'satisfactory':r.status==='not_validated'?'not_satisfactory':'');
-      map.set(str(r.pq),{...r,result:resultCode(value)});
-    }
-    return map;
-  }
-  function simulateVisit(visit,phase,before,master,scopeAreas){
-    const scope=[...new Map(values(visit?.scope?.pqs).filter(p=>!scopeAreas.size||scopeAreas.has(areaOf(p,master))).map(p=>[`${areaOf(p,master)}|${concept(p,master)||p.pq}`,p])).values()];
-    const results=phaseResults(visit,phase),idx=indexStates(before.data),seen=new Set(),deltas={};
-    const counts={satisfactory:0,notSatisfactory:0,notApplicable:0,pending:0,total:scope.length};
-    AREAS.forEach(a=>deltas[a]={sat:0,app:0,unresolved:0,evaluated:0});
+  function visitRecords(visit){return new Map(values(visit?.icaoValidation?.records).filter(r=>r&&!r.isDeleted).map(r=>[str(r.pq),r]));}
+  function rawMetric(m){return {satisfactory:m.satisfactory,notSatisfactory:m.notSatisfactory,notApplicable:m.notApplicable,applicable:m.applicable,ei:m.ei,sourceReliable:m.reliable!==false};}
+  function dataWithMetrics(data,m){return {...data,counts:{areas:Object.fromEntries(AREAS.map(a=>[a,rawMetric(m[a])])),overall:rawMetric(m.Overall)}};}
+  function simulateVisit(visit,before,master,scopeAreas,finalOnly=false){
+    const scope=visitScope(visit,master,scopeAreas),records=visitRecords(visit),idx=indexStates(before.data),changes={},seen=new Set();
+    const counts={satisfactory:0,notSatisfactory:0,notApplicable:0,pending:0,unknown:0,total:scope.length,finalized:0,draft:0,working:0,unchanged:0};
+    const deltas=Object.fromEntries(AREAS.map(a=>[a,{sat:0,ns:0,na:0,app:0,unresolved:0,evaluated:0}]));
     for(const p of scope){
-      const r=results.get(str(p.pq)),area=areaOf(p,master),code=r?.result;
-      if(!code){counts.pending++;continue;}
-      if(code==='S')counts.satisfactory++;else if(code==='NS')counts.notSatisfactory++;else counts.notApplicable++;
-      if(!deltas[area])continue;
-      const id=findState(idx,p,master),old=id&&idx.rows.get(id);
-      if(!old||!['S','NS','NA'].includes(old.status)){deltas[area].unresolved++;continue;}
-      if(seen.has(id))continue;seen.add(id);
-      deltas[area].evaluated++;
-      deltas[area].sat+=(code==='S'?1:0)-(old.status==='S'?1:0);
-      deltas[area].app+=(code==='NA'?0:1)-(old.status==='NA'||old.applicable===false?0:1);
+      const record=records.get(str(p.pq))||{},area=areaOf(p,master),identity=findState(idx,p,master),old=identity&&idx.rows.get(identity);
+      const outcome=window.IcaoVisitOutcomes.resolve(record,old?.status,finalOnly);
+      if(window.IcaoVisitOutcomes.final(record))counts.finalized++;
+      if(outcome.phase==='draft')counts.draft++;if(outcome.phase==='working')counts.working++;
+      if(!outcome.raw){counts.pending++;continue;}
+      if(outcome.unchanged)counts.unchanged++;
+      if(outcome.code==='S')counts.satisfactory++;else if(outcome.code==='NS')counts.notSatisfactory++;else if(outcome.code==='NA')counts.notApplicable++;else counts.unknown++;
+      const d=deltas[area];if(!d)continue;
+      if(!old||!['S','NS','NA'].includes(old.status)||!outcome.code){d.unresolved++;continue;}
+      if(seen.has(identity))continue;seen.add(identity);d.evaluated++;
+      d.sat+=(outcome.code==='S'?1:0)-(old.status==='S'?1:0);
+      d.ns+=(outcome.code==='NS'?1:0)-(old.status==='NS'?1:0);
+      d.na+=(outcome.code==='NA'?1:0)-(old.status==='NA'?1:0);
+      d.app+=(outcome.code==='NA'?0:1)-(old.status==='NA'||old.applicable===false?0:1);
+      changes[identity]={...old,status:outcome.code,applicable:outcome.code!=='NA'};
     }
     const out={};
     for(const a of KEYS){
-      const d=a==='Overall'?Object.values(deltas).reduce((x,y)=>({sat:x.sat+y.sat,app:x.app+y.app,unresolved:x.unresolved+y.unresolved,evaluated:x.evaluated+y.evaluated}),{sat:0,app:0,unresolved:0,evaluated:0}):deltas[a];
-      const m=before.metrics[a];let ei=m.ei;
-      if(d.unresolved)ei=null;
-      else if(d.evaluated)ei=m.consistent&&m.satisfactory!==null&&m.applicable!==null?percent(m.satisfactory+d.sat,m.applicable+d.app):null;
-      out[a]={ei,evaluated:d.evaluated,unresolved:d.unresolved};
+      const d=a==='Overall'?Object.values(deltas).reduce((x,y)=>Object.fromEntries(Object.keys(x).map(k=>[k,x[k]+y[k]])),{sat:0,ns:0,na:0,app:0,unresolved:0,evaluated:0}):deltas[a];
+      const m=before.metrics[a];let next={...m};
+      if(d.unresolved){next={...next,satisfactory:null,notSatisfactory:null,notApplicable:null,applicable:null,ei:null,reliable:false,consistent:false};}
+      else if(d.evaluated){
+        const sat=m.satisfactory===null?null:m.satisfactory+d.sat,app=m.applicable===null?null:m.applicable+d.app;
+        next=metric({satisfactory:sat,applicable:app,notSatisfactory:m.notSatisfactory===null?null:m.notSatisfactory+d.ns,
+          notApplicable:m.notApplicable===null?null:m.notApplicable+d.na,ei:m.consistent?percent(sat,app):null,sourceReliable:m.consistent&&m.reliable!==false});
+      }
+      out[a]={...next,evaluated:d.evaluated,unresolved:d.unresolved};
     }
-    return{metrics:out,counts};
+    const pqStates={};for(const [identity,row] of idx.rows)pqStates[safe(identity)]=changes[identity]||{...row};
+    const data=dataWithMetrics({...before.data,sourceType:'visit_derived_state',pqStates},out);
+    return{metrics:out,data,counts,hasResults:counts.finalized+counts.draft+counts.working>0};
+  }
+  function mergeReportedMetric(computed,reported){
+    const sat=reported.satisfactory??computed.satisfactory,app=reported.applicable??computed.applicable;
+    return metric({satisfactory:sat,applicable:app,notSatisfactory:reported.notSatisfactory??computed.notSatisfactory,
+      notApplicable:reported.notApplicable??computed.notApplicable,ei:reported.ei??computed.ei,sourceReliable:reported.ei!==null||computed.reliable!==false});
   }
   function buildVisitRows(input,events,states,baseline,officialStates){
     const visits=(input.visits||[]).filter(v=>active(v)&&(v.visitType==='icao_official'||v.type==='icao_official')).map(v=>({...v}));
@@ -169,55 +182,62 @@
     for(const e of events){
       if(str(e.type).toUpperCase()==='CMAA'&&!e.linkedVisitId)continue;
       if(e.linkedVisitId&&visits.some(v=>v.id===e.linkedVisitId))continue;
-      // Missing visit rows can still be grouped by their explicit shared visit ID.
       const key=e.linkedVisitId?'visit:'+e.linkedVisitId:'event:'+e.id;
-      if(!eventGroups.has(key))eventGroups.set(key,[]);
-      eventGroups.get(key).push(e);
+      if(!eventGroups.has(key))eventGroups.set(key,[]);eventGroups.get(key).push(e);
     }
     for(const [id,group] of eventGroups){
       const e=group.filter(e=>(e.resultStatus||'official')==='official').at(-1)||group.at(-1);
       visits.push({id,visitName:e.name||e.type,areas:e.scopeAreas||[],actualEnd:date(e),eventOnly:e,relatedEvents:group});
     }
-    visits.sort(sortDate);
-    const rows=[];
+    visits.sort(sortDate);const rows=[];let previous=null;
     for(const visit of visits){
       const related=visit.relatedEvents||(visit.eventOnly?[visit.eventOnly]:events.filter(e=>e.linkedVisitId===visit.id));
-      const resultRows=values(visit.icaoValidation?.records).filter(r=>!r.isDeleted);
-      const hasFinal=related.some(e=>(e.resultStatus||'official')==='official')||resultRows.some(r=>resultCode(r.finalResult));
-      const hasDraft=related.some(e=>['draft','provisional'].includes(e.resultStatus))||resultRows.some(r=>resultCode(r.draftResult));
-      const hasWorking=resultRows.some(r=>['validated','not_validated'].includes(r.status));
-      // One visible result per visit. Final results supersede all draft and working rows.
-      const phases=[hasFinal?'final':hasDraft?'draft':hasWorking?'working':'pending'];
-      const day=date(visit),excluded=new Set(related.map(e=>stateForEvent(e,states)?.id).filter(Boolean));
+      const official=related.filter(e=>(e.resultStatus||'official')==='official').sort(sortDate).at(-1);
+      const draft=related.filter(e=>['draft','provisional'].includes(e.resultStatus)).sort(sortDate).at(-1),e=official||draft;
+      const day=date(visit)||date(e),excluded=new Set(related.map(e=>stateForEvent(e,states)?.id).filter(Boolean));
       const priorStates=officialStates.filter(s=>date(s)&&date(s)<day&&!excluded.has(s.id));
       const priorEvents=events.filter(e=>(e.resultStatus||'official')==='official'&&date(e)<day&&!related.includes(e));
       const priorState=priorStates.at(-1),priorEvent=priorEvents.at(-1);
-      let before=day&&date(baseline.event)&&date(baseline.event)>day?{data:null,metrics:metrics(null),version:''}:baseline;
-      if(priorState&&(!priorEvent||date(priorState)>=date(priorEvent)))before={data:priorState,metrics:metrics(priorState),version:priorState.pqVersion};
-      else if(priorEvent)before={data:eventData(priorEvent,states),metrics:eventMetrics(priorEvent,states),version:priorEvent.pqVersion};
-      for(const phase of phases){
-        const e=related.filter(e=>phase==='final'?(e.resultStatus||'official')==='official':phase==='draft'&&['draft','provisional'].includes(e.resultStatus)).sort(sortDate).at(-1);
-        const scope=new Set((e?.scopeAreas?.length?e.scopeAreas:visit.areas||[]).map(a=>str(a).toUpperCase()));
-        if(!scope.size)values(visit.scope?.pqs).forEach(p=>{const a=areaOf(p,input.master);if(a)scope.add(a);});
-        const simulated=simulateVisit(visit,phase,before,input.master,scope),published=e?eventMetrics(e,states):null,cells={};
-        const data=e?eventData(e,states):null;
-        const version=e?.pqVersion||data?.pqVersion||before.version;
-        const versionChanged=!!(before.version&&version&&before.version!==version);
-        for(const a of KEYS){
-          const inScope=a==='Overall'||scope.has(a),hasPublished=published&&published[a].ei!==null;
-          const value=inScope?(hasPublished?published[a].ei:simulated.metrics[a].ei):before.metrics[a].ei;
-          cells[a]={ei:value,inScope,delta:inScope&&value!==null&&before.metrics[a].ei!==null?value-before.metrics[a].ei:null,
-            evaluated:simulated.metrics[a].evaluated,source:hasPublished?'published':'pq_results'};
+      let before=day&&date(baseline.event)&&date(baseline.event)>day?{data:null,metrics:metrics(null),version:'',date:''}:{...baseline,date:date(baseline.event)};
+      if(priorState&&(!priorEvent||date(priorState)>=date(priorEvent)))before={data:priorState,metrics:metrics(priorState),version:priorState.pqVersion,date:date(priorState)};
+      else if(priorEvent)before={data:eventData(priorEvent,states),metrics:eventMetrics(priorEvent,states),version:priorEvent.pqVersion,date:date(priorEvent)};
+      if(previous&&day&&previous.date<=day&&(!before.date||previous.date>=before.date))before={data:previous.data,metrics:previous.metrics,version:previous.version,date:previous.date};
+      const scope=new Set((e?.scopeAreas?.length?e.scopeAreas:visit.areas||[]).map(a=>str(a).toUpperCase()));
+      if(!scope.size)values(visit.scope?.pqs).forEach(p=>{const a=areaOf(p,input.master);if(a)scope.add(a);});
+      const simulated=simulateVisit(visit,before,input.master,scope,!!official),reported=e?eventMetrics(e,states):null,recordData=e?eventData(e,states):null;
+      const complete=simulated.counts.total>0&&simulated.counts.finalized===simulated.counts.total;
+      const phase=official||complete?'final':draft||simulated.counts.finalized||simulated.counts.draft?'draft':simulated.counts.working?'working':'pending';
+      const version=e?.pqVersion||recordData?.pqVersion||before.version,versionChanged=!!(before.version&&version&&before.version!==version);
+      const cells={},stageMetrics={};let useFullRecord=!!(recordData?.pqStates&&(official||!simulated.hasResults));
+      for(const a of KEYS){
+        const inScope=a==='Overall'||scope.has(a),published=reported?.[a];let m=simulated.metrics[a],source='visit_pq_results';
+        if(!inScope){m=before.metrics[a];source='previous_stage';}
+        else if(published?.ei!==null&&published?.ei!==undefined&&(official||!simulated.hasResults||m.ei===null&&phase!=='final')){
+          m=mergeReportedMetric(m,published);source='registered_assessment';
         }
-        rows.push({id:visit.id+':'+phase,visitId:visit.eventOnly?'':visit.id,name:visit.visitName||visit.icaoVisitType||'ICAO ziyareti',date:date(e)||day,
-          phase,scope:[...scope],cells,counts:simulated.counts,versionChanged,
-          source:e?'Kayıtlı değerlendirme':'Ziyaret PQ sonuçlarından hesaplanan çalışma etkisi',
-          official:phase==='final'&&!!e,partial:simulated.counts.pending>0});
+        stageMetrics[a]=m;
+        cells[a]={ei:m.ei,inScope,delta:inScope&&m.ei!==null&&before.metrics[a].ei!==null?m.ei-before.metrics[a].ei:null,
+          evaluated:simulated.metrics[a].evaluated,source};
       }
+      let data=simulated.data;
+      if(useFullRecord){
+        const pqStates={};for(const row of values(before.data?.pqStates))if(!scope.has(row.area))pqStates[safe(concept(row)||row.area+'_'+row.pq)]={...row};
+        for(const row of values(recordData.pqStates))if(scope.has(row.area))pqStates[safe(concept(row)||row.area+'_'+row.pq)]={...row};
+        data={...recordData,pqStates};
+      }
+      data=dataWithMetrics(data,stageMetrics);
+      const stageId=visit.eventOnly?'assessment:'+visit.id:'visit:'+visit.id;
+      const row={id:visit.id+':'+phase,stageId,visitId:visit.eventOnly?'':visit.id,type:visit.icaoVisitType||e?.type||'ICAO',
+        name:visit.visitName||visit.icaoVisitType||'ICAO ziyareti',date:day||date(e),phase,scope:[...scope],cells,metrics:stageMetrics,data,counts:simulated.counts,
+        version,versionChanged,before,relatedIds:related.map(r=>r.id),official:!!official,partial:!official&&!complete,
+        source:official?'Kayıtlı nihai değerlendirme':simulated.hasResults?'Resmî ziyaretin PQ sonuçları':e?'Kayıtlı taslak değerlendirme':'Sonuç bekleniyor'};
+      rows.push(row);
+      if(row.phase==='final'&&row.date&&(!date(baseline.event)||row.date>=date(baseline.event)))previous=row;
     }
     return rows;
   }
   function build(input={}){
+    buildIndexCache=new WeakMap();buildGroupCache=new WeakMap();
     input={master:{},capRows:[],states:[],events:[],visits:[],readiness:{},...input};
     const states=input.states.filter(active).sort(sortDate),events=eventsFor(input);
     const cmaaEvents=events.filter(e=>str(e.type).toUpperCase()==='CMAA'&&(e.resultStatus||'official')==='official');
@@ -244,68 +264,114 @@
       baseByArea[a]={findings:count,identifiedFindings:ns.length,capSteps:count===0?0:(ns.length&&source?ns.reduce((n,[id])=>n+(baseGroups.get(id)?.length||0),0):null),
         withCap:ns.filter(([id])=>baseGroups.has(id)).length};
     }
-    const projection=projections(current,cap,input.master,input.readiness);
-    return{baseline,current,cmaaEvents,cap,baseByArea,projection,visits:buildVisitRows(input,events,states,baseline,officialStates),
+    const visits=buildVisitRows(input,events,states,baseline,officialStates);
+    const baselineVisit=visits.find(v=>v.relatedIds.includes(chosen?.id));
+    const baselineStage=chosen?{id:'baseline:'+chosen.id,stageId:'baseline:'+chosen.id,name:chosen.name||'CMAA',type:'CMAA',date:date(chosen),phase:'final',official:true,metrics:baseline.metrics,data:baseline.data,version:baseline.version,counts:{total:0,finalized:0}}:null;
+    const stages=[...(!baselineVisit&&baselineStage?[baselineStage]:[]),...visits.filter(v=>!baselineStage||!v.date||v.date>=baselineStage.date)].sort(sortDate);
+    const latestStage=stages.filter(v=>v.phase!=='pending').at(-1)||stages.at(-1)||null;
+    const selectedStage=stages.find(v=>v.stageId===input.stageId)||latestStage;
+    const selected=selectedStage||{name:current.name,date:current.date,phase:'pending',data:current.data,metrics:current.metrics,counts:{total:0,finalized:0}};
+    const selectedIndex=indexStates(selected.data),selectedGroups=groupsFor(cap,selectedIndex,input.master),selectedByArea={};
+    for(const a of KEYS){
+      const ns=[...selectedIndex.rows.entries()].filter(([,r])=>(a==='Overall'||r.area===a)&&r.status==='NS'&&r.applicable!==false);
+      const known=selected.metrics[a].notSatisfactory,hasSource=cap.sources.some(s=>a==='Overall'||s.area===a);
+      selectedByArea[a]={findings:known,capSteps:known===0?0:known!==null&&ns.length===known&&hasSource?ns.reduce((n,[id])=>n+(selectedGroups.get(id)?.length||0),0):null};
+    }
+    const projection=projections(selected,cap,input.master,input.readiness),referenceProjection=projections(current,cap,input.master,input.readiness);
+    const model={baseline,current,cmaaEvents,cap,baseByArea,projection,referenceProjection,visits,stages,selectedStage:selected,latestStage,selectedByArea,
       issues:[!chosen?'Nihai CMAA değerlendirmesi bulunamadı.':null,
         chosen&&!baseline.data?.pqStates&&baseline.metrics.Overall.notSatisfactory!==0?'CMAA bulguları ile CAP adımlarını eşleştirmek için bu değerlendirmeye ait Full PQ Status kaydını bağlayın.':null,
-        !current.data?.pqStates?'Projeksiyon için güncel resmî PQ durumları gereklidir; yalnız EI yüzdesinden bulgu veya payda türetilmez.':null,
+        !selected.data?.pqStates?'Seçili aşamanın projeksiyonu için PQ durumları gereklidir; yalnız EI yüzdesinden bulgu veya payda türetilmez.':null,
+        visits.some(v=>v.counts.unknown||v.metrics.Overall.reliable===false)?'Bazı ziyaret sonuçları önceki PQ durumuyla eşleştirilemedi; bu aşamalarda bilinmeyen EI veya sayımlar hesaplanmaz.':null,
         cap.undated?'Tarihi belirlenemeyen CAP kayıtları var; tarihli alan kaynağı mevcutsa güncel sayımda o kaynak kullanılır.':null].filter(Boolean)};
+    buildIndexCache=null;buildGroupCache=null;return model;
   }
 
   const esc=v=>str(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const fmt=v=>v===null||v===undefined?'—':Number(v).toLocaleString('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:2})+'%';
   const count=v=>v===null||v===undefined?'—':Number(v).toLocaleString('tr-TR');
-  const phaseLabel=v=>v.phase==='final'?(v.official?'Nihai':'Nihai PQ sonucu'):v.phase==='draft'?'Taslak':v.phase==='working'?'Ziyaret çalışma etkisi':'Sonuç bekleniyor';
+  const phaseLabel=v=>v.phase==='final'?(v.official?'Nihai':'Nihai PQ sonucu'):v.phase==='draft'?(v.counts?.finalized?'Taslak · kısmen nihai':'Taslak'):v.phase==='working'?'Ziyaret çalışma etkisi':'Sonuç bekleniyor';
   const delta=v=>v===null||v===undefined?'':`${v>0?'+':''}${Number(v).toLocaleString('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:2})} puan`;
-  let baselineId='',capAsOf='',queued=false;
+  let baselineId='',capAsOf='',stageId='',queued=false;
   function collect(){
     const events=typeof window.getAssessmentTimelineWithSnapshots==='function'?window.getAssessmentTimelineWithSnapshots():[];
     return{events,officialRecords:window.icaoOfficialEiRecords||{},states:Object.entries(window.icaoStateSnapshots||{}).map(([id,s])=>({id,...s})),
       visits:typeof getVisitRecords==='function'?getVisitRecords():[],capRows:typeof rawData!=='undefined'?rawData:[],master:typeof pqMasterData!=='undefined'?pqMasterData:{},
-      readiness:window.icaoValidationReadiness||{},baselineId,capAsOf};
+      readiness:window.icaoValidationReadiness||{},baselineId,capAsOf,stageId};
+  }
+  let runtimeCache=null;
+  function runtimeModel(){
+    const refs=[window.icaoStateSnapshots,window.icaoAssessmentEvents,window.icaoEiSnapshots,window.icaoOfficialEiRecords,
+      typeof icaoVisits!=='undefined'?icaoVisits:window.icaoVisits,typeof rawData!=='undefined'?rawData:null,
+      typeof pqMasterData!=='undefined'?pqMasterData:null,window.icaoValidationReadiness,baselineId,capAsOf,stageId];
+    if(runtimeCache&&runtimeCache.refs.every((r,i)=>r===refs[i]))return runtimeCache.model;
+    const item={refs,model:build(collect())};runtimeCache=item;
+    Promise.resolve().then(()=>{if(runtimeCache===item)runtimeCache=null;});
+    return item.model;
   }
   function render(){
     const root=document.getElementById('dashboardOverview');if(!root)return;
-    const model=build(collect());window.currentDashboardOverview=model;
-    const base=model.baseline.metrics.Overall,now=model.current.metrics.Overall,p=model.projection.Overall;
+    const model=runtimeModel();window.currentDashboardOverview=model;
+    const selected=model.selectedStage,base=model.baseline.metrics.Overall,now=model.current.metrics.Overall,p=model.projection.Overall;
+    const progress=selected.counts||{},note=phaseLabel(selected)+' · '+(selected.date||'tarih yok');
     const card=(title,value,note,kind='')=>`<article class="dash-metric ${kind}"><span>${title}</span><strong>${value}</strong><small>${esc(note)}</small></article>`;
     const cards=[card('CMAA Overall EI',fmt(base.ei),model.baseline.event?date(model.baseline.event):'Nihai CMAA kaydı gerekli'),
-      card('CMAA bulguları',count(model.baseByArea.Overall.findings),'NS durumundaki benzersiz PQ'),
-      card('CMAA bulgularına bağlı CAP adımı',count(model.baseByArea.Overall.capSteps),'Seçili CAP kaynak tarihinde · tekrarlar hariç'),
-      card('Güncel resmî Overall EI',fmt(now.ei),`${model.current.name} · ${model.current.date||'tarih yok'}`,'official'),
-      card('Validasyon adayları dahil EI',fmt(p.candidateEI),p.candidateEI===null?p.reason:`${p.candidateCount} aday PQ · henüz resmî sonuç değildir`,'candidate'),
-      card('Tüm açık CAP’ler valide edilirse EI',fmt(p.theoreticalEI),p.theoreticalEI===null?p.reason:`${p.theoreticalCount} NS PQ · adaylar dahil teorik sınır`,'theoretical')].join('');
+      card('CMAA bulguları',count(model.baseByArea.Overall.findings),'Başlangıç dönemindeki NS PQ'),
+      card('CMAA bulgularına bağlı CAP adımı',count(model.baseByArea.Overall.capSteps),'Seçili CAP kaynak tarihinde'),
+      card('Kayıtlı resmî EI referansı',fmt(now.ei),`${model.current.name} · ${model.current.date||'tarih yok'}`,'official'),
+      card('Seçili aşama sonrası EI',fmt(selected.metrics.Overall.ei),`${selected.name} · ${note}`,'scenario'),
+      card('Nihai PQ sonuçları',progress.total?`${progress.finalized}/${progress.total}`:'—',progress.total?`${progress.unchanged||0} No Change · ${progress.draft||0} taslak · ${progress.pending||0} sonuç bekleyen`:'Bu aşamada ziyaret PQ kapsamı bulunmuyor','scenario'),
+      card('Validasyon adayları dahil EI',fmt(p.candidateEI),p.candidateEI===null?p.reason:`Seçili aşamaya göre ${p.candidateCount} aday PQ`,'candidate'),
+      card('Tüm açık CAP’ler valide edilirse EI',fmt(p.theoreticalEI),p.theoreticalEI===null?p.reason:`Seçili aşamaya göre ${p.theoreticalCount} CAP’lı NS PQ`,'theoretical')].join('');
+    const flow=model.stages.map((s,i)=>`${i?'<span class="dash-stage-arrow" aria-hidden="true">→</span>':''}<button type="button" class="dash-stage-button ${s.stageId===selected.stageId?'selected':''}" data-dashboard-stage="${esc(s.stageId)}" aria-pressed="${s.stageId===selected.stageId}"><b>${esc(s.type||s.name)}</b><span>${esc(s.date||'Tarih yok')} · ${esc(phaseLabel(s))}</span><strong>${fmt(s.metrics.Overall.ei)}</strong>${s.counts?.total?`<small>${s.counts.finalized}/${s.counts.total} PQ nihai</small>`:''}</button>`).join('');
     const areaRows=['Overall',...AREAS].map(a=>{
-      const b=model.baseByArea[a],pr=model.projection[a];
-      return `<tr ${a==='Overall'?'class="dash-overall"':''}><th scope="row">${a==='Overall'?'Overall':a}</th><td>${fmt(model.baseline.metrics[a].ei)}</td><td>${count(b.findings)}</td><td title="${b.identifiedFindings} PQ düzeyinde eşleştirilen bulgu">${count(b.capSteps)}${b.withCap?`<small>${b.withCap} bulguya bağlı</small>`:''}</td><td class="dash-official">${fmt(model.current.metrics[a].ei)}</td><td title="${esc(pr.reason)}">${fmt(pr.candidateEI)}<small>${pr.candidateCount} aday</small></td><td title="${esc(pr.reason)}">${fmt(pr.theoreticalEI)}<small>${pr.theoreticalCount} CAP’lı NS PQ</small></td></tr>`;
+      const m=selected.metrics[a],b=model.selectedByArea[a],pr=model.projection[a];
+      return `<tr ${a==='Overall'?'class="dash-overall"':''}><th scope="row">${a==='Overall'?'Overall':a}</th><td class="dash-scenario-value">${fmt(m.ei)}</td><td>${count(m.satisfactory)}</td><td>${count(b.findings)}</td><td>${count(b.capSteps)}</td><td title="${esc(pr.reason)}">${fmt(pr.candidateEI)}<small>${pr.candidateCount} aday</small></td><td title="${esc(pr.reason)}">${fmt(pr.theoreticalEI)}<small>${pr.theoreticalCount} CAP’lı NS PQ</small></td></tr>`;
     }).join('');
-    const visitRows=model.visits.map(v=>{
-      const label=phaseLabel(v);
+    const visitRows=model.stages.map(v=>{
       const cells=['Overall',...AREAS].map(a=>{
-        const c=v.cells[a];
-        return `<td class="${c.inScope?'':'dash-unvalidated'}">${fmt(c.ei)}<small>${!c.inScope?'Valide edilmedi':v.phase==='pending'?'Sonuç bekleniyor':c.delta!==null?delta(c.delta):'EI için veri eksik'}</small></td>`;
+        const c=v.cells?.[a]||{ei:v.metrics[a].ei,inScope:true,delta:null};
+        return `<td class="${c.inScope?'':'dash-unvalidated'}">${fmt(c.ei)}<small>${!c.inScope?'Valide edilmedi':v.phase==='pending'?'Sonuç bekleniyor':c.delta!==null?delta(c.delta):'Başlangıç / kayıtlı kaynak'}</small></td>`;
       }).join('');
-      const summary=v.counts.total?`${v.counts.satisfactory} S · ${v.counts.notSatisfactory} NS · ${v.counts.notApplicable} N/A · ${v.counts.pending} bekleyen`:'PQ sonuçları bağlı değil';
-      return `<tr data-dashboard-visit="${esc(v.id)}"><th scope="row">${esc(v.name)}<small>${esc(v.date||'Tarih belirtilmedi')}</small><span class="dash-stage ${v.phase}">${label}${v.official?' · kayıtlı sonuç':''}</span><small>${esc(summary)}</small>${v.versionChanged?'<small class="dash-warning">PQ seti değişti; fark yalnız validasyon etkisi değildir.</small>':''}${!v.official&&v.phase==='final'?'<small>Nihai PQ sonucu · resmî EI kaydı değildir</small>':''}</th>${cells}</tr>`;
+      const n=v.counts||{},summary=n.total?`${n.satisfactory} S · ${n.notSatisfactory} NS · ${n.notApplicable} N/A · ${n.pending} bekleyen`:'Başlangıç / kayıtlı değerlendirme';
+      return `<tr data-dashboard-visit="${esc(v.id)}"><th scope="row">${esc(v.name)}<small>${esc(v.date||'Tarih belirtilmedi')}</small><span class="dash-stage ${v.phase}">${esc(phaseLabel(v))}${v.official?' · kayıtlı sonuç':''}</span><small>${esc(summary)}</small>${n.total?`<small><b>${n.finalized}/${n.total} PQ nihai</b> · ${n.unchanged||0} No Change</small>`:''}${v.versionChanged?'<small class="dash-warning">PQ seti değişti; fark yalnız validasyon etkisi değildir.</small>':''}<small>${esc(v.source||'CMAA başlangıç kaynağı')}</small></th>${cells}</tr>`;
     }).join('');
-    root.innerHTML=`<header class="dash-heading"><div><span class="dash-eyebrow">GENEL DURUM</span><h2>CMAA, validasyon ve CAP görünümü</h2><p>Resmî durum, ziyaret sonuçları ve olası EI artışı ayrı gösterilir.</p></div><button type="button" class="btn-outline" onclick="openIcaoOfficialEiManager()">Değerlendirme kaynakları</button><button type="button" class="btn-outline" onclick="openStateSnapshotCenter()">PQ durum kaynakları / Sil</button></header>
-      <div class="dash-controls"><label>CMAA başlangıcı<select id="dashboardCmaaSelect" onchange="setDashboardCmaa(this.value)">${model.cmaaEvents.length?model.cmaaEvents.map(e=>`<option value="${esc(e.id)}" ${e.id===model.baseline.event?.id?'selected':''}>${esc(e.name||'CMAA')} · ${esc(date(e))}</option>`).join(''):'<option value="">CMAA kaydı yok</option>'}</select></label><label>CAP kaynak tarihi<select id="dashboardCapDate" onchange="setDashboardCapDate(this.value)"><option value="">Her alanın en güncel kaynağı</option>${model.cap.dates.map(d=>`<option value="${d}" ${d===capAsOf?'selected':''}>${d} ve öncesi</option>`).join('')}</select></label><span class="dash-cap-contract">CAP Word yüklemesi yalnız CAP ilerlemesini ve projeksiyonları günceller.</span></div>
+    root.innerHTML=`<header class="dash-heading"><div><span class="dash-eyebrow">GENEL DURUM</span><h2>CMAA, validasyon ve CAP görünümü</h2><p>Resmî ziyaretlerin taslak ve nihai PQ sonuçları aşama istatistiklerine dahil edilir.</p></div><button type="button" class="btn-outline" onclick="openIcaoOfficialEiManager()">Değerlendirme kaynakları</button><button type="button" class="btn-outline" onclick="openStateSnapshotCenter()">PQ durum kaynakları / Sil</button></header>
+      <div class="dash-controls"><label>CMAA başlangıcı<select id="dashboardCmaaSelect" onchange="setDashboardCmaa(this.value)">${model.cmaaEvents.length?model.cmaaEvents.map(e=>`<option value="${esc(e.id)}" ${e.id===model.baseline.event?.id?'selected':''}>${esc(e.name||'CMAA')} · ${esc(date(e))}</option>`).join(''):'<option value="">CMAA kaydı yok</option>'}</select></label><label>CAP kaynak tarihi<select id="dashboardCapDate" onchange="setDashboardCapDate(this.value)"><option value="">Her alanın en güncel kaynağı</option>${model.cap.dates.map(d=>`<option value="${d}" ${d===capAsOf?'selected':''}>${d} ve öncesi</option>`).join('')}</select></label><span class="dash-cap-contract">CAP Word yalnız CAP ilerlemesini günceller; ziyaret sonucu oluşturmaz.</span></div>
+      <section class="dash-stage-section"><h3>Değerlendirme aşamaları</h3><nav class="dash-stage-flow" aria-label="Değerlendirme aşamaları">${flow||'<p>Aşama için değerlendirme / ziyaret kaydı bekleniyor.</p>'}</nav><p class="dash-note">İncelemek istediğiniz aşamayı seçin. Başlangıçta son sonuç bulunan aşama gösterilir; taslak ziyaretler de dahildir.</p></section>
       <div class="dash-metrics">${cards}</div>
       ${model.issues.length?`<div class="dash-data-note" role="status">${model.issues.map(esc).join('<br>')}</div>`:''}
-      <section class="dash-section"><h3>Denetim alanı bazında durum</h3><div class="dash-table-wrap"><table class="dash-table" id="dashboardAreaTable"><thead><tr><th>Alan</th><th>CMAA EI</th><th>CMAA bulgu</th><th>CAP adımı</th><th>Güncel resmî EI</th><th>Adaylar dahil EI</th><th>Teorik EI</th></tr></thead><tbody>${areaRows}</tbody></table></div><p class="dash-note">Bulgu = NS PQ. Overall EI = toplam S / toplam uygulanabilir PQ; alan yüzdelerinin ortalaması değildir. CAP adımları CMAA bulgularıyla PQ kimliği üzerinden eşleştirilir.</p></section>
-      <section class="dash-section"><div class="dash-section-heading"><div><h3>ICAO resmî validasyon ziyaretleri</h3><p>Her ziyaret tek satırdır. Nihai sonuç varsa taslak ve çalışma satırları gösterilmez; kapsam dışındaki alanların önceki EI değeri korunur.</p></div><button type="button" class="btn-outline" onclick="switchTab('icao-visit-validation')">Ziyaret sonuçları</button></div><div class="dash-table-wrap"><table class="dash-table dash-visit-table" id="dashboardVisitTable"><thead><tr><th>Ziyaret / sonuç aşaması</th>${['Overall',...AREAS].map(a=>`<th>${a}</th>`).join('')}</tr></thead><tbody>${visitRows||'<tr><td colspan="10">Kayıtlı resmî validasyon ziyareti bulunmuyor.</td></tr>'}</tbody></table></div><p class="dash-note">Taslak sonuçlar ve PQ bazındaki çalışma etkileri güncel resmî EI’yi değiştirmez. Yeni resmî durum yalnız değerlendirme / Full PQ Status kaynağından alınır.</p></section>
-      <details class="dash-definitions"><summary>Hesap kuralları ve CAP kaynakları</summary><p>Aday projeksiyonu: güncel resmî durumda NS olan, güncel CAP adımlarının tamamı tamamlanmış ve bekletilmeyen PQ’lar başarılı valide edilirse. Teorik EI: bekletilenler dahil CAP’ı bulunan tüm NS PQ’lar başarılı valide edilirse; her PQ bir kez sayılır. N/A ve zaten S olan PQ’lar ek artış üretmez. CAP’ı olmayan NS PQ’lar teorik sınıra eklenmez.</p><p>CAP kaynağı her denetim alanında ayrı seçilir; aynı adım eski ve yeni Word dosyalarından tekrar sayılmaz. Bu seçim değerlendirme veya ziyaret tarihi oluşturmaz. Dashboard, CAP ekranındaki geçici arama/ofis filtrelerinden bağımsız ulusal durumu gösterir.</p><ul>${model.cap.sources.map(s=>`<li><b>${s.area}</b> · ${esc(s.date||'Tarih bilinmiyor')} · ${s.files.map(esc).join(', ')}</li>`).join('')||'<li>CAP kaynağı bekleniyor.</li>'}</ul></details>`;
+      <section class="dash-section"><h3>${esc(selected.name)} sonrası alan durumu <span class="dash-stage ${selected.phase}">${esc(phaseLabel(selected))}</span></h3><div class="dash-table-wrap"><table class="dash-table" id="dashboardAreaTable"><thead><tr><th>Alan</th><th>Aşama sonrası EI</th><th>S PQ</th><th>Bulgu / NS PQ</th><th>NS bulgularına CAP adımı</th><th>Adaylar dahil EI</th><th>Teorik EI</th></tr></thead><tbody>${areaRows}</tbody></table></div><p class="dash-note">Bu tablo ve projeksiyonlar seçili aşamanın sonuçlarını kullanır. No Change, ziyaret öncesindeki S/NS/N-A durumunu korur. Overall EI = toplam S / toplam uygulanabilir PQ. Taslak sonuçların hesaba katıldığı aşama açıkça etiketlenir.</p></section>
+      <section class="dash-section"><div class="dash-section-heading"><div><h3>ICAO resmî ziyaretleri ve aşama değişimleri</h3><p>Her ziyaret tek satırdır. PQ bazında nihai sonuç taslağın önüne geçer; tüm kapsam PQ’ları nihai olduğunda ziyaret nihai görünür.</p></div><button type="button" class="btn-outline" onclick="switchTab('icao-visit-validation')">Ziyaret sonuçları</button></div><div class="dash-table-wrap"><table class="dash-table dash-visit-table" id="dashboardVisitTable"><thead><tr><th>Ziyaret / sonuç aşaması</th>${['Overall',...AREAS].map(a=>`<th>${a}</th>`).join('')}</tr></thead><tbody>${visitRows||'<tr><td colspan="10">Değerlendirme / ziyaret kaydı bekleniyor.</td></tr>'}</tbody></table></div><p class="dash-note">Aşamalar tarih sırasıyla gösterilir; her ziyaret önceki kesinleşmiş durumu temel alır. Kapsam dışı alanlar önceki durumunu korur ve Valide edilmedi olarak gösterilir. Kayıtlı resmî EI referansı, ziyaret PQ sonuçlarından hesaplanan taslak/nihai EI’den ayrı korunur.</p></section>
+      <details class="dash-definitions"><summary>Hesap kuralları ve CAP kaynakları</summary><p>Her PQ’da önce Satisfactory / Not Satisfactory / No Change olarak girilmiş nihai sonuç; yoksa taslak sonuç kullanılır. No Change yeni S artışı oluşturmaz. Sonucu girilmemiş PQ’nun önceki durumu korunur; eksik sonuç sayısı gösterilir. Önceki PQ durumu bilinmiyorsa güvenilir EI veya projeksiyon uydurulmaz.</p><p>Aday ve teorik EI seçili aşamada halen NS olan PQ’lardan hesaplanır; ziyaretle S olmuş PQ ikinci kez ek artış üretmez. CAP kaynağı her denetim alanında ayrı seçilir. Dashboard geçici CAP arama/ofis filtrelerinden bağımsızdır.</p><ul>${model.cap.sources.map(s=>`<li><b>${s.area}</b> · ${esc(s.date||'Tarih bilinmiyor')} · ${s.files.map(esc).join(', ')}</li>`).join('')||'<li>CAP kaynağı bekleniyor.</li>'}</ul></details>`;
+    root.querySelectorAll('[data-dashboard-stage]').forEach(button=>button.addEventListener('click',()=>window.setDashboardStage(button.dataset.dashboardStage)));
     return model;
   }
   window.DashboardOverview={build,indexStates,findState,metrics,collect};
+  window.getIcaoDashboardVisitStage=id=>runtimeModel().visits.find(v=>v.visitId===id)||null;
+  window.getIcaoDashboardVisitImpact=function(visit,scopeOverride=null){
+    const input=collect(),stage=runtimeModel().visits.find(v=>v.visitId===visit?.id);if(!stage)return null;
+    const actual=Array.isArray(scopeOverride)?{...visit,scope:{...visit.scope,pqs:scopeOverride}}:visit;
+    const scope=new Set((Array.isArray(scopeOverride)?scopeOverride.map(p=>areaOf(p,input.master)):stage.scope).filter(Boolean));
+    const result=Array.isArray(scopeOverride)?simulateVisit(actual,stage.before,input.master,scope,false):stage;
+    const out={};for(const a of AREAS){const before=stage.before.metrics[a],after=result.metrics[a];out[a]={area:a,total:after.applicable,baselineSat:before.satisfactory,validatedNew:after.satisfactory!==null&&before.satisfactory!==null?after.satisfactory-before.satisfactory:null,newSat:after.satisfactory,baselinePct:before.ei,newPct:after.ei,delta:after.ei!==null&&before.ei!==null?after.ei-before.ei:null};}
+    const before=stage.before.metrics.Overall,after=result.metrics.Overall;
+    return{scopePqs:scopeOverride||visitScope(visit,input.master,new Set(stage.scope)),records:values(visit.icaoValidation?.records),areas:out,total:after.applicable,baselineSat:before.satisfactory,validatedNew:after.satisfactory!==null&&before.satisfactory!==null?after.satisfactory-before.satisfactory:null,newSat:after.satisfactory,baselinePct:before.ei,newPct:after.ei,delta:after.ei!==null&&before.ei!==null?after.ei-before.ei:null,counts:result.counts,phase:stage.phase,baselineSource:'Önceki ziyaret aşaması'};
+  };
+
   function exportRows(model){
-    const areas=['Overall',...AREAS].map(a=>({'Alan':a,'CMAA EI (%)':model.baseline.metrics[a].ei,'CMAA Bulgu (NS PQ)':model.baseByArea[a].findings,
+    const selected=model.selectedStage;
+    const areas=['Overall',...AREAS].map(a=>({'Alan':a,'Seçili Aşama':selected.name,'Sonuç Statüsü':phaseLabel(selected),
+      'Aşama Sonrası EI (%)':selected.metrics[a].ei,'Aşama S PQ':selected.metrics[a].satisfactory,'Aşama NS PQ':selected.metrics[a].notSatisfactory,
+      'Aşama NS CAP Adımı':model.selectedByArea[a].capSteps,'CMAA EI (%)':model.baseline.metrics[a].ei,'CMAA Bulgu (NS PQ)':model.baseByArea[a].findings,
       'CMAA Bulgularına Bağlı CAP Adımı':model.baseByArea[a].capSteps,'Güncel Resmî EI (%)':model.current.metrics[a].ei,
       'Validasyon Adayları Dahil EI (%)':model.projection[a].candidateEI,'Aday PQ':model.projection[a].candidateCount,
       'Tüm CAP Başarılı Teorik EI (%)':model.projection[a].theoreticalEI,'CAP Bulunan NS PQ':model.projection[a].theoreticalCount}));
-    const visits=model.visits.flatMap(v=>['Overall',...AREAS].map(a=>({'Ziyaret':v.name,'Tarih':v.date,'Aşama':phaseLabel(v),
-      'Alan':a,'EI (%)':v.cells[a].ei,'Değişim (puan)':v.cells[a].delta,'Alan Durumu':v.cells[a].inScope?'Kapsamda':'Valide edilmedi',
-      'Kaynak':v.source,'PQ Seti Değişti':v.versionChanged?'Evet':'Hayır'})));
+    const visits=model.stages.flatMap(v=>['Overall',...AREAS].map(a=>({'Ziyaret':v.name,'Tarih':v.date,'Aşama':phaseLabel(v),
+      'Alan':a,'EI (%)':v.metrics[a].ei,'S PQ':v.metrics[a].satisfactory,'NS PQ':v.metrics[a].notSatisfactory,
+      'Değişim (puan)':v.cells?.[a]?.delta??null,'Alan Durumu':v.cells?.[a]?.inScope===false?'Valide edilmedi':'Kapsamda',
+      'Nihai PQ':v.counts?.finalized??0,'Kapsam PQ':v.counts?.total??0,'No Change':v.counts?.unchanged??0,
+      'Kaynak':v.source||'CMAA başlangıcı','PQ Seti Değişti':v.versionChanged?'Evet':'Hayır'})));
     return{areas,visits};
   }
   window.DashboardOverview.exportRows=exportRows;
@@ -314,29 +380,32 @@
     for(const [name,rows] of [['Alan_ve_Overall',data.areas],['Ziyaret_Asamalari',data.visits],['CAP_Kaynaklari',model.cap.sources.map(s=>({'Alan':s.area,'CAP Kaynak Tarihi':s.date,'Dosyalar':s.files.join(', ')}))]]){
       XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(rows),name);
     }
-    XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet([{Kural:'CMAA kaynağı',Açıklama:model.baseline.event?.name||'Eksik'},
-      {Kural:'Güncel resmî kaynak',Açıklama:model.current.name},{Kural:'CAP kaynak seçimi',Açıklama:capAsOf||'Her alanın en güncel kaynağı'},
-      {Kural:'Ziyaret görünümü',Açıklama:'Her ziyaret tek satır: nihai sonuç, yoksa taslak, yoksa çalışma etkisi veya bekleyen. Geçmiş sonuçlar silinmez.'},
-      {Kural:'Projeksiyon',Açıklama:'Resmî EI değildir. S ve N/A için ek artış sayılmaz; her NS PQ bir kez sayılır.'},
+    XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet([
+      {Kural:'Seçili aşama',Açıklama:model.selectedStage.name+' · '+phaseLabel(model.selectedStage)},
+      {Kural:'Kayıtlı resmî EI referansı',Açıklama:model.current.name},
+      {Kural:'PQ sonuç önceliği',Açıklama:'Nihai sonuç, yoksa taslak sonuç. No Change önceki aşamanın S/NS/N-A durumunu korur.'},
+      {Kural:'Ziyaret tamamlanması',Açıklama:'Tüm kapsam PQ’larında Satisfactory, Not Satisfactory veya No Change nihai sonucu girildiğinde nihai aşama.'},
+      {Kural:'Projeksiyon',Açıklama:'Seçili aşamada halen NS olan PQ’lar; her PQ bir kez. Taslak sonuçlar dahilse aşama etiketinde belirtilir.'},
+      {Kural:'CAP kaynağı',Açıklama:capAsOf||'Her alanın en güncel kaynağı'},
       ...model.issues.map(x=>({Kural:'Veri kontrolü',Açıklama:x}))]),'Hesap_ve_Kaynak');
     XLSX.writeFile(wb,'Dashboard_CMAA_Validasyon_CAP.xlsx');
   };
   window.exportDashboardOverviewPDF=function(){
-    const model=build(collect());
-    const areaHeader=['Alan','CMAA EI','Bulgu','CAP adımı','Resmî EI','Aday EI','Teorik EI'];
-    const areaBody=[areaHeader,...['Overall',...AREAS].map(a=>[a,fmt(model.baseline.metrics[a].ei),count(model.baseByArea[a].findings),count(model.baseByArea[a].capSteps),fmt(model.current.metrics[a].ei),fmt(model.projection[a].candidateEI),fmt(model.projection[a].theoreticalEI)])];
-    const visitBody=[['Ziyaret / aşama','Overall',...AREAS],...model.visits.map(v=>[`${v.name}\n${v.date} · ${phaseLabel(v)}${v.phase==='final'&&!v.official?'\nPQ sonuçlarından çalışma etkisi':''}`,...['Overall',...AREAS].map(a=>fmt(v.cells[a].ei)+'\n'+(v.cells[a].inScope?delta(v.cells[a].delta):'Valide edilmedi'))])];
-    const content=[{text:'CMAA, Validasyon ve CAP Dashboard',fontSize:17,bold:true,margin:[0,0,0,8]},
-      {text:`CMAA: ${model.baseline.event?.name||'Eksik'} · Resmî kaynak: ${model.current.name} · CAP: ${capAsOf||'Her alanın en güncel kaynağı'}`,fontSize:8,margin:[0,0,0,10]},
+    const model=build(collect()),selected=model.selectedStage;
+    const areaBody=[['Alan','Aşama EI','S','NS','CAP adımı','Aday EI','Teorik EI'],...['Overall',...AREAS].map(a=>[a,fmt(selected.metrics[a].ei),count(selected.metrics[a].satisfactory),count(selected.metrics[a].notSatisfactory),count(model.selectedByArea[a].capSteps),fmt(model.projection[a].candidateEI),fmt(model.projection[a].theoreticalEI)])];
+    const visitBody=[['Aşama / ziyaret','Overall',...AREAS],...model.stages.map(v=>[`${v.name}\n${v.date} · ${phaseLabel(v)}${v.counts?.total?`\n${v.counts.finalized}/${v.counts.total} PQ nihai · ${v.counts.unchanged||0} No Change`:''}`,...['Overall',...AREAS].map(a=>fmt(v.metrics[a].ei)+'\n'+(v.cells?.[a]?.inScope===false?'Valide edilmedi':delta(v.cells?.[a]?.delta??null)))])];
+    const content=[{text:'CMAA, OSVA, ICVM ve Ziyaret Aşamaları',fontSize:17,bold:true,margin:[0,0,0,8]},
+      {text:`Seçili aşama: ${selected.name} · ${phaseLabel(selected)} · ${selected.date||'-'}\nKayıtlı resmî EI referansı: ${model.current.name} · ${fmt(model.current.metrics.Overall.ei)}`,fontSize:9,margin:[0,0,0,10]},
       {table:{headerRows:1,widths:['*','*','*','*','*','*','*'],body:areaBody},layout:'lightHorizontalLines'},
-      {text:'ICAO ziyaret sonuçları',bold:true,margin:[0,18,0,8]},
-      {table:{headerRows:1,widths:[120,...Array(9).fill('*')],body:visitBody},layout:'lightHorizontalLines'},
-      {text:'Taslaklar ve yalnız PQ sonuçlarından hesaplanan çalışma etkileri resmî EI değildir. CAP ilerlemesi resmî sonucu değiştirmez. Overall toplam S/uygulanabilir PQ üzerinden hesaplanır; aday ve teorik EI ayrı senaryolardır.',fontSize:8,margin:[0,12,0,0]},
+      {text:'CMAA → OSVA → ICVM ve sonraki ziyaretler',bold:true,margin:[0,18,0,8]},
+      {table:{headerRows:1,widths:[125,...Array(9).fill('*')],body:visitBody},layout:'lightHorizontalLines'},
+      {text:'Resmî ziyaretlerin taslak ve nihai PQ sonuçları seçili aşama istatistiklerine dahildir. No Change önceki durumu korur. Kayıtlı rapor/Full PQ Status referansı ayrı saklanır. Aday ve teorik EI seçili aşamadan hesaplanan senaryolardır. CAP Word resmî ziyaret sonucu oluşturmaz.',fontSize:8,margin:[0,12,0,0]},
       ...model.issues.map(text=>({text,fontSize:8,margin:[0,5,0,0]}))];
     return safeDownloadPdf(createStandardPdfDefinition(content,{pageOrientation:'landscape',pageSize:'A4',defaultStyle:{font:'Roboto',fontSize:8}}),'Dashboard_CMAA_Validasyon_CAP.pdf');
   };
   window.renderDashboardOverview=render;
-  window.setDashboardCmaa=id=>{baselineId=id;render();};
+  window.setDashboardCmaa=id=>{baselineId=id;stageId='';render();};
+  window.setDashboardStage=id=>{stageId=id;render();};
   window.setDashboardCapDate=day=>{capAsOf=day;render();};
   window.scheduleDashboardOverview=function(){
     if(queued)return;queued=true;

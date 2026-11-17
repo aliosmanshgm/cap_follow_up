@@ -1,18 +1,20 @@
-RC1.4.20 — RC1.4.19 sürümüne göre değişen dosyalar
+RC1.4.21 — RC1.4.20 sürümüne göre değişen dosyalar
 
 CHANGED_FILES.txt
-DASHBOARD_TEKILLESTIRME_QA_RC1_4_20.json
-DASHBOARD_TEKILLESTIRME_RC1_4_20.txt
 RC_STATIC_QA_REPORT.json
+ZIYARET_ASAMALARI_ISTATISTIK_RC1_4_21.txt
+ZIYARET_ASAMALARI_QA_RC1_4_21.json
 app-manifest.json
+css/app.css
 index.html
 js/app.js
 js/modules/dashboard-overview.js
 js/modules/official-ei-management.js
-js/modules/state-compliance.js
+js/services/visit-outcomes.js
 tools/dashboard-final-precedence-tests.mjs
 tools/dashboard-tests.mjs
-tools/initial-period-tests.mjs
+tools/fixtures/visit-stages-data.mjs
+tools/visit-stage-statistics-tests.mjs
 
-Güncel kurulum ve davranış notları: DASHBOARD_TEKILLESTIRME_RC1_4_20.txt
-Önceki kaynak, silme, dashboard, CAP, PQ ve ziyaret düzeltmeleri korunur.
+Güncel rehber: ZIYARET_ASAMALARI_ISTATISTIK_RC1_4_21.txt
+Önceki kaynak, dashboard, CAP, PQ, başlangıç ve ziyaret düzeltmeleri korunur.

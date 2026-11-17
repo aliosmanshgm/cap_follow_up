@@ -1,6 +1,6 @@
 {
   "app": "USOAP CMA CAP Takip",
-  "version": "1.0.0-rc1.4.20",
+  "version": "1.0.0-rc1.4.21",
   "baseline": "index_visit_hub_pq_version_database(2).html",
   "buildDate": "2026-11-17",
   "features": [
@@ -139,7 +139,12 @@
     "single-visit-result-dashboard",
     "final-assessment-precedence",
     "explicit-working-effect-label",
-    "empty-system-initial-period-guard"
+    "empty-system-initial-period-guard",
+    "chronological-visit-statistical-stages",
+    "draft-official-visit-statistics",
+    "no-change-final-outcome",
+    "all-scoped-pq-final-completion",
+    "stage-based-ei-cap-projections"
   ],
   "architecture": {
     "index": "index.html",
@@ -148,6 +153,7 @@
     ],
     "scripts": [
       "js/services/cap-current-source.js",
+      "js/services/visit-outcomes.js",
       "js/app.js",
       "js/modules/access-control.js",
       "js/modules/visit-sync.js",
@@ -173,6 +179,6 @@
     ]
   },
   "releaseChannel": "release-candidate",
-  "previousVersion": "1.0.0-rc1.4.19",
-  "cacheTag": "20261117-v1.0-rc1.4.20"
+  "previousVersion": "1.0.0-rc1.4.20",
+  "cacheTag": "20261117-v1.0-rc1.4.21"
 }

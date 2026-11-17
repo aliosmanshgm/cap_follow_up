@@ -3,7 +3,7 @@ import fs from 'node:fs';import vm from 'node:vm';import assert from 'node:asser
 import {dashboardFixture} from './fixtures/dashboard-data.mjs';
 const root=fileURLToPath(new URL('../',import.meta.url)),clone=x=>JSON.parse(JSON.stringify(x));
 const ctx={console,document:{addEventListener(){}},setTimeout};ctx.window=ctx;vm.createContext(ctx);
-for(const f of ['js/services/cap-current-source.js','js/modules/dashboard-overview.js'])vm.runInContext(fs.readFileSync(root+f,'utf8'),ctx);
+for(const f of ['js/services/cap-current-source.js','js/services/visit-outcomes.js','js/modules/dashboard-overview.js'])vm.runInContext(fs.readFileSync(root+f,'utf8'),ctx);
 const build=x=>ctx.DashboardOverview.build(x);
 function fixture(){
   const x=dashboardFixture();delete x.visits[0].icaoValidation.records.a.finalResult;
@@ -36,6 +36,6 @@ check('visits without result data remain pending',()=>{const x=dashboardFixture(
 check('a final assessment without individual PQ results still hides its draft row',()=>{const x=fixture();x.visits.find(v=>v.id==='osva_visit').icaoValidation.records={};const rows=build(x).visits.filter(v=>v.visitId==='osva_visit');assert.equal(rows.length,1);assert.equal(rows[0].phase,'final');});
 check('areas outside the final visit scope retain their unvalidated status',()=>{const row=build(fixture()).visits.find(v=>v.visitId==='osva_visit');assert.equal(row.cells.LEG.inScope,false);assert.equal(row.cells.LEG.delta,null);});
 check('Excel export uses the same three visible results without hidden draft copies',()=>{const data=ctx.DashboardOverview.exportRows(build(fixture()));assert.equal(data.visits.length,27);assert.equal(data.visits.filter(v=>v.Ziyaret==='CMAA'&&v['Aşama']==='Taslak').length,0);assert.equal(data.visits.filter(v=>v.Ziyaret==='OSVA'&&v['Aşama']==='Taslak').length,0);});
-check('working-only exports are explicitly labelled as working effects',()=>{const x=dashboardFixture();x.visits[0].icaoValidation.records.a={pq:'2.001',status:'validated'};assert.equal(ctx.DashboardOverview.exportRows(build(x)).visits[0]['Aşama'],'Ziyaret çalışma etkisi');});
+check('working-only exports are explicitly labelled as working effects',()=>{const x=dashboardFixture();x.visits[0].icaoValidation.records.a={pq:'2.001',status:'validated'};assert.equal(ctx.DashboardOverview.exportRows(build(x)).visits.find(r=>r.Ziyaret==='ICAO ICVM')['Aşama'],'Ziyaret çalışma etkisi');});
 check('deduplication is read-only and preserves historical drafts CAP and visit data',()=>{const x=fixture(),before=JSON.stringify(x);build(x);assert.equal(JSON.stringify(x),before);});
 console.log(`FINAL PRECEDENCE TEST RESULT: ${passed} PASS / 0 FAIL`);

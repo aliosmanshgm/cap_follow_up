@@ -955,3 +955,19 @@
 #stateSnapshotModal .icao-ei-auto-form-grid label{display:block;margin-bottom:5px;}
 #stateSnapshotModal input:not([type=file]){box-sizing:border-box;width:100%;min-width:0;padding:8px;border:1px solid var(--border);border-radius:6px;background:var(--surface,#fff);color:var(--text);}
 @media(max-width:600px){.state-snapshot-row{grid-template-columns:minmax(0,1fr);}}
+
+/* Chronological official visit scenarios */
+#dashboardOverview .dash-metrics{grid-template-columns:repeat(4,minmax(0,1fr));}
+.dash-metric.scenario{border-top-color:#7c3aed;}
+.dash-metric.scenario strong,.dash-scenario-value{color:#6d28d9;}
+.dash-stage-section{margin:0 0 18px;min-width:0;}
+.dash-stage-section h3{font-size:14px;margin:0 0 10px;}
+.dash-stage-flow{display:flex;align-items:stretch;gap:10px;overflow-x:auto;padding:3px 0 8px;}
+.dash-stage-button{display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:6px;min-width:175px;max-width:260px;flex:1;padding:12px 14px;border:1px solid var(--border);border-radius:9px;background:var(--card);color:var(--text);text-align:left;cursor:pointer;}
+.dash-stage-button.selected{border-color:#7c3aed;box-shadow:inset 0 0 0 1px #7c3aed;background:#f5f3ff;}
+.dash-stage-button span,.dash-stage-button small{font-size:10px;color:var(--muted);}
+.dash-stage-button strong{font-size:19px;color:#6d28d9;}
+.dash-stage-arrow{align-self:center;color:var(--muted);}
+@media(max-width:1100px){#dashboardOverview .dash-metrics{grid-template-columns:repeat(2,minmax(0,1fr));}}
+@media(max-width:620px){#dashboardOverview .dash-metrics{grid-template-columns:1fr;}.dash-stage-button{min-width:175px;}}
+@media print{.dash-stage-flow{overflow:visible;flex-wrap:wrap;}.dash-stage-button{min-width:130px;}.dash-stage-arrow{display:none;}}

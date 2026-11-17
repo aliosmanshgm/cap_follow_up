@@ -1,0 +1,115 @@
+CAP FOLLOW UP — RESMÎ ZİYARET AŞAMALARI VE PQ SONUÇLARI
+Sürüm: v1.0 RC1.4.21 | 17 Kasım 2026
+Önceki sürüm: RC1.4.20
+
+TASLAK ICVM DAHİL İSTATİSTİKLER
+ICAO Resmî Ziyareti / ICVM bölümündeki resmî ziyaretler, sonuçları taslak olsa da
+dashboard aşama istatistiklerine dahil edilir. Varsayılan görünüm son sonuç bulunan
+aşamadır. Örneğin CMAA → OSVA → ICVM sıralamasında ICVM sonuçları taslaksa ICVM
+seçili açılır; seçili aşamanın EI, S/NS sayısı, NS bulgularına bağlı CAP adımı ve
+iki EI projeksiyonu bu sonuçları kullanır. Taslak olduğu açıkça belirtilir.
+
+Dashboard'da Değerlendirme aşamaları alanındaki CMAA, OSVA, ICVM ve sonraki ziyaret
+kartlarına basarak önceki dönemlerin alan/Overall durumuna geçebilirsiniz.
+Tarihi ve açık ziyaret/değerlendirme bağlantısı esas alınır; isim benzerliğiyle
+ziyaretler birleştirilmez. Her ziyaret tek satır olarak kalır.
+
+Her yeni ziyaretin hesabı önceki kesinleşmiş durumu temel alır. Bir önceki ziyaret
+halen taslaksa onun S önerisi başka bir ziyaretin No Change sonucuyla sessizce
+nihai hale getirilmez. Önceki ziyaret nihayetlendiğinde sonraki aşamalar bu son
+kesinleşmiş durumu kullanır. Kapsam dışındaki alanların durumu korunur ve ziyaret
+tablosunda Valide edilmedi notu gösterilir.
+
+NİHAİ PQ SONUCU ÖNCELİĞİ
+Her kapsam PQ'sunda önce ICAO nihai PQ sonucu kullanılır. Nihai sonuç yoksa o
+PQ'nun taslak sonucu kullanılır. Böylece bir PQ nihai olurken ziyaretin geri
+kalan taslak sonuçları istatistiklerden düşmez.
+
+Üç nihai seçim tanınır:
+- Satisfactory: PQ S olur; önceden NS ise S sayısına geçer.
+- Not Satisfactory: PQ NS olur; önceden S ise EI düşüşü de hesaba katılır.
+- No Change: ziyaret öncesindeki S / NS / N-A durumu korunur. Bu seçim PQ için
+  nihai sonuçtur, fakat kendiliğinden Satisfactory veya CAP kapanışı sayılmaz.
+
+Örnek: Önce NS olan bir PQ taslakta S seçilmişken nihai No Change seçilirse PQ
+NS olarak kalır; taslak S artışı kaldırılır. Önce S olan PQ'da No Change, S'yi
+korur ve ikinci kez EI kazancı üretmez. N/A olan PQ'da No Change, N/A durumunu
+ve payda dışında kalmasını korur.
+
+ZİYARETİN NİHAYETLENMESİ
+Sayaç yalnız ziyarete dahil edilmiş benzersiz kapsam PQ'larını sayar.
+Bir PQ nihai olduğunda x / toplam PQ nihai sayacı artar. Kalan PQ'ların sonuçları
+taslak ise ziyaret Taslak · kısmen nihai olarak görünür. Tüm kapsam PQ'larında
+nihai Satisfactory, Not Satisfactory veya No Change kaydedildiğinde aşama otomatik
+Nihai PQ sonucu olur. Eski taslak satırı ayrıca gösterilmez.
+No Change sonuçları nihai sayaca dahil edilir ve ayrıca adet olarak gösterilir.
+Henüz sonucu girilmemiş PQ sayısı da görünür; bu PQ'nun önceki durumu korunur.
+
+Kayıtlı Nihai / Resmî değerlendirme zaten varsa o ziyaretin kayıtlı nihai sonucu
+önceliklidir. Uygulamada her PQ için ayrı nihai alanların henüz doldurulmamış olması
+kaydedilmiş resmî raporu otomatik taslağa çevirmez; sayaç PQ girişlerinin durumunu
+gösterir. Gerçek nihai kaydı olan ziyarette önceki taslak kopyaları gizli kalır.
+
+DASHBOARD DÜZENİ
+Üstte tarih sıralı, seçilebilir aşama kartları bulunur. Sekiz özet kartı şunları
+ayrı gösterir: CMAA EI, CMAA bulguları, bu bulguların CAP adımları, kayıtlı resmî EI
+referansı, seçili aşama sonrası EI, nihai PQ sayacı, adaylar dahil EI ve teorik EI.
+Alan tablosu seçili aşamanın EI / S / NS / CAP adımı ve projeksiyonlarını gösterir.
+CMAA'nın alan detayına CMAA aşamasını seçerek ulaşabilirsiniz.
+
+Projeksiyonlar seçili aşamada halen NS olan PQ'ları esas alır. Taslak veya nihai
+ziyaret sonucuyla zaten S olmuş PQ, ikinci kez aday/theorik EI artışı üretmez.
+Aday senaryosu güncel CAP adımları tamamlanmış PQ'ları; teorik senaryo CAP'ı olan
+tüm NS PQ'ları kullanır. CAP kaynak tarihi seçimi her alan için uygulanır.
+
+KAYNAK AYRIMI
+Kayıtlı resmî EI referansı (rapor / Full PQ Status), ziyaretin PQ sonuçlarından
+hesaplanan taslak veya nihai aşama EI'sinden ayrı gösterilir. PQ sonucunu kaydetmek
+artık dashboard istatistiklerini günceller; ayrıca EI dosyası yüklemek bu canlı
+ziyaret hesabını görmek için zorunlu değildir. Ancak hesap yapabilmek için önceki
+PQ durumları ile S / uygulanabilir PQ sayılarının bilinmesi gerekir.
+
+Önceki S/NS/N-A durumu veya payda bilinmiyorsa, özellikle No Change sonucundan
+uydurma bir S durumu veya sayısal EI üretilmez. Eksik kaynak için — ve açıklama
+gösterilir. Yalnız EI yüzdesi, hangi PQ'nun önce NS/S olduğunu belirlemeye yetmez.
+Overall EI toplam S / toplam uygulanabilir PQ üzerinden hesaplanır; alan
+Yüzdelerinin ortalaması alınmaz.
+
+KULLANIM
+1. Güncel paketi kurun, Ctrl+F5 yapın ve RC1.4.21 rozetini doğrulayın.
+2. ICAO Resmî Ziyareti / ICVM altında ilgili ziyareti ve PQ'yu açın.
+3. ICAO nihai PQ sonucu alanında Satisfactory, Not Satisfactory veya No Change
+   seçip kaydedin. Taslak sonuçlar da kaydedildikleri anda aşama hesabına katılır.
+4. İstenirse birden fazla PQ için mevcut Toplu Değerlendir formu kullanılabilir.
+5. Dashboard'a döndüğünüzde ilgili aşama, sayaç ve istatistikler güncellenir.
+   Mevcut ziyaret veya eski kayıtları yeniden oluşturmanız gerekmez.
+
+Tekil ve toplu PQ formları ile ziyaret içindeki EI özeti de aynı aşama hesabını
+kullanır. No Change etiketi listede NS diye yanlış gösterilmez. Sonuç kayıtları
+ziyaret ve audit alanlarına yazılır; yeni resmî EI kaydı otomatik oluşturulmaz.
+
+ÇIKTILAR VE GEÇMİŞ
+Excel ve PDF, ekranda seçili aşamayı, önceki aşamaları ve nihai / No Change sayaçlarını
+aynı modelden alır. CAP Word yüklemeleri yalnız CAP ilerlemesini besler; yeni EI
+veya ziyaret sonucu oluşturmaz. Tarihsel CAP belgeleri, eski taslaklar ve kaynak
+snapshot'ları saklanır. Başlangıç dönemleri düğmesinin mevcut sisteme yerleşik kayıt
+eklemesini engelleyen RC1.4.20 kontrolü ve önceki düzeltmeler korunur.
+
+KURULUM
+ZIP içindeki tüm uygulama dosyalarını birlikte güncelleyin. Yeni
+js/services/visit-outcomes.js dosyası da pakete dahildir; HTML, manifest ve JS/CSS
+dosyaları aynı sürümde olmalıdır. Yeni Firebase kuralı veya veri taşıması gerekmez.
+Paket canlı veritabanınızı kendiliğinden değiştirerek ziyaretleri nihai yapmaz.
+Aşamaların görünümü mevcut kaydedilmiş sonuçlardan hesaplanır.
+
+DOĞRULAMA
+- Aşama zinciri, taslak istatistik, nihai önceliği, No Change, tamamlanma ve
+  projeksiyon kuralları: 35 test başarılı.
+- Gerçek tekil/toplu PQ formları, Firebase davranışını taklit eden kayıt akışı,
+  aşama seçimi ve gerçek Excel/PDF çıktıları: 25 Chromium kontrolü başarılı.
+- Önceki Word tarihçesi, dashboard ve çıktılar: 39 test ve 24 tarayıcı kontrolü.
+- Önceki nihai tekilleştirme 22, başlangıç kaydı kontrolü 22, snapshot bağlantısı
+  35, kaynak silme 25, ziyaret kapsamı 13, PQ performans 27 ve alan kuralları 16
+  test başarılı.
+- Statik sürüm/asset/HTML/JS/kural kontrolleri: 51 başarılı; uyarı yok.
+Firebase yazmaları testlerde taklit edilmiştir; canlı kullanıcı verileri değişmedi.
