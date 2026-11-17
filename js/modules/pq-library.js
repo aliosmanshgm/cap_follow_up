@@ -7,6 +7,7 @@
     let pqDbSelectedPq='';
     let pqDbLoaded=false;
     let pqDbLoadPromise=null,pqDbReloadPromise=null;
+    let pqDbPreloadHandle=null,pqDbPreloadIdle=false,pqDbLastSource='';
     let pqDbSelectorsLibrary=null;
     let pqDbPqLists=new WeakMap();
     const PQDB_STORAGE_KEY='icao_pq_library_v1';
@@ -102,11 +103,13 @@
         try{
             if(!window.PQRepository)throw new Error('PQ repository servisi yüklenemedi.');
             const result=await window.PQRepository.load();
+            pqDbLastSource=result.source||'firebase';
             icaoPqLibrary=pqDbNormalizeLibrary(result.library);
             if(pqDbRemoveLegacyEmbeddedSeed(icaoPqLibrary))pqDbSaveLocal();
             if(window.PQLinkage&&typeof window.PQLinkage.enrichLibrary==='function')window.PQLinkage.enrichLibrary(icaoPqLibrary);
             if(note)note.textContent=result.message||'PQ veri tabanı hazır.';
         }catch(err){
+            pqDbLastSource='local-fallback';
             console.warn('PQ DB load',err);
             let local=null;try{local=JSON.parse(localStorage.getItem(PQDB_STORAGE_KEY)||'null');}catch(e){}
             icaoPqLibrary=pqDbNormalizeLibrary(local||{editions:{}});
@@ -124,6 +127,24 @@
         },0);
         return icaoPqLibrary;
     }
+    function cancelIcaoPqLibraryPreload(){
+        if(pqDbPreloadHandle===null)return;
+        if(pqDbPreloadIdle&&typeof cancelIdleCallback==='function')cancelIdleCallback(pqDbPreloadHandle);else clearTimeout(pqDbPreloadHandle);
+        pqDbPreloadHandle=null;
+    }
+    function scheduleIcaoPqLibraryPreload(){
+        if(pqDbPreloadHandle!==null||pqDbLoadPromise||(pqDbLoaded&&pqDbLastSource==='firebase'))return;
+        const run=()=>{
+            pqDbPreloadHandle=null;
+            if(!firebase.auth().currentUser||(typeof window.hasAppAccess==='function'&&!window.hasAppAccess()))return;
+            loadIcaoPqLibrary(pqDbLoaded&&pqDbLastSource!=='firebase').catch(err=>console.warn('PQ arka plan yüklemesi',err));
+        };
+        pqDbPreloadIdle=typeof requestIdleCallback==='function';
+        pqDbPreloadHandle=pqDbPreloadIdle?requestIdleCallback(run,{timeout:1200}):setTimeout(run,0);
+    }
+    window.scheduleIcaoPqLibraryPreload=scheduleIcaoPqLibraryPreload;
+    window.cancelIcaoPqLibraryPreload=cancelIcaoPqLibraryPreload;
+    window.addEventListener?.('online',()=>{if(pqDbLastSource!=='firebase')scheduleIcaoPqLibraryPreload();});
     window.loadIcaoPqLibrary=loadIcaoPqLibrary;
     window.getIcaoPqLibrarySnapshot=function(){return icaoPqLibrary||{editions:{},activeByArea:{}};};
     window.isIcaoPqLibraryLoaded=function(){return pqDbLoaded===true;};

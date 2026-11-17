@@ -505,7 +505,7 @@ const I18N = {
     // ================================================================
     // STABILIZASYON PAKETI 1
     // ================================================================
-    const APP_RELEASE = Object.freeze({version:'1.0.0-rc1.4.22',label:'v1.0 RC1.4.22',buildDate:'2026-11-17',baseline:'RC1.4.21 + unified PDF Word reporting and objection save lifecycle',cacheTag:'20261117-v1.0-rc1.4.22'});
+    const APP_RELEASE = Object.freeze({version:'1.0.0-rc1.4.23',label:'v1.0 RC1.4.23',buildDate:'2026-11-17',baseline:'RC1.4.22 + PQ background preload and linked draft visit EI',cacheTag:'20261117-v1.0-rc1.4.23'});
     const STABILIZATION_VERSION = APP_RELEASE.label;
     window.USOAP_APP_RELEASE = APP_RELEASE;
     const stabilizationState = {
@@ -698,7 +698,7 @@ const I18N = {
         add('word', 'Word okuma motoru', (typeof JSZip !== 'undefined') ? 'ok' : 'error', (typeof JSZip !== 'undefined') ? 'JSZip hazır.' : 'Word ayrıştırma kütüphanesi yüklenemedi.');
         add('charts', 'Grafik motoru', (typeof Chart !== 'undefined') ? 'ok' : 'warn', (typeof Chart !== 'undefined') ? 'Chart.js hazır.' : 'Grafik kütüphanesi yüklenemedi.');
         const assetVersionIssues = getLocalAssetVersionIssues();
-        add('release-build', 'Release / cache bütünlüğü', assetVersionIssues.length ? 'error' : 'ok', assetVersionIssues.length ? `RC1.4.22 cache etiketiyle eşleşmeyen ${assetVersionIssues.length} yerel asset: ${assetVersionIssues.slice(0,6).join(', ')}` : `${APP_RELEASE.label} · build ${APP_RELEASE.buildDate} · bütün yerel assetler ${APP_RELEASE.cacheTag}.`);
+        add('release-build', 'Release / cache bütünlüğü', assetVersionIssues.length ? 'error' : 'ok', assetVersionIssues.length ? `RC1.4.23 cache etiketiyle eşleşmeyen ${assetVersionIssues.length} yerel asset: ${assetVersionIssues.slice(0,6).join(', ')}` : `${APP_RELEASE.label} · build ${APP_RELEASE.buildDate} · bütün yerel assetler ${APP_RELEASE.cacheTag}.`);
         let storageOk=true; try{localStorage.setItem('__usoap_rc_probe','1');localStorage.removeItem('__usoap_rc_probe');}catch(_){storageOk=false;}
         add('browser-storage', 'Tarayıcı yerel depolama', storageOk ? 'ok' : 'warn', storageOk ? 'localStorage kullanılabilir.' : 'localStorage kapalı; çevrimdışı cache ve bazı tercihler kalıcı olmayabilir.');
         const originalDocMode=String(window.PQ_ORIGINAL_DOCUMENT_STORAGE_MODE||'external').toLowerCase();
@@ -935,6 +935,7 @@ const I18N = {
                 loadFromLocalStorage(); startVisitFirebaseListener(); startVisitUnitSettingsListener(); if(typeof startResponsibilityRegistryListener==='function')startResponsibilityRegistryListener(); if(typeof startStateComplianceListener==='function')startStateComplianceListener(); if(typeof startAssessmentEventListener==='function')startAssessmentEventListener(); startIcaoOfficialEiListener(); if(typeof startValidationReadinessListener==='function')startValidationReadinessListener();
                 if (typeof window.applyAccessControlUi === 'function') setTimeout(()=>window.applyAccessControlUi(), 0);
             } else {
+                window.cancelIcaoPqLibraryPreload?.();
                 stopVisitFirebaseListener(); stopVisitUnitSettingsListener(); if(typeof stopResponsibilityRegistryListener==='function')stopResponsibilityRegistryListener(); if(typeof stopStateComplianceListener==='function')stopStateComplianceListener(); stopIcaoOfficialEiListener(); if(typeof stopAssessmentEventListener==='function')stopAssessmentEventListener(); if(typeof stopValidationReadinessListener==='function')stopValidationReadinessListener();
                 if (typeof window.accessControlReset === 'function') window.accessControlReset(); if (typeof window.hideAccessDeniedGate === 'function') window.hideAccessDeniedGate();
                 document.getElementById('loadingOverlay').style.display = 'none'; document.getElementById('mainAppContainer').style.display = 'none'; document.getElementById('loginOverlay').style.display = 'flex';
@@ -1052,7 +1053,7 @@ const I18N = {
                 if (Object.keys(baseEIData).length > 0) { document.getElementById('eiOverallProgressPanel').style.display = "grid"; document.getElementById('eiChartPanel').style.display = "block"; } else { document.getElementById('eiOverallProgressPanel').style.display = "none"; document.getElementById('eiChartPanel').style.display = "none"; }
                 setLoadingMessage('Kayıtlı veri yükleniyor...', 'Filtreler ve ekran bileşenleri hazırlanıyor.'); renderFileList(); await yieldToBrowser(); refreshAllFilters(); await yieldToBrowser(); render();
             } else { window_loadedReportDate = null; updateDynamicSubtitle(); renderFileList(); }
-        }).catch(e => { console.error(e); recordRuntimeIssue('firebase-load', e.message || String(e), {stack:e.stack || ''}); showAppRuntimeToast('Kayıtlı ana veri yüklenemedi. Sistem Kontrolü ekranını inceleyiniz.', 'error'); }).finally(() => { hideLoading(); updateSystemConnectionBadge(); });
+        }).catch(e => { console.error(e); recordRuntimeIssue('firebase-load', e.message || String(e), {stack:e.stack || ''}); showAppRuntimeToast('Kayıtlı ana veri yüklenemedi. Sistem Kontrolü ekranını inceleyiniz.', 'error'); }).finally(() => { hideLoading(); updateSystemConnectionBadge(); window.scheduleIcaoPqLibraryPreload?.(); });
 
         db.ref('icao_archive').on('value', (snapshot) => {
             let rawArchives = snapshot.val() || {};
@@ -3628,6 +3629,7 @@ const I18N = {
         visitFirebaseRef = db.ref('icao_visits');
         visitFirebaseCallback = snapshot => {
             icaoVisits = snapshot.val() || {};
+            window.scheduleOfficialEiFormRefresh?.();
             window.refreshStateSnapshotAssessmentOptions?.();
             renderVisitModule();
             renderVisitScopeModule(true);
@@ -8180,8 +8182,8 @@ const I18N = {
         const visit=getLatestDashboardIcaoVisitSummary();
         const result={release:APP_RELEASE.label,verificationTypeSample:null,officialVisit:visit?{name:visit.visit.visitName||visit.visit.icaoVisitType,scope:visit.scopeCount,satisfactory:visit.satisfactory,notSatisfactory:visit.notSatisfactory,followUp:visit.followUp,notEvaluated:visit.notEvaluated,draftEi:visit.impact?visit.impact.newPct:null,newSat:visit.impact?visit.impact.newSat:null,total:visit.impact?visit.impact.total:null}:null,pendingNoticeUsesVisit:!!visit};
         try{const first=Object.keys(pqMasterData||{})[0];if(first)result.verificationTypeSample={pq:first,type:getCommonVerificationType(first)};}catch(_){}
-        result.passed=APP_RELEASE.label.includes('RC1.4.22')&&(!visit||visit.scopeCount>=visit.satisfactory);
-        console.log('RC1.4.22 dashboard öz denetimi:',result);return result;
+        result.passed=APP_RELEASE.label.includes('RC1.4.23')&&(!visit||visit.scopeCount>=visit.satisfactory);
+        console.log('RC1.4.23 dashboard öz denetimi:',result);return result;
     };
 
     window.runSimulator = function() {

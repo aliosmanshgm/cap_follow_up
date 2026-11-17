@@ -1,0 +1,34 @@
+RC1.4.23 — PQ otomatik yükleme, taslak ziyaret EI ve rapor sayfaları
+17 Kasım 2026
+
+KURULUM
+ZIP içindeki cap_follow_up klasörünün tüm dosyalarını mevcut proje dosyalarının üzerine kopyalayın. Ctrl+F5 ile yenileyip RC1.4.23 rozetini kontrol edin. Firebase kuralı veya veri taşıması gerekmez. Önceki güncellemeler dahildir.
+
+PQ VERİTABANI
+Önceki sürüm veritabanını ilk ihtiyaçta yüklüyordu; menü ilk yüklemeyi tetikliyordu. Aynı oturumdaki sonraki normal açılışlar zaten bellekteki veriyi kullanıyordu.
+Artık yetkili girişten ve ana veri yüklemesinden sonra tarayıcıya çizim fırsatı verilerek PQ yüklemesi arka planda başlar. Ana ekran PQ okumasını beklemez. Kullanıcı bu sırada menüyü açarsa aynı istek paylaşılır; ikinci Firebase okuması başlatılmaz. Yüklenen veri oturumda yeniden kullanılır. Ağ geri geldiğinde yerel/fallback kaynak otomatik yenilenebilir. Oturum yoksa veya erişim onayı yoksa otomatik okuma yapılmaz.
+Bu değişiklik okuma zamanını erkene alır; PQ setinin indirilmesi ve indekslenmesi yine kaynak gerektirir. Ana giriş ekranına bloklayan bir bekleme eklenmez.
+
+PDF VE WORD
+Detay raporlarındaki bölüm başlıkları yeni sayfadan başlar. Her itiraz edilen PQ ayrı sayfadan başlar; ilk PQ, itiraz bölümünün başlığıyla aynı sayfadadır. Belgenin ilk durum özeti ana rapor başlığıyla ilk sayfada kalır; boş kapak/bölüm sayfası oluşmaz.
+Uzun itiraz metni tam genişlikte ve kesilmeden devam eder. Word de aynı modelin sayfa kırılımlarını kullanır. Word sürümü/yazı tipleri devam sayfalarının yerleşimini etkileyebilir.
+
+TASLAK / GEÇİCİ ICVM EI
+ICAO Resmî EI Veri Yönetimi ekranında mevcut taslak ICVM kaydını açın veya yeni kayıt oluşturup Sonuç statüsü: Taslak seçin. Bağlı ICAO ziyareti alanında mevcut ICVM'yi seçin.
+Açıkça seçili bir PQ durum kaynağı (State Snapshot) yoksa, Overall ve alan EI değerleri bağlı ziyaretin güncel PQ sonuçlarından otomatik dolar. Nihai PQ sonucu varsa taslaktan önce kullanılır. No Change ziyaret öncesi S/NS/N-A durumunu korur.
+Kapsam dışı alanlarda önceki aşamanın EI'si korunur ve Valide edilmedi notu gösterilir. Önceki PQ durumu bilinmiyorsa EI uydurulmaz; alan boş kalır ve neden belirtilir. Ziyaret kapsam başarı oranı State Overall EI yerine kullanılmaz.
+Açıkça seçilmiş PQ durum kaynağı önceliklidir. Kaynak seçilmiş ama henüz yüklenmemişse kayıt işlemi bekleme/kaynak seçimini kaldırma mesajı verir; sessizce başka kaynağa geçmez.
+Açık EI formu, bağlı ziyarete yeni PQ sonucu geldiğinde hesaplanan alanlarını yeniler; yazılmış ad/not gibi alanları korur. Mevcut taslak kaydınızı yeniden oluşturmanız gerekmez. Kaydet/Güncelle ile hesaplanan değerleri ve ziyaret kaynağını saklayabilirsiniz.
+Saklanmış taslak yüzdeleri aynı ziyaret için bağımsız bir eski rapor gibi hesaba katılmaz. PQ sonuçları değişince güncel hesap esas alınır. Taslak değerler resmî EI referansını değiştirmez; yalnız statüyü Resmî yapmak taslak hesabı resmî kaynağa dönüştürmez. Resmî kayıt için bağlı uygun PQ durum kaynağı veya kontrollü yayımlanmış Final sonuç gerekir.
+EI penceresinin yüksekliği de düzeltildi; alttaki Kaydet/Güncelle düğmesine kaydırılarak ulaşılabilir.
+
+DASHBOARD
+Üstteki üç CMAA kartı (EI/bulgu/CAP) başlangıç referansıdır. Kayıtlı resmî EI kartı da resmî kaynak referansıdır. Bu dört kartın aşama seçiminde değişmemesi normaldir; ayrı bir referans bölümüne taşındılar.
+Değerlendirme aşamaları bölümünün altında seçili aşama adı, aşama sonrası EI, nihai PQ sayacı ve projeksiyonlar yer alır. Aşama değişince bunlar ve alan tablosu güncellenir. CMAA başlangıcı ve CAP kaynak tarihi seçimleri önceki anlamlarıyla çalışır.
+
+KONTROLLER
+269 otomatik alan/regresyon kontrolü ve 51 statik kontrol başarılı; 0 uyarı/hata.
+22 tarayıcı kontrolü: gerçek giriş akışı, bloklamayan arka plan yüklemesi, tek Firebase okuması, dashboard aşama/referans ayrımı, bağlı taslak formu, canlı PQ güncellemesi, gerçek kaydetme, resmî referans izolasyonu, mobil görünüm.
+21 rapor/kaydetme tarayıcı kontrolü ve önceki ziyaret aşaması/tekil-toplu kayıt/Excel-PDF akışı için 25 tarayıcı kontrolü başarılı.
+15 çıktı kontrolü: PDF tam metin/sınırlar, gerçek düzenlenebilir DOCX yapısı, bölüm ve tekil itiraz sayfa kırılımları. PDF görsel olarak incelendi; Microsoft Word ile sayfa görüntüleme bu ortamda yapılmadı.
+Testlerde Firebase taklit edildi. Canlı kullanıcı verisi değiştirilmedi.

@@ -127,6 +127,7 @@
             eventMetrics:record.eventMetrics||{},
             stateSnapshotId:record.stateSnapshotId||'',
             reconciliation:record.reconciliation||{},
+            sourceOfTruth:record.sourceOfTruth||{},
             sourceLink:commonSource
         });
         const snapshotCore=clean({
@@ -341,6 +342,7 @@
 
     let assessmentUiRefreshTimer=null;
     function scheduleAssessmentUiRefresh(){
+        window.scheduleOfficialEiFormRefresh?.();
         clearTimeout(assessmentUiRefreshTimer);
         assessmentUiRefreshTimer=setTimeout(()=>{
             try{if(typeof renderIcaoOfficialPeriodControls==='function')renderIcaoOfficialPeriodControls();}catch(e){}

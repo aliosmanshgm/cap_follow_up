@@ -46,7 +46,7 @@
     const kpis=[{label:'Toplam PQ',value:summary.total,fill:'#f1f5f9'},{label:'Kapalı PQ',value:summary.closed,fill:'#dcfce7'},{label:'Açık PQ',value:summary.open,fill:'#fee2e2'},{label:'İtirazlı PQ',value:summary.objections,fill:'#ede9fe'}];
     if(summary.na)kpis.push({label:'N/A PQ',value:summary.na,fill:'#e2e8f0'});
     const blocks=[{kind:'heading',text:'Durum dağılımı'},{kind:'kpis',cards:kpis},
-      {kind:'heading',text:'Denetim alanlarına göre PQ ve itiraz sayıları'},
+      {kind:'heading',text:'Denetim alanlarına göre PQ ve itiraz sayıları',pageBreak:true},
       {kind:'table',key:'areas',headers:['Alan','Toplam PQ','Kapalı','Açık','İtirazlı PQ','İtiraz edilen PQ’lar'],weights:[.65,.9,.85,.85,1,3.75],rows:[...areaRows.map(a=>[a.area,a.total,a.closed,a.open,a.objections,a.pqs.join(', ')||'—']),['Toplam',summary.total,summary.closed,summary.open,summary.objections,'']]}];
     if(summary.na){const table=blocks.find(b=>b.key==='areas');table.headers.splice(4,0,'N/A');table.weights.splice(4,0,.7);table.rows.forEach((r,i)=>r.splice(4,0,i<areaRows.length?areaRows[i].na:summary.na));}
     const eiRows=input.eiRows||[];
@@ -57,14 +57,14 @@
     blocks.push({kind:'heading',text:'Kapsamdaki PQ durumları',pageBreak:true},{kind:'table',key:'pqs',headers:['PQ','Alan','CE','Doğrulama türü','PQ sonucu','İtiraz'],weights:[.8,.6,.7,1.4,2.2,1.4],rows:rows.map(r=>[r.PQ,r.Alan,r.CE||'—',r['Doğrulama Türü']||'—',r['ICAO Nihai PQ Sonucu']?result(r['ICAO Nihai PQ Sonucu']):r['ICAO Taslak PQ Sonucu']?result(r['ICAO Taslak PQ Sonucu']):r['ICAO / ICVM Sonucu']||'—',objection(r)?TEXT[str(r['İtiraz / Yorum Durumu'])]||'İtiraz / yorum':'—'])});
     const objections=rows.filter(objection);
     if(objections.length){blocks.push({kind:'heading',text:`İtiraz edilen PQ’lar (${objections.length})`,pageBreak:true});
-      objections.forEach(r=>{
-        blocks.push({kind:'heading',level:3,text:`PQ ${r.PQ} — ${r.Alan}`});
+      objections.forEach((r,i)=>{
+        blocks.push({kind:'heading',level:3,text:`PQ ${r.PQ} — ${r.Alan}`,pageBreak:i>0});
         blocks.push({kind:'table',key:'objectionMeta',headers:[],weights:[1,1.2,1,1],rows:[[`Taslak sonuç: ${result(r['ICAO Taslak PQ Sonucu'])}`,`İtiraz durumu: ${TEXT[str(r['İtiraz / Yorum Durumu'])]||str(r['İtiraz / Yorum Durumu'])||'—'}`,`İtiraz tarihi: ${str(r['İtiraz / Yorum Tarihi'])||'—'}`,`Nihai sonuç: ${result(r['ICAO Nihai PQ Sonucu'])}`]]});
         blocks.push({kind:'paragraph',text:str(r['İtiraz / Yorum Notu'])||'—',role:'objectionNote',pq:str(r.PQ)});
       });
     }
     if(input.mode==='screen'&&rows.length){blocks.push({kind:'heading',text:'PQ / CAP validasyon sonuçları',pageBreak:true});
-      rows.forEach(r=>{blocks.push({kind:'heading',level:3,text:`PQ ${r.PQ} — ${r.Alan}`});
+      rows.forEach((r,i)=>{blocks.push({kind:'heading',level:3,text:`PQ ${r.PQ} — ${r.Alan}`,pageBreak:i>0});
         const fields=[['PQ Question (ENG)','PQ Sorusu (ENG)'],['PQ Sorusu (TR)','PQ Sorusu (TR)'],['Finding (ENG)','Bulgu (ENG)'],['Bulgu (TR)','Bulgu (TR)'],['Kanıt','ICAO’ya Sunulan Kanıt / Uygulama Kanıtı'],['ICAO görüşü','ICAO Görüşü / Ziyaret Notu'],['Ek kanıt talebi','Ek Kanıt / Açıklama Talebi'],['İç not','İç Not'],['CAP adımları','CAP Step’leri (Bilgi Amaçlı)']];
         for(const [label,key] of fields)if(str(r[key])){blocks.push({kind:'heading',level:4,text:label});blocks.push({kind:'paragraph',text:str(r[key])});}
       });

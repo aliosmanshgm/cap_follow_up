@@ -1,0 +1,89 @@
+{
+  "release": "1.0.0-rc1.4.23",
+  "automatedDomainChecks": 269,
+  "staticChecks": 51,
+  "startupDraftBrowser": {
+    "passed": 22,
+    "checks": [
+      "anonymous app opening does not read the PQ library",
+      "authenticated startup reads PQ automatically without a menu click",
+      "main screen opens while the PQ background read is still pending",
+      "opening PQ menu during preload coalesces requests",
+      "later menu navigation uses the loaded in-memory library",
+      "dashboard separates four reference cards from four selected-stage cards",
+      "ICVM is the default selected draft stage at 66.67 percent",
+      "selecting CMAA updates selected-stage EI and final PQ progress",
+      "CMAA selection preserves explicit reference cards",
+      "selecting OSVA updates selected metrics and heading",
+      "selecting ICVM restores draft EI while reference values remain stable",
+      "draft ICVM link fills Overall and area EI automatically",
+      "areas outside the visit show the not-validated note",
+      "incoming PQ result updates an open EI form without overwriting notes",
+      "real form saves draft area EI counts and visit calculation source",
+      "saved draft does not change official EI reference",
+      "reopening an existing linked draft record immediately fills its areas",
+      "changing to official clears calculated draft percentages",
+      "a draft EI cache alone cannot be saved as a final official result",
+      "unlinking clears previous visit values",
+      "separated cards and navigation fit a mobile viewport",
+      "no uncaught browser errors"
+    ],
+    "errors": []
+  },
+  "reportSaveBrowser": {
+    "passed": 21,
+    "checks": [
+      "real report model resolves final No Change over previous S and has 85/60/25/8 totals",
+      "real report EI uses the previous official stage and current visit results",
+      "detailed PDF downloads successfully",
+      "matching editable DOCX downloads successfully",
+      "chart legend and maximum values have no visual bounding box overlap",
+      "detailed export keeps all area scope PQs independent of search and status filters",
+      "screen export follows the visible search scope",
+      "both screen report formats download with full PQ detail blocks",
+      "consecutive objections persist without refresh or guard timeout",
+      "save button remains disabled while actual async write is pending",
+      "switching PQ during write keeps the shared save button locked",
+      "late write does not move the editor back or discard next PQ text and local draft",
+      "in-flight duplicate submits issue only one Firebase update",
+      "next objection saves directly after slow previous save",
+      "later same-PQ edits remain visible after save completes",
+      "a failed write releases button for retry and preserves text",
+      "retry persists the newer text after a failed write",
+      "explicit visits.write permission remains enforced",
+      "permission restoration unlocks editor without refresh",
+      "report exports and saves never create official EI or CAP sources",
+      "no uncaught browser errors"
+    ],
+    "errors": []
+  },
+  "visitStageBrowserRegression": {
+    "passed": 25
+  },
+  "artifacts": {
+    "passed": 15,
+    "checks": [
+      "PDF pages contain content and landscape dimensions",
+      "PDF and Word show 85 total 60 closed 25 open and 8 objections",
+      "all eight full objection notes survive PDF line and page breaks",
+      "all eight full objection notes remain editable Word paragraphs",
+      "both formats omit verbose filter boilerplate",
+      "Word native area table matches PDF model exactly",
+      "editable Word objection metadata and full note blocks preserve total 8",
+      "Word has landscape A4 layout and one embedded high resolution chart",
+      "Word OpenXML parts parse and contain real docx content types",
+      "Word footer contains PAGE and NUMPAGES fields",
+      "PDF text remains within printable page margins",
+      "long PDF notes use full width instead of narrow last column",
+      "all later major PDF sections begin at the start of a page",
+      "each objection PQ begins a separate PDF page",
+      "Word has the same explicit section and individual objection page breaks"
+    ],
+    "pdfPages": 22,
+    "wordTables": 12,
+    "wordCharts": 1
+  },
+  "liveFirebaseModified": false,
+  "pdfVisualInspection": true,
+  "wordVisualRendering": "not_available"
+}

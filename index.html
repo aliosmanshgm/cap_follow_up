@@ -13,7 +13,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.10/pdfmake.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.10/vfs_fonts.js"></script>
-    <link rel="stylesheet" href="css/app.css?v=20261117-v1.0-rc1.4.22">
+    <link rel="stylesheet" href="css/app.css?v=20261117-v1.0-rc1.4.23">
 </head>
 <body>
 
@@ -149,7 +149,7 @@
                 <button onclick="toggleFiltersPanel()" class="btn-outline header-primary-action">🔎 Filtreler</button>
                 <button type="button" id="activeScreenPdfBtn" onclick="exportPDF()" style="background:#dc2626;" title="Aktif ekranı PDF olarak dışa aktar">📄 Ekran PDF</button>
                 <button id="activeScreenExcelBtn" onclick="exportExcel()" style="background:#059669;" title="Aktif ekranı Excel olarak dışa aktar">📊 Ekran Excel</button>
-                <button type="button" id="appReleaseBadge" class="system-connection-badge ok release-badge" onclick="openSystemHealthModal()" title="Release Candidate sistem kontrolünü aç">RC1.4.22 · v1.0</button>
+                <button type="button" id="appReleaseBadge" class="system-connection-badge ok release-badge" onclick="openSystemHealthModal()" title="Release Candidate sistem kontrolünü aç">RC1.4.23 · v1.0</button>
                 <button type="button" id="systemConnectionBadge" class="system-connection-badge checking" onclick="openSystemHealthModal()" title="Sistem bağlantı ve kayıt durumunu görüntüle">⚪ Kontrol ediliyor</button>
                 <div class="more-actions-wrap">
                     <button class="btn-outline" onclick="toggleMoreActions(event)">⚙️ Diğer <span style="font-size:10px;">▼</span></button>
@@ -271,7 +271,7 @@
                             <div class="icao-ei-form-grid">
                                 <div><label>Değerlendirme adı *</label><input id="icaoEiName" required placeholder="Örn: Virtual OSVA"></div>
                                 <div><label>Değerlendirme türü</label><select id="icaoEiType"><option value="CMAA">CMAA</option><option value="OSVA">OSVA</option><option value="ICVM">ICVM</option><option value="AUDIT">Denetim</option><option value="OTHER">Diğer</option></select></div>
-                                <div><label>Sonuç statüsü</label><select id="icaoEiResultStatus"><option value="official">Resmî / Final</option><option value="draft">Taslak</option><option value="provisional">Geçici / Provisional</option></select></div>
+                                <div><label>Sonuç statüsü</label><select id="icaoEiResultStatus" onchange="refreshIcaoOfficialEiFormSource()"><option value="official">Resmî / Final</option><option value="draft">Taslak</option><option value="provisional">Geçici / Provisional</option></select></div>
                                 <div><label>Ziyaret başlangıç tarihi</label><input type="date" id="icaoEiStartDate"></div>
                                 <div><label>Ziyaret bitiş tarihi</label><input type="date" id="icaoEiEndDate"></div>
                                 <div><label>Değerlendirme / sonuç tarihi *</label><input type="date" id="icaoEiAssessmentDate" required></div>
@@ -281,8 +281,8 @@
                                 <div><label>PQ revizyonu</label><input id="icaoEiPqRevision" placeholder="Örn: Rev.1"></div>
                                 <div class="full"><label>State Compliance Snapshot</label><select id="icaoEiStateSnapshot" onchange="applyStateSnapshotToOfficialEiForm(this.value)"><option value="">State Snapshot seçiniz...</option></select><div id="stateSnapshotStatus" style="font-size:10px;color:var(--muted);margin-top:5px;">Henüz State Snapshot yüklenmedi.</div></div>
                                 <div><label>Hesaplanan Overall EI (%)</label><input type="number" id="icaoEiOverall" min="0" max="100" step="0.01" readonly></div>
-                                <div><label>State Snapshot Satisfactory PQ</label><input type="number" id="icaoEiOverallSat" min="0" step="1" readonly></div>
-                                <div><label>State Snapshot Applicable PQ</label><input type="number" id="icaoEiOverallApplicable" min="1" step="1" readonly></div>
+                                <div><label>Hesaplanan Satisfactory PQ</label><input type="number" id="icaoEiOverallSat" min="0" step="1" readonly></div>
+                                <div><label>Hesaplanan Applicable PQ</label><input type="number" id="icaoEiOverallApplicable" min="1" step="1" readonly></div>
                                 <div><label>Ziyaret kapsamındaki Applicable PQ</label><input type="number" id="icaoEiScopeApplicable" min="0" step="1" placeholder="Örn: ICVM kapsamı 85"></div>
                                 <div><label>Ziyaret sonucunda Satisfactory / Validated PQ</label><input type="number" id="icaoEiScopeSatisfactory" min="0" step="1" placeholder="Örn: ICVM sonucu 60"></div>
                                 <div><label>Kapsam başarı oranı</label><input type="text" id="icaoEiScopeSuccessRate" readonly placeholder="Otomatik"></div>
@@ -303,16 +303,16 @@
                             </div>
                             <div style="margin-top:14px;border-top:1px solid var(--border);padding-top:12px;">
                                 <h4 style="margin:0 0 5px;">Alan Bazlı EI Oranları (%)</h4>
-                                <div style="font-size:11px;color:var(--muted);">Normalde seçili State Snapshot'tan otomatik hesaplanır. Kapsam dışı alanlar event metriği değildir; yalnız State durumunu gösterir.</div>
+                                <div id="icaoEiCalculationSource" style="font-size:11px;color:var(--muted);">Seçili PQ durum kaynağı önceliklidir. Kaynak seçilmemiş taslaklarda bağlı ziyaretin PQ sonuçları kullanılır.</div>
                                 <div class="icao-ei-area-grid">
-                                    <label>LEG<input type="number" id="icaoEiAreaLEG" min="0" max="100" step="0.01" readonly><small class="icao-published-field" style="display:none;">Yayımlanan<input type="number" id="icaoEiPublishedAreaLEG" min="0" max="100" step="0.01" disabled></small></label>
-                                    <label>ORG<input type="number" id="icaoEiAreaORG" min="0" max="100" step="0.01" readonly><small class="icao-published-field" style="display:none;">Yayımlanan<input type="number" id="icaoEiPublishedAreaORG" min="0" max="100" step="0.01" disabled></small></label>
-                                    <label>PEL<input type="number" id="icaoEiAreaPEL" min="0" max="100" step="0.01" readonly><small class="icao-published-field" style="display:none;">Yayımlanan<input type="number" id="icaoEiPublishedAreaPEL" min="0" max="100" step="0.01" disabled></small></label>
-                                    <label>OPS<input type="number" id="icaoEiAreaOPS" min="0" max="100" step="0.01" readonly><small class="icao-published-field" style="display:none;">Yayımlanan<input type="number" id="icaoEiPublishedAreaOPS" min="0" max="100" step="0.01" disabled></small></label>
-                                    <label>AIR<input type="number" id="icaoEiAreaAIR" min="0" max="100" step="0.01" readonly><small class="icao-published-field" style="display:none;">Yayımlanan<input type="number" id="icaoEiPublishedAreaAIR" min="0" max="100" step="0.01" disabled></small></label>
-                                    <label>AIG<input type="number" id="icaoEiAreaAIG" min="0" max="100" step="0.01" readonly><small class="icao-published-field" style="display:none;">Yayımlanan<input type="number" id="icaoEiPublishedAreaAIG" min="0" max="100" step="0.01" disabled></small></label>
-                                    <label>ANS<input type="number" id="icaoEiAreaANS" min="0" max="100" step="0.01" readonly><small class="icao-published-field" style="display:none;">Yayımlanan<input type="number" id="icaoEiPublishedAreaANS" min="0" max="100" step="0.01" disabled></small></label>
-                                    <label>AGA<input type="number" id="icaoEiAreaAGA" min="0" max="100" step="0.01" readonly><small class="icao-published-field" style="display:none;">Yayımlanan<input type="number" id="icaoEiPublishedAreaAGA" min="0" max="100" step="0.01" disabled></small></label>
+                                    <label>LEG<input type="number" id="icaoEiAreaLEG" min="0" max="100" step="0.01" readonly><small id="icaoEiAreaNoteLEG" style="display:block;color:var(--muted);"></small><small class="icao-published-field" style="display:none;">Yayımlanan<input type="number" id="icaoEiPublishedAreaLEG" min="0" max="100" step="0.01" disabled></small></label>
+                                    <label>ORG<input type="number" id="icaoEiAreaORG" min="0" max="100" step="0.01" readonly><small id="icaoEiAreaNoteORG" style="display:block;color:var(--muted);"></small><small class="icao-published-field" style="display:none;">Yayımlanan<input type="number" id="icaoEiPublishedAreaORG" min="0" max="100" step="0.01" disabled></small></label>
+                                    <label>PEL<input type="number" id="icaoEiAreaPEL" min="0" max="100" step="0.01" readonly><small id="icaoEiAreaNotePEL" style="display:block;color:var(--muted);"></small><small class="icao-published-field" style="display:none;">Yayımlanan<input type="number" id="icaoEiPublishedAreaPEL" min="0" max="100" step="0.01" disabled></small></label>
+                                    <label>OPS<input type="number" id="icaoEiAreaOPS" min="0" max="100" step="0.01" readonly><small id="icaoEiAreaNoteOPS" style="display:block;color:var(--muted);"></small><small class="icao-published-field" style="display:none;">Yayımlanan<input type="number" id="icaoEiPublishedAreaOPS" min="0" max="100" step="0.01" disabled></small></label>
+                                    <label>AIR<input type="number" id="icaoEiAreaAIR" min="0" max="100" step="0.01" readonly><small id="icaoEiAreaNoteAIR" style="display:block;color:var(--muted);"></small><small class="icao-published-field" style="display:none;">Yayımlanan<input type="number" id="icaoEiPublishedAreaAIR" min="0" max="100" step="0.01" disabled></small></label>
+                                    <label>AIG<input type="number" id="icaoEiAreaAIG" min="0" max="100" step="0.01" readonly><small id="icaoEiAreaNoteAIG" style="display:block;color:var(--muted);"></small><small class="icao-published-field" style="display:none;">Yayımlanan<input type="number" id="icaoEiPublishedAreaAIG" min="0" max="100" step="0.01" disabled></small></label>
+                                    <label>ANS<input type="number" id="icaoEiAreaANS" min="0" max="100" step="0.01" readonly><small id="icaoEiAreaNoteANS" style="display:block;color:var(--muted);"></small><small class="icao-published-field" style="display:none;">Yayımlanan<input type="number" id="icaoEiPublishedAreaANS" min="0" max="100" step="0.01" disabled></small></label>
+                                    <label>AGA<input type="number" id="icaoEiAreaAGA" min="0" max="100" step="0.01" readonly><small id="icaoEiAreaNoteAGA" style="display:block;color:var(--muted);"></small><small class="icao-published-field" style="display:none;">Yayımlanan<input type="number" id="icaoEiPublishedAreaAGA" min="0" max="100" step="0.01" disabled></small></label>
                                 </div>
                             </div>
                             <div id="icaoEiFormAudit" class="icao-ei-status"></div>
@@ -2150,7 +2150,7 @@
                                 <button type="button" class="btn-outline" onclick="exportIcaoPqLibraryExcel()">📊 Excel</button>
                             </div>
                         </div>
-                        <div id="pqDbSyncNote" class="pqdb-sync">PQ veri tabanı açıldığında Firebase kayıtları okunacaktır.</div>
+                        <div id="pqDbSyncNote" class="pqdb-sync">PQ veri tabanı girişten sonra arka planda hazırlanır.</div>
                         <div class="pqdb-kpis">
                             <div class="pqdb-kpi"><strong id="pqDbKpiEditions">0</strong><span>Sürüm / Revizyon</span></div>
                             <div class="pqdb-kpi ok"><strong id="pqDbKpiAreas">0</strong><span>Alan Kaydı</span></div>
@@ -2613,31 +2613,31 @@
 </div>
 
 
-<script src="js/services/cap-current-source.js?v=20261117-v1.0-rc1.4.22"></script>
-<script src="js/services/visit-outcomes.js?v=20261117-v1.0-rc1.4.22"></script>
-<script src="js/app.js?v=20261117-v1.0-rc1.4.22"></script>
-<script src="js/modules/access-control.js?v=20261117-v1.0-rc1.4.22"></script>
-<script src="js/modules/visit-sync.js?v=20261117-v1.0-rc1.4.22"></script>
-<script src="js/modules/visit-hub.js?v=20261117-v1.0-rc1.4.22"></script>
-<script src="js/modules/state-compliance.js?v=20261117-v1.0-rc1.4.22"></script>
-<script src="js/modules/assessment-events.js?v=20261117-v1.0-rc1.4.22"></script>
-<script src="js/modules/official-ei-management.js?v=20261117-v1.0-rc1.4.22"></script>
-<script src="js/modules/official-ei-automation.js?v=20261117-v1.0-rc1.4.22"></script>
-<script src="js/parsers/pq-docx-parser.js?v=20261117-v1.0-rc1.4.22"></script>
-<script src="js/modules/pq-linkage.js?v=20261117-v1.0-rc1.4.22"></script>
-<script src="js/modules/validation-readiness.js?v=20261117-v1.0-rc1.4.22"></script>
-<script src="js/modules/assessment-impact.js?v=20261117-v1.0-rc1.4.22"></script>
-<script src="js/modules/management-shell.js?v=20261117-v1.0-rc1.4.22"></script>
-<script src="js/modules/drive-documents.js?v=20261117-v1.0-rc1.4.22"></script>
-<script src="js/services/pq-repository.js?v=20261117-v1.0-rc1.4.22"></script>
-<script src="js/modules/pq-library.js?v=20261117-v1.0-rc1.4.22"></script>
-<script src="js/modules/responsibility-registry.js?v=20261117-v1.0-rc1.4.22"></script>
-<script src="js/modules/system-integrity.js?v=20261117-v1.0-rc1.4.22"></script>
-<script src="js/modules/action-center.js?v=20261117-v1.0-rc1.4.22"></script>
-<script src="js/modules/notification-center.js?v=20261117-v1.0-rc1.4.22"></script>
-<script src="js/modules/reporting-center.js?v=20261117-v1.0-rc1.4.22"></script>
-<script src="js/modules/dashboard-overview.js?v=20261117-v1.0-rc1.4.22"></script>
-<script src="js/services/native-docx-writer.js?v=20261117-v1.0-rc1.4.22"></script>
-<script src="js/modules/icao-visit-report.js?v=20261117-v1.0-rc1.4.22"></script>
+<script src="js/services/cap-current-source.js?v=20261117-v1.0-rc1.4.23"></script>
+<script src="js/services/visit-outcomes.js?v=20261117-v1.0-rc1.4.23"></script>
+<script src="js/app.js?v=20261117-v1.0-rc1.4.23"></script>
+<script src="js/modules/access-control.js?v=20261117-v1.0-rc1.4.23"></script>
+<script src="js/modules/visit-sync.js?v=20261117-v1.0-rc1.4.23"></script>
+<script src="js/modules/visit-hub.js?v=20261117-v1.0-rc1.4.23"></script>
+<script src="js/modules/state-compliance.js?v=20261117-v1.0-rc1.4.23"></script>
+<script src="js/modules/assessment-events.js?v=20261117-v1.0-rc1.4.23"></script>
+<script src="js/modules/official-ei-management.js?v=20261117-v1.0-rc1.4.23"></script>
+<script src="js/modules/official-ei-automation.js?v=20261117-v1.0-rc1.4.23"></script>
+<script src="js/parsers/pq-docx-parser.js?v=20261117-v1.0-rc1.4.23"></script>
+<script src="js/modules/pq-linkage.js?v=20261117-v1.0-rc1.4.23"></script>
+<script src="js/modules/validation-readiness.js?v=20261117-v1.0-rc1.4.23"></script>
+<script src="js/modules/assessment-impact.js?v=20261117-v1.0-rc1.4.23"></script>
+<script src="js/modules/management-shell.js?v=20261117-v1.0-rc1.4.23"></script>
+<script src="js/modules/drive-documents.js?v=20261117-v1.0-rc1.4.23"></script>
+<script src="js/services/pq-repository.js?v=20261117-v1.0-rc1.4.23"></script>
+<script src="js/modules/pq-library.js?v=20261117-v1.0-rc1.4.23"></script>
+<script src="js/modules/responsibility-registry.js?v=20261117-v1.0-rc1.4.23"></script>
+<script src="js/modules/system-integrity.js?v=20261117-v1.0-rc1.4.23"></script>
+<script src="js/modules/action-center.js?v=20261117-v1.0-rc1.4.23"></script>
+<script src="js/modules/notification-center.js?v=20261117-v1.0-rc1.4.23"></script>
+<script src="js/modules/reporting-center.js?v=20261117-v1.0-rc1.4.23"></script>
+<script src="js/modules/dashboard-overview.js?v=20261117-v1.0-rc1.4.23"></script>
+<script src="js/services/native-docx-writer.js?v=20261117-v1.0-rc1.4.23"></script>
+<script src="js/modules/icao-visit-report.js?v=20261117-v1.0-rc1.4.23"></script>
 </body>
 </html>

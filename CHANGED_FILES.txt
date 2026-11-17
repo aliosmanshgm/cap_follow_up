@@ -1,16 +1,19 @@
-RC1.4.22 — RC1.4.21 sürümüne göre değişen dosyalar
+RC1.4.23 — RC1.4.22 sürümüne göre değişen dosyalar
 
 CHANGED_FILES.txt
-PDF_WORD_ITIRAZ_QA_RC1_4_22.json
-PDF_WORD_ITIRAZ_RC1_4_22.txt
+PQ_TASLAK_EI_RAPOR_QA_RC1_4_23.json
+PQ_TASLAK_EI_RAPOR_RC1_4_23.txt
 RC_STATIC_QA_REPORT.json
 app-manifest.json
+css/app.css
 index.html
 js/app.js
-js/modules/access-control.js
+js/modules/assessment-events.js
+js/modules/dashboard-overview.js
 js/modules/icao-visit-report.js
-js/services/native-docx-writer.js
-tools/fixtures/visit-report-data.mjs
-tools/visit-report-tests.mjs
+js/modules/official-ei-management.js
+js/modules/pq-library.js
+js/modules/state-compliance.js
+tools/startup-draft-ei-tests.mjs
 
-Yeni dosyalar dahil tüm klasör yapısını koruyarak güncelleyin. Ctrl+F5 sonrası RC1.4.22 rozetini kontrol edin.
+Tüm klasör yapısını koruyarak güncelleyin. Ctrl+F5 sonrası RC1.4.23 rozetini kontrol edin.

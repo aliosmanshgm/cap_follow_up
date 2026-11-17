@@ -603,7 +603,7 @@
 
 
 
-.icao-official-ei-content{width:min(1120px,calc(100% - 28px));max-height:calc(100dvh - 32px);overflow:auto}
+.icao-official-ei-content{width:min(1120px,calc(100% - 28px));max-height:calc(100dvh - 32px);margin:16px auto;box-sizing:border-box;overflow:auto}
 .icao-ei-manager-grid{display:grid;grid-template-columns:minmax(300px,.8fr) minmax(420px,1.2fr);gap:14px;align-items:start}
 .icao-ei-record-list{display:block;max-height:640px;overflow:auto;padding-right:4px}
 .icao-ei-table-wrap{overflow:auto;border:1px solid var(--border);border-radius:9px;background:var(--card)}
@@ -971,3 +971,7 @@
 @media(max-width:1100px){#dashboardOverview .dash-metrics{grid-template-columns:repeat(2,minmax(0,1fr));}}
 @media(max-width:620px){#dashboardOverview .dash-metrics{grid-template-columns:1fr;}.dash-stage-button{min-width:175px;}}
 @media print{.dash-stage-flow{overflow:visible;flex-wrap:wrap;}.dash-stage-button{min-width:130px;}.dash-stage-arrow{display:none;}}
+
+.dash-reference-section{margin:0 0 22px;min-width:0;}
+.dash-reference-section h3{font-size:14px;margin:0 0 8px;}
+#dashboardOverview .dash-selected-heading{padding-top:16px;border-top:1px solid var(--border);margin-top:16px;}

@@ -1,6 +1,6 @@
 {
   "app": "USOAP CMA CAP Takip",
-  "version": "1.0.0-rc1.4.22",
+  "version": "1.0.0-rc1.4.23",
   "baseline": "index_visit_hub_pq_version_database(2).html",
   "buildDate": "2026-11-17",
   "features": [
@@ -149,7 +149,13 @@
     "wide-editable-objection-report-blocks",
     "area-objection-counts-and-pq-lists",
     "nonoverlapping-ei-chart-layout",
-    "async-objection-save-lifecycle"
+    "async-objection-save-lifecycle",
+    "authenticated-idle-pq-preload",
+    "draft-visit-derived-area-ei",
+    "draft-visit-ei-cache-isolation",
+    "report-section-and-objection-page-breaks",
+    "dashboard-reference-stage-card-separation",
+    "ei-manager-viewport-bounds"
   ],
   "architecture": {
     "index": "index.html",
@@ -186,6 +192,6 @@
     ]
   },
   "releaseChannel": "release-candidate",
-  "previousVersion": "1.0.0-rc1.4.21",
-  "cacheTag": "20261117-v1.0-rc1.4.22"
+  "previousVersion": "1.0.0-rc1.4.22",
+  "cacheTag": "20261117-v1.0-rc1.4.23"
 }
