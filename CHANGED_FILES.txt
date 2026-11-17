@@ -1,20 +1,16 @@
-RC1.4.21 — RC1.4.20 sürümüne göre değişen dosyalar
+RC1.4.22 — RC1.4.21 sürümüne göre değişen dosyalar
 
 CHANGED_FILES.txt
+PDF_WORD_ITIRAZ_QA_RC1_4_22.json
+PDF_WORD_ITIRAZ_RC1_4_22.txt
 RC_STATIC_QA_REPORT.json
-ZIYARET_ASAMALARI_ISTATISTIK_RC1_4_21.txt
-ZIYARET_ASAMALARI_QA_RC1_4_21.json
 app-manifest.json
-css/app.css
 index.html
 js/app.js
-js/modules/dashboard-overview.js
-js/modules/official-ei-management.js
-js/services/visit-outcomes.js
-tools/dashboard-final-precedence-tests.mjs
-tools/dashboard-tests.mjs
-tools/fixtures/visit-stages-data.mjs
-tools/visit-stage-statistics-tests.mjs
+js/modules/access-control.js
+js/modules/icao-visit-report.js
+js/services/native-docx-writer.js
+tools/fixtures/visit-report-data.mjs
+tools/visit-report-tests.mjs
 
-Güncel rehber: ZIYARET_ASAMALARI_ISTATISTIK_RC1_4_21.txt
-Önceki kaynak, dashboard, CAP, PQ, başlangıç ve ziyaret düzeltmeleri korunur.
+Yeni dosyalar dahil tüm klasör yapısını koruyarak güncelleyin. Ctrl+F5 sonrası RC1.4.22 rozetini kontrol edin.

@@ -1,6 +1,6 @@
 {
   "app": "USOAP CMA CAP Takip",
-  "version": "1.0.0-rc1.4.21",
+  "version": "1.0.0-rc1.4.22",
   "baseline": "index_visit_hub_pq_version_database(2).html",
   "buildDate": "2026-11-17",
   "features": [
@@ -144,7 +144,12 @@
     "draft-official-visit-statistics",
     "no-change-final-outcome",
     "all-scoped-pq-final-completion",
-    "stage-based-ei-cap-projections"
+    "stage-based-ei-cap-projections",
+    "shared-pdf-docx-visit-report-model",
+    "wide-editable-objection-report-blocks",
+    "area-objection-counts-and-pq-lists",
+    "nonoverlapping-ei-chart-layout",
+    "async-objection-save-lifecycle"
   ],
   "architecture": {
     "index": "index.html",
@@ -175,10 +180,12 @@
       "js/modules/action-center.js",
       "js/modules/notification-center.js",
       "js/modules/reporting-center.js",
-      "js/modules/dashboard-overview.js"
+      "js/modules/dashboard-overview.js",
+      "js/services/native-docx-writer.js",
+      "js/modules/icao-visit-report.js"
     ]
   },
   "releaseChannel": "release-candidate",
-  "previousVersion": "1.0.0-rc1.4.20",
-  "cacheTag": "20261117-v1.0-rc1.4.21"
+  "previousVersion": "1.0.0-rc1.4.21",
+  "cacheTag": "20261117-v1.0-rc1.4.22"
 }

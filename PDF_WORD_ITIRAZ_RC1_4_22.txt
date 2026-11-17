@@ -1,0 +1,27 @@
+RC1.4.22 — ICAO ziyaret raporları ve itiraz kaydı
+17 Kasım 2026
+
+KULLANIM
+1. Paketi açın. cap_follow_up klasöründeki dosyaları mevcut proje dosyalarının üzerine kopyalayın; yeni js/services/native-docx-writer.js ve js/modules/icao-visit-report.js dosyalarını da ekleyin.
+2. Uygulamayı açıp Ctrl+F5 ile yenileyin. Üstte RC1.4.22 yazdığını kontrol edin.
+3. ICAO Resmî Ziyareti / ICVM ekranında ziyareti ve gerekiyorsa denetim alanını seçin. Detaylı PDF veya yeni Detaylı Word düğmesiyle raporu indirin.
+4. İtirazı kaydettikten sonra doğrudan başka PQ seçip yeni itirazı kaydedebilirsiniz. Sayfayı yenilemek gerekmez.
+
+DEĞİŞİKLİKLER
+- Durum dağılımı: Toplam PQ, Kapalı PQ, Açık PQ, İtirazlı PQ. N/A varsa ayrıca gösterilir. İtiraz bir alt kümedir; açık ve kapalı toplamına eklenmez. Henüz kapanmamış/değerlendirilmemiş PQ'lar açık sayılır. S/NS/No Change sonuçlarında ziyaret öncesi durum dikkate alınır.
+- Denetim alanı tablosu: toplam, kapalı, açık ve itirazlı PQ sayıları; itiraz edilen PQ numaraları; genel toplam.
+- Gereksiz kapsam/ekran filtresi açıklamaları kaldırıldı. Ziyaret adı, tarih ve alan bilgisi korunur.
+- EI tablosu sayfa genişliğini kullanır; yazı 11 punto. Grafik lejantı ve üst değerler ayrıldı. Çok alanlı grafiğe ayrı sayfa verilir. Bilinmeyen EI sıfır olarak çizilmez.
+- İtirazlar: PQ ve alan başlığı; kısa taslak/itiraz/tarih/nihai sonuç bilgi satırı; altında tam genişlikte not. Uzun metin kesilmeden sonraki sayfaya devam eder.
+- Detaylı Word, PDF ile aynı rapor modelinden oluşturulur. Gerçek .docx; metin ve tablolar düzenlenebilir, grafik yüksek çözünürlüklü görseldir. Sayfa kırılımları Word sürümüne/yazı tiplerine göre değişebilir.
+- Kaydet düğmesi sabit süreli tıklama kilidi yerine devam eden kayıt işlemini izler. Başarı/hata sonrası serbest kalır; çift kayıt engellenir. Geciken kayıt, sonraki PQ'nun metnini/yerel taslağını silmez veya önceki PQ'yu geri açmaz. visits.write yetkisi korunur.
+
+DOĞRULAMA
+- 248 alan/regresyon kontrolü + 51 statik kontrol başarılı (0 uyarı/hata).
+- 21 gerçek tarayıcı kontrolü: PDF/DOCX indirme, 85/60/25/8 özeti, No Change, art arda kayıt, geciken kayıt/PQ geçişi, çift gönderim, hata/tekrar deneme, yetki kontrolü ve veri kaynağı ayrımı.
+- Önceki ziyaret aşaması/tekil-toplu kayıt/Excel-PDF akışı da 25 tarayıcı kontrolüyle başarılı.
+- 12 çıktı kontrolü: PDF sınırlar/görsel yerleşim, 8 itirazın tüm metni, Word OpenXML yapısı, düzenlenebilir tablolar, grafik ve sayfa numaraları.
+- PDF görsel olarak incelendi. Word yapısı ve içerik doğrulandı; bu ortamda Microsoft Word ile sayfa görüntülemesi yapılmadı.
+
+VERİ
+Bu paket kaynak kod güncellemesidir. Canlı Firebase üzerinde işlem yapılmadı. Firebase kuralları/veri şeması değişmez. CAP Word yüklemeleri EI kaydı veya ziyaret sonucu oluşturmaz.

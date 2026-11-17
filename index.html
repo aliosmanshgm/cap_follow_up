@@ -13,7 +13,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.10/pdfmake.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.10/vfs_fonts.js"></script>
-    <link rel="stylesheet" href="css/app.css?v=20261117-v1.0-rc1.4.21">
+    <link rel="stylesheet" href="css/app.css?v=20261117-v1.0-rc1.4.22">
 </head>
 <body>
 
@@ -149,7 +149,7 @@
                 <button onclick="toggleFiltersPanel()" class="btn-outline header-primary-action">🔎 Filtreler</button>
                 <button type="button" id="activeScreenPdfBtn" onclick="exportPDF()" style="background:#dc2626;" title="Aktif ekranı PDF olarak dışa aktar">📄 Ekran PDF</button>
                 <button id="activeScreenExcelBtn" onclick="exportExcel()" style="background:#059669;" title="Aktif ekranı Excel olarak dışa aktar">📊 Ekran Excel</button>
-                <button type="button" id="appReleaseBadge" class="system-connection-badge ok release-badge" onclick="openSystemHealthModal()" title="Release Candidate sistem kontrolünü aç">RC1.4.21 · v1.0</button>
+                <button type="button" id="appReleaseBadge" class="system-connection-badge ok release-badge" onclick="openSystemHealthModal()" title="Release Candidate sistem kontrolünü aç">RC1.4.22 · v1.0</button>
                 <button type="button" id="systemConnectionBadge" class="system-connection-badge checking" onclick="openSystemHealthModal()" title="Sistem bağlantı ve kayıt durumunu görüntüle">⚪ Kontrol ediliyor</button>
                 <div class="more-actions-wrap">
                     <button class="btn-outline" onclick="toggleMoreActions(event)">⚙️ Diğer <span style="font-size:10px;">▼</span></button>
@@ -1725,6 +1725,7 @@
                         <button type="button" class="btn-outline" onclick="renderIcaoOfficialVisitModule(true)">🔄 Yenile</button>
                         <button type="button" class="btn-outline" onclick="openIcaoOfficialVisitForm()">➕ Resmî Ziyaret Oluştur</button>
                         <button type="button" class="btn-outline" onclick="exportIcaoOfficialVisitDetailedPDF()" title="Kapsam özeti, EI özeti, PQ durumları ve varsa itiraz edilen PQ tablosunu içeren detaylı PDF">📄 Detaylı PDF</button>
+                        <button type="button" class="btn-outline" onclick="exportIcaoOfficialVisitDetailedWord()" title="Detaylı PDF raporuyla aynı içeriği düzenlenebilir Word olarak indir">📝 Detaylı Word</button>
                         <button type="button" class="btn-outline" onclick="exportIcaoOfficialVisitDetailedExcel()" title="Seçili denetim alanı filtresindeki tüm PQ/CAP kapsamını ayrıntılı Excel olarak dışa aktar">📊 Detaylı Excel</button>
                     </div>
                 </div>
@@ -1795,7 +1796,7 @@
                                 <div class="icao-valid-field full"><label>İç not</label><div class="icvm-textarea-wrap" data-textarea-wrap="icaoValidationNotes"><textarea id="icaoValidationNotes" placeholder="SHGM iç kullanım notu" oninput="handleIcaoValidationTextInput(this)"></textarea><div class="icvm-textarea-toolbar"><button type="button" onclick="icaoValidationTextAction('icaoValidationNotes','timestamp')">🕒 Zaman</button><button type="button" onclick="icaoValidationTextAction('icaoValidationNotes','copy')">📋 Kopyala</button><button type="button" onclick="icaoValidationTextAction('icaoValidationNotes','expand')">⛶ Büyüt</button><button type="button" onclick="icaoValidationTextAction('icaoValidationNotes','clear')">🧹 Temizle</button><span class="icvm-textarea-meta" id="icaoValidationNotesCount">0 karakter</span></div></div></div>
                             </div>
                             <div id="icaoValidationEiImpact" class="icao-ei-impact"></div>
-                            <div class="icao-valid-actions"><span id="icaoValidationDraftInfo" class="icvm-draft-info">Metin alanlarındaki değişiklikler tarayıcıda taslak olarak korunur.</span><button type="button" class="btn-outline" onclick="resetIcaoValidationForm()">Formu Temizle</button><button type="submit" id="icaoValidationSaveButton">💾 CAP Sonucunu Kaydet</button></div>
+                            <div class="icao-valid-actions"><span id="icaoValidationDraftInfo" class="icvm-draft-info">Metin alanlarındaki değişiklikler tarayıcıda taslak olarak korunur.</span><button type="button" class="btn-outline" onclick="resetIcaoValidationForm()">Formu Temizle</button><button type="submit" id="icaoValidationSaveButton" data-permission="visits.write">💾 CAP Sonucunu Kaydet</button></div>
                         </form>
                     </section>
                 </div>
@@ -2612,29 +2613,31 @@
 </div>
 
 
-<script src="js/services/cap-current-source.js?v=20261117-v1.0-rc1.4.21"></script>
-<script src="js/services/visit-outcomes.js?v=20261117-v1.0-rc1.4.21"></script>
-<script src="js/app.js?v=20261117-v1.0-rc1.4.21"></script>
-<script src="js/modules/access-control.js?v=20261117-v1.0-rc1.4.21"></script>
-<script src="js/modules/visit-sync.js?v=20261117-v1.0-rc1.4.21"></script>
-<script src="js/modules/visit-hub.js?v=20261117-v1.0-rc1.4.21"></script>
-<script src="js/modules/state-compliance.js?v=20261117-v1.0-rc1.4.21"></script>
-<script src="js/modules/assessment-events.js?v=20261117-v1.0-rc1.4.21"></script>
-<script src="js/modules/official-ei-management.js?v=20261117-v1.0-rc1.4.21"></script>
-<script src="js/modules/official-ei-automation.js?v=20261117-v1.0-rc1.4.21"></script>
-<script src="js/parsers/pq-docx-parser.js?v=20261117-v1.0-rc1.4.21"></script>
-<script src="js/modules/pq-linkage.js?v=20261117-v1.0-rc1.4.21"></script>
-<script src="js/modules/validation-readiness.js?v=20261117-v1.0-rc1.4.21"></script>
-<script src="js/modules/assessment-impact.js?v=20261117-v1.0-rc1.4.21"></script>
-<script src="js/modules/management-shell.js?v=20261117-v1.0-rc1.4.21"></script>
-<script src="js/modules/drive-documents.js?v=20261117-v1.0-rc1.4.21"></script>
-<script src="js/services/pq-repository.js?v=20261117-v1.0-rc1.4.21"></script>
-<script src="js/modules/pq-library.js?v=20261117-v1.0-rc1.4.21"></script>
-<script src="js/modules/responsibility-registry.js?v=20261117-v1.0-rc1.4.21"></script>
-<script src="js/modules/system-integrity.js?v=20261117-v1.0-rc1.4.21"></script>
-<script src="js/modules/action-center.js?v=20261117-v1.0-rc1.4.21"></script>
-<script src="js/modules/notification-center.js?v=20261117-v1.0-rc1.4.21"></script>
-<script src="js/modules/reporting-center.js?v=20261117-v1.0-rc1.4.21"></script>
-<script src="js/modules/dashboard-overview.js?v=20261117-v1.0-rc1.4.21"></script>
+<script src="js/services/cap-current-source.js?v=20261117-v1.0-rc1.4.22"></script>
+<script src="js/services/visit-outcomes.js?v=20261117-v1.0-rc1.4.22"></script>
+<script src="js/app.js?v=20261117-v1.0-rc1.4.22"></script>
+<script src="js/modules/access-control.js?v=20261117-v1.0-rc1.4.22"></script>
+<script src="js/modules/visit-sync.js?v=20261117-v1.0-rc1.4.22"></script>
+<script src="js/modules/visit-hub.js?v=20261117-v1.0-rc1.4.22"></script>
+<script src="js/modules/state-compliance.js?v=20261117-v1.0-rc1.4.22"></script>
+<script src="js/modules/assessment-events.js?v=20261117-v1.0-rc1.4.22"></script>
+<script src="js/modules/official-ei-management.js?v=20261117-v1.0-rc1.4.22"></script>
+<script src="js/modules/official-ei-automation.js?v=20261117-v1.0-rc1.4.22"></script>
+<script src="js/parsers/pq-docx-parser.js?v=20261117-v1.0-rc1.4.22"></script>
+<script src="js/modules/pq-linkage.js?v=20261117-v1.0-rc1.4.22"></script>
+<script src="js/modules/validation-readiness.js?v=20261117-v1.0-rc1.4.22"></script>
+<script src="js/modules/assessment-impact.js?v=20261117-v1.0-rc1.4.22"></script>
+<script src="js/modules/management-shell.js?v=20261117-v1.0-rc1.4.22"></script>
+<script src="js/modules/drive-documents.js?v=20261117-v1.0-rc1.4.22"></script>
+<script src="js/services/pq-repository.js?v=20261117-v1.0-rc1.4.22"></script>
+<script src="js/modules/pq-library.js?v=20261117-v1.0-rc1.4.22"></script>
+<script src="js/modules/responsibility-registry.js?v=20261117-v1.0-rc1.4.22"></script>
+<script src="js/modules/system-integrity.js?v=20261117-v1.0-rc1.4.22"></script>
+<script src="js/modules/action-center.js?v=20261117-v1.0-rc1.4.22"></script>
+<script src="js/modules/notification-center.js?v=20261117-v1.0-rc1.4.22"></script>
+<script src="js/modules/reporting-center.js?v=20261117-v1.0-rc1.4.22"></script>
+<script src="js/modules/dashboard-overview.js?v=20261117-v1.0-rc1.4.22"></script>
+<script src="js/services/native-docx-writer.js?v=20261117-v1.0-rc1.4.22"></script>
+<script src="js/modules/icao-visit-report.js?v=20261117-v1.0-rc1.4.22"></script>
 </body>
 </html>

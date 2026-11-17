@@ -116,12 +116,12 @@
   }
   function updateWriteControls(){
     if(!state.accessGranted)return;
-    document.querySelectorAll('button[onclick],input[type=file]').forEach(el=>{
+    document.querySelectorAll('button[onclick],button[data-permission],input[type=file]').forEach(el=>{
       const perm=el.dataset&&el.dataset.permission||classifyControl(el);
       if(!perm)return;
       const allowed=can(perm);
       if(!allowed){el.disabled=true;el.classList.add('access-disabled');el.title=(el.title?el.title+' · ':'')+`Rolünüz bu işlem için yetkili değil (${roleDef(roleOf()).label}).`;}
-      else if(el.classList.contains('access-disabled')){el.disabled=false;el.classList.remove('access-disabled');}
+      else if(el.classList.contains('access-disabled')){el.disabled=el.dataset.saving==='1';el.classList.remove('access-disabled');}
     });
   }
 
